@@ -1,0 +1,14 @@
+crypto_box/curve25519xsalsa20poly1305/ref/libsodium_la-after_curve25519xsalsa20poly1305.lo: \
+ crypto_box/curve25519xsalsa20poly1305/ref/after_curve25519xsalsa20poly1305.c \
+ include/sodium/crypto_box_curve25519xsalsa20poly1305.h \
+ /home/arash/coding/libsodium-1.0.10/android-toolchain-mips64r6/lib/gcc/mips64el-linux-android/4.9.x/include/stddef.h \
+ include/sodium/export.h \
+ include/sodium/crypto_secretbox_xsalsa20poly1305.h
+
+include/sodium/crypto_box_curve25519xsalsa20poly1305.h:
+
+/home/arash/coding/libsodium-1.0.10/android-toolchain-mips64r6/lib/gcc/mips64el-linux-android/4.9.x/include/stddef.h:
+
+include/sodium/export.h:
+
+include/sodium/crypto_secretbox_xsalsa20poly1305.h:

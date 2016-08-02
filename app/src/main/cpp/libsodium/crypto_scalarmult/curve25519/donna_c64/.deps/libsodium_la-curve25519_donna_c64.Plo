@@ -1,0 +1,46 @@
+crypto_scalarmult/curve25519/donna_c64/libsodium_la-curve25519_donna_c64.lo: \
+ crypto_scalarmult/curve25519/donna_c64/curve25519_donna_c64.c \
+ /home/arash/coding/libsodium-1.0.10/android-toolchain-mips64r6/sysroot/usr/include/string.h \
+ /home/arash/coding/libsodium-1.0.10/android-toolchain-mips64r6/sysroot/usr/include/sys/cdefs.h \
+ /home/arash/coding/libsodium-1.0.10/android-toolchain-mips64r6/sysroot/usr/include/sys/cdefs_elf.h \
+ /home/arash/coding/libsodium-1.0.10/android-toolchain-mips64r6/sysroot/usr/include/android/api-level.h \
+ /home/arash/coding/libsodium-1.0.10/android-toolchain-mips64r6/lib/gcc/mips64el-linux-android/4.9.x/include/stddef.h \
+ /home/arash/coding/libsodium-1.0.10/android-toolchain-mips64r6/sysroot/usr/include/malloc.h \
+ /home/arash/coding/libsodium-1.0.10/android-toolchain-mips64r6/sysroot/usr/include/xlocale.h \
+ /home/arash/coding/libsodium-1.0.10/android-toolchain-mips64r6/lib/gcc/mips64el-linux-android/4.9.x/include/stdint.h \
+ /home/arash/coding/libsodium-1.0.10/android-toolchain-mips64r6/sysroot/usr/include/stdint.h \
+ /home/arash/coding/libsodium-1.0.10/android-toolchain-mips64r6/sysroot/usr/include/machine/wchar_limits.h \
+ include/sodium/utils.h include/sodium/export.h \
+ crypto_scalarmult/curve25519/donna_c64/curve25519_donna_c64.h \
+ include/sodium/crypto_scalarmult_curve25519.h \
+ crypto_scalarmult/curve25519/donna_c64/../scalarmult_curve25519.h
+
+/home/arash/coding/libsodium-1.0.10/android-toolchain-mips64r6/sysroot/usr/include/string.h:
+
+/home/arash/coding/libsodium-1.0.10/android-toolchain-mips64r6/sysroot/usr/include/sys/cdefs.h:
+
+/home/arash/coding/libsodium-1.0.10/android-toolchain-mips64r6/sysroot/usr/include/sys/cdefs_elf.h:
+
+/home/arash/coding/libsodium-1.0.10/android-toolchain-mips64r6/sysroot/usr/include/android/api-level.h:
+
+/home/arash/coding/libsodium-1.0.10/android-toolchain-mips64r6/lib/gcc/mips64el-linux-android/4.9.x/include/stddef.h:
+
+/home/arash/coding/libsodium-1.0.10/android-toolchain-mips64r6/sysroot/usr/include/malloc.h:
+
+/home/arash/coding/libsodium-1.0.10/android-toolchain-mips64r6/sysroot/usr/include/xlocale.h:
+
+/home/arash/coding/libsodium-1.0.10/android-toolchain-mips64r6/lib/gcc/mips64el-linux-android/4.9.x/include/stdint.h:
+
+/home/arash/coding/libsodium-1.0.10/android-toolchain-mips64r6/sysroot/usr/include/stdint.h:
+
+/home/arash/coding/libsodium-1.0.10/android-toolchain-mips64r6/sysroot/usr/include/machine/wchar_limits.h:
+
+include/sodium/utils.h:
+
+include/sodium/export.h:
+
+crypto_scalarmult/curve25519/donna_c64/curve25519_donna_c64.h:
+
+include/sodium/crypto_scalarmult_curve25519.h:
+
+crypto_scalarmult/curve25519/donna_c64/../scalarmult_curve25519.h:

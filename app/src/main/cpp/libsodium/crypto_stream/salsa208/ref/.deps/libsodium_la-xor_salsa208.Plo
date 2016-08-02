@@ -1,0 +1,17 @@
+crypto_stream/salsa208/ref/libsodium_la-xor_salsa208.lo: \
+ crypto_stream/salsa208/ref/xor_salsa208.c /usr/include/stdc-predef.h \
+ include/sodium/crypto_core_salsa208.h \
+ /usr/lib/gcc/x86_64-linux-gnu/5/include/stddef.h include/sodium/export.h \
+ include/sodium/crypto_stream_salsa208.h include/sodium/utils.h
+
+/usr/include/stdc-predef.h:
+
+include/sodium/crypto_core_salsa208.h:
+
+/usr/lib/gcc/x86_64-linux-gnu/5/include/stddef.h:
+
+include/sodium/export.h:
+
+include/sodium/crypto_stream_salsa208.h:
+
+include/sodium/utils.h:

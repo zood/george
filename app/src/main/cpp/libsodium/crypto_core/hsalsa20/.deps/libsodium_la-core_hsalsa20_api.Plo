@@ -1,0 +1,11 @@
+crypto_core/hsalsa20/libsodium_la-core_hsalsa20_api.lo: \
+ crypto_core/hsalsa20/core_hsalsa20_api.c \
+ include/sodium/crypto_core_hsalsa20.h \
+ /home/arash/coding/libsodium-1.0.10/android-toolchain-mips64r6/lib/gcc/mips64el-linux-android/4.9.x/include/stddef.h \
+ include/sodium/export.h
+
+include/sodium/crypto_core_hsalsa20.h:
+
+/home/arash/coding/libsodium-1.0.10/android-toolchain-mips64r6/lib/gcc/mips64el-linux-android/4.9.x/include/stddef.h:
+
+include/sodium/export.h:

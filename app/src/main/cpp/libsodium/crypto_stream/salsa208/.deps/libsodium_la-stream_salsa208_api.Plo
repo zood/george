@@ -1,0 +1,12 @@
+crypto_stream/salsa208/libsodium_la-stream_salsa208_api.lo: \
+ crypto_stream/salsa208/stream_salsa208_api.c /usr/include/stdc-predef.h \
+ include/sodium/crypto_stream_salsa208.h \
+ /usr/lib/gcc/x86_64-linux-gnu/5/include/stddef.h include/sodium/export.h
+
+/usr/include/stdc-predef.h:
+
+include/sodium/crypto_stream_salsa208.h:
+
+/usr/lib/gcc/x86_64-linux-gnu/5/include/stddef.h:
+
+include/sodium/export.h:

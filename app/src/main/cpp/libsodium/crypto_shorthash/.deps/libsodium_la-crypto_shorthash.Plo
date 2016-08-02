@@ -1,0 +1,12 @@
+crypto_shorthash/libsodium_la-crypto_shorthash.lo: \
+ crypto_shorthash/crypto_shorthash.c include/sodium/crypto_shorthash.h \
+ /home/arash/coding/libsodium-1.0.10/android-toolchain-mips64r6/lib/gcc/mips64el-linux-android/4.9.x/include/stddef.h \
+ include/sodium/crypto_shorthash_siphash24.h include/sodium/export.h
+
+include/sodium/crypto_shorthash.h:
+
+/home/arash/coding/libsodium-1.0.10/android-toolchain-mips64r6/lib/gcc/mips64el-linux-android/4.9.x/include/stddef.h:
+
+include/sodium/crypto_shorthash_siphash24.h:
+
+include/sodium/export.h:

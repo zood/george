@@ -1,0 +1,107 @@
+crypto_aead/aes256gcm/aesni/libaesni_la-aead_aes256gcm_aesni.lo: \
+ crypto_aead/aes256gcm/aesni/aead_aes256gcm_aesni.c \
+ /home/arash/coding/libsodium-1.0.10/android-toolchain-mips64r6/sysroot/usr/include/errno.h \
+ /home/arash/coding/libsodium-1.0.10/android-toolchain-mips64r6/sysroot/usr/include/sys/cdefs.h \
+ /home/arash/coding/libsodium-1.0.10/android-toolchain-mips64r6/sysroot/usr/include/sys/cdefs_elf.h \
+ /home/arash/coding/libsodium-1.0.10/android-toolchain-mips64r6/sysroot/usr/include/android/api-level.h \
+ /home/arash/coding/libsodium-1.0.10/android-toolchain-mips64r6/sysroot/usr/include/linux/errno.h \
+ /home/arash/coding/libsodium-1.0.10/android-toolchain-mips64r6/sysroot/usr/include/asm/errno.h \
+ /home/arash/coding/libsodium-1.0.10/android-toolchain-mips64r6/sysroot/usr/include/asm-generic/errno-base.h \
+ /home/arash/coding/libsodium-1.0.10/android-toolchain-mips64r6/lib/gcc/mips64el-linux-android/4.9.x/include/stdint.h \
+ /home/arash/coding/libsodium-1.0.10/android-toolchain-mips64r6/sysroot/usr/include/stdint.h \
+ /home/arash/coding/libsodium-1.0.10/android-toolchain-mips64r6/lib/gcc/mips64el-linux-android/4.9.x/include/stddef.h \
+ /home/arash/coding/libsodium-1.0.10/android-toolchain-mips64r6/sysroot/usr/include/machine/wchar_limits.h \
+ /home/arash/coding/libsodium-1.0.10/android-toolchain-mips64r6/sysroot/usr/include/stdlib.h \
+ /home/arash/coding/libsodium-1.0.10/android-toolchain-mips64r6/sysroot/usr/include/string.h \
+ /home/arash/coding/libsodium-1.0.10/android-toolchain-mips64r6/sysroot/usr/include/malloc.h \
+ /home/arash/coding/libsodium-1.0.10/android-toolchain-mips64r6/sysroot/usr/include/xlocale.h \
+ /home/arash/coding/libsodium-1.0.10/android-toolchain-mips64r6/sysroot/usr/include/alloca.h \
+ /home/arash/coding/libsodium-1.0.10/android-toolchain-mips64r6/sysroot/usr/include/strings.h \
+ /home/arash/coding/libsodium-1.0.10/android-toolchain-mips64r6/sysroot/usr/include/sys/types.h \
+ /home/arash/coding/libsodium-1.0.10/android-toolchain-mips64r6/sysroot/usr/include/linux/types.h \
+ /home/arash/coding/libsodium-1.0.10/android-toolchain-mips64r6/sysroot/usr/include/asm/types.h \
+ /home/arash/coding/libsodium-1.0.10/android-toolchain-mips64r6/sysroot/usr/include/asm-generic/int-l64.h \
+ /home/arash/coding/libsodium-1.0.10/android-toolchain-mips64r6/sysroot/usr/include/asm/bitsperlong.h \
+ /home/arash/coding/libsodium-1.0.10/android-toolchain-mips64r6/sysroot/usr/include/asm-generic/bitsperlong.h \
+ /home/arash/coding/libsodium-1.0.10/android-toolchain-mips64r6/sysroot/usr/include/linux/posix_types.h \
+ /home/arash/coding/libsodium-1.0.10/android-toolchain-mips64r6/sysroot/usr/include/linux/stddef.h \
+ /home/arash/coding/libsodium-1.0.10/android-toolchain-mips64r6/sysroot/usr/include/linux/compiler.h \
+ /home/arash/coding/libsodium-1.0.10/android-toolchain-mips64r6/sysroot/usr/include/asm/posix_types.h \
+ /home/arash/coding/libsodium-1.0.10/android-toolchain-mips64r6/sysroot/usr/include/asm/sgidefs.h \
+ /home/arash/coding/libsodium-1.0.10/android-toolchain-mips64r6/sysroot/usr/include/asm-generic/posix_types.h \
+ /home/arash/coding/libsodium-1.0.10/android-toolchain-mips64r6/sysroot/usr/include/sys/sysmacros.h \
+ /home/arash/coding/libsodium-1.0.10/android-toolchain-mips64r6/sysroot/usr/include/memory.h \
+ include/sodium/crypto_aead_aes256gcm.h include/sodium/export.h \
+ include/sodium/export.h include/sodium/runtime.h include/sodium/utils.h
+
+/home/arash/coding/libsodium-1.0.10/android-toolchain-mips64r6/sysroot/usr/include/errno.h:
+
+/home/arash/coding/libsodium-1.0.10/android-toolchain-mips64r6/sysroot/usr/include/sys/cdefs.h:
+
+/home/arash/coding/libsodium-1.0.10/android-toolchain-mips64r6/sysroot/usr/include/sys/cdefs_elf.h:
+
+/home/arash/coding/libsodium-1.0.10/android-toolchain-mips64r6/sysroot/usr/include/android/api-level.h:
+
+/home/arash/coding/libsodium-1.0.10/android-toolchain-mips64r6/sysroot/usr/include/linux/errno.h:
+
+/home/arash/coding/libsodium-1.0.10/android-toolchain-mips64r6/sysroot/usr/include/asm/errno.h:
+
+/home/arash/coding/libsodium-1.0.10/android-toolchain-mips64r6/sysroot/usr/include/asm-generic/errno-base.h:
+
+/home/arash/coding/libsodium-1.0.10/android-toolchain-mips64r6/lib/gcc/mips64el-linux-android/4.9.x/include/stdint.h:
+
+/home/arash/coding/libsodium-1.0.10/android-toolchain-mips64r6/sysroot/usr/include/stdint.h:
+
+/home/arash/coding/libsodium-1.0.10/android-toolchain-mips64r6/lib/gcc/mips64el-linux-android/4.9.x/include/stddef.h:
+
+/home/arash/coding/libsodium-1.0.10/android-toolchain-mips64r6/sysroot/usr/include/machine/wchar_limits.h:
+
+/home/arash/coding/libsodium-1.0.10/android-toolchain-mips64r6/sysroot/usr/include/stdlib.h:
+
+/home/arash/coding/libsodium-1.0.10/android-toolchain-mips64r6/sysroot/usr/include/string.h:
+
+/home/arash/coding/libsodium-1.0.10/android-toolchain-mips64r6/sysroot/usr/include/malloc.h:
+
+/home/arash/coding/libsodium-1.0.10/android-toolchain-mips64r6/sysroot/usr/include/xlocale.h:
+
+/home/arash/coding/libsodium-1.0.10/android-toolchain-mips64r6/sysroot/usr/include/alloca.h:
+
+/home/arash/coding/libsodium-1.0.10/android-toolchain-mips64r6/sysroot/usr/include/strings.h:
+
+/home/arash/coding/libsodium-1.0.10/android-toolchain-mips64r6/sysroot/usr/include/sys/types.h:
+
+/home/arash/coding/libsodium-1.0.10/android-toolchain-mips64r6/sysroot/usr/include/linux/types.h:
+
+/home/arash/coding/libsodium-1.0.10/android-toolchain-mips64r6/sysroot/usr/include/asm/types.h:
+
+/home/arash/coding/libsodium-1.0.10/android-toolchain-mips64r6/sysroot/usr/include/asm-generic/int-l64.h:
+
+/home/arash/coding/libsodium-1.0.10/android-toolchain-mips64r6/sysroot/usr/include/asm/bitsperlong.h:
+
+/home/arash/coding/libsodium-1.0.10/android-toolchain-mips64r6/sysroot/usr/include/asm-generic/bitsperlong.h:
+
+/home/arash/coding/libsodium-1.0.10/android-toolchain-mips64r6/sysroot/usr/include/linux/posix_types.h:
+
+/home/arash/coding/libsodium-1.0.10/android-toolchain-mips64r6/sysroot/usr/include/linux/stddef.h:
+
+/home/arash/coding/libsodium-1.0.10/android-toolchain-mips64r6/sysroot/usr/include/linux/compiler.h:
+
+/home/arash/coding/libsodium-1.0.10/android-toolchain-mips64r6/sysroot/usr/include/asm/posix_types.h:
+
+/home/arash/coding/libsodium-1.0.10/android-toolchain-mips64r6/sysroot/usr/include/asm/sgidefs.h:
+
+/home/arash/coding/libsodium-1.0.10/android-toolchain-mips64r6/sysroot/usr/include/asm-generic/posix_types.h:
+
+/home/arash/coding/libsodium-1.0.10/android-toolchain-mips64r6/sysroot/usr/include/sys/sysmacros.h:
+
+/home/arash/coding/libsodium-1.0.10/android-toolchain-mips64r6/sysroot/usr/include/memory.h:
+
+include/sodium/crypto_aead_aes256gcm.h:
+
+include/sodium/export.h:
+
+include/sodium/export.h:
+
+include/sodium/runtime.h:
+
+include/sodium/utils.h:

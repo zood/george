@@ -1,0 +1,19 @@
+crypto_verify/32/ref/libsodium_la-verify_32.lo: \
+ crypto_verify/32/ref/verify_32.c \
+ /home/arash/coding/libsodium-1.0.10/android-toolchain-mips64r6/lib/gcc/mips64el-linux-android/4.9.x/include/stddef.h \
+ /home/arash/coding/libsodium-1.0.10/android-toolchain-mips64r6/lib/gcc/mips64el-linux-android/4.9.x/include/stdint.h \
+ /home/arash/coding/libsodium-1.0.10/android-toolchain-mips64r6/sysroot/usr/include/stdint.h \
+ /home/arash/coding/libsodium-1.0.10/android-toolchain-mips64r6/sysroot/usr/include/machine/wchar_limits.h \
+ include/sodium/crypto_verify_32.h include/sodium/export.h
+
+/home/arash/coding/libsodium-1.0.10/android-toolchain-mips64r6/lib/gcc/mips64el-linux-android/4.9.x/include/stddef.h:
+
+/home/arash/coding/libsodium-1.0.10/android-toolchain-mips64r6/lib/gcc/mips64el-linux-android/4.9.x/include/stdint.h:
+
+/home/arash/coding/libsodium-1.0.10/android-toolchain-mips64r6/sysroot/usr/include/stdint.h:
+
+/home/arash/coding/libsodium-1.0.10/android-toolchain-mips64r6/sysroot/usr/include/machine/wchar_limits.h:
+
+include/sodium/crypto_verify_32.h:
+
+include/sodium/export.h:
