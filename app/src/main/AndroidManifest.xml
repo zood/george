@@ -3,21 +3,30 @@
     package="io.pijun.george">
 
     <application
-        android:allowBackup="true"
+        android:name=".App"
+        android:allowBackup="false"
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
         <activity android:name=".MainActivity">
+        </activity>
+        <activity android:name=".MapActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <activity android:name=".MapActivity" />
-
-        <service android:name="com.mapbox.mapboxsdk.telemetry.TelemetryService" />
+        <activity
+            android:name=".LoginActivity"
+            android:theme="@style/LoginTheme" />
+        <meta-data
+            android:name="com.google.android.gms.version"
+            android:value="@integer/google_play_services_version" />
+        <meta-data
+            android:name="com.google.android.geo.API_KEY"
+            android:value=" AIzaSyBIvDSmVJ-BplWOWnqCqvQo9V14sJhPn0E" />
     </application>
 
 </manifest>

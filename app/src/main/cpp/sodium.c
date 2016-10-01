@@ -20,40 +20,49 @@ JNIEXPORT jint Java_io_pijun_george_Sodium_init(JNIEnv *env, jclass cls) {
     return sodium_init();
 }
 
-// Sodium.createKeyFromPassword(int keySizeBytes, byte[] password, byte[] salt)
-JNIEXPORT jbyteArray JNICALL Java_io_pijun_george_Sodium_createKeyFromPassword(
-    JNIEnv *env, jclass cls, jint keySizeBytes, jbyteArray password, jbyteArray salt) {
+// Sodium.createHashFromPassword(int keySizeBytes, byte[] password, byte[] salt)
+JNIEXPORT jbyteArray JNICALL Java_io_pijun_george_Sodium_createHashFromPassword(
+    JNIEnv *env, jclass cls, jint hashSizeBytes, jbyteArray password, jbyteArray salt, jlong opsLimit, jlong memLimit) {
     if (password == NULL) {
-        __android_log_print(ANDROID_LOG_INFO, "Pijun", "createKeyFromPassword: password is NULL. returning");
+        __android_log_print(ANDROID_LOG_INFO, "Pijun", "createHashFromPassword: password is NULL. returning");
         return NULL;
     }
     if (salt == NULL) {
-        __android_log_print(ANDROID_LOG_INFO, "Pijun", "createKeyFromPassword: salt is NULL. returning");
+        __android_log_print(ANDROID_LOG_INFO, "Pijun", "createHashFromPassword: salt is NULL. returning");
         return NULL;
     }
 
-
     unsigned char* passwordUChar = ucharArray(env, password);
     unsigned char* saltUChar = ucharArray(env, salt);
-    unsigned char key[keySizeBytes];
+    unsigned char key[hashSizeBytes];
     int result = crypto_pwhash(key,
-                               keySizeBytes,
+                               (unsigned long long)hashSizeBytes,
                                (const char*)passwordUChar,
-                               (*env)->GetArrayLength(env, password),
+                               (unsigned long long)(*env)->GetArrayLength(env, password),
                                saltUChar,
-                               crypto_pwhash_OPSLIMIT_INTERACTIVE,
-                               crypto_pwhash_MEMLIMIT_INTERACTIVE,
+                               (unsigned long long)opsLimit,
+                               (unsigned long long)memLimit,
                                crypto_pwhash_ALG_DEFAULT);
     free(passwordUChar);
     free(saltUChar);
     if (result != 0) {
-        __android_log_print(ANDROID_LOG_INFO, "Pijun", "createKeyFromPassword returned non-zero value: %d", result);
+        __android_log_print(ANDROID_LOG_INFO, "Pijun", "createHashFromPassword returned non-zero value: %d", result);
         return NULL;
     }
 
-    jbyteArray keyBytes = byteArray(env, key, keySizeBytes);
+    jbyteArray keyBytes = byteArray(env, key, crypto_box_SEEDBYTES);
 
     return keyBytes;
+}
+
+JNIEXPORT jint JNICALL Java_io_pijun_george_Sodium_getPasswordHashSaltLength(
+    JNIEnv *env, jclass cls) {
+    return crypto_pwhash_SALTBYTES;
+}
+
+JNIEXPORT jint JNICALL Java_io_pijun_george_Sodium_getSymmetricKeyLength(
+        JNIEnv *env, jclass cls) {
+    return crypto_secretbox_KEYBYTES;
 }
 
 // Sodium.generateKeyPair(KeyPair kp)
@@ -78,11 +87,11 @@ JNIEXPORT jint JNICALL Java_io_pijun_george_Sodium_generateKeyPair(
     return 0;
 }
 
-// Sodium.secretKeyEncrypt(byte[] msg, byte[] key)
-JNIEXPORT jobject JNICALL Java_io_pijun_george_Sodium_secretKeyEncrypt(
+// Sodium.symmetricKeyEncrypt(byte[] msg, byte[] key)
+JNIEXPORT jobject JNICALL Java_io_pijun_george_Sodium_symmetricKeyEncrypt(
     JNIEnv *env, jclass cls, jbyteArray msg, jbyteArray key) {
-    int msgLen = (*env)->GetArrayLength(env, msg);
-    int cipherTextLen = msgLen + crypto_secretbox_MACBYTES;
+    unsigned long long msgLen = (unsigned long long)(*env)->GetArrayLength(env, msg);
+    unsigned long long cipherTextLen = msgLen + crypto_secretbox_MACBYTES;
     unsigned char cipherText[cipherTextLen];
     unsigned char* msgUChar = ucharArray(env, msg);
     unsigned char nonceUChar[crypto_secretbox_NONCEBYTES];
@@ -114,12 +123,12 @@ JNIEXPORT jobject JNICALL Java_io_pijun_george_Sodium_secretKeyEncrypt(
     return skem;
 }
 
-// Sodium.secretKeyDecrypt(byte[] cipherText, byte[] nonce, byte[] key)
-JNIEXPORT jbyteArray JNICALL Java_io_pijun_george_Sodium_secretKeyDecrypt(
+// Sodium.symmetricKeyDecrypt(byte[] cipherText, byte[] nonce, byte[] key)
+JNIEXPORT jbyteArray JNICALL Java_io_pijun_george_Sodium_symmetricKeyDecrypt(
     JNIEnv *env, jclass cls, jbyteArray cipherText, jbyteArray nonce, jbyteArray key) {
     int msgLen = (*env)->GetArrayLength(env, cipherText) - crypto_secretbox_MACBYTES;
     if (msgLen < 1) {
-        __android_log_print(ANDROID_LOG_INFO, "Pijun", "secretKeyDecrypt: message is too short");
+        __android_log_print(ANDROID_LOG_INFO, "Pijun", "symmetricKeyDecrypt: message is too short");
         return NULL;
     }
 
@@ -129,14 +138,14 @@ JNIEXPORT jbyteArray JNICALL Java_io_pijun_george_Sodium_secretKeyDecrypt(
     unsigned char* keyUChar = ucharArray(env, key);
     int result = crypto_secretbox_open_easy(msgUChar,
                                             cipherTextUChar,
-                                            (*env)->GetArrayLength(env, cipherText),
+                                            (unsigned long long)(*env)->GetArrayLength(env, cipherText),
                                             nonceUChar,
                                             keyUChar);
     free(cipherTextUChar);
     free(nonceUChar);
     free(keyUChar);
     if (result != 0) {
-        __android_log_print(ANDROID_LOG_INFO, "Pijun", "secretKeyDecrypt: non-zero result (%d)", result);
+        __android_log_print(ANDROID_LOG_INFO, "Pijun", "symmetricKeyDecrypt: non-zero result (%d)", result);
         return NULL;
     }
 
@@ -184,6 +193,7 @@ JNIEXPORT jobject JNICALL Java_io_pijun_george_Sodium_publicKeyEncrypt(
     return skem;
 }
 
+// Sodium.publicKeyDecrypt(byte[] cipherText, byte[] nonce, byte[] senderPubKey, byte[] receiverSecKey)
 JNIEXPORT jbyteArray JNICALL Java_io_pijun_george_Sodium_publicKeyDecrypt(
     JNIEnv *env, jclass cls, jbyteArray cipherText, jbyteArray nonce, jbyteArray senderPubKey, jbyteArray receiverSecretKey) {
     int cipherTextLen = (*env)->GetArrayLength(env, cipherText);

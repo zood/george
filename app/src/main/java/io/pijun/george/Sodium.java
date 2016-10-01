@@ -12,13 +12,34 @@ public class Sodium {
 
     public native static int init();
 
-    public native static byte[] createKeyFromPassword(int keySizeBytes, byte[] password, byte[] salt);
+    public final static long PASSWORDHASH_OPSLIMIT_INTERACTIVE = 4;
+    public final static long PASSWORDHASH_OPSLIMIT_MODERATE = 6;
+    public final static long PASSWORDHASH_OPSLIMIT_SENSITIVE = 8;
+
+    public final static long PASSWORDHASH_MEMLIMIT_INTERACTIVE = 33554432;
+    public final static long PASSWORDHASH_MEMLIMIT_MODERATE = 134217728;
+    public final static long PASSWORDHASH_MEMLIMIT_SENSITIVE = 536870912;
+
+    /**
+     * Deterministically generates a 32-byte cryptographic key from a password and salt.
+     * @param password An arbitrarily long password
+     * @param salt An array of random bytes. The necessary length can be found by calling
+     *             getPasswordHashSaltLength().
+     * @param opsLimit one of the PASSWORDHASH_OPSLIMIT_* values
+     * @param memLimit one of the PASSWORDHASH_MEMLIMIT_* values
+     * @return a 32-byte key
+     */
+    public native static byte[] createHashFromPassword(int hashSizeBytes, byte[] password, byte[] salt, long opsLimit, long memLimit);
+
+    public native static int getPasswordHashSaltLength();
 
     public native static int generateKeyPair(KeyPair kp);
 
-    public native static SecretKeyEncryptedMessage secretKeyEncrypt(byte[] msg, byte[] key);
+    public native static int getSymmetricKeyLength();
 
-    public native static byte[] secretKeyDecrypt(byte[] cipherText, byte[] nonce, byte[] key);
+    public native static SecretKeyEncryptedMessage symmetricKeyEncrypt(byte[] msg, byte[] key);
+
+    public native static byte[] symmetricKeyDecrypt(byte[] cipherText, byte[] nonce, byte[] key);
 
     public native static SecretKeyEncryptedMessage publicKeyEncrypt(byte[] msg, byte[] receiverPubKey, byte[] senderSecretKey);
 

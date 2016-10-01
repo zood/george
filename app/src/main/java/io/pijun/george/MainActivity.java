@@ -34,13 +34,17 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void onCreateKey(View v) {
-        L.i("onCreateKey");
-        String password = "foo";
-        byte[] salt = new byte[32];
-        new SecureRandom().nextBytes(salt);
-        mSecretKey = Sodium.createKeyFromPassword(32, password.getBytes(), salt);
-        L.i("createKeyVal: " + Hex.toHexString(mSecretKey));
-        L.i("salt: " + Hex.toHexString(salt));
+//        L.i("onCreateKey");
+//        String password = "foo";
+//        byte[] salt = new byte[32];
+//        new SecureRandom().nextBytes(salt);
+//        mSecretKey = Sodium.createHashFromPassword(
+//                password.getBytes(),
+//                salt,
+//                Sodium.PASSWORDHASH_OPSLIMIT_INTERACTIVE,
+//                Sodium.PASSWORDHASH_MEMLIMIT_INTERACTIVE);
+//        L.i("createKeyVal: " + Hex.toHexString(mSecretKey));
+//        L.i("salt: " + Hex.toHexString(salt));
     }
 
     public void onCreateKeyPairs(View v) {
@@ -56,12 +60,12 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void onSecretKeyEncrypt(View v) {
-        mSecretKeyEncryptedMessage = Sodium.secretKeyEncrypt("a secret message".getBytes(), mSecretKey);
+        mSecretKeyEncryptedMessage = Sodium.symmetricKeyEncrypt("a secret message".getBytes(), mSecretKey);
         L.i(mSecretKeyEncryptedMessage.toString());
     }
 
     public void onSecretKeyDecrypt(View v) {
-        byte[] msg = Sodium.secretKeyDecrypt(mSecretKeyEncryptedMessage.cipherText, mSecretKeyEncryptedMessage.nonce, mSecretKey);
+        byte[] msg = Sodium.symmetricKeyDecrypt(mSecretKeyEncryptedMessage.cipherText, mSecretKeyEncryptedMessage.nonce, mSecretKey);
         if (msg == null) {
             L.i("can't decrypt secret key message");
             return;
