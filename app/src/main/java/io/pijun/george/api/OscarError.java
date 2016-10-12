@@ -7,6 +7,9 @@ import com.google.gson.annotations.SerializedName;
 
 import java.io.Reader;
 
+import io.pijun.george.L;
+import retrofit2.Response;
+
 @SuppressWarnings("unused")
 public class OscarError {
 
@@ -49,7 +52,17 @@ public class OscarError {
         Gson gson = new GsonBuilder()
                 .setFieldNamingPolicy(FieldNamingPolicy.LOWER_CASE_WITH_UNDERSCORES)
                 .create();
-        return gson.fromJson(r, OscarError.class);
+        OscarError err = null;
+        try {
+            err = gson.fromJson(r, OscarError.class);
+        } catch (Throwable t) {
+            L.w("can't deserialize OscarError", t);
+        }
+        return err;
+    }
+
+    public static OscarError fromResponse(Response r) {
+        return fromReader(r.errorBody().charStream());
     }
 
 }

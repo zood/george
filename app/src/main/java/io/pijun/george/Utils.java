@@ -3,6 +3,7 @@ package io.pijun.george;
 import android.content.Context;
 import android.os.Looper;
 import android.support.annotation.StringRes;
+import android.support.annotation.UiThread;
 import android.support.v7.app.AlertDialog;
 
 public class Utils {
@@ -21,6 +22,7 @@ public class Utils {
         _showAlert(ctx, titleId, msgId);
     }
 
+    @UiThread
     private static void _showAlert(Context ctx, @StringRes int titleId, @StringRes int msgId) {
         AlertDialog.Builder builder = new AlertDialog.Builder(ctx, R.style.AlertDialogTheme);
         if (titleId != 0) {
@@ -31,7 +33,21 @@ public class Utils {
         builder.show();
     }
 
-    public static void showStringAlert(final Context ctx, CharSequence title, CharSequence msg) {
+    public static void showStringAlert(final Context ctx, final CharSequence title, final CharSequence msg) {
+        if (Looper.myLooper() != Looper.getMainLooper()) {
+            App.runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    _showStringAlert(ctx, title, msg);
+                }
+            });
+            return;
+        }
+        _showStringAlert(ctx, title, msg);
+    }
+
+    @UiThread
+    private static void _showStringAlert(final Context ctx, CharSequence title, CharSequence msg) {
         AlertDialog.Builder builder = new AlertDialog.Builder(ctx, R.style.AlertDialogTheme);
         if (title != null) {
             builder.setTitle(title);

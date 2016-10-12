@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <group
+        android:id="@+id/primary_drawer_group"
+        android:checkableBehavior="all">
+        <item android:id="@+id/add_friend" android:title="@string/add_friend" />
+        <item android:id="@+id/check_messages" android:title="@string/check_messages" />
+        <item android:id="@+id/friend_requests" android:title="@string/friend_requests" />
+    </group>
+</menu>

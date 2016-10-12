@@ -2,6 +2,8 @@
 #include <android/log.h>
 #include <sodium.h>
 
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wunused-parameter"
 unsigned char* ucharArray(JNIEnv *env, jbyteArray array) {
     int len = (*env)->GetArrayLength(env, array);
     unsigned char* buf = malloc(len * sizeof(unsigned char));
@@ -224,3 +226,18 @@ JNIEXPORT jbyteArray JNICALL Java_io_pijun_george_Sodium_publicKeyDecrypt(
 
     return byteArray(env, msg, msgLen);
 }
+
+// Sodium.createHash(byte[] data, byte[] key)
+//JNIEXPORT jbyteArray JNICALL Java_io_pijun_george_Sodium_createHash(
+//    JNIEnv *env, jclass cls, jbyteArray data, jbyteArray key) {
+//    jsize dataLen = (*env)->GetArrayLength(env, data);
+//    jsize keyLen = (*env)->GetArrayLength(env, key);
+//    unsigned char hash[crypto_generichash_BYTES];
+//    int result = crypto_generichash(hash,
+//                                    crypto_generichash_BYTES,
+//
+//
+//    );
+//}
+
+#pragma clang diagnostic pop

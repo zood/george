@@ -9,8 +9,20 @@
     <string name="log_in">Log in</string>
     <string name="password_mismatch_msg">The passwords don\'t match. Please check and try again.</string>
     <string name="ok">OK</string>
-    <string name="password_too_short_msg">That password is too short. Create a password that is at least 8 characters long.</string>
+    <string name="password_too_short_msg">That password is too short. Create a password that is at least 6 characters long. At least 12 character is even better.</string>
     <string name="keypair_generation_error">Error generating key pair.</string>
     <string name="username_too_short_msg">The username you entered is too short. Make sure it\'s at least 5 characters long.</string>
     <string name="unknown_user_generation_error_msg">An unknown error occurred while trying to generate your user settings. Try again, and if it persists, please contact support.</string>
+    <string name="add_friend">Add friend</string>
+    <string name="cancel">Cancel</string>
+    <string name="check_messages">Check messages</string>
+    <string name="friend_requests">Friend requests</string>
+    <string name="share_wisely">Share wisely</string>
+    <string name="sign_in">Sign in</string>
+    <string name="get_started">Get started</string>
+    <string name="show">Show</string>
+    <string name="email_optional_lowercase">email (optional)</string>
+    <string name="lets_go_exclamation">Let\'s go!</string>
+    <string name="need_username_msg">You need to pick a username.</string>
+    <string name="enter_username_msg">You forgot to enter your username.</string>
 </resources>

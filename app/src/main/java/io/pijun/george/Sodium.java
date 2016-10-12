@@ -45,4 +45,6 @@ public class Sodium {
 
     public native static byte[] publicKeyDecrypt(byte[] cipherText, byte[] nonce, byte[] senderPubKey, byte[] receiverSecretKey);
 
+//    public native static byte[] createHash(byte[] data, byte[] key);
+
 }

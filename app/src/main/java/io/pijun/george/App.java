@@ -13,6 +13,11 @@ public class App extends Application {
     private Handler mUiThreadHandler;
     private ExecutorService mExecutor;
 
+    // Used to load the 'native-lib' library on application startup.
+    static {
+        System.loadLibrary("native-lib");
+    }
+
     public static App getApp() {
         return sApp;
     }
