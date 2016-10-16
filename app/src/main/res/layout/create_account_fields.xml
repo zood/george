@@ -11,7 +11,6 @@
     <EditText
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:ems="10"
         android:id="@+id/username_field"
         android:privateImeOptions="nm"
         android:imeOptions="actionNext"
@@ -29,7 +28,6 @@
         android:layout_height="wrap_content"
         android:inputType="textPassword"
         android:imeOptions="actionNext"
-        android:ems="10"
         android:id="@+id/password_field"
         app:layout_constraintRight_toLeftOf="@+id/password_reveal"
         app:layout_constraintLeft_toLeftOf="parent"
@@ -53,7 +51,6 @@
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:inputType="textEmailAddress"
-        android:ems="10"
         android:id="@+id/email_field"
         android:layout_marginTop="8dp"
         android:imeOptions="actionGo"

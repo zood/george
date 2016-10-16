@@ -21,6 +21,10 @@
             android:name=".WelcomeActivity"
             android:windowSoftInputMode="adjustResize"
             android:theme="@style/WelcomeTheme" />
+        <activity
+            android:name=".FriendsActivity"
+            android:windowSoftInputMode="adjustResize"
+            android:theme="@style/AppTheme" />
         <meta-data
             android:name="com.google.android.gms.version"
             android:value="@integer/google_play_services_version" />

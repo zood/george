@@ -2,7 +2,7 @@ package io.pijun.george.api;
 
 public enum CommType {
 
-    OngoingLocationRequest("ongoing_location_request"),
+    LocationSharingRequest("location_sharing_request"),
     LocationSharingGrant("location_sharing_grant"),
     Unknown("unknown");
 

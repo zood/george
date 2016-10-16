@@ -3,8 +3,9 @@
     <group
         android:id="@+id/primary_drawer_group"
         android:checkableBehavior="all">
-        <item android:id="@+id/add_friend" android:title="@string/add_friend" />
-        <item android:id="@+id/check_messages" android:title="@string/check_messages" />
-        <item android:id="@+id/friend_requests" android:title="@string/friend_requests" />
+        <item android:id="@+id/your_friends" android:title="@string/your_friends" />
+        <!--<item android:id="@+id/add_friend" android:title="@string/add_friend" />-->
+        <!--<item android:id="@+id/check_messages" android:title="@string/check_messages" />-->
+        <!--<item android:id="@+id/friend_requests" android:title="@string/friend_requests" />-->
     </group>
 </menu>

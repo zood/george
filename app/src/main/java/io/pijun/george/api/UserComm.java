@@ -11,9 +11,9 @@ public class UserComm {
     public byte[] dropBox;
     public boolean processed;
 
-    public static UserComm newOngoingLocationRequest(String note) {
+    public static UserComm newLocationSharingRequest(String note) {
         UserComm c = new UserComm();
-        c.type = CommType.OngoingLocationRequest;
+        c.type = CommType.LocationSharingRequest;
         c.note = note;
         return c;
     }

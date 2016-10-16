@@ -2,10 +2,15 @@ package io.pijun.george;
 
 import android.app.Application;
 import android.os.Handler;
+import android.os.HandlerThread;
+import android.os.Process;
+import android.support.annotation.WorkerThread;
 import android.support.v7.app.AppCompatDelegate;
 
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.RunnableFuture;
 
 public class App extends Application {
 
@@ -31,14 +36,13 @@ public class App extends Application {
 
         mUiThreadHandler = new Handler();
         mExecutor = Executors.newCachedThreadPool();
-        L.i("App.onCreate");
     }
 
     public static void runOnUiThread(Runnable r) {
         App.getApp().mUiThreadHandler.post(r);
     }
 
-    public static void runInBackground(Runnable r) {
-        App.getApp().mExecutor.submit(r);
+    public static void runInBackground(final Runnable r) {
+        App.getApp().mExecutor.execute(r);
     }
 }

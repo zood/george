@@ -25,4 +25,10 @@
     <string name="lets_go_exclamation">Let\'s go!</string>
     <string name="need_username_msg">You need to pick a username.</string>
     <string name="enter_username_msg">You forgot to enter your username.</string>
+    <string name="your_friends">Your friends</string>
+    <string name="friend_request">Friend request</string>
+    <string name="share_my_location">Share my location</string>
+    <string name="note_message_optional">Note/Message (optional)</string>
+    <string name="send">Send</string>
+    <string name="incorrect_password">Incorrect password</string>
 </resources>

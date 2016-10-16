@@ -2,12 +2,14 @@ package io.pijun.george;
 
 import android.content.Context;
 import android.os.Looper;
+import android.support.annotation.AnyThread;
 import android.support.annotation.StringRes;
 import android.support.annotation.UiThread;
 import android.support.v7.app.AlertDialog;
 
 public class Utils {
 
+    @AnyThread
     public static void showAlert(final Context ctx, @StringRes final int titleId, @StringRes final int msgId) {
         if (Looper.myLooper() != Looper.getMainLooper()) {
             App.runOnUiThread(new Runnable() {
@@ -19,6 +21,7 @@ public class Utils {
             return;
         }
 
+        //noinspection WrongThread
         _showAlert(ctx, titleId, msgId);
     }
 
@@ -28,11 +31,14 @@ public class Utils {
         if (titleId != 0) {
             builder.setTitle(titleId);
         }
-        builder.setMessage(msgId);
+        if (msgId != 0) {
+            builder.setMessage(msgId);
+        }
         builder.setPositiveButton(R.string.ok, null);
         builder.show();
     }
 
+    @AnyThread
     public static void showStringAlert(final Context ctx, final CharSequence title, final CharSequence msg) {
         if (Looper.myLooper() != Looper.getMainLooper()) {
             App.runOnUiThread(new Runnable() {
@@ -43,6 +49,8 @@ public class Utils {
             });
             return;
         }
+
+        //noinspection WrongThread
         _showStringAlert(ctx, title, msg);
     }
 

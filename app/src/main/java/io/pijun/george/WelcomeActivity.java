@@ -184,7 +184,7 @@ public class WelcomeActivity extends AppCompatActivity {
         App.runInBackground(new Runnable() {
             @Override
             public void run() {
-                obtainAuthenticationChallenge(username, password);
+                login(username, password);
             }
         });
     }
@@ -222,82 +222,72 @@ public class WelcomeActivity extends AppCompatActivity {
     }
 
     @WorkerThread
-    public void obtainAuthenticationChallenge(final String username, final String password) {
-        L.i("obtainAuthenticationChallenge");
-        if (mAuthChallenge != null && mAuthChallenge.user.username.equalsIgnoreCase(username)) {
-            processChallenge(username, password);
-            return;
-        }
-        OscarAPI api = OscarClient.newInstance(null);
+    public void login(final String username, final String password) {
+        L.i("logging in");
+        boolean startedChallenge = false;
         try {
-            Response<AuthenticationChallenge> response = api.getAuthenticationChallenge(username).execute();
-            if (response.isSuccessful()) {
-                mAuthChallenge = response.body();
-                processChallenge(username, password);
-            } else {
-                OscarError err = OscarError.fromReader(response.errorBody().charStream());
+            OscarAPI api = OscarClient.newInstance(null);
+            Response<AuthenticationChallenge> startChallengeResp = api.getAuthenticationChallenge(username).execute();
+            startedChallenge = true;
+            if (!startChallengeResp.isSuccessful()) {
+                OscarError err = OscarError.fromResponse(startChallengeResp);
                 if (err.code == OscarError.ERROR_USER_NOT_FOUND) {
                     Utils.showStringAlert(WelcomeActivity.this, null, "Unknown user");
                 } else {
                     Utils.showStringAlert(WelcomeActivity.this, null, "Unknown error ");
                 }
             }
-        } catch (IOException e) {
-            L.i("serious error obtaining authentication challenge");
-            Utils.showStringAlert(this, null, "serious error obtaining authentication challenge: " + e.getLocalizedMessage());
-        }
-    }
+            mAuthChallenge = startChallengeResp.body();
 
-    @WorkerThread
-    private void processChallenge(String username, String password) {
-        L.i("processChallenge");
-        final byte[] passwordHash = Sodium.createHashFromPassword(
-                Sodium.getSymmetricKeyLength(),
-                password.getBytes(),
-                mAuthChallenge.user.passwordSalt,
-                mAuthChallenge.user.passwordHashOperationsLimit,
-                mAuthChallenge.user.passwordHashMemoryLimit);
+            final byte[] passwordHash = Sodium.createHashFromPassword(
+                    Sodium.getSymmetricKeyLength(),
+                    password.getBytes(),
+                    mAuthChallenge.user.passwordSalt,
+                    mAuthChallenge.user.passwordHashOperationsLimit,
+                    mAuthChallenge.user.passwordHashMemoryLimit);
 
-        // now try to decrypt the private key
-        final byte[] secretKey = Sodium.symmetricKeyDecrypt(
-                mAuthChallenge.user.wrappedSecretKey,
-                mAuthChallenge.user.wrappedSecretKeyNonce,
-                passwordHash);
-        if (secretKey == null) {
-            L.i("Unable to decrypt the secret key");
-        } else {
-            L.i("secret key is " + secretKey.length + " bytes long");
-        }
+            // now try to decrypt the private key
+            final byte[] secretKey = Sodium.symmetricKeyDecrypt(
+                    mAuthChallenge.user.wrappedSecretKey,
+                    mAuthChallenge.user.wrappedSecretKeyNonce,
+                    passwordHash);
 
-        OscarAPI api = OscarClient.newInstance(null);
-        SecretKeyEncryptedMessage encChallenge = Sodium.publicKeyEncrypt(mAuthChallenge.challenge, mAuthChallenge.publicKey, secretKey);
-        try {
-            Response<LoginResponse> response = api.completeAuthenticationChallenge(username, encChallenge).execute();
-            if (response.isSuccessful()) {
-                final LoginResponse loginResponse = response.body();
-                // decrypt the symmetric key, and save it along with all the other user data
-                byte[] symmetricKey = Sodium.symmetricKeyDecrypt(loginResponse.wrappedSymmetricKey,
-                        loginResponse.wrappedSymmetricKeyNonce,
-                        passwordHash);
-                Prefs prefs = Prefs.get(WelcomeActivity.this);
-                prefs.setSymmetricKey(symmetricKey);
-                prefs.setPasswordSalt(mAuthChallenge.user.passwordSalt);
-                KeyPair kp = new KeyPair();
-                kp.publicKey = mAuthChallenge.user.publicKey;
-                kp.secretKey = secretKey;
-                prefs.setKeyPair(kp);
-
-                App.runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        onLoginResponse(loginResponse);
-                    }
-                });
-            } else {
-                Utils.showStringAlert(this, null, "Login failed: " + OscarError.fromResponse(response));
+            if (secretKey == null) {
+                Utils.showAlert(this, R.string.incorrect_password, 0);
+                return;
             }
+            SecretKeyEncryptedMessage encChallenge = Sodium.publicKeyEncrypt(mAuthChallenge.challenge, mAuthChallenge.publicKey, secretKey);
+
+            Response<LoginResponse> completeChallengeResp = api.completeAuthenticationChallenge(username, encChallenge).execute();
+            if (!completeChallengeResp.isSuccessful()) {
+                Utils.showStringAlert(this, null, "Login failed: " + OscarError.fromResponse(completeChallengeResp));
+                return;
+            }
+            final LoginResponse loginResponse = completeChallengeResp.body();
+            byte[] symmetricKey = Sodium.symmetricKeyDecrypt(loginResponse.wrappedSymmetricKey,
+                    loginResponse.wrappedSymmetricKeyNonce,
+                    passwordHash);
+            Prefs prefs = Prefs.get(WelcomeActivity.this);
+            prefs.setSymmetricKey(symmetricKey);
+            prefs.setPasswordSalt(mAuthChallenge.user.passwordSalt);
+            KeyPair kp = new KeyPair();
+            kp.publicKey = mAuthChallenge.user.publicKey;
+            kp.secretKey = secretKey;
+            prefs.setKeyPair(kp);
+
+            App.runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    onLoginResponse(loginResponse);
+                }
+            });
+
         } catch (IOException e) {
-            L.i("serious failure logging in: " + e.getLocalizedMessage());
+            if (!startedChallenge) {
+                Utils.showStringAlert(this, null, "serious error obtaining authentication challenge: " + e.getLocalizedMessage());
+            } else {
+                Utils.showStringAlert(this, null, "serious error completing authentication challenge: " + e.getLocalizedMessage());
+            }
         }
     }
 

@@ -26,4 +26,9 @@
         <!--<item name="colorAccent">@color/colorAccent</item>-->
     </style>
 
+    <style name="ToolbarTheme">
+        <item name="android:textColor">@android:color/white</item>
+        <!--<item name="android:titleTextColor">@android:color/white</item>-->
+    </style>
+
 </resources>

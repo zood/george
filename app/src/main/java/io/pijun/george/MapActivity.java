@@ -4,16 +4,28 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.graphics.Color;
+import android.graphics.Outline;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
+import android.support.annotation.UiThread;
 import android.support.annotation.WorkerThread;
+import android.support.constraint.ConstraintLayout;
 import android.support.design.widget.NavigationView;
+import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.view.MenuItem;
+import android.view.View;
+import android.view.ViewGroup;
+import android.view.ViewOutlineProvider;
+import android.widget.Button;
 import android.widget.EditText;
+
+import com.google.android.gms.maps.GoogleMap;
+import com.google.android.gms.maps.MapView;
+import com.google.android.gms.maps.OnMapReadyCallback;
 
 import java.io.IOException;
 import java.security.SecureRandom;
@@ -34,6 +46,8 @@ import retrofit2.Response;
 public class MapActivity extends AppCompatActivity {
 
     private EditText mAddUsernameField;
+    private MapView mMapView;
+    private GoogleMap mGoogleMap;
 
     public static Intent newIntent(Context ctx) {
         return new Intent(ctx, MapActivity.class);
@@ -54,8 +68,102 @@ public class MapActivity extends AppCompatActivity {
         getWindow().setStatusBarColor(Color.TRANSPARENT);
         setContentView(R.layout.activity_map);
 
+        final Button button = (Button) findViewById(R.id.drawer_button);
+        final ConstraintLayout.LayoutParams params = (ConstraintLayout.LayoutParams) button.getLayoutParams();
+        params.topMargin = getStatusBarHeight();
+
+        mMapView = (MapView) findViewById(R.id.map);
+        mMapView.onCreate(savedInstanceState);
+        mMapView.getMapAsync(new OnMapReadyCallback() {
+            @Override
+            public void onMapReady(GoogleMap googleMap) {
+                mGoogleMap = googleMap;
+            }
+        });
+
+        findViewById(R.id.bottom_textview).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                onShowFriends();
+            }
+        });
+
         NavigationView navView = (NavigationView) findViewById(R.id.navigation);
         navView.setNavigationItemSelectedListener(navItemListener);
+    }
+
+    @Override
+    protected void onStart() {
+        super.onStart();
+
+        mMapView.onStart();
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+
+        mMapView.onResume();
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+
+        mMapView.onPause();
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+
+        mMapView.onStop();
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+
+        mMapView.onDestroy();
+        mMapView = null;
+    }
+
+    @Override
+    protected void onSaveInstanceState(Bundle outState) {
+        super.onSaveInstanceState(outState);
+
+        mMapView.onSaveInstanceState(outState);
+    }
+
+    @Override
+    public void onLowMemory() {
+        super.onLowMemory();
+
+        mMapView.onLowMemory();
+    }
+
+    @UiThread
+    private int getStatusBarHeight() {
+        int result = 0;
+        int resourceId = getResources().getIdentifier("status_bar_height", "dimen", "android");
+        if (resourceId > 0) {
+            result = getResources().getDimensionPixelSize(resourceId);
+        }
+
+        return result;
+    }
+
+    @UiThread
+    public void onShowDrawerAction(View v) {
+        L.i("onShowDrawerAction");
+        DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
+        drawer.openDrawer(GravityCompat.START, true);
+    }
+
+    @UiThread
+    private void onShowFriends() {
+        Intent i = FriendsActivity.newIntent(this);
+        startActivity(i);
     }
 
     private void addFriendAction() {
@@ -87,6 +195,7 @@ public class MapActivity extends AppCompatActivity {
         mAddUsernameField = (EditText) dialog.findViewById(R.id.friend_username);
     }
 
+    /*
     private void getMessagesAction() {
         OscarAPI client = OscarClient.newInstance(Prefs.get(this).getAccessToken());
         try {
@@ -119,7 +228,9 @@ public class MapActivity extends AppCompatActivity {
             L.w("serious problem getting messages", ex);
         }
     }
+    */
 
+    /*
     private void showFriendRequests() {
         DB db = new DB(this);
         final ArrayList<ShareRequest> requests = db.getShareRequests();
@@ -158,7 +269,9 @@ public class MapActivity extends AppCompatActivity {
             }
         });
     }
+    */
 
+    /*
     @WorkerThread
     private void approveAllRequests(ArrayList<ShareRequest> requests) {
         byte[] boxId = new byte[Constants.DROP_BOX_ID_LENGTH];
@@ -193,6 +306,7 @@ public class MapActivity extends AppCompatActivity {
         }
 
     }
+    */
 
     private NavigationView.OnNavigationItemSelectedListener navItemListener = new NavigationView.OnNavigationItemSelectedListener() {
         @Override
@@ -201,23 +315,26 @@ public class MapActivity extends AppCompatActivity {
             DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
             drawer.closeDrawers();
 
-            if (item.getItemId() == R.id.add_friend) {
-                addFriendAction();
-            } else if (item.getItemId() == R.id.check_messages) {
-                App.runInBackground(new Runnable() {
-                    @Override
-                    public void run() {
-                        getMessagesAction();
-                    }
-                });
-            } else if (item.getItemId() == R.id.friend_requests) {
-                App.runInBackground(new Runnable() {
-                    @Override
-                    public void run() {
-                        showFriendRequests();
-                    }
-                });
+            if (item.getItemId() == R.id.your_friends) {
+                onShowFriends();
             }
+//            if (item.getItemId() == R.id.add_friend) {
+//                addFriendAction();
+//            } else if (item.getItemId() == R.id.check_messages) {
+//                App.runInBackground(new Runnable() {
+//                    @Override
+//                    public void run() {
+//                        getMessagesAction();
+//                    }
+//                });
+//            } else if (item.getItemId() == R.id.friend_requests) {
+//                App.runInBackground(new Runnable() {
+//                    @Override
+//                    public void run() {
+//                        showFriendRequests();
+//                    }
+//                });
+//            }
             return false;
         }
     };

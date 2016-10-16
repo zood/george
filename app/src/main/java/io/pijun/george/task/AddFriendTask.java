@@ -51,7 +51,7 @@ public class AddFriendTask {
     }
 
     private void onReceivedUser(User user) {
-        UserComm comm = UserComm.newOngoingLocationRequest("Please share your location with me.");
+        UserComm comm = UserComm.newLocationSharingRequest("Please share your location with me.");
         SecretKeyEncryptedMessage msg = Sodium.publicKeyEncrypt(comm.toJSON(), user.publicKey, Prefs.get(mContext).getKeyPair().secretKey);
         L.i("sending message to " + Arrays.toString(user.id));
         mClient.sendMessage(Hex.toHexString(user.id), msg).enqueue(new Callback<Void>() {
