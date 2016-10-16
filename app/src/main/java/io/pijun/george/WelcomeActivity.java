@@ -157,7 +157,7 @@ public class WelcomeActivity extends AppCompatActivity {
             return;
         }
 
-        App.runInBackground(new Runnable() {
+        App.runInBackground(new WorkerRunnable() {
             @Override
             public void run() {
                 final User user = generateUser(username, password);
@@ -181,7 +181,7 @@ public class WelcomeActivity extends AppCompatActivity {
         EditText passwordField = (EditText) findViewById(R.id.password_field);
         final String password = passwordField.getText().toString();
 
-        App.runInBackground(new Runnable() {
+        App.runInBackground(new WorkerRunnable() {
             @Override
             public void run() {
                 login(username, password);
@@ -275,7 +275,7 @@ public class WelcomeActivity extends AppCompatActivity {
             kp.secretKey = secretKey;
             prefs.setKeyPair(kp);
 
-            App.runOnUiThread(new Runnable() {
+            App.runOnUiThread(new UiRunnable() {
                 @Override
                 public void run() {
                     onLoginResponse(loginResponse);
@@ -343,7 +343,7 @@ public class WelcomeActivity extends AppCompatActivity {
         try {
             final Response<LoginResponse> response = api.createUser(user).execute();
             if (response.isSuccessful()) {
-                App.runOnUiThread(new Runnable() {
+                App.runOnUiThread(new UiRunnable() {
                     @Override
                     public void run() {
                         onLoginResponse(response.body());

@@ -12,7 +12,7 @@ public class Utils {
     @AnyThread
     public static void showAlert(final Context ctx, @StringRes final int titleId, @StringRes final int msgId) {
         if (Looper.myLooper() != Looper.getMainLooper()) {
-            App.runOnUiThread(new Runnable() {
+            App.runOnUiThread(new UiRunnable() {
                 @Override
                 public void run() {
                     _showAlert(ctx, titleId, msgId);
@@ -41,7 +41,7 @@ public class Utils {
     @AnyThread
     public static void showStringAlert(final Context ctx, final CharSequence title, final CharSequence msg) {
         if (Looper.myLooper() != Looper.getMainLooper()) {
-            App.runOnUiThread(new Runnable() {
+            App.runOnUiThread(new UiRunnable() {
                 @Override
                 public void run() {
                     _showStringAlert(ctx, title, msg);

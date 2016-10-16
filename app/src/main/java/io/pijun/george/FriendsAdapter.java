@@ -39,12 +39,12 @@ class FriendsAdapter extends RecyclerView.Adapter {
 
     @AnyThread
     void reloadFriends(final Context context) {
-        App.runInBackground(new Runnable() {
+        App.runInBackground(new WorkerRunnable() {
             @Override
             public void run() {
                 DB db = new DB(context);
                 final ArrayList<FriendRecord> records = db.getFriends();
-                App.runOnUiThread(new Runnable() {
+                App.runOnUiThread(new UiRunnable() {
                     @Override
                     public void run() {
                         mRecords = records;

@@ -38,11 +38,11 @@ public class App extends Application {
         mExecutor = Executors.newCachedThreadPool();
     }
 
-    public static void runOnUiThread(Runnable r) {
+    public static void runOnUiThread(UiRunnable r) {
         App.getApp().mUiThreadHandler.post(r);
     }
 
-    public static void runInBackground(final Runnable r) {
+    public static void runInBackground(WorkerRunnable r) {
         App.getApp().mExecutor.execute(r);
     }
 }
