@@ -2,6 +2,10 @@
 <manifest
     xmlns:android="http://schemas.android.com/apk/res/android"
     package="io.pijun.george">
+
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+
     <application
         android:name=".App"
         android:allowBackup="false"
@@ -25,12 +29,16 @@
             android:name=".FriendsActivity"
             android:windowSoftInputMode="adjustResize"
             android:theme="@style/AppTheme" />
+        <service android:name=".service.LocationMonitor" />
+        <service
+            android:name=".service.LocationJobService"
+            android:permission="android.permission.BIND_JOB_SERVICE" />
         <meta-data
             android:name="com.google.android.gms.version"
             android:value="@integer/google_play_services_version" />
         <meta-data
             android:name="com.google.android.geo.API_KEY"
-            android:value=" AIzaSyBIvDSmVJ-BplWOWnqCqvQo9V14sJhPn0E" />
+            android:value="AIzaSyBIvDSmVJ-BplWOWnqCqvQo9V14sJhPn0E" />
     </application>
 
 </manifest>

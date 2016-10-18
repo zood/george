@@ -1,53 +1,59 @@
 package io.pijun.george;
 
+import android.Manifest;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.IntentSender;
+import android.content.pm.PackageManager;
 import android.graphics.Color;
-import android.graphics.Outline;
+import android.location.Location;
 import android.os.Bundle;
+import android.support.annotation.AnyThread;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.annotation.UiThread;
-import android.support.annotation.WorkerThread;
 import android.support.constraint.ConstraintLayout;
 import android.support.design.widget.NavigationView;
+import android.support.v4.app.ActivityCompat;
+import android.support.v4.content.ContextCompat;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
+import android.text.format.DateUtils;
 import android.view.MenuItem;
 import android.view.View;
-import android.view.ViewGroup;
-import android.view.ViewOutlineProvider;
 import android.widget.Button;
-import android.widget.EditText;
 
+import com.google.android.gms.common.ConnectionResult;
+import com.google.android.gms.common.api.GoogleApiClient;
+import com.google.android.gms.common.api.PendingResult;
+import com.google.android.gms.common.api.ResultCallback;
+import com.google.android.gms.common.api.Status;
+import com.google.android.gms.location.LocationListener;
+import com.google.android.gms.location.LocationRequest;
+import com.google.android.gms.location.LocationServices;
+import com.google.android.gms.location.LocationSettingsRequest;
+import com.google.android.gms.location.LocationSettingsResult;
+import com.google.android.gms.location.LocationSettingsStatusCodes;
 import com.google.android.gms.maps.GoogleMap;
+import com.google.android.gms.maps.LocationSource;
 import com.google.android.gms.maps.MapView;
 import com.google.android.gms.maps.OnMapReadyCallback;
 
-import java.io.IOException;
-import java.security.SecureRandom;
-import java.util.ArrayList;
+import io.pijun.george.service.LocationMonitor;
 
-import io.pijun.george.api.Message;
-import io.pijun.george.api.OscarAPI;
-import io.pijun.george.api.OscarClient;
-import io.pijun.george.api.OscarError;
-import io.pijun.george.api.User;
-import io.pijun.george.api.UserComm;
-import io.pijun.george.crypto.SecretKeyEncryptedMessage;
-import io.pijun.george.crypto.Vault;
-import io.pijun.george.models.ShareRequest;
-import io.pijun.george.task.AddFriendTask;
-import retrofit2.Response;
+public class MapActivity extends AppCompatActivity implements OnMapReadyCallback, GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener, LocationListener {
 
-public class MapActivity extends AppCompatActivity {
+    private static final int REQUEST_LOCATION_PERMISSION = 18;
+    private static final int REQUEST_LOCATION_SETTINGS = 20;
 
-    private EditText mAddUsernameField;
     private MapView mMapView;
     private GoogleMap mGoogleMap;
+    private LocationSource.OnLocationChangedListener mMyLocationListener;
+    private GoogleApiClient mGoogleApiClient;
+    private Location mLastLocation;
 
     public static Intent newIntent(Context ctx) {
         return new Intent(ctx, MapActivity.class);
@@ -74,12 +80,7 @@ public class MapActivity extends AppCompatActivity {
 
         mMapView = (MapView) findViewById(R.id.map);
         mMapView.onCreate(savedInstanceState);
-        mMapView.getMapAsync(new OnMapReadyCallback() {
-            @Override
-            public void onMapReady(GoogleMap googleMap) {
-                mGoogleMap = googleMap;
-            }
-        });
+        mMapView.getMapAsync(this);
 
         findViewById(R.id.bottom_textview).setOnClickListener(new View.OnClickListener() {
             @Override
@@ -90,6 +91,12 @@ public class MapActivity extends AppCompatActivity {
 
         NavigationView navView = (NavigationView) findViewById(R.id.navigation);
         navView.setNavigationItemSelectedListener(navItemListener);
+
+        mGoogleApiClient = new GoogleApiClient.Builder(this)
+                .addConnectionCallbacks(this)
+                .addOnConnectionFailedListener(this)
+                .addApi(LocationServices.API)
+                .build();
     }
 
     @Override
@@ -97,6 +104,9 @@ public class MapActivity extends AppCompatActivity {
         super.onStart();
 
         mMapView.onStart();
+        checkForLocationPermission();
+        App.registerOnBus(this);
+        mGoogleApiClient.connect();
     }
 
     @Override
@@ -108,9 +118,9 @@ public class MapActivity extends AppCompatActivity {
 
     @Override
     protected void onPause() {
-        super.onPause();
-
         mMapView.onPause();
+
+        super.onPause();
     }
 
     @Override
@@ -118,14 +128,20 @@ public class MapActivity extends AppCompatActivity {
         super.onStop();
 
         mMapView.onStop();
+        App.unregisterFromBus(this);
+
+        if (mGoogleApiClient.isConnected()) {
+            LocationServices.FusedLocationApi.removeLocationUpdates(mGoogleApiClient, this);
+        }
+        mGoogleApiClient.disconnect();
     }
 
     @Override
     protected void onDestroy() {
-        super.onDestroy();
-
         mMapView.onDestroy();
         mMapView = null;
+
+        super.onDestroy();
     }
 
     @Override
@@ -142,6 +158,103 @@ public class MapActivity extends AppCompatActivity {
         mMapView.onLowMemory();
     }
 
+    @Override
+    public void onMapReady(GoogleMap googleMap) {
+        mGoogleMap = googleMap;
+        mGoogleMap.setLocationSource(new LocationSource() {
+            @Override
+            public void activate(OnLocationChangedListener onLocationChangedListener) {
+                mMyLocationListener = onLocationChangedListener;
+                if (mLastLocation != null) {
+                    mMyLocationListener.onLocationChanged(mLastLocation);
+                }
+            }
+
+            @Override
+            public void deactivate() {
+                mMyLocationListener = null;
+            }
+        });
+
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
+            mGoogleMap.setMyLocationEnabled(true);
+        }
+    }
+
+//    @Subscribe
+//    @AnyThread
+//    public void onLocationUpdate(Location location) {
+//        L.i("onLocationUpdate: " + location);
+//        if (mMyLocationListener != null) {
+//            L.i("|   location listener is here");
+//            mMyLocationListener.onLocationChanged(location);
+//            LatLng ll = new LatLng(location.getLatitude(), location.getLongitude());
+//            CameraUpdate cameraUpdate = CameraUpdateFactory.newLatLngZoom(ll, 16);
+//            mGoogleMap.animateCamera(cameraUpdate);
+//        }
+//    }
+
+    @UiThread
+    private void checkForLocationPermission() {
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
+            L.i("already have permission");
+            locationPermissionVerified();
+            return;
+        }
+
+        if (ActivityCompat.shouldShowRequestPermissionRationale(this, Manifest.permission.ACCESS_FINE_LOCATION)) {
+            // show the reasoning
+            L.i("showing reason for permission before asking");
+            AlertDialog.Builder builder = new AlertDialog.Builder(this, R.style.AlertDialogTheme);
+            builder.setTitle("Permission request");
+            builder.setMessage("Pijun uses your location to show your position on the map, and to securely share it with friends that you've authorized. It's never used for any other purpose.");
+            builder.setPositiveButton(R.string.ok, new DialogInterface.OnClickListener() {
+                @Override
+                public void onClick(DialogInterface dialog, int which) {
+                    L.i("requesting permission after explaining");
+                    ActivityCompat.requestPermissions(
+                            MapActivity.this,
+                            new String[]{Manifest.permission.ACCESS_FINE_LOCATION},
+                            REQUEST_LOCATION_PERMISSION);
+                }
+            });
+            builder.show();
+        } else {
+            L.i("requesting location without showing permission");
+            ActivityCompat.requestPermissions(
+                    this,
+                    new String[]{Manifest.permission.ACCESS_FINE_LOCATION},
+                    REQUEST_LOCATION_PERMISSION);
+        }
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        if (requestCode != REQUEST_LOCATION_PERMISSION) {
+            L.w("onRequestPermissionsResult called with unknown request code: " + requestCode);
+            return;
+        }
+
+        if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+            L.i("permission granted");
+            locationPermissionVerified();
+        } else {
+            L.i("permission denied");
+        }
+    }
+
+    @SuppressWarnings("MissingPermission")
+    @UiThread
+    private void locationPermissionVerified() {
+        startService(LocationMonitor.newIntent(this));
+        if (mGoogleMap != null) {
+            mGoogleMap.setMyLocationEnabled(true);
+            if (mMyLocationListener != null && mLastLocation != null) {
+                mMyLocationListener.onLocationChanged(mLastLocation);
+            }
+        }
+    }
+
     @UiThread
     private int getStatusBarHeight() {
         int result = 0;
@@ -151,6 +264,20 @@ public class MapActivity extends AppCompatActivity {
         }
 
         return result;
+    }
+
+    @AnyThread
+    private void beginLocationUpdates() {
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            // This should never happen. Nobody should be calling this method before permission has been obtained.
+            L.w("MapActivity.beginLocationUpdates was called before obtaining location permission");
+            // TODO: log the stack trace to a server for debugging
+            return;
+        }
+        LocationRequest req = LocationRequest.create();
+        req.setInterval(5 * DateUtils.SECOND_IN_MILLIS);
+        req.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
+        LocationServices.FusedLocationApi.requestLocationUpdates(mGoogleApiClient, req, this);
     }
 
     @UiThread
@@ -164,35 +291,6 @@ public class MapActivity extends AppCompatActivity {
     private void onShowFriends() {
         Intent i = FriendsActivity.newIntent(this);
         startActivity(i);
-    }
-
-    private void addFriendAction() {
-        AlertDialog.Builder builder = new AlertDialog.Builder(this, R.style.AlertDialogTheme);
-        builder.setTitle(R.string.add_friend);
-        builder.setPositiveButton(R.string.ok, new DialogInterface.OnClickListener() {
-            @Override
-            public void onClick(DialogInterface dialog, int which) {
-                String username = mAddUsernameField.getText().toString();
-                new AddFriendTask(MapActivity.this, username).begin();
-            }
-        });
-        builder.setCancelable(true);
-        builder.setOnCancelListener(new DialogInterface.OnCancelListener() {
-            @Override
-            public void onCancel(DialogInterface dialog) {
-                mAddUsernameField = null;
-            }
-        });
-        builder.setNegativeButton(R.string.cancel, new DialogInterface.OnClickListener() {
-            @Override
-            public void onClick(DialogInterface dialog, int which) {
-                mAddUsernameField = null;
-            }
-        });
-        builder.setView(R.layout.alert_add_friend);
-        final AlertDialog dialog = builder.create();
-        dialog.show();
-        mAddUsernameField = (EditText) dialog.findViewById(R.id.friend_username);
     }
 
     /*
@@ -227,47 +325,6 @@ public class MapActivity extends AppCompatActivity {
         } catch (IOException ex) {
             L.w("serious problem getting messages", ex);
         }
-    }
-    */
-
-    /*
-    private void showFriendRequests() {
-        DB db = new DB(this);
-        final ArrayList<ShareRequest> requests = db.getShareRequests();
-        App.runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                AlertDialog.Builder builder = new AlertDialog.Builder(MapActivity.this, R.style.AlertDialogTheme);
-                builder.setTitle(R.string.friend_requests);
-                CharSequence[] usernames = new CharSequence[requests.size()];
-                boolean[] checked = new boolean[requests.size()];
-                for (int i=0; i<requests.size(); i++) {
-                    usernames[i] = requests.get(i).username;
-                    checked[i] = false;
-                }
-                builder.setMultiChoiceItems(usernames, checked, new DialogInterface.OnMultiChoiceClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int which, boolean isChecked) {
-                        L.i("dialogchoice.onclick - which: " + which + " isChecked: " + isChecked);
-                    }
-                });
-                builder.setPositiveButton(R.string.ok, new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
-                        L.i("dialog ok");
-                        App.runInBackground(new Runnable() {
-                            @Override
-                            public void run() {
-                                approveAllRequests(requests);
-                            }
-                        });
-                    }
-                });
-                builder.setNegativeButton(R.string.cancel, null);
-                builder.setCancelable(true);
-                builder.show();
-            }
-        });
     }
     */
 
@@ -318,24 +375,65 @@ public class MapActivity extends AppCompatActivity {
             if (item.getItemId() == R.id.your_friends) {
                 onShowFriends();
             }
-//            if (item.getItemId() == R.id.add_friend) {
-//                addFriendAction();
-//            } else if (item.getItemId() == R.id.check_messages) {
-//                App.runInBackground(new Runnable() {
-//                    @Override
-//                    public void run() {
-//                        getMessagesAction();
-//                    }
-//                });
-//            } else if (item.getItemId() == R.id.friend_requests) {
-//                App.runInBackground(new Runnable() {
-//                    @Override
-//                    public void run() {
-//                        showFriendRequests();
-//                    }
-//                });
-//            }
+
             return false;
         }
     };
+
+    @Override
+    public void onConnected(@Nullable Bundle bundle) {
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            return;
+        }
+        mLastLocation = LocationServices.FusedLocationApi.getLastLocation(mGoogleApiClient);
+        if (mLastLocation != null) {
+            App.postOnBus(mLastLocation);
+            if (mMyLocationListener != null) {
+                mMyLocationListener.onLocationChanged(mLastLocation);
+            }
+        }
+
+        // these are the location settings we want
+        LocationRequest req = LocationRequest.create();
+        req.setInterval(5 * DateUtils.SECOND_IN_MILLIS);
+        req.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
+        // check whether the location settings can currently be met by the hardware
+        LocationSettingsRequest.Builder builder = new LocationSettingsRequest.Builder()
+                .addLocationRequest(req);
+        PendingResult<LocationSettingsResult> result =
+                LocationServices.SettingsApi.checkLocationSettings(mGoogleApiClient, builder.build());
+        result.setResultCallback(new ResultCallback<LocationSettingsResult>() {
+            @Override
+            public void onResult(@NonNull LocationSettingsResult result) {
+                Status status = result.getStatus();
+                if (status.getStatusCode() != LocationSettingsStatusCodes.RESOLUTION_REQUIRED) {
+                    beginLocationUpdates();
+                    return;
+                }
+
+                try {
+                    status.startResolutionForResult(MapActivity.this, REQUEST_LOCATION_SETTINGS);
+                } catch (IntentSender.SendIntentException ignore) {}
+            }
+        });
+    }
+
+    @Override
+    public void onConnectionSuspended(int i) {
+
+    }
+
+    @Override
+    public void onConnectionFailed(@NonNull ConnectionResult connectionResult) {
+
+    }
+
+    @Override
+    public void onLocationChanged(Location location) {
+        if (mMyLocationListener != null) {
+            mMyLocationListener.onLocationChanged(location);
+        }
+
+        App.postOnBus(location);
+    }
 }
