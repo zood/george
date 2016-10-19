@@ -301,7 +301,7 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
             if (response.isSuccessful()) {
                 byte[] secretKey = Prefs.get(MapActivity.this).getKeyPair().secretKey;
                 Message[] messages = response.body();
-                DB db = new DB(this);
+                DBHelper db = new DBHelper(this);
                 for (Message msg : messages) {
                     try {
                         byte[] pubKey = Vault.getPublicKey(MapActivity.this, msg.senderId);
@@ -333,7 +333,7 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
     private void approveAllRequests(ArrayList<ShareRequest> requests) {
         byte[] boxId = new byte[Constants.DROP_BOX_ID_LENGTH];
         new SecureRandom().nextBytes(boxId);
-        DB db = new DB(this);
+        DBHelper db = new DBHelper(this);
         OscarAPI client = OscarClient.newInstance(Prefs.get(this).getAccessToken());
         for (ShareRequest r : requests) {
             // add this to our database
@@ -357,7 +357,7 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
                     L.i("sending sharing grant failed: " + OscarError.fromResponse(response));
                     continue;
                 }
-            } catch (Exception ex) {
+            } catch (DBException ex) {
                 L.w("unable to send message approving sharing request", ex);
             }
         }

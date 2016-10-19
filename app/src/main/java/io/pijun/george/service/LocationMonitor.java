@@ -43,7 +43,6 @@ public class LocationMonitor extends Service {
         }
     }
 
-//    private Location mLastLocation;
     private LinkedList<Location> mLocations = new LinkedList<>();
     private final IBinder mBinder = new LocalBinder();
 

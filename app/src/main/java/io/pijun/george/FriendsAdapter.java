@@ -42,7 +42,7 @@ class FriendsAdapter extends RecyclerView.Adapter {
         App.runInBackground(new WorkerRunnable() {
             @Override
             public void run() {
-                DB db = new DB(context);
+                DB db = DB.get(context);
                 final ArrayList<FriendRecord> records = db.getFriends();
                 App.runOnUiThread(new UiRunnable() {
                     @Override

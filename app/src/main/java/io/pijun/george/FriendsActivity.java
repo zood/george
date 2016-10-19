@@ -115,7 +115,7 @@ public class FriendsActivity extends AppCompatActivity {
                 return;
             }
 
-            DB db = new DB(this);
+            DB db = DB.get(this);
             db.addFriendWithSharingRequest(username, userToRequest.id, userToRequest.publicKey);
 
             if (shareLocation) {
