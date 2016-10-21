@@ -1,7 +1,7 @@
 package io.pijun.george;
 
 import io.pijun.george.crypto.KeyPair;
-import io.pijun.george.crypto.SecretKeyEncryptedMessage;
+import io.pijun.george.crypto.PKEncryptedMessage;
 
 public class Sodium {
 
@@ -37,11 +37,11 @@ public class Sodium {
 
     public native static int getSymmetricKeyLength();
 
-    public native static SecretKeyEncryptedMessage symmetricKeyEncrypt(byte[] msg, byte[] key);
+    public native static PKEncryptedMessage symmetricKeyEncrypt(byte[] msg, byte[] key);
 
     public native static byte[] symmetricKeyDecrypt(byte[] cipherText, byte[] nonce, byte[] key);
 
-    public native static SecretKeyEncryptedMessage publicKeyEncrypt(byte[] msg, byte[] receiverPubKey, byte[] senderSecretKey);
+    public native static PKEncryptedMessage publicKeyEncrypt(byte[] msg, byte[] receiverPubKey, byte[] senderSecretKey);
 
     public native static byte[] publicKeyDecrypt(byte[] cipherText, byte[] nonce, byte[] senderPubKey, byte[] receiverSecretKey);
 

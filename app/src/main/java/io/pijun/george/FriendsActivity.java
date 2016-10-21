@@ -24,7 +24,7 @@ import io.pijun.george.api.OscarClient;
 import io.pijun.george.api.OscarError;
 import io.pijun.george.api.User;
 import io.pijun.george.api.UserComm;
-import io.pijun.george.crypto.SecretKeyEncryptedMessage;
+import io.pijun.george.crypto.PKEncryptedMessage;
 import retrofit2.Response;
 
 public class FriendsActivity extends AppCompatActivity {
@@ -107,7 +107,7 @@ public class FriendsActivity extends AppCompatActivity {
             }
             User userToRequest = searchResponse.body();
             UserComm comm = UserComm.newLocationSharingRequest(note);
-            SecretKeyEncryptedMessage msg = Sodium.publicKeyEncrypt(comm.toJSON(), userToRequest.publicKey, prefs.getKeyPair().secretKey);
+            PKEncryptedMessage msg = Sodium.publicKeyEncrypt(comm.toJSON(), userToRequest.publicKey, prefs.getKeyPair().secretKey);
             Response<Void> sendResponse = api.sendMessage(Hex.toHexString(userToRequest.id), msg).execute();
             if (!sendResponse.isSuccessful()) {
                 OscarError err = OscarError.fromResponse(sendResponse);

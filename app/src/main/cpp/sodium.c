@@ -110,7 +110,7 @@ JNIEXPORT jobject JNICALL Java_io_pijun_george_Sodium_symmetricKeyEncrypt(
         return NULL;
     }
 
-    jclass skemCls = (*env)->FindClass(env, "io/pijun/george/crypto/SecretKeyEncryptedMessage");
+    jclass skemCls = (*env)->FindClass(env, "io/pijun/george/crypto/PKEncryptedMessage");
     jmethodID constructor = (*env)->GetMethodID(env, skemCls, "<init>", "()V");
     jobject skem = (*env)->NewObject(env, skemCls, constructor);
 
@@ -180,7 +180,7 @@ JNIEXPORT jobject JNICALL Java_io_pijun_george_Sodium_publicKeyEncrypt(
         return NULL;
     }
 
-    jclass skemCls = (*env)->FindClass(env, "io/pijun/george/crypto/SecretKeyEncryptedMessage");
+    jclass skemCls = (*env)->FindClass(env, "io/pijun/george/crypto/PKEncryptedMessage");
     jmethodID constructor = (*env)->GetMethodID(env, skemCls, "<init>", "()V");
     jobject skem = (*env)->NewObject(env, skemCls, constructor);
 

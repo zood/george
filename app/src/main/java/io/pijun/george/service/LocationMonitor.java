@@ -16,11 +16,24 @@ import android.support.annotation.WorkerThread;
 
 import com.squareup.otto.Subscribe;
 
+import java.io.IOException;
+import java.util.ArrayList;
 import java.util.LinkedList;
 
 import io.pijun.george.App;
+import io.pijun.george.DB;
+import io.pijun.george.Hex;
 import io.pijun.george.L;
+import io.pijun.george.Prefs;
+import io.pijun.george.Sodium;
 import io.pijun.george.WorkerRunnable;
+import io.pijun.george.api.OscarAPI;
+import io.pijun.george.api.OscarClient;
+import io.pijun.george.api.UserComm;
+import io.pijun.george.crypto.KeyPair;
+import io.pijun.george.crypto.PKEncryptedMessage;
+import io.pijun.george.models.FriendRecord;
+import retrofit2.Response;
 
 public class LocationMonitor extends Service {
 
@@ -98,8 +111,46 @@ public class LocationMonitor extends Service {
         });
     }
 
+    /**
+     * Get the most recent location and report it.
+     */
     @WorkerThread
     void flush() {
         L.i("LM.flush");
+
+        // If we have no location to report, just get out of here.
+        if (mLocations.isEmpty()) {
+            return;
+        }
+
+        Prefs prefs = Prefs.get(this);
+        String token = prefs.getAccessToken();
+        KeyPair keyPair = prefs.getKeyPair();
+        if (token == null || keyPair == null) {
+            L.i("LM.flush token or keypair was null, so skipping upload");
+            mLocations.clear();
+            return;
+        }
+
+        Location location = mLocations.getLast();
+        UserComm locMsg = UserComm.newLocationInfo(location);
+        byte[] msgBytes = locMsg.toJSON();
+        ArrayList<FriendRecord> friends = DB.get(this).getFriendsToShareWith();
+        OscarAPI api = OscarClient.newInstance(token);
+        for (FriendRecord fr : friends) {
+            L.i("|  friend: " + fr);
+            L.i("|  send box: " + Hex.toHexString(fr.sendingBoxId));
+            PKEncryptedMessage encryptedMessage = Sodium.publicKeyEncrypt(msgBytes, fr.publicKey, keyPair.secretKey);
+            try {
+                Response<Void> response = api.dropPackage(Hex.toHexString(fr.sendingBoxId), encryptedMessage).execute();
+                if (!response.isSuccessful()) {
+                    L.w("problem dropping location_info package");
+                }
+            } catch (IOException ex) {
+                L.w("Serious error dropping location_info package", ex);
+            }
+        }
+
+        mLocations.clear();
     }
 }

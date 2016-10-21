@@ -47,8 +47,8 @@ public class DB {
     }
 
     @WorkerThread
-    public void setSendingDropBoxId(@NonNull String username, @NonNull @Size(512) byte[] boxId) {
-        mDbHelper.setSendingDropBoxId(username, boxId);
+    public void deleteUserData() {
+        mDbHelper.deleteUserData();
     }
 
     @WorkerThread
@@ -61,6 +61,11 @@ public class DB {
     @NonNull
     public ArrayList<FriendRecord> getFriendsToShareWith() {
         return mDbHelper.getFriendsToShareWith();
+    }
+
+    @WorkerThread
+    public void setSendingDropBoxId(@NonNull String username, @NonNull @Size(512) byte[] boxId) {
+        mDbHelper.setSendingDropBoxId(username, boxId);
     }
 
     private static class DBHelper extends SQLiteOpenHelper {
@@ -124,6 +129,14 @@ public class DB {
         }
 
         @WorkerThread
+        private void deleteUserData() {
+            try (SQLiteDatabase db = getWritableDatabase()) {
+                db.delete(FRIENDS_TABLE, null, null);
+            }
+        }
+
+        /*
+        @WorkerThread
         private void setSendingDropBoxId(@NonNull String username, @NonNull @Size(512) byte[] boxId) {
             try (SQLiteDatabase db = getWritableDatabase()) {
                 ContentValues cv = new ContentValues();
@@ -134,6 +147,7 @@ public class DB {
                 }
             }
         }
+        */
 
         @WorkerThread
         @NonNull
@@ -207,6 +221,18 @@ public class DB {
             }
 
             return records;
+        }
+
+        @WorkerThread
+        private void setSendingDropBoxId(@NonNull String username, @NonNull @Size(512) byte[] boxId) {
+            try (SQLiteDatabase db = getWritableDatabase()) {
+                ContentValues cv = new ContentValues();
+                cv.put(FRIENDS_COL_SENDING_BOX_ID, boxId);
+                long result = db.update(FRIENDS_TABLE, cv, "username=?", new String[]{username});
+                if (result != 1) {
+                    L.w("DBHelper.setSendingDropBoxId - Num affected rows was " + result + " for username '" + username + "'");
+                }
+            }
         }
     }
 }

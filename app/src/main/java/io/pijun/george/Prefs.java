@@ -2,6 +2,9 @@ package io.pijun.george;
 
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.support.annotation.AnyThread;
+import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 
 import io.pijun.george.crypto.KeyPair;
 
@@ -33,6 +36,40 @@ public class Prefs {
         return sPrefs;
     }
 
+    @AnyThread
+    public boolean isLoggedIn() {
+        String token = getAccessToken();
+        KeyPair keyPair = getKeyPair();
+        byte[] passwordSalt = getPasswordSalt();
+        byte[] symmetricKey = getSymmetricKey();
+        byte[] userId = getUserId();
+
+        if (token != null && keyPair != null && passwordSalt != null && symmetricKey != null && userId != null) {
+            return true;
+        }
+
+        return false;
+    }
+
+    @AnyThread
+    public void logOut(@NonNull final Context context, @Nullable final UiRunnable completion) {
+        App.runInBackground(new WorkerRunnable() {
+            @Override
+            public void run() {
+                setAccessToken(null);
+                setKeyPair(null);
+                setPasswordSalt(null);
+                setSymmetricKey(null);
+                setUserId(null);
+                DB.get(context).deleteUserData();
+
+                if (completion != null) {
+                    App.runOnUiThread(completion);
+                }
+            }
+        });
+    }
+
     private byte[] getBytes(String key) {
         String hex = mPrefs.getString(key, null);
         if (hex == null) {
@@ -42,8 +79,12 @@ public class Prefs {
     }
 
     private void setBytes(byte[] bytes, String key) {
-        String hex = Hex.toHexString(bytes);
-        mPrefs.edit().putString(key, hex).apply();
+        if (bytes != null) {
+            String hex = Hex.toHexString(bytes);
+            mPrefs.edit().putString(key, hex).apply();
+        } else {
+            mPrefs.edit().putString(key, null).apply();
+        }
     }
 
     public KeyPair getKeyPair() {
@@ -62,8 +103,13 @@ public class Prefs {
     }
 
     public void setKeyPair(KeyPair kp) {
-        setBytes(kp.secretKey, sKeySecretKey);
-        setBytes(kp.publicKey, sKeyPublicKey);
+        if (kp != null) {
+            setBytes(kp.secretKey, sKeySecretKey);
+            setBytes(kp.publicKey, sKeyPublicKey);
+        } else {
+            setBytes(null, sKeySecretKey);
+            setBytes(null, sKeyPublicKey);
+        }
     }
 
     public byte[] getPasswordSalt() {

@@ -28,14 +28,13 @@ import io.pijun.george.api.OscarClient;
 import io.pijun.george.api.OscarError;
 import io.pijun.george.api.User;
 import io.pijun.george.crypto.KeyPair;
-import io.pijun.george.crypto.SecretKeyEncryptedMessage;
+import io.pijun.george.crypto.PKEncryptedMessage;
 import retrofit2.Response;
 
 public class WelcomeActivity extends AppCompatActivity {
 
     private boolean mShowingCreateAccount;
     private boolean mShowingSignIn;
-    private AuthenticationChallenge mAuthChallenge;
 
     public static Intent newIntent(Context ctx) {
         return new Intent(ctx, WelcomeActivity.class);
@@ -237,26 +236,26 @@ public class WelcomeActivity extends AppCompatActivity {
                     Utils.showStringAlert(WelcomeActivity.this, null, "Unknown error ");
                 }
             }
-            mAuthChallenge = startChallengeResp.body();
+            AuthenticationChallenge authChallenge = startChallengeResp.body();
 
             final byte[] passwordHash = Sodium.createHashFromPassword(
                     Sodium.getSymmetricKeyLength(),
                     password.getBytes(),
-                    mAuthChallenge.user.passwordSalt,
-                    mAuthChallenge.user.passwordHashOperationsLimit,
-                    mAuthChallenge.user.passwordHashMemoryLimit);
+                    authChallenge.user.passwordSalt,
+                    authChallenge.user.passwordHashOperationsLimit,
+                    authChallenge.user.passwordHashMemoryLimit);
 
             // now try to decrypt the private key
             final byte[] secretKey = Sodium.symmetricKeyDecrypt(
-                    mAuthChallenge.user.wrappedSecretKey,
-                    mAuthChallenge.user.wrappedSecretKeyNonce,
+                    authChallenge.user.wrappedSecretKey,
+                    authChallenge.user.wrappedSecretKeyNonce,
                     passwordHash);
 
             if (secretKey == null) {
                 Utils.showAlert(this, R.string.incorrect_password, 0);
                 return;
             }
-            SecretKeyEncryptedMessage encChallenge = Sodium.publicKeyEncrypt(mAuthChallenge.challenge, mAuthChallenge.publicKey, secretKey);
+            PKEncryptedMessage encChallenge = Sodium.publicKeyEncrypt(authChallenge.challenge, authChallenge.publicKey, secretKey);
 
             Response<LoginResponse> completeChallengeResp = api.completeAuthenticationChallenge(username, encChallenge).execute();
             if (!completeChallengeResp.isSuccessful()) {
@@ -269,10 +268,11 @@ public class WelcomeActivity extends AppCompatActivity {
                     passwordHash);
             Prefs prefs = Prefs.get(WelcomeActivity.this);
             prefs.setSymmetricKey(symmetricKey);
-            prefs.setPasswordSalt(mAuthChallenge.user.passwordSalt);
+            prefs.setPasswordSalt(authChallenge.user.passwordSalt);
             KeyPair kp = new KeyPair();
-            kp.publicKey = mAuthChallenge.user.publicKey;
+            kp.publicKey = authChallenge.user.publicKey;
             kp.secretKey = secretKey;
+            L.i("login will set keypair: " + kp);
             prefs.setKeyPair(kp);
 
             App.runOnUiThread(new UiRunnable() {
@@ -323,14 +323,14 @@ public class WelcomeActivity extends AppCompatActivity {
         new SecureRandom().nextBytes(symmetricKey);
         prefs.setSymmetricKey(symmetricKey);
 
-        SecretKeyEncryptedMessage wrappedSymmetricKey = Sodium.symmetricKeyEncrypt(symmetricKey, passwordHash);
+        PKEncryptedMessage wrappedSymmetricKey = Sodium.symmetricKeyEncrypt(symmetricKey, passwordHash);
         if (wrappedSymmetricKey == null) {
             return null;
         }
         u.wrappedSymmetricKey = wrappedSymmetricKey.cipherText;
         u.wrappedSymmetricKeyNonce = wrappedSymmetricKey.nonce;
 
-        SecretKeyEncryptedMessage wrappedSecretKey = Sodium.symmetricKeyEncrypt(kp.secretKey, passwordHash);
+        PKEncryptedMessage wrappedSecretKey = Sodium.symmetricKeyEncrypt(kp.secretKey, passwordHash);
         u.wrappedSecretKey = wrappedSecretKey.cipherText;
         u.wrappedSecretKeyNonce = wrappedSecretKey.nonce;
 
@@ -362,7 +362,7 @@ public class WelcomeActivity extends AppCompatActivity {
 
     @UiThread
     private void onLoginResponse(LoginResponse lr) {
-        L.i("user account created successfully");
+        L.i("WA.onLoginResponse");
         Prefs prefs = Prefs.get(this);
         prefs.setUserId(lr.id);
         prefs.setAccessToken(lr.accessToken);

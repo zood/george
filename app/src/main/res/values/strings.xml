@@ -31,4 +31,7 @@
     <string name="note_message_optional">Note/Message (optional)</string>
     <string name="send">Send</string>
     <string name="incorrect_password">Incorrect password</string>
+    <string name="log_out">Log out</string>
+    <string name="confirm_log_out_msg">Are you sure you want to log out?</string>
+    <string name="no">No</string>
 </resources>

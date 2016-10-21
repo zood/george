@@ -1,6 +1,7 @@
 package io.pijun.george;
 
 import android.Manifest;
+import android.app.job.JobScheduler;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -64,7 +65,8 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
         super.onCreate(savedInstanceState);
 
         // Is there a user account here? If not, send them to the login/sign up screen
-        if (Prefs.get(this).getAccessToken() == null) {
+        if (!Prefs.get(this).isLoggedIn()) {
+            L.i("MA.onCreate not logged in");
             Intent welcomeIntent = WelcomeActivity.newIntent(this);
             startActivity(welcomeIntent);
             finish();
@@ -293,6 +295,32 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
         startActivity(i);
     }
 
+    @UiThread
+    private void onLogOutAction() {
+        L.i("about to cancel all jobs");
+        JobScheduler jobScheduler = (JobScheduler) getSystemService(Context.JOB_SCHEDULER_SERVICE);
+        jobScheduler.cancelAll();
+
+        AlertDialog.Builder builder = new AlertDialog.Builder(this, R.style.AlertDialogTheme);
+        builder.setMessage(R.string.confirm_log_out_msg);
+        builder.setCancelable(true);
+        builder.setNegativeButton(R.string.no, null);
+        builder.setPositiveButton(R.string.log_out, new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                Prefs.get(MapActivity.this).logOut(MapActivity.this, new UiRunnable() {
+                    @Override
+                    public void run() {
+                        Intent welcomeIntent = WelcomeActivity.newIntent(MapActivity.this);
+                        startActivity(welcomeIntent);
+                        finish();
+                    }
+                });
+            }
+        });
+        builder.show();
+    }
+
     /*
     private void getMessagesAction() {
         OscarAPI client = OscarClient.newInstance(Prefs.get(this).getAccessToken());
@@ -347,7 +375,7 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
                 L.w("unable to get public key to approve sharing request", ex);
                 continue;
             }
-            SecretKeyEncryptedMessage message = Sodium.publicKeyEncrypt(
+            PKEncryptedMessage message = Sodium.publicKeyEncrypt(
                     sharingGrant.toJSON(),
                     rcvrPubKey,
                     Prefs.get(this).getKeyPair().secretKey);
@@ -374,6 +402,8 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
 
             if (item.getItemId() == R.id.your_friends) {
                 onShowFriends();
+            } else if (item.getItemId() == R.id.log_out) {
+                onLogOutAction();
             }
 
             return false;

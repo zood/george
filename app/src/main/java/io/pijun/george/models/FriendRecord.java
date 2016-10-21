@@ -10,4 +10,11 @@ public class FriendRecord {
     public byte[] receivingBoxId;
     public String shareRequestNote;
 
+    @Override
+    public String toString() {
+        return "FriendRecord{" +
+                "id=" + id +
+                ", username='" + username + '\'' +
+                '}';
+    }
 }

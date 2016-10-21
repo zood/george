@@ -26,6 +26,7 @@ import com.google.android.gms.location.LocationServices;
 
 import io.pijun.george.App;
 import io.pijun.george.L;
+import io.pijun.george.Prefs;
 import io.pijun.george.WorkerRunnable;
 
 public class LocationJobService extends JobService implements LocationListener {
@@ -46,8 +47,8 @@ public class LocationJobService extends JobService implements LocationListener {
         // because Android N has a minimum period duration of 15 minutes.
         ComponentName compName = new ComponentName(context, LocationJobService.class);
         JobInfo.Builder builder = new JobInfo.Builder(LocationJobService.JOB_ID, compName)
-                .setMinimumLatency(10 * DateUtils.MINUTE_IN_MILLIS)
-//                .setMinimumLatency(15 * DateUtils.SECOND_IN_MILLIS)
+//                .setMinimumLatency(10 * DateUtils.MINUTE_IN_MILLIS)
+                .setMinimumLatency(15 * DateUtils.SECOND_IN_MILLIS)
                 .setRequiredNetworkType(JobInfo.NETWORK_TYPE_ANY)
                 .setRequiresCharging(false)
                 .setRequiresDeviceIdle(false);
@@ -57,6 +58,7 @@ public class LocationJobService extends JobService implements LocationListener {
     private GoogleApiClient mGoogleClient;
     private JobParameters mJobParams;
     private LocationMonitor mMonitorService;
+    private boolean mFinished = false;
 
     private ServiceConnection mConnection = new ServiceConnection() {
         @Override
@@ -74,6 +76,14 @@ public class LocationJobService extends JobService implements LocationListener {
     @Override
     public boolean onStartJob(JobParameters params) {
         L.i("LJS.onStartJob");
+        // If we're not logged in, just get out of here. This also makes sure we don't get rescheduled.
+        if (!Prefs.get(this).isLoggedIn()) {
+            mFinished = true;
+
+            jobFinished(params, false);
+            return false;
+        }
+
         mJobParams = params;
         App.runInBackground(new WorkerRunnable() {
             @Override
@@ -87,21 +97,36 @@ public class LocationJobService extends JobService implements LocationListener {
     @Override
     public boolean onStopJob(JobParameters params) {
         L.i("LJS.onStopJob");
-        return true;
+        App.runInBackground(new WorkerRunnable() {
+            @Override
+            public void run() {
+                finishLocationJobUpdate(false);
+            }
+        });
+
+        return false;
     }
 
     @WorkerThread
-    private void finishLocationJobUpdate() {
+    private void finishLocationJobUpdate(boolean finishNormally) {
+        L.i("LJS.finishLocationJobUpdate");
+        // Check if we were already marked as finished by a call from onStopJob
+        if (mFinished) {
+            L.i("job was already finished");
+            return;
+        }
+
         L.i("marking job as finished");
         LocationServices.FusedLocationApi.removeLocationUpdates(mGoogleClient, LocationJobService.this);
         mGoogleClient.disconnect();
 
-        // upload the location
-        if (mMonitorService != null) {
+        // Upload the location
+        // If the JobScheduler told us to stop, skip the upload
+        if (finishNormally && mMonitorService != null) {
             mMonitorService.flush();
+        }
+        if (mMonitorService != null) {
             unbindService(mConnection);
-        } else {
-            L.w("LJS encountered null monitor when finishing job");
         }
 
         jobFinished(mJobParams, false);
@@ -113,6 +138,8 @@ public class LocationJobService extends JobService implements LocationListener {
                 scheduler.schedule(getJobInfo(App.getApp()));
             }
         });
+
+        mFinished = true;
     }
 
     @WorkerThread
@@ -141,12 +168,12 @@ public class LocationJobService extends JobService implements LocationListener {
                 @Override
                 public void run() {
                     L.i("LJS.runnable");
-                    finishLocationJobUpdate();
+                    finishLocationJobUpdate(true);
                 }
             }, 10 * DateUtils.SECOND_IN_MILLIS);
         } else {
             L.w("LocationJobService ran without Location permission");
-            finishLocationJobUpdate();
+            finishLocationJobUpdate(false);
         }
     }
 
