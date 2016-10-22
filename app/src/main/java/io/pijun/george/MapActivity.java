@@ -222,7 +222,7 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
             });
             builder.show();
         } else {
-            L.i("requesting location without showing permission");
+            L.i("requesting location without showing message");
             ActivityCompat.requestPermissions(
                     this,
                     new String[]{Manifest.permission.ACCESS_FINE_LOCATION},
@@ -255,6 +255,7 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
                 mMyLocationListener.onLocationChanged(mLastLocation);
             }
         }
+        beginLocationUpdates();
     }
 
     @UiThread
@@ -274,6 +275,9 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
             // This should never happen. Nobody should be calling this method before permission has been obtained.
             L.w("MapActivity.beginLocationUpdates was called before obtaining location permission");
             // TODO: log the stack trace to a server for debugging
+            return;
+        }
+        if (!mGoogleApiClient.isConnected()) {
             return;
         }
         LocationRequest req = LocationRequest.create();
