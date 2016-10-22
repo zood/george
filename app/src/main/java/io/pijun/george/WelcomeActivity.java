@@ -230,11 +230,12 @@ public class WelcomeActivity extends AppCompatActivity {
             startedChallenge = true;
             if (!startChallengeResp.isSuccessful()) {
                 OscarError err = OscarError.fromResponse(startChallengeResp);
-                if (err.code == OscarError.ERROR_USER_NOT_FOUND) {
+                if (err != null && err.code == OscarError.ERROR_USER_NOT_FOUND) {
                     Utils.showStringAlert(WelcomeActivity.this, null, "Unknown user");
                 } else {
-                    Utils.showStringAlert(WelcomeActivity.this, null, "Unknown error ");
+                    Utils.showStringAlert(WelcomeActivity.this, null, "Unknown error");
                 }
+                return;
             }
             AuthenticationChallenge authChallenge = startChallengeResp.body();
 
@@ -350,9 +351,15 @@ public class WelcomeActivity extends AppCompatActivity {
                     }
                 });
             } else {
-                OscarError err = OscarError.fromReader(response.errorBody().charStream());
+                OscarError err = OscarError.fromResponse(response);
                 if (err != null) {
-                    Utils.showStringAlert(WelcomeActivity.this, null, err.message);
+                    if (err.code == OscarError.ERROR_USERNAME_NOT_AVAILABLE) {
+                        Utils.showAlert(WelcomeActivity.this, 0, R.string.username_not_available_msg);
+                    } else {
+                        Utils.showStringAlert(WelcomeActivity.this, null, err.message);
+                    }
+                } else {
+                    Utils.showStringAlert(WelcomeActivity.this, null, "unknown error occurred when attempting to register account");
                 }
             }
         } catch (IOException e) {

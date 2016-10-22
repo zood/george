@@ -42,7 +42,7 @@ public class DB {
     }
 
     @WorkerThread
-    public long addFriendWithSharingRequest(@NonNull String username, @NonNull @Size(32) byte[] userId, @NonNull @Size(32) byte[] publicKey) throws DBException {
+    public long addFriendWithSharingRequest(@NonNull String username, @NonNull @Size(Constants.USER_ID_LENGTH) byte[] userId, @NonNull @Size(Constants.PUBLIC_KEY_LENGTH) byte[] publicKey) throws DBException {
         return mDbHelper.addFriendWithSharingRequest(username, userId, publicKey);
     }
 
@@ -64,7 +64,7 @@ public class DB {
     }
 
     @WorkerThread
-    public void setSendingDropBoxId(@NonNull String username, @NonNull @Size(512) byte[] boxId) {
+    public void setSendingDropBoxId(@NonNull String username, @NonNull @Size(Constants.DROP_BOX_ID_LENGTH) byte[] boxId) {
         mDbHelper.setSendingDropBoxId(username, boxId);
     }
 
@@ -105,7 +105,7 @@ public class DB {
         }
 
         @WorkerThread
-        private long addFriendWithSharingRequest(@NonNull String username, @NonNull @Size(32) byte[] userId, @NonNull @Size(32) byte[] publicKey) throws DBException {
+        private long addFriendWithSharingRequest(@NonNull String username, @NonNull @Size(Constants.USER_ID_LENGTH) byte[] userId, @NonNull @Size(Constants.PUBLIC_KEY_LENGTH) byte[] publicKey) throws DBException {
             //noinspection ConstantConditions
             if (username == null) {
                 throw new IllegalArgumentException("username must not be null");
@@ -224,7 +224,7 @@ public class DB {
         }
 
         @WorkerThread
-        private void setSendingDropBoxId(@NonNull String username, @NonNull @Size(512) byte[] boxId) {
+        private void setSendingDropBoxId(@NonNull String username, @NonNull @Size(Constants.DROP_BOX_ID_LENGTH) byte[] boxId) {
             try (SQLiteDatabase db = getWritableDatabase()) {
                 ContentValues cv = new ContentValues();
                 cv.put(FRIENDS_COL_SENDING_BOX_ID, boxId);
