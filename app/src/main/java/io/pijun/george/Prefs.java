@@ -5,20 +5,23 @@ import android.content.SharedPreferences;
 import android.support.annotation.AnyThread;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
+import android.text.TextUtils;
 
 import io.pijun.george.crypto.KeyPair;
+import io.pijun.george.service.FcmTokenRegistrar;
 
 public class Prefs {
 
     private static volatile Prefs sPrefs;
     private final SharedPreferences mPrefs;
 
-    private final static String sKeySecretKey = "key_secret_key";
-    private final static String sKeyPublicKey = "key_public_key";
-    private final static String sKeyPasswordSalt = "key_password_salt";
-    private final static String sKeySymmetricKey = "key_symmetric_key";
-    private final static String sKeyAccessToken = "key_access_token";
-    private final static String sKeyUserId = "key_user_id";
+    private final static String KEY_SECRET_KEY = "key_secret_key";
+    private final static String KEY_PUBLIC_KEY = "key_public_key";
+    private final static String KEY_PASSWORD_SALT = "key_password_salt";
+    private final static String KEY_SYMMETRIC_KEY = "key_symmetric_key";
+    private final static String KEY_ACCESS_TOKEN = "key_access_token";
+    private final static String KEY_USER_ID = "key_user_id";
+    private final static String KEY_FCM_TOKEN = "fcm_token";
 
     private Prefs(Context context) {
         mPrefs = context.getSharedPreferences("secret.xml", Context.MODE_PRIVATE);
@@ -56,6 +59,11 @@ public class Prefs {
         App.runInBackground(new WorkerRunnable() {
             @Override
             public void run() {
+                String token = getAccessToken();
+                if (!TextUtils.isEmpty(token)) {
+                    context.startService(FcmTokenRegistrar.newIntent(context, true, token));
+                }
+
                 setAccessToken(null);
                 setKeyPair(null);
                 setPasswordSalt(null);
@@ -89,8 +97,8 @@ public class Prefs {
 
     public KeyPair getKeyPair() {
         byte[] secKey, pubKey;
-        secKey = getBytes(sKeySecretKey);
-        pubKey = getBytes(sKeyPublicKey);
+        secKey = getBytes(KEY_SECRET_KEY);
+        pubKey = getBytes(KEY_PUBLIC_KEY);
 
         if (secKey == null || pubKey == null) {
             return null;
@@ -104,44 +112,52 @@ public class Prefs {
 
     public void setKeyPair(KeyPair kp) {
         if (kp != null) {
-            setBytes(kp.secretKey, sKeySecretKey);
-            setBytes(kp.publicKey, sKeyPublicKey);
+            setBytes(kp.secretKey, KEY_SECRET_KEY);
+            setBytes(kp.publicKey, KEY_PUBLIC_KEY);
         } else {
-            setBytes(null, sKeySecretKey);
-            setBytes(null, sKeyPublicKey);
+            setBytes(null, KEY_SECRET_KEY);
+            setBytes(null, KEY_PUBLIC_KEY);
         }
     }
 
     public byte[] getPasswordSalt() {
-        return getBytes(sKeyPasswordSalt);
+        return getBytes(KEY_PASSWORD_SALT);
     }
 
     public void setPasswordSalt(byte[] salt) {
-        setBytes(salt, sKeyPasswordSalt);
+        setBytes(salt, KEY_PASSWORD_SALT);
     }
 
     public byte[] getSymmetricKey() {
-        return getBytes(sKeySymmetricKey);
+        return getBytes(KEY_SYMMETRIC_KEY);
     }
 
     public void setSymmetricKey(byte[] symKey) {
-        setBytes(symKey, sKeySymmetricKey);
+        setBytes(symKey, KEY_SYMMETRIC_KEY);
     }
 
     public String getAccessToken() {
-        return mPrefs.getString(sKeyAccessToken, null);
+        return mPrefs.getString(KEY_ACCESS_TOKEN, null);
     }
 
     public void setAccessToken(String token) {
-        mPrefs.edit().putString(sKeyAccessToken, token).apply();
+        mPrefs.edit().putString(KEY_ACCESS_TOKEN, token).apply();
     }
 
     public byte[] getUserId() {
-        return getBytes(sKeyUserId);
+        return getBytes(KEY_USER_ID);
     }
 
     public void setUserId(byte[] id) {
-        setBytes(id, sKeyUserId);
+        setBytes(id, KEY_USER_ID);
+    }
+
+    public String getFcmToken() {
+        return mPrefs.getString(KEY_FCM_TOKEN, null);
+    }
+
+    public void setFcmToken(String token) {
+        mPrefs.edit().putString(KEY_FCM_TOKEN, token).apply();
     }
 
 }

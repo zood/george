@@ -48,7 +48,7 @@ public class OscarError {
                 '}';
     }
 
-    public static OscarError fromReader(Reader r) {
+    private static OscarError fromReader(Reader r) {
         Gson gson = new GsonBuilder()
                 .setFieldNamingPolicy(FieldNamingPolicy.LOWER_CASE_WITH_UNDERSCORES)
                 .create();

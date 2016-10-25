@@ -69,6 +69,7 @@ public class LocationJobService extends JobService implements LocationListener {
 
         @Override
         public void onServiceDisconnected(ComponentName name) {
+            L.i("LJS.onServiceDisconnected");
             mMonitorService = null;
         }
     };
@@ -125,9 +126,9 @@ public class LocationJobService extends JobService implements LocationListener {
         if (finishNormally && mMonitorService != null) {
             mMonitorService.flush();
         }
-        if (mMonitorService != null) {
+        try {
             unbindService(mConnection);
-        }
+        } catch (Exception ignore) {}
 
         jobFinished(mJobParams, false);
 

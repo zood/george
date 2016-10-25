@@ -12,8 +12,6 @@ import com.google.gson.JsonSerializer;
 
 import java.lang.reflect.Type;
 
-import io.pijun.george.L;
-
 public class BytesToBase64Adapter implements JsonSerializer<byte[]>, JsonDeserializer<byte[]> {
     @Override
     public byte[] deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context) throws JsonParseException {

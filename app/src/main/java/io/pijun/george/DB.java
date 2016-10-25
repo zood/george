@@ -135,20 +135,6 @@ public class DB {
             }
         }
 
-        /*
-        @WorkerThread
-        private void setSendingDropBoxId(@NonNull String username, @NonNull @Size(512) byte[] boxId) {
-            try (SQLiteDatabase db = getWritableDatabase()) {
-                ContentValues cv = new ContentValues();
-                cv.put(FRIENDS_COL_SENDING_BOX_ID, boxId);
-                long result = db.update(FRIENDS_TABLE, cv, "username=?", new String[]{username});
-                if (result != 1) {
-                    L.w("DBHelper.setSendingDropBoxId - Num affected rows was " + result + " for username '" + username + "'");
-                }
-            }
-        }
-        */
-
         @WorkerThread
         @NonNull
         private ArrayList<FriendRecord> getFriends() {

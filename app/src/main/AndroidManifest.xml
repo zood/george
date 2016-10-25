@@ -33,6 +33,19 @@
         <service
             android:name=".service.LocationJobService"
             android:permission="android.permission.BIND_JOB_SERVICE" />
+        <service
+            android:name=".service.FcmMessageReceiver">
+            <intent-filter>
+                <action android:name="com.google.firebase.MESSAGING_EVENT" />
+            </intent-filter>
+        </service>
+        <service
+            android:name=".service.FcmTokenMonitor">
+            <intent-filter>
+                <action android:name="com.google.firebase.INSTANCE_ID_EVENT" />
+            </intent-filter>
+        </service>
+        <service android:name=".service.FcmTokenRegistrar" />
         <meta-data
             android:name="com.google.android.gms.version"
             android:value="@integer/google_play_services_version" />
