@@ -89,12 +89,6 @@ public class DB {
         return mDbHelper.getFriendsToShareWith();
     }
 
-//    @WorkerThread
-//    @Nullable
-//    public byte[] getPublicKey(@NonNull @Size(Constants.USER_ID_LENGTH) final byte[] userId) {
-//        return mDbHelper.getPublicKey(userId);
-//    }
-
     @WorkerThread
     public void setFriendLocation(long friendId, double lat, double lng, long time, Float accuracy, Float speed) throws DBException {
         L.i("setFriendLocation: {id: " + friendId + ", lat: " + lat + ", lng: " + lng);
@@ -184,68 +178,61 @@ public class DB {
             if (username == null) {
                 throw new IllegalArgumentException("username must not be null");
             }
-            try (SQLiteDatabase db = getWritableDatabase()) {
-                ContentValues cv = new ContentValues();
-                cv.put(FRIENDS_COL_USERNAME, username);
-                cv.put(FRIENDS_COL_USER_ID, userId);
-                cv.put(FRIENDS_COL_PUBLIC_KEY, publicKey);
-                cv.put(FRIENDS_COL_SENDING_BOX_ID, sendingBoxId);
-                cv.put(FRIENDS_COL_RECEIVING_BOX_ID, receivingBoxId);
-                cv.put(FRIENDS_COL_SHARE_REQUESTED, shareRequested);
-                cv.put(FRIENDS_COL_SHARE_REQUEST_NOTE, shareRequestNote);
-                long result = db.insert(FRIENDS_TABLE, null, cv);
-                if (result == 0) {
-                    throw new DBException("Error creating friend " + username);
-                }
-                return result;
-            } catch (Throwable t) {
-                L.w("exception in the catcher", t);
+            SQLiteDatabase db = getWritableDatabase();
+            ContentValues cv = new ContentValues();
+            cv.put(FRIENDS_COL_USERNAME, username);
+            cv.put(FRIENDS_COL_USER_ID, userId);
+            cv.put(FRIENDS_COL_PUBLIC_KEY, publicKey);
+            cv.put(FRIENDS_COL_SENDING_BOX_ID, sendingBoxId);
+            cv.put(FRIENDS_COL_RECEIVING_BOX_ID, receivingBoxId);
+            cv.put(FRIENDS_COL_SHARE_REQUESTED, shareRequested);
+            cv.put(FRIENDS_COL_SHARE_REQUEST_NOTE, shareRequestNote);
+            long result = db.insert(FRIENDS_TABLE, null, cv);
+            if (result == 0) {
+                throw new DBException("Error creating friend " + username);
             }
-
-            throw new DBException("Error creating friend" + username + ". Probably unable to get the database");
+            return result;
         }
 
         @WorkerThread
         private void deleteUserData() {
-            try (SQLiteDatabase db = getWritableDatabase()) {
-                db.delete(FRIENDS_TABLE, null, null);
-            }
+            SQLiteDatabase db = getWritableDatabase();
+            db.delete(FRIENDS_TABLE, null, null);
         }
 
         @WorkerThread
         @Nullable
         private FriendRecord getFriendMatchingBlob(@NonNull final byte[] blob, @NonNull String matchingColumn) {
             FriendRecord fr = null;
-            try (SQLiteDatabase db = getReadableDatabase()) {
-                String sql = "SELECT " + FRIENDS_COL_ID + ", "
-                        + FRIENDS_COL_USERNAME + ", "
-                        + FRIENDS_COL_USER_ID + ", "
-                        + FRIENDS_COL_PUBLIC_KEY + ", "
-                        + FRIENDS_COL_SENDING_BOX_ID + ", "
-                        + FRIENDS_COL_RECEIVING_BOX_ID + ", "
-                        + FRIENDS_COL_SHARE_REQUESTED + ", "
-                        + FRIENDS_COL_SHARE_REQUEST_NOTE
-                        + " FROM " + FRIENDS_TABLE
-                        + " WHERE " + matchingColumn + "=?";
-                SQLiteDatabase.CursorFactory factory = new SQLiteDatabase.CursorFactory() {
-                    @Override
-                    public Cursor newCursor(SQLiteDatabase sqLiteDatabase, SQLiteCursorDriver driver, String editTable, SQLiteQuery query) {
-                        query.bindBlob(1, blob);
-                        return new SQLiteCursor(driver, editTable, query);
-                    }
-                };
-                try (Cursor c = db.rawQueryWithFactory(factory, sql, null, FRIENDS_TABLE)) {
-                    if (c.moveToNext()) {
-                        fr = new FriendRecord();
-                        fr.id = c.getLong(c.getColumnIndexOrThrow(FRIENDS_COL_ID));
-                        fr.userId = c.getBlob(c.getColumnIndexOrThrow(FRIENDS_COL_USER_ID));
-                        fr.username = c.getString(c.getColumnIndexOrThrow(FRIENDS_COL_USERNAME));
-                        fr.publicKey = c.getBlob(c.getColumnIndexOrThrow(FRIENDS_COL_PUBLIC_KEY));
-                        fr.sendingBoxId = c.getBlob(c.getColumnIndexOrThrow(FRIENDS_COL_SENDING_BOX_ID));
-                        fr.receivingBoxId = c.getBlob(c.getColumnIndexOrThrow(FRIENDS_COL_RECEIVING_BOX_ID));
-                        fr.shareRequested = c.getInt(c.getColumnIndexOrThrow(FRIENDS_COL_SHARE_REQUESTED)) != 0;
-                        fr.shareRequestNote = c.getString(c.getColumnIndexOrThrow(FRIENDS_COL_SHARE_REQUEST_NOTE));
-                    }
+            SQLiteDatabase db = getReadableDatabase();
+            String sql = "SELECT " + FRIENDS_COL_ID + ", "
+                    + FRIENDS_COL_USERNAME + ", "
+                    + FRIENDS_COL_USER_ID + ", "
+                    + FRIENDS_COL_PUBLIC_KEY + ", "
+                    + FRIENDS_COL_SENDING_BOX_ID + ", "
+                    + FRIENDS_COL_RECEIVING_BOX_ID + ", "
+                    + FRIENDS_COL_SHARE_REQUESTED + ", "
+                    + FRIENDS_COL_SHARE_REQUEST_NOTE
+                    + " FROM " + FRIENDS_TABLE
+                    + " WHERE " + matchingColumn + "=?";
+            SQLiteDatabase.CursorFactory factory = new SQLiteDatabase.CursorFactory() {
+                @Override
+                public Cursor newCursor(SQLiteDatabase sqLiteDatabase, SQLiteCursorDriver driver, String editTable, SQLiteQuery query) {
+                    query.bindBlob(1, blob);
+                    return new SQLiteCursor(driver, editTable, query);
+                }
+            };
+            try (Cursor c = db.rawQueryWithFactory(factory, sql, null, FRIENDS_TABLE)) {
+                if (c.moveToNext()) {
+                    fr = new FriendRecord();
+                    fr.id = c.getLong(c.getColumnIndexOrThrow(FRIENDS_COL_ID));
+                    fr.userId = c.getBlob(c.getColumnIndexOrThrow(FRIENDS_COL_USER_ID));
+                    fr.username = c.getString(c.getColumnIndexOrThrow(FRIENDS_COL_USERNAME));
+                    fr.publicKey = c.getBlob(c.getColumnIndexOrThrow(FRIENDS_COL_PUBLIC_KEY));
+                    fr.sendingBoxId = c.getBlob(c.getColumnIndexOrThrow(FRIENDS_COL_SENDING_BOX_ID));
+                    fr.receivingBoxId = c.getBlob(c.getColumnIndexOrThrow(FRIENDS_COL_RECEIVING_BOX_ID));
+                    fr.shareRequested = c.getInt(c.getColumnIndexOrThrow(FRIENDS_COL_SHARE_REQUESTED)) != 0;
+                    fr.shareRequestNote = c.getString(c.getColumnIndexOrThrow(FRIENDS_COL_SHARE_REQUEST_NOTE));
                 }
             }
 
@@ -255,12 +242,11 @@ public class DB {
         @WorkerThread
         private int getFriendRequestsCount() {
             int count = 0;
-            try (SQLiteDatabase db = getReadableDatabase()) {
-                String sql = "SELECT COUNT(*) FROM " + FRIENDS_TABLE + " WHERE " + FRIENDS_COL_SHARE_REQUESTED + "=1 AND " + FRIENDS_COL_SENDING_BOX_ID + " ISNULL";
-                try (Cursor cursor = db.rawQuery(sql, null)) {
-                    if (cursor.moveToNext()) {
-                        count = cursor.getInt(0);
-                    }
+            SQLiteDatabase db = getReadableDatabase();
+            String sql = "SELECT COUNT(*) FROM " + FRIENDS_TABLE + " WHERE " + FRIENDS_COL_SHARE_REQUESTED + "=1 AND " + FRIENDS_COL_SENDING_BOX_ID + " ISNULL";
+            try (Cursor cursor = db.rawQuery(sql, null)) {
+                if (cursor.moveToNext()) {
+                    count = cursor.getInt(0);
                 }
             }
 
@@ -271,37 +257,36 @@ public class DB {
         @NonNull
         private ArrayList<FriendRecord> getFriends() {
             ArrayList<FriendRecord> records = new ArrayList<>();
-            try (SQLiteDatabase db = getReadableDatabase()) {
-                String[] cols = new String[]{
-                        FRIENDS_COL_ID,
-                        FRIENDS_COL_USERNAME,
-                        FRIENDS_COL_USER_ID,
-                        FRIENDS_COL_PUBLIC_KEY,
-                        FRIENDS_COL_SENDING_BOX_ID,
-                        FRIENDS_COL_RECEIVING_BOX_ID,
-                        FRIENDS_COL_SHARE_REQUESTED,
-                        FRIENDS_COL_SHARE_REQUEST_NOTE};
-                try (Cursor cursor = db.query(FRIENDS_TABLE, cols, null, null, null, null, null, null)) {
-                    int idIdx = cursor.getColumnIndexOrThrow(FRIENDS_COL_ID);
-                    int usernameIdx = cursor.getColumnIndexOrThrow(FRIENDS_COL_USERNAME);
-                    int userIdIdx = cursor.getColumnIndexOrThrow(FRIENDS_COL_USER_ID);
-                    int publicKeyIdx = cursor.getColumnIndexOrThrow(FRIENDS_COL_PUBLIC_KEY);
-                    int sendingBoxIdIdx = cursor.getColumnIndexOrThrow(FRIENDS_COL_SENDING_BOX_ID);
-                    int receivingBoxIdIdx = cursor.getColumnIndexOrThrow(FRIENDS_COL_RECEIVING_BOX_ID);
-                    int shareRequestedIdx = cursor.getColumnIndexOrThrow(FRIENDS_COL_SHARE_REQUESTED);
-                    int shareRequestNoteIdx = cursor.getColumnIndexOrThrow(FRIENDS_COL_SHARE_REQUEST_NOTE);
-                    while (cursor.moveToNext()) {
-                        FriendRecord fr = new FriendRecord();
-                        fr.id = cursor.getInt(idIdx);
-                        fr.username = cursor.getString(usernameIdx);
-                        fr.userId = cursor.getBlob(userIdIdx);
-                        fr.publicKey = cursor.getBlob(publicKeyIdx);
-                        fr.sendingBoxId = cursor.getBlob(sendingBoxIdIdx);
-                        fr.receivingBoxId = cursor.getBlob(receivingBoxIdIdx);
-                        fr.shareRequested = cursor.getInt(shareRequestedIdx) != 0;
-                        fr.shareRequestNote = cursor.getString(shareRequestNoteIdx);
-                        records.add(fr);
-                    }
+            SQLiteDatabase db = getReadableDatabase();
+            String[] cols = new String[]{
+                    FRIENDS_COL_ID,
+                    FRIENDS_COL_USERNAME,
+                    FRIENDS_COL_USER_ID,
+                    FRIENDS_COL_PUBLIC_KEY,
+                    FRIENDS_COL_SENDING_BOX_ID,
+                    FRIENDS_COL_RECEIVING_BOX_ID,
+                    FRIENDS_COL_SHARE_REQUESTED,
+                    FRIENDS_COL_SHARE_REQUEST_NOTE};
+            try (Cursor cursor = db.query(FRIENDS_TABLE, cols, null, null, null, null, null, null)) {
+                int idIdx = cursor.getColumnIndexOrThrow(FRIENDS_COL_ID);
+                int usernameIdx = cursor.getColumnIndexOrThrow(FRIENDS_COL_USERNAME);
+                int userIdIdx = cursor.getColumnIndexOrThrow(FRIENDS_COL_USER_ID);
+                int publicKeyIdx = cursor.getColumnIndexOrThrow(FRIENDS_COL_PUBLIC_KEY);
+                int sendingBoxIdIdx = cursor.getColumnIndexOrThrow(FRIENDS_COL_SENDING_BOX_ID);
+                int receivingBoxIdIdx = cursor.getColumnIndexOrThrow(FRIENDS_COL_RECEIVING_BOX_ID);
+                int shareRequestedIdx = cursor.getColumnIndexOrThrow(FRIENDS_COL_SHARE_REQUESTED);
+                int shareRequestNoteIdx = cursor.getColumnIndexOrThrow(FRIENDS_COL_SHARE_REQUEST_NOTE);
+                while (cursor.moveToNext()) {
+                    FriendRecord fr = new FriendRecord();
+                    fr.id = cursor.getInt(idIdx);
+                    fr.username = cursor.getString(usernameIdx);
+                    fr.userId = cursor.getBlob(userIdIdx);
+                    fr.publicKey = cursor.getBlob(publicKeyIdx);
+                    fr.sendingBoxId = cursor.getBlob(sendingBoxIdIdx);
+                    fr.receivingBoxId = cursor.getBlob(receivingBoxIdIdx);
+                    fr.shareRequested = cursor.getInt(shareRequestedIdx) != 0;
+                    fr.shareRequestNote = cursor.getString(shareRequestNoteIdx);
+                    records.add(fr);
                 }
             }
 
@@ -312,119 +297,92 @@ public class DB {
         @NonNull
         private ArrayList<FriendRecord> getFriendsToShareWith() {
             ArrayList<FriendRecord> records = new ArrayList<>();
-            try (SQLiteDatabase db = getReadableDatabase()) {
-                String[] cols = new String[]{
-                        FRIENDS_COL_ID,
-                        FRIENDS_COL_USERNAME,
-                        FRIENDS_COL_USER_ID,
-                        FRIENDS_COL_PUBLIC_KEY,
-                        FRIENDS_COL_SENDING_BOX_ID,
-                        FRIENDS_COL_RECEIVING_BOX_ID,
-                        FRIENDS_COL_SHARE_REQUESTED,
-                        FRIENDS_COL_SHARE_REQUEST_NOTE};
-                try (Cursor cursor = db.query(FRIENDS_TABLE, cols, FRIENDS_COL_SENDING_BOX_ID + " IS NOT NULL", null, null, null, null, null)) {
-                    int idIdx = cursor.getColumnIndexOrThrow(FRIENDS_COL_ID);
-                    int usernameIdx = cursor.getColumnIndexOrThrow(FRIENDS_COL_USERNAME);
-                    int userIdIdx = cursor.getColumnIndexOrThrow(FRIENDS_COL_USER_ID);
-                    int publicKeyIdx = cursor.getColumnIndexOrThrow(FRIENDS_COL_PUBLIC_KEY);
-                    int sendingBoxIdIdx = cursor.getColumnIndexOrThrow(FRIENDS_COL_SENDING_BOX_ID);
-                    int receivingBoxIdIdx = cursor.getColumnIndexOrThrow(FRIENDS_COL_RECEIVING_BOX_ID);
-                    int shareRequestedIdx = cursor.getColumnIndexOrThrow(FRIENDS_COL_SHARE_REQUESTED);
-                    int shareRequestNoteIdx = cursor.getColumnIndexOrThrow(FRIENDS_COL_SHARE_REQUEST_NOTE);
-                    while (cursor.moveToNext()) {
-                        FriendRecord fr = new FriendRecord();
-                        fr.id = cursor.getInt(idIdx);
-                        fr.username = cursor.getString(usernameIdx);
-                        fr.userId = cursor.getBlob(userIdIdx);
-                        fr.publicKey = cursor.getBlob(publicKeyIdx);
-                        fr.sendingBoxId = cursor.getBlob(sendingBoxIdIdx);
-                        fr.receivingBoxId = cursor.getBlob(receivingBoxIdIdx);
-                        fr.shareRequested = cursor.getInt(shareRequestedIdx) != 0;
-                        fr.shareRequestNote = cursor.getString(shareRequestNoteIdx);
-                        records.add(fr);
-                    }
+            SQLiteDatabase db = getReadableDatabase();
+            String[] cols = new String[]{
+                    FRIENDS_COL_ID,
+                    FRIENDS_COL_USERNAME,
+                    FRIENDS_COL_USER_ID,
+                    FRIENDS_COL_PUBLIC_KEY,
+                    FRIENDS_COL_SENDING_BOX_ID,
+                    FRIENDS_COL_RECEIVING_BOX_ID,
+                    FRIENDS_COL_SHARE_REQUESTED,
+                    FRIENDS_COL_SHARE_REQUEST_NOTE};
+            try (Cursor cursor = db.query(FRIENDS_TABLE, cols, FRIENDS_COL_SENDING_BOX_ID + " IS NOT NULL", null, null, null, null, null)) {
+                int idIdx = cursor.getColumnIndexOrThrow(FRIENDS_COL_ID);
+                int usernameIdx = cursor.getColumnIndexOrThrow(FRIENDS_COL_USERNAME);
+                int userIdIdx = cursor.getColumnIndexOrThrow(FRIENDS_COL_USER_ID);
+                int publicKeyIdx = cursor.getColumnIndexOrThrow(FRIENDS_COL_PUBLIC_KEY);
+                int sendingBoxIdIdx = cursor.getColumnIndexOrThrow(FRIENDS_COL_SENDING_BOX_ID);
+                int receivingBoxIdIdx = cursor.getColumnIndexOrThrow(FRIENDS_COL_RECEIVING_BOX_ID);
+                int shareRequestedIdx = cursor.getColumnIndexOrThrow(FRIENDS_COL_SHARE_REQUESTED);
+                int shareRequestNoteIdx = cursor.getColumnIndexOrThrow(FRIENDS_COL_SHARE_REQUEST_NOTE);
+                while (cursor.moveToNext()) {
+                    FriendRecord fr = new FriendRecord();
+                    fr.id = cursor.getInt(idIdx);
+                    fr.username = cursor.getString(usernameIdx);
+                    fr.userId = cursor.getBlob(userIdIdx);
+                    fr.publicKey = cursor.getBlob(publicKeyIdx);
+                    fr.sendingBoxId = cursor.getBlob(sendingBoxIdIdx);
+                    fr.receivingBoxId = cursor.getBlob(receivingBoxIdIdx);
+                    fr.shareRequested = cursor.getInt(shareRequestedIdx) != 0;
+                    fr.shareRequestNote = cursor.getString(shareRequestNoteIdx);
+                    records.add(fr);
                 }
             }
 
             return records;
         }
 
-//        @WorkerThread
-//        @Nullable
-//        private byte[] getPublicKey(@NonNull @Size(Constants.USER_ID_LENGTH) final byte[] userId) {
-//            byte[] pubKey = null;
-//            try (SQLiteDatabase db = getReadableDatabase()) {
-//                String sql = "SELECT " + FRIENDS_COL_PUBLIC_KEY + " FROM " + FRIENDS_TABLE + " WHERE " + FRIENDS_COL_USER_ID + "=?";
-//                Cursor cursor = db.rawQueryWithFactory(new SQLiteDatabase.CursorFactory() {
-//                    @Override
-//                    public Cursor newCursor(SQLiteDatabase sqLiteDatabase, SQLiteCursorDriver driver, String editTable, SQLiteQuery query) {
-//                        query.bindBlob(1, userId);
-//                        return new SQLiteCursor(driver, editTable, query);
-//                    }
-//                }, sql, null, FRIENDS_TABLE);
-//                if (cursor.moveToNext()) {
-//                    pubKey = cursor.getBlob(cursor.getColumnIndexOrThrow(FRIENDS_COL_PUBLIC_KEY));
-//                }
-//                cursor.close();
-//            }
-//
-//            return pubKey;
-//        }
-
         @WorkerThread
         private void setFriendLocation(long friendId, double lat, double lng, long time, Float accuracy, Float speed) throws DBException {
-            try (SQLiteDatabase db = getWritableDatabase()) {
-                ContentValues cv = new ContentValues();
-                cv.put(LOCATIONS_COL_FRIEND_ID, friendId);
-                cv.put(LOCATIONS_COL_LATITUDE, lat);
-                cv.put(LOCATIONS_COL_LONGITUDE, lng);
-                cv.put(LOCATIONS_COL_TIME, time);
-                if (accuracy != null) {
-                    cv.put(LOCATIONS_COL_ACCURACY, accuracy);
-                }
-                if (speed != null) {
-                    cv.put(LOCATIONS_COL_SPEED, speed);
-                }
-                long result = db.replace(LOCATIONS_TABLE, null, cv);
-                if (result == -1) {
-                    throw new DBException("Error occurred while setting friend location");
-                }
+            SQLiteDatabase db = getWritableDatabase();
+            ContentValues cv = new ContentValues();
+            cv.put(LOCATIONS_COL_FRIEND_ID, friendId);
+            cv.put(LOCATIONS_COL_LATITUDE, lat);
+            cv.put(LOCATIONS_COL_LONGITUDE, lng);
+            cv.put(LOCATIONS_COL_TIME, time);
+            if (accuracy != null) {
+                cv.put(LOCATIONS_COL_ACCURACY, accuracy);
+            }
+            if (speed != null) {
+                cv.put(LOCATIONS_COL_SPEED, speed);
+            }
+            long result = db.replace(LOCATIONS_TABLE, null, cv);
+            if (result == -1) {
+                throw new DBException("Error occurred while setting friend location");
             }
         }
 
         @WorkerThread
         private void setReceivingBoxId(@NonNull String username, @NonNull @Size(Constants.DROP_BOX_ID_LENGTH) byte[] boxId) throws DBException {
-            try (SQLiteDatabase db = getWritableDatabase()) {
-                ContentValues cv = new ContentValues();
-                cv.put(FRIENDS_COL_RECEIVING_BOX_ID, boxId);
-                long result = db.update(FRIENDS_TABLE, cv, "username=?", new String[]{username});
-                if (result != 1) {
-                    throw new DBException("Num affected rows was " + result + " for username '" + username + "'");
-                }
+            SQLiteDatabase db = getWritableDatabase();
+            ContentValues cv = new ContentValues();
+            cv.put(FRIENDS_COL_RECEIVING_BOX_ID, boxId);
+            long result = db.update(FRIENDS_TABLE, cv, "username=?", new String[]{username});
+            if (result != 1) {
+                throw new DBException("Num affected rows was " + result + " for username '" + username + "'");
             }
         }
 
         @WorkerThread
         private void setShareRequested(@NonNull String username, boolean shareRequested) throws DBException {
-            try (SQLiteDatabase db = getWritableDatabase()) {
-                ContentValues cv = new ContentValues();
-                cv.put(FRIENDS_COL_SHARE_REQUESTED, shareRequested);
-                long result = db.update(FRIENDS_TABLE, cv, "username=?", new String[]{username});
-                if (result != 1) {
-                    throw new DBException("Num affected rows was " + result + " for username '" + username + "'");
-                }
+            SQLiteDatabase db = getWritableDatabase();
+            ContentValues cv = new ContentValues();
+            cv.put(FRIENDS_COL_SHARE_REQUESTED, shareRequested);
+            long result = db.update(FRIENDS_TABLE, cv, "username=?", new String[]{username});
+            if (result != 1) {
+                throw new DBException("Num affected rows was " + result + " for username '" + username + "'");
             }
         }
 
         @WorkerThread
         private void setSendingDropBoxId(@NonNull String username, @NonNull @Size(Constants.DROP_BOX_ID_LENGTH) byte[] boxId) throws DBException {
-            try (SQLiteDatabase db = getWritableDatabase()) {
-                ContentValues cv = new ContentValues();
-                cv.put(FRIENDS_COL_SENDING_BOX_ID, boxId);
-                long result = db.update(FRIENDS_TABLE, cv, "username=?", new String[]{username});
-                if (result != 1) {
-                    throw new DBException("Num affected rows was " + result + " for username '" + username + "'");
-                }
+            SQLiteDatabase db = getWritableDatabase();
+            ContentValues cv = new ContentValues();
+            cv.put(FRIENDS_COL_SENDING_BOX_ID, boxId);
+            long result = db.update(FRIENDS_TABLE, cv, "username=?", new String[]{username});
+            if (result != 1) {
+                throw new DBException("Num affected rows was " + result + " for username '" + username + "'");
             }
         }
     }
