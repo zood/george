@@ -12,6 +12,7 @@ import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
+import android.text.TextUtils;
 import android.view.View;
 import android.widget.CheckBox;
 import android.widget.EditText;
@@ -24,10 +25,13 @@ import io.pijun.george.api.OscarClient;
 import io.pijun.george.api.OscarError;
 import io.pijun.george.api.User;
 import io.pijun.george.api.UserComm;
+import io.pijun.george.crypto.KeyPair;
 import io.pijun.george.crypto.PKEncryptedMessage;
+import io.pijun.george.models.FriendRecord;
+import okhttp3.internal.Util;
 import retrofit2.Response;
 
-public class FriendsActivity extends AppCompatActivity {
+public class FriendsActivity extends AppCompatActivity implements FriendsAdapter.FriendsAdapterListener {
 
     public static Intent newIntent(Context context) {
         return new Intent(context, FriendsActivity.class);
@@ -56,6 +60,7 @@ public class FriendsActivity extends AppCompatActivity {
 
         RecyclerView list = (RecyclerView) findViewById(R.id.friends_list);
         mAdapter = new FriendsAdapter(this);
+        mAdapter.setListener(this);
         list.setAdapter(mAdapter);
     }
 
@@ -97,6 +102,16 @@ public class FriendsActivity extends AppCompatActivity {
     @WorkerThread
     private void onSendFriendRequest(@NonNull String username, String note, boolean shareLocation) {
         Prefs prefs = Prefs.get(this);
+        String accessToken = prefs.getAccessToken();
+        if (TextUtils.isEmpty(accessToken)) {
+            Utils.showStringAlert(this, null, "How are you not logged in right now? (missing access token)");
+            return;
+        }
+        KeyPair keyPair = prefs.getKeyPair();
+        if (keyPair == null) {
+            Utils.showStringAlert(this, null, "How are you not logged in right now? (missing key pair)");
+            return;
+        }
         OscarAPI api = OscarClient.newInstance(prefs.getAccessToken());
         try {
             Response<User> searchResponse = api.searchForUser(username).execute();
@@ -107,22 +122,31 @@ public class FriendsActivity extends AppCompatActivity {
             }
             User userToRequest = searchResponse.body();
             UserComm comm = UserComm.newLocationSharingRequest(note);
-            PKEncryptedMessage msg = Sodium.publicKeyEncrypt(comm.toJSON(), userToRequest.publicKey, prefs.getKeyPair().secretKey);
+            PKEncryptedMessage msg = Sodium.publicKeyEncrypt(comm.toJSON(), userToRequest.publicKey, keyPair.secretKey);
             Response<Void> sendResponse = api.sendMessage(Hex.toHexString(userToRequest.id), msg).execute();
             if (!sendResponse.isSuccessful()) {
                 OscarError err = OscarError.fromResponse(sendResponse);
-                Utils.showStringAlert(this, null, "Unable to send message: " + err);
+                Utils.showStringAlert(this, null, "Unable to send request message: " + err);
                 return;
             }
 
-            DB db = DB.get(this);
-            db.addFriendWithSharingRequest(username, userToRequest.id, userToRequest.publicKey);
-
+            byte[] sendingBoxId = null;
             if (shareLocation) {
-                byte[] dropBoxId = new byte[Constants.DROP_BOX_ID_LENGTH];
-                new SecureRandom().nextBytes(dropBoxId);
-                db.setSendingDropBoxId(username, dropBoxId);
+                sendingBoxId = new byte[Constants.DROP_BOX_ID_LENGTH];
+                new SecureRandom().nextBytes(sendingBoxId);
+                comm = UserComm.newLocationSharingGrant(sendingBoxId);
+                msg = Sodium.publicKeyEncrypt(comm.toJSON(), userToRequest.publicKey, keyPair.secretKey);
+                sendResponse = api.sendMessage(Hex.toHexString(userToRequest.id), msg).execute();
+                if (!sendResponse.isSuccessful()) {
+                    OscarError err = OscarError.fromResponse(sendResponse);
+                    Utils.showStringAlert(this, null, "Unable to send grand message: " + err);
+                    return;
+                }
             }
+
+            DB db = DB.get(this);
+            db.addFriend(username, userToRequest.id, userToRequest.publicKey, sendingBoxId, null, false, null);
+
             Utils.showStringAlert(this, null, "User request added");
             mAdapter.reloadFriends(this);
         } catch (IOException ex) {
@@ -130,5 +154,67 @@ public class FriendsActivity extends AppCompatActivity {
         } catch (DB.DBException re) {
             Utils.showStringAlert(this, null, "Error adding friend into database");
         }
+    }
+
+    @WorkerThread
+    private void approveFriendRequest(byte[] userId) {
+        Prefs prefs = Prefs.get(this);
+        String accessToken = prefs.getAccessToken();
+        if (TextUtils.isEmpty(accessToken)) {
+            Utils.showStringAlert(this, null, "Your access token is missing");
+            return;
+        }
+        KeyPair kp = Prefs.get(this).getKeyPair();
+        if (kp == null) {
+            Utils.showStringAlert(this, null, "Your key pair is missing");
+            return;
+        }
+        byte[] boxId = new byte[Constants.DROP_BOX_ID_LENGTH];
+        new SecureRandom().nextBytes(boxId);
+        UserComm comm = UserComm.newLocationSharingGrant(boxId);
+        byte[] msgBytes = comm.toJSON();
+        FriendRecord friend = DB.get(this).getFriend(userId);
+        if (friend == null) {
+            L.w("friend with user id " + Hex.toHexString(userId) + " doesn't work");
+            return;
+        }
+        PKEncryptedMessage encMsg = Sodium.publicKeyEncrypt(msgBytes, friend.publicKey, kp.secretKey);
+        OscarAPI client = OscarClient.newInstance(accessToken);
+        try {
+            Response<Void> response = client.sendMessage(Hex.toHexString(userId), encMsg).execute();
+            if (!response.isSuccessful()) {
+                Utils.showStringAlert(this, null, "Problem sending request approval");
+                return;
+            }
+        } catch (IOException ex) {
+            Utils.showStringAlert(this, null, "Serious problem sending request approval");
+            L.w("Serious problem sending request approval", ex);
+            return;
+        }
+
+        try {
+            DB.get(this).setSendingDropBoxId(friend.username, boxId);
+        } catch (DB.DBException ex) {
+            Utils.showStringAlert(this, null, "Serious problem setting drop box id");
+            L.w("serious problem setting drop box id", ex);
+        }
+    }
+
+    @Override
+    @UiThread
+    public void onApproveFriendRequest(byte[] userId) {
+        L.i("onapprove " + Hex.toHexString(userId));
+        App.runInBackground(new WorkerRunnable() {
+            @Override
+            public void run() {
+
+            }
+        });
+    }
+
+    @Override
+    @UiThread
+    public void onRejectFriendRequest(byte[] userId) {
+        L.i("onreject: " + Hex.toHexString(userId));
     }
 }

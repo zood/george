@@ -7,6 +7,9 @@ import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.text.TextUtils;
 
+import com.google.android.gms.maps.model.CameraPosition;
+import com.google.android.gms.maps.model.LatLng;
+
 import io.pijun.george.crypto.KeyPair;
 import io.pijun.george.service.FcmTokenRegistrar;
 
@@ -23,10 +26,18 @@ public class Prefs {
     private final static String KEY_USER_ID = "key_user_id";
     private final static String KEY_FCM_TOKEN = "fcm_token";
 
+    private final static String KEY_CAMERA_POSITION_SAVED = "camera_position_saved";
+    private final static String KEY_CAMERA_POSITION_LATITUDE = "camera_position_latitude";
+    private final static String KEY_CAMERA_POSITION_LONGITUDE = "camera_position_longitude";
+    private final static String KEY_CAMERA_POSITION_BEARING = "camera_position_bearing";
+    private final static String KEY_CAMERA_POSITION_TILT = "camera_position_tilt";
+    private final static String KEY_CAMERA_POSITION_ZOOM = "camera_position_zoom";
+
     private Prefs(Context context) {
         mPrefs = context.getSharedPreferences("secret.xml", Context.MODE_PRIVATE);
     }
 
+    @NonNull
     public static Prefs get(Context context) {
         if (sPrefs == null) {
             synchronized (Prefs.class) {
@@ -78,6 +89,7 @@ public class Prefs {
         });
     }
 
+    @Nullable
     private byte[] getBytes(String key) {
         String hex = mPrefs.getString(key, null);
         if (hex == null) {
@@ -95,6 +107,7 @@ public class Prefs {
         }
     }
 
+    @Nullable
     public KeyPair getKeyPair() {
         byte[] secKey, pubKey;
         secKey = getBytes(KEY_SECRET_KEY);
@@ -120,6 +133,7 @@ public class Prefs {
         }
     }
 
+    @Nullable
     public byte[] getPasswordSalt() {
         return getBytes(KEY_PASSWORD_SALT);
     }
@@ -128,6 +142,7 @@ public class Prefs {
         setBytes(salt, KEY_PASSWORD_SALT);
     }
 
+    @Nullable
     public byte[] getSymmetricKey() {
         return getBytes(KEY_SYMMETRIC_KEY);
     }
@@ -136,6 +151,7 @@ public class Prefs {
         setBytes(symKey, KEY_SYMMETRIC_KEY);
     }
 
+    @Nullable
     public String getAccessToken() {
         return mPrefs.getString(KEY_ACCESS_TOKEN, null);
     }
@@ -144,6 +160,7 @@ public class Prefs {
         mPrefs.edit().putString(KEY_ACCESS_TOKEN, token).apply();
     }
 
+    @Nullable
     public byte[] getUserId() {
         return getBytes(KEY_USER_ID);
     }
@@ -152,12 +169,45 @@ public class Prefs {
         setBytes(id, KEY_USER_ID);
     }
 
+    @Nullable
     public String getFcmToken() {
         return mPrefs.getString(KEY_FCM_TOKEN, null);
     }
 
     public void setFcmToken(String token) {
         mPrefs.edit().putString(KEY_FCM_TOKEN, token).apply();
+    }
+
+    @Nullable
+    public CameraPosition getCameraPosition() {
+        if (!mPrefs.getBoolean(KEY_CAMERA_POSITION_SAVED, false)) {
+            return null;
+        }
+
+        float bearing = mPrefs.getFloat(KEY_CAMERA_POSITION_BEARING, 0);
+        float tilt = mPrefs.getFloat(KEY_CAMERA_POSITION_TILT, 0);
+        float zoom = mPrefs.getFloat(KEY_CAMERA_POSITION_ZOOM, 0);
+        double lat = Double.longBitsToDouble(mPrefs.getLong(KEY_CAMERA_POSITION_LATITUDE, 0));
+        double lng = Double.longBitsToDouble(mPrefs.getLong(KEY_CAMERA_POSITION_LONGITUDE, 0));
+
+        LatLng ll = new LatLng(lat, lng);
+        return new CameraPosition(ll, zoom, tilt, bearing);
+    }
+
+    public void setCameraPosition(@Nullable CameraPosition pos) {
+        if (pos == null) {
+            mPrefs.edit().putBoolean(KEY_CAMERA_POSITION_SAVED, false).apply();
+            return;
+        }
+
+        mPrefs.edit()
+                .putFloat(KEY_CAMERA_POSITION_BEARING, pos.bearing)
+                .putFloat(KEY_CAMERA_POSITION_TILT, pos.tilt)
+                .putFloat(KEY_CAMERA_POSITION_ZOOM, pos.zoom)
+                .putLong(KEY_CAMERA_POSITION_LATITUDE, Double.doubleToRawLongBits(pos.target.latitude))
+                .putLong(KEY_CAMERA_POSITION_LONGITUDE, Double.doubleToRawLongBits(pos.target.longitude))
+                .putBoolean(KEY_CAMERA_POSITION_SAVED, true)
+                .apply();
     }
 
 }

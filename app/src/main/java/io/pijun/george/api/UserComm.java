@@ -2,9 +2,13 @@ package io.pijun.george.api;
 
 import android.location.Location;
 
+import com.google.gson.annotations.SerializedName;
+
 import java.io.ByteArrayInputStream;
 import java.io.InputStreamReader;
 import java.util.Arrays;
+
+import io.pijun.george.Constants;
 
 public class UserComm {
 
@@ -51,6 +55,33 @@ public class UserComm {
         return c;
     }
 
+    public boolean isValid() {
+        switch (type) {
+            case LocationSharingGrant:
+                //noinspection RedundantIfStatement
+                if (dropBox == null || dropBox.length != Constants.DROP_BOX_ID_LENGTH) {
+                    return false;
+                }
+                return true;
+            case LocationSharingRequest:
+                return true;
+            case LocationInfo:
+                if (latitude < -90 || latitude > 90) {
+                    return false;
+                }
+                if (longitude < -180 || longitude > 180) {
+                    return false;
+                }
+                //noinspection RedundantIfStatement
+                if (time <= 0) {
+                    return false;
+                }
+                return true;
+            default:
+                throw new UnsupportedOperationException("unknown commtype: '" + type.val + "'");
+        }
+    }
+
     public static UserComm fromJSON(byte[] bytes) {
         InputStreamReader isr = new InputStreamReader(new ByteArrayInputStream(bytes));
         return OscarClient.sGson.fromJson(isr, UserComm.class);
@@ -68,6 +99,11 @@ public class UserComm {
                 ", note='" + note + '\'' +
                 ", dropBox=" + Arrays.toString(dropBox) +
                 ", processed=" + processed +
+                ", latitude=" + latitude +
+                ", longitude=" + longitude +
+                ", time=" + time +
+                ", accuracy=" + accuracy +
+                ", speed=" + speed +
                 '}';
     }
 }

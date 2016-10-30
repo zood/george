@@ -1,7 +1,5 @@
 package io.pijun.george.api;
 
-import java.util.Arrays;
-
 import io.pijun.george.Hex;
 
 public class Message {

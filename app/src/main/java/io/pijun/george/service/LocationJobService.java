@@ -47,8 +47,8 @@ public class LocationJobService extends JobService implements LocationListener {
         // because Android N has a minimum period duration of 15 minutes.
         ComponentName compName = new ComponentName(context, LocationJobService.class);
         JobInfo.Builder builder = new JobInfo.Builder(LocationJobService.JOB_ID, compName)
-//                .setMinimumLatency(10 * DateUtils.MINUTE_IN_MILLIS)
-                .setMinimumLatency(15 * DateUtils.SECOND_IN_MILLIS)
+                .setMinimumLatency(10 * DateUtils.MINUTE_IN_MILLIS)
+//                .setMinimumLatency(15 * DateUtils.SECOND_IN_MILLIS)
                 .setRequiredNetworkType(JobInfo.NETWORK_TYPE_ANY)
                 .setRequiresCharging(false)
                 .setRequiresDeviceIdle(false);
@@ -113,11 +113,9 @@ public class LocationJobService extends JobService implements LocationListener {
         L.i("LJS.finishLocationJobUpdate");
         // Check if we were already marked as finished by a call from onStopJob
         if (mFinished) {
-            L.i("job was already finished");
             return;
         }
 
-        L.i("marking job as finished");
         LocationServices.FusedLocationApi.removeLocationUpdates(mGoogleClient, LocationJobService.this);
         mGoogleClient.disconnect();
 
@@ -168,7 +166,6 @@ public class LocationJobService extends JobService implements LocationListener {
             sServiceHandler.postDelayed(new WorkerRunnable() {
                 @Override
                 public void run() {
-                    L.i("LJS.runnable");
                     finishLocationJobUpdate(true);
                 }
             }, 10 * DateUtils.SECOND_IN_MILLIS);

@@ -38,6 +38,9 @@ public interface OscarAPI {
     @GET("users/{id}")
     Call<User> getUser(@Path("id") String hexId);
 
+    @GET("drop-boxes/{boxId}")
+    Call<PKEncryptedMessage> pickUpPackage(@Path("boxId") String hexId);
+
     @GET("users")
     Call<User> searchForUser(@Query("username") String username);
 

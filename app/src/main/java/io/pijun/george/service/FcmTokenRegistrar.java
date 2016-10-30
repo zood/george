@@ -41,12 +41,11 @@ public class FcmTokenRegistrar extends IntentService {
     }
 
     public FcmTokenRegistrar() {
-        super(FcmTokenRegistrar.class.getCanonicalName());
+        super(FcmTokenRegistrar.class.getSimpleName());
     }
 
     @Override
     protected void onHandleIntent(Intent intent) {
-        L.i("FTR.onHandleIntent");
         if (intent.getBooleanExtra(ARG_UNREGISTER, false)) {
             unregister(intent.getStringExtra(ARG_ACCESS_TOKEN));
         } else {
@@ -70,7 +69,6 @@ public class FcmTokenRegistrar extends IntentService {
             return;
         }
 
-        L.i("|  haven't uploaded it");
         // if someone is logged in, perform the upload
         String apiAccessToken = prefs.getAccessToken();
         if (!prefs.isLoggedIn()) {
@@ -78,7 +76,6 @@ public class FcmTokenRegistrar extends IntentService {
         }
         OscarAPI api = OscarClient.newInstance(apiAccessToken);
         try {
-            L.i("|  attempting to upload");
             Response<Void> response = api.addFcmToken(Collections.singletonMap("token", fcmToken)).execute();
             if (!response.isSuccessful()) {
                 L.i("problem uploading fcm token: " + OscarError.fromResponse(response));
@@ -90,7 +87,6 @@ public class FcmTokenRegistrar extends IntentService {
         }
 
         // upon success, save the token to our prefs
-        L.i("|  upload was successful");
         prefs.setFcmToken(fcmToken);
     }
 

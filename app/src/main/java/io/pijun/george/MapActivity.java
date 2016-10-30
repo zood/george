@@ -14,6 +14,7 @@ import android.support.annotation.AnyThread;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.annotation.UiThread;
+import android.support.annotation.WorkerThread;
 import android.support.constraint.ConstraintLayout;
 import android.support.design.widget.NavigationView;
 import android.support.v4.app.ActivityCompat;
@@ -26,6 +27,7 @@ import android.text.format.DateUtils;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
+import android.widget.TextView;
 
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
@@ -38,12 +40,21 @@ import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.location.LocationSettingsRequest;
 import com.google.android.gms.location.LocationSettingsResult;
 import com.google.android.gms.location.LocationSettingsStatusCodes;
+import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.LocationSource;
 import com.google.android.gms.maps.MapView;
 import com.google.android.gms.maps.OnMapReadyCallback;
+import com.google.android.gms.maps.model.CameraPosition;
+import com.squareup.otto.Subscribe;
 
+import java.util.ArrayList;
+
+import io.pijun.george.api.PackageWatcher;
+import io.pijun.george.event.LocationSharingRequested;
+import io.pijun.george.models.FriendRecord;
 import io.pijun.george.service.FcmTokenRegistrar;
+import io.pijun.george.service.FriendLocationsRefresher;
 import io.pijun.george.service.LocationMonitor;
 
 public class MapActivity extends AppCompatActivity implements OnMapReadyCallback, GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener, LocationListener {
@@ -56,12 +67,14 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
     private LocationSource.OnLocationChangedListener mMyLocationListener;
     private GoogleApiClient mGoogleApiClient;
     private Location mLastLocation;
+    private volatile PackageWatcher mPkgWatcher;
 
     public static Intent newIntent(Context ctx) {
         return new Intent(ctx, MapActivity.class);
     }
 
     @Override
+    @UiThread
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
@@ -102,9 +115,33 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
                 .build();
 
         startService(FcmTokenRegistrar.newIntent(this));
+        startService(FriendLocationsRefresher.newIntent(this));
+        App.runInBackground(new WorkerRunnable() {
+            @Override
+            public void run() {
+                String token = Prefs.get(MapActivity.this).getAccessToken();
+                if (token == null) {
+                    return;
+                }
+                // pass the app context, so the activity doesn't get caught in a retain cycle
+                mPkgWatcher = PackageWatcher.createWatcher(getApplicationContext(), token);
+                if (mPkgWatcher == null) {
+                    L.w("unable to create package watcher");
+                    return;
+                }
+                ArrayList<FriendRecord> friends = DB.get(MapActivity.this).getFriends();
+                for (FriendRecord fr: friends) {
+                    L.i(fr.toString());
+                    if (fr.receivingBoxId != null) {
+                        mPkgWatcher.watch(fr.receivingBoxId);
+                    }
+                }
+            }
+        });
     }
 
     @Override
+    @UiThread
     protected void onStart() {
         super.onStart();
 
@@ -112,9 +149,17 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
         checkForLocationPermission();
         App.registerOnBus(this);
         mGoogleApiClient.connect();
+
+        App.runInBackground(new WorkerRunnable() {
+            @Override
+            public void run() {
+                loadFriendRequests();
+            }
+        });
     }
 
     @Override
+    @UiThread
     protected void onResume() {
         super.onResume();
 
@@ -122,6 +167,7 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
     }
 
     @Override
+    @UiThread
     protected void onPause() {
         mMapView.onPause();
 
@@ -129,8 +175,14 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
     }
 
     @Override
+    @UiThread
     protected void onStop() {
         super.onStop();
+
+        if (mGoogleMap != null) {
+            CameraPosition pos = mGoogleMap.getCameraPosition();
+            Prefs.get(this).setCameraPosition(pos);
+        }
 
         mMapView.onStop();
         App.unregisterFromBus(this);
@@ -142,7 +194,17 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
     }
 
     @Override
+    @UiThread
     protected void onDestroy() {
+        App.runInBackground(new WorkerRunnable() {
+            @Override
+            public void run() {
+                if (mPkgWatcher != null) {
+                    mPkgWatcher.disconnect();
+                    mPkgWatcher = null;
+                }
+            }
+        });
         mMapView.onDestroy();
         mMapView = null;
 
@@ -150,6 +212,7 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
     }
 
     @Override
+    @UiThread
     protected void onSaveInstanceState(Bundle outState) {
         super.onSaveInstanceState(outState);
 
@@ -157,6 +220,7 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
     }
 
     @Override
+    @UiThread
     public void onLowMemory() {
         super.onLowMemory();
 
@@ -166,6 +230,10 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
     @Override
     public void onMapReady(GoogleMap googleMap) {
         mGoogleMap = googleMap;
+        CameraPosition pos = Prefs.get(this).getCameraPosition();
+        if (pos != null) {
+            mGoogleMap.moveCamera(CameraUpdateFactory.newCameraPosition(pos));
+        }
         mGoogleMap.setLocationSource(new LocationSource() {
             @Override
             public void activate(OnLocationChangedListener onLocationChangedListener) {
@@ -186,37 +254,21 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
         }
     }
 
-//    @Subscribe
-//    @AnyThread
-//    public void onLocationUpdate(Location location) {
-//        L.i("onLocationUpdate: " + location);
-//        if (mMyLocationListener != null) {
-//            L.i("|   location listener is here");
-//            mMyLocationListener.onLocationChanged(location);
-//            LatLng ll = new LatLng(location.getLatitude(), location.getLongitude());
-//            CameraUpdate cameraUpdate = CameraUpdateFactory.newLatLngZoom(ll, 16);
-//            mGoogleMap.animateCamera(cameraUpdate);
-//        }
-//    }
-
     @UiThread
     private void checkForLocationPermission() {
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
-            L.i("already have permission");
             locationPermissionVerified();
             return;
         }
 
         if (ActivityCompat.shouldShowRequestPermissionRationale(this, Manifest.permission.ACCESS_FINE_LOCATION)) {
             // show the reasoning
-            L.i("showing reason for permission before asking");
             AlertDialog.Builder builder = new AlertDialog.Builder(this, R.style.AlertDialogTheme);
             builder.setTitle("Permission request");
             builder.setMessage("Pijun uses your location to show your position on the map, and to securely share it with friends that you've authorized. It's never used for any other purpose.");
             builder.setPositiveButton(R.string.ok, new DialogInterface.OnClickListener() {
                 @Override
                 public void onClick(DialogInterface dialog, int which) {
-                    L.i("requesting permission after explaining");
                     ActivityCompat.requestPermissions(
                             MapActivity.this,
                             new String[]{Manifest.permission.ACCESS_FINE_LOCATION},
@@ -225,7 +277,6 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
             });
             builder.show();
         } else {
-            L.i("requesting location without showing message");
             ActivityCompat.requestPermissions(
                     this,
                     new String[]{Manifest.permission.ACCESS_FINE_LOCATION},
@@ -289,6 +340,38 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
         LocationServices.FusedLocationApi.requestLocationUpdates(mGoogleApiClient, req, this);
     }
 
+    @WorkerThread
+    private void loadFriendRequests() {
+        final int count = DB.get(this).getFriendRequestsCount();
+        App.runOnUiThread(new UiRunnable() {
+            @Override
+            public void run() {
+                TextView tv = (TextView) findViewById(R.id.bottom_textview);
+                if (tv == null) {
+                    return;
+                }
+
+                int drawable = 0;
+                if (count > 0) {
+                    drawable = R.drawable.common_google_signin_btn_icon_dark;
+                }
+                tv.setCompoundDrawablesRelativeWithIntrinsicBounds(0, 0, drawable, 0);
+            }
+        });
+    }
+
+    @Subscribe
+    @UiThread
+    public void onLocationSharingRequested(LocationSharingRequested req) {
+        L.i("MA.onLocationSharingRequested");
+        App.runInBackground(new WorkerRunnable() {
+            @Override
+            public void run() {
+                loadFriendRequests();
+            }
+        });
+    }
+
     @UiThread
     public void onShowDrawerAction(View v) {
         L.i("onShowDrawerAction");
@@ -327,41 +410,6 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
         });
         builder.show();
     }
-
-    /*
-    private void getMessagesAction() {
-        OscarAPI client = OscarClient.newInstance(Prefs.get(this).getAccessToken());
-        try {
-            Response<Message[]> response = client.getMessages().execute();
-            if (response.isSuccessful()) {
-                byte[] secretKey = Prefs.get(MapActivity.this).getKeyPair().secretKey;
-                Message[] messages = response.body();
-                DBHelper db = new DBHelper(this);
-                for (Message msg : messages) {
-                    try {
-                        byte[] pubKey = Vault.getPublicKey(MapActivity.this, msg.senderId);
-                        byte[] msgBytes = Sodium.publicKeyDecrypt(msg.cipherText, msg.nonce, pubKey, secretKey);
-                        UserComm comm = UserComm.fromJSON(msgBytes);
-                        L.i("comm: " + comm);
-                        Response<User> userResp = client.getUser(Hex.toHexString(msg.senderId)).execute();
-                        String username = "";
-                        if (userResp.isSuccessful()) {
-                            username = userResp.body().username;
-                        } else {
-                            L.i("username is not successful");
-                        }
-                        long result = db.addShareRequest(username, msg.senderId, comm.note);
-                        L.i("add request: " + result);
-                    } catch (IOException ex) {
-                        L.w("trouble receiving public key  or username for user " + Hex.toHexString(msg.senderId), ex);
-                    }
-                }
-            }
-        } catch (IOException ex) {
-            L.w("serious problem getting messages", ex);
-        }
-    }
-    */
 
     /*
     @WorkerThread
@@ -473,4 +521,5 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
 
         App.postOnBus(location);
     }
+
 }

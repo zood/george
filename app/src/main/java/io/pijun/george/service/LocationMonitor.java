@@ -10,10 +10,20 @@ import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.IBinder;
 import android.os.Looper;
+import android.support.annotation.Keep;
+import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.annotation.UiThread;
 import android.support.annotation.WorkerThread;
+import android.text.format.DateUtils;
 
+import com.google.android.gms.common.ConnectionResult;
+import com.google.android.gms.common.api.GoogleApiClient;
+import com.google.android.gms.common.api.PendingResult;
+import com.google.android.gms.common.api.ResultCallback;
+import com.google.android.gms.common.api.Status;
+import com.google.android.gms.location.ActivityRecognition;
+import com.google.android.gms.location.ActivityRecognitionApi;
 import com.squareup.otto.Subscribe;
 
 import java.io.IOException;
@@ -58,6 +68,7 @@ public class LocationMonitor extends Service {
 
     private LinkedList<Location> mLocations = new LinkedList<>();
     private final IBinder mBinder = new LocalBinder();
+    private GoogleApiClient mGoogleClient;
 
     @Nullable
     @Override
@@ -72,9 +83,16 @@ public class LocationMonitor extends Service {
     public void onCreate() {
         super.onCreate();
 
-        L.i("LM.onCreate " + this);
+        L.i("LM.onCreate");
         JobScheduler scheduler = (JobScheduler) getSystemService(Context.JOB_SCHEDULER_SERVICE);
         scheduler.schedule(LocationJobService.getJobInfo(this));
+
+        App.runInBackground(new WorkerRunnable() {
+            @Override
+            public void run() {
+                beginActivityMonitoring();
+            }
+        });
 
         App.registerOnBus(this);
     }
@@ -82,7 +100,7 @@ public class LocationMonitor extends Service {
     @Override
     @UiThread
     public int onStartCommand(Intent intent, int flags, int startId) {
-        L.i("LM.onStartCommand " + this);
+        L.i("LM.onStartCommand");
         return START_STICKY;
     }
 
@@ -95,7 +113,35 @@ public class LocationMonitor extends Service {
         super.onDestroy();
     }
 
+    @WorkerThread
+    private void beginActivityMonitoring() {
+        mGoogleClient = new GoogleApiClient.Builder(this)
+                .addApi(ActivityRecognition.API)
+                .build();
+        ConnectionResult connectionResult = mGoogleClient.blockingConnect();
+        if (!connectionResult.isSuccess()) {
+            L.i("|  google client connect failed");
+            L.i("|  has resolution? " + connectionResult.hasResolution());
+        }
+
+        PendingResult<Status> result = ActivityRecognition.ActivityRecognitionApi.requestActivityUpdates(
+                mGoogleClient,
+                5 * DateUtils.MINUTE_IN_MILLIS,
+                ActivityMonitor.getPendingIntent(this));
+        result.setResultCallback(new ResultCallback<Status>() {
+            @Override
+            public void onResult(@NonNull Status status) {
+                if (status.isSuccess()) {
+                    L.i("successfully registered for activity recognition");
+                } else {
+                    L.i("failed to register for activity recognition");
+                }
+            }
+        });
+    }
+
     @Subscribe
+    @Keep
     public void onLocationChanged(final Location l) {
         sServiceHandler.post(new WorkerRunnable() {
             @Override

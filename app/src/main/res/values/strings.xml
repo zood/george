@@ -35,4 +35,5 @@
     <string name="confirm_log_out_msg">Are you sure you want to log out?</string>
     <string name="no">No</string>
     <string name="username_not_available_msg">That username has already been taken.</string>
+    <string name="share_your_location_with_msg">Share your location with %s?</string>
 </resources>
