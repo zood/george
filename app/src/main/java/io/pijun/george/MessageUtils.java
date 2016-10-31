@@ -15,6 +15,7 @@ import io.pijun.george.crypto.KeyPair;
 import io.pijun.george.event.FriendLocationUpdated;
 import io.pijun.george.event.LocationSharingGranted;
 import io.pijun.george.event.LocationSharingRequested;
+import io.pijun.george.models.FriendLocation;
 import io.pijun.george.models.FriendRecord;
 import retrofit2.Response;
 
@@ -100,9 +101,11 @@ public class MessageUtils {
         }
         switch (comm.type) {
             case LocationSharingGrant:
+                L.i("LocationSharingGrant");
                 try {
                     // if we already have a record for this user, then add the receiving box id to our database
                     if (fr != null) {
+                        L.i("|  have the friend, adding box Id");
                         DB.get(context).setReceivingDropBoxId(fr.username, comm.dropBox);
                     } else {
                         DB.get(context).addFriend(senderUsername, senderId, senderPubKey, null, comm.dropBox, false, null);
@@ -137,7 +140,7 @@ public class MessageUtils {
                     L.w("error setting location info for friend", ex);
                     return ERROR_DATABASE_EXCEPTION;
                 }
-                App.postOnBus(new FriendLocationUpdated());
+                App.postOnBus(new FriendLocation(fr.id, comm));
                 break;
         }
 

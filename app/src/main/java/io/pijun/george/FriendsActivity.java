@@ -28,7 +28,6 @@ import io.pijun.george.api.UserComm;
 import io.pijun.george.crypto.KeyPair;
 import io.pijun.george.crypto.PKEncryptedMessage;
 import io.pijun.george.models.FriendRecord;
-import okhttp3.internal.Util;
 import retrofit2.Response;
 
 public class FriendsActivity extends AppCompatActivity implements FriendsAdapter.FriendsAdapterListener {
@@ -193,21 +192,23 @@ public class FriendsActivity extends AppCompatActivity implements FriendsAdapter
         }
 
         try {
-            DB.get(this).setSendingDropBoxId(friend.username, boxId);
+            DB.get(this).setShareGranted(friend.username, boxId);
         } catch (DB.DBException ex) {
             Utils.showStringAlert(this, null, "Serious problem setting drop box id");
             L.w("serious problem setting drop box id", ex);
         }
+
+        mAdapter.reloadFriends(this);
     }
 
     @Override
     @UiThread
-    public void onApproveFriendRequest(byte[] userId) {
+    public void onApproveFriendRequest(final byte[] userId) {
         L.i("onapprove " + Hex.toHexString(userId));
         App.runInBackground(new WorkerRunnable() {
             @Override
             public void run() {
-
+                approveFriendRequest(userId);
             }
         });
     }

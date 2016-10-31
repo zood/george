@@ -28,7 +28,7 @@ public class PackageWatcher extends WebSocketAdapter {
 
     @WorkerThread
     public static PackageWatcher createWatcher(@NonNull Context context, @NonNull String accessToken) {
-        PackageWatcher watcher = new PackageWatcher();
+        PackageWatcher watcher = new PackageWatcher(context);
         try {
             watcher.mSocket = new WebSocketFactory()
                     .createSocket("ws://192.168.1.76:9999/alpha/drop-boxes/watch", 15000)
@@ -41,6 +41,10 @@ public class PackageWatcher extends WebSocketAdapter {
         }
 
         return watcher;
+    }
+
+    private PackageWatcher(@NonNull Context c) {
+        mContext = c;
     }
 
     @Override

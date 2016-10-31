@@ -10,6 +10,7 @@ import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.location.Location;
 import android.os.Bundle;
+import android.os.Looper;
 import android.support.annotation.AnyThread;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
@@ -19,6 +20,7 @@ import android.support.constraint.ConstraintLayout;
 import android.support.design.widget.NavigationView;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
+import android.support.v4.util.LongSparseArray;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.AlertDialog;
@@ -46,12 +48,16 @@ import com.google.android.gms.maps.LocationSource;
 import com.google.android.gms.maps.MapView;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.model.CameraPosition;
+import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.Marker;
+import com.google.android.gms.maps.model.MarkerOptions;
 import com.squareup.otto.Subscribe;
 
 import java.util.ArrayList;
 
 import io.pijun.george.api.PackageWatcher;
 import io.pijun.george.event.LocationSharingRequested;
+import io.pijun.george.models.FriendLocation;
 import io.pijun.george.models.FriendRecord;
 import io.pijun.george.service.FcmTokenRegistrar;
 import io.pijun.george.service.FriendLocationsRefresher;
@@ -68,6 +74,7 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
     private GoogleApiClient mGoogleApiClient;
     private Location mLastLocation;
     private volatile PackageWatcher mPkgWatcher;
+    private LongSparseArray<Marker> mFriendMarkers = new LongSparseArray<>();
 
     public static Intent newIntent(Context ctx) {
         return new Intent(ctx, MapActivity.class);
@@ -123,8 +130,7 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
                 if (token == null) {
                     return;
                 }
-                // pass the app context, so the activity doesn't get caught in a retain cycle
-                mPkgWatcher = PackageWatcher.createWatcher(getApplicationContext(), token);
+                mPkgWatcher = PackageWatcher.createWatcher(MapActivity.this, token);
                 if (mPkgWatcher == null) {
                     L.w("unable to create package watcher");
                     return;
@@ -207,6 +213,7 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
         });
         mMapView.onDestroy();
         mMapView = null;
+        mFriendMarkers.clear();
 
         super.onDestroy();
     }
@@ -228,7 +235,9 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
     }
 
     @Override
+    @UiThread
     public void onMapReady(GoogleMap googleMap) {
+        L.i("onMapReady isMainThread? " + (Looper.getMainLooper() == Looper.myLooper()));
         mGoogleMap = googleMap;
         CameraPosition pos = Prefs.get(this).getCameraPosition();
         if (pos != null) {
@@ -248,10 +257,45 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
                 mMyLocationListener = null;
             }
         });
+        mGoogleMap.setOnMarkerClickListener(this);
+
+        // add markers for all friends
+        App.runInBackground(new WorkerRunnable() {
+            @Override
+            public void run() {
+                DB db = DB.get(MapActivity.this);
+                ArrayList<FriendRecord> friends = db.getFriends();
+                for (final FriendRecord f : friends) {
+                    final FriendLocation location = db.getFriendLocation(f.id);
+                    if (location == null) {
+                        continue;
+                    }
+
+                    App.runOnUiThread(new UiRunnable() {
+                        @Override
+                        public void run() {
+                            addMapMarker(f, location);
+                        }
+                    });
+                }
+            }
+        });
 
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
             mGoogleMap.setMyLocationEnabled(true);
         }
+    }
+
+    @UiThread
+    private void addMapMarker(FriendRecord friend, FriendLocation loc) {
+        MarkerOptions opts = new MarkerOptions()
+                .position(new LatLng(loc.latitude, loc.longitude))
+                .draggable(false)
+                .flat(false)
+                .title(friend.username);
+        Marker marker = mGoogleMap.addMarker(opts);
+        marker.setTag(friend.id);
+        mFriendMarkers.put(friend.id, marker);
     }
 
     @UiThread
@@ -372,6 +416,29 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
         });
     }
 
+    @Subscribe
+    @UiThread
+    public void onFriendLocationUpdated(final FriendLocation loc) {
+        // check if we already have a marker for this friend
+        Marker marker = mFriendMarkers.get(loc.friendId);
+        if (marker == null) {
+            App.runInBackground(new WorkerRunnable() {
+                @Override
+                public void run() {
+                    final FriendRecord friend = DB.get(MapActivity.this).getFriendById(loc.friendId);
+                    App.runOnUiThread(new UiRunnable() {
+                        @Override
+                        public void run() {
+                            addMapMarker(friend, loc);
+                        }
+                    });
+                }
+            });
+        } else {
+            marker.setPosition(new LatLng(loc.latitude, loc.longitude));
+        }
+    }
+
     @UiThread
     public void onShowDrawerAction(View v) {
         L.i("onShowDrawerAction");
@@ -410,43 +477,6 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
         });
         builder.show();
     }
-
-    /*
-    @WorkerThread
-    private void approveAllRequests(ArrayList<ShareRequest> requests) {
-        byte[] boxId = new byte[Constants.DROP_BOX_ID_LENGTH];
-        new SecureRandom().nextBytes(boxId);
-        DBHelper db = new DBHelper(this);
-        OscarAPI client = OscarClient.newInstance(Prefs.get(this).getAccessToken());
-        for (ShareRequest r : requests) {
-            // add this to our database
-            db.addGrantedShare(r.username, r.userId, boxId);
-            // send a message letting the user know that we approved the request and the drop box they should check
-            UserComm sharingGrant = UserComm.newLocationSharingGrant(boxId);
-            byte[] rcvrPubKey;
-            try {
-                rcvrPubKey = Vault.getPublicKey(this, r.userId);
-            } catch (IOException ex) {
-                L.w("unable to get public key to approve sharing request", ex);
-                continue;
-            }
-            PKEncryptedMessage message = Sodium.publicKeyEncrypt(
-                    sharingGrant.toJSON(),
-                    rcvrPubKey,
-                    Prefs.get(this).getKeyPair().secretKey);
-            try {
-                Response<Void> response = client.sendMessage(Hex.toHexString(r.userId), message).execute();
-                if (!response.isSuccessful()) {
-                    L.i("sending sharing grant failed: " + OscarError.fromResponse(response));
-                    continue;
-                }
-            } catch (DBException ex) {
-                L.w("unable to send message approving sharing request", ex);
-            }
-        }
-
-    }
-    */
 
     private NavigationView.OnNavigationItemSelectedListener navItemListener = new NavigationView.OnNavigationItemSelectedListener() {
         @Override

@@ -15,8 +15,10 @@ import android.support.annotation.WorkerThread;
 
 import java.util.ArrayList;
 
+import io.pijun.george.models.FriendLocation;
 import io.pijun.george.models.FriendRecord;
 
+@SuppressWarnings("WeakerAccess")
 public class DB {
 
     private static volatile DB sDb;
@@ -69,8 +71,19 @@ public class DB {
 
     @WorkerThread
     @Nullable
+    public FriendRecord getFriendById(long friendId) {
+        return mDbHelper.getFriendById(friendId);
+    }
+
+    @WorkerThread
+    @Nullable
     public FriendRecord getFriendByReceivingBoxId(@NonNull @Size(Constants.DROP_BOX_ID_LENGTH) final byte[] boxId) {
         return mDbHelper.getFriendMatchingBlob(boxId, DBHelper.FRIENDS_COL_RECEIVING_BOX_ID);
+    }
+
+    @Nullable
+    public FriendLocation getFriendLocation(long friendRecordId) {
+        return mDbHelper.getFriendLocation(friendRecordId);
     }
 
     public int getFriendRequestsCount() {
@@ -106,8 +119,8 @@ public class DB {
     }
 
     @WorkerThread
-    public void setSendingDropBoxId(@NonNull String username, @NonNull @Size(Constants.DROP_BOX_ID_LENGTH) byte[] boxId) throws DBException {
-        mDbHelper.setSendingDropBoxId(username, boxId);
+    public void setShareGranted(@NonNull String username, @NonNull @Size(Constants.DROP_BOX_ID_LENGTH) byte[] boxId) throws DBException {
+        mDbHelper.setShareGranted(username, boxId);
     }
 
     private static class DBHelper extends SQLiteOpenHelper {
@@ -121,6 +134,16 @@ public class DB {
         private static final String FRIENDS_COL_RECEIVING_BOX_ID = "receiving_box_id";
         private static final String FRIENDS_COL_SHARE_REQUESTED = "share_requested";
         private static final String FRIENDS_COL_SHARE_REQUEST_NOTE = "share_request_note";
+        private static final String[] FRIENDS_COLUMNS = new String[]{
+                FRIENDS_COL_ID,
+                FRIENDS_COL_USERNAME,
+                FRIENDS_COL_USER_ID,
+                FRIENDS_COL_PUBLIC_KEY,
+                FRIENDS_COL_SENDING_BOX_ID,
+                FRIENDS_COL_RECEIVING_BOX_ID,
+                FRIENDS_COL_SHARE_REQUESTED,
+                FRIENDS_COL_SHARE_REQUEST_NOTE
+        };
 
         private static final String LOCATIONS_TABLE = "locations";
         private static final String LOCATIONS_COL_FRIEND_ID = "friend_id";
@@ -129,6 +152,14 @@ public class DB {
         private static final String LOCATIONS_COL_TIME = "time";
         private static final String LOCATIONS_COL_ACCURACY = "accuracy";
         private static final String LOCATIONS_COL_SPEED = "speed";
+        private static final String[] LOCATIONS_COLUMNS = new String[]{
+                LOCATIONS_COL_FRIEND_ID,
+                LOCATIONS_COL_LATITUDE,
+                LOCATIONS_COL_LONGITUDE,
+                LOCATIONS_COL_TIME,
+                LOCATIONS_COL_ACCURACY,
+                LOCATIONS_COL_SPEED
+        };
 
         private DBHelper(Context context) {
             super(context, "thedata", null, 1);
@@ -202,6 +233,52 @@ public class DB {
 
         @WorkerThread
         @Nullable
+        private FriendRecord getFriendById(long friendId) {
+            FriendRecord friend = null;
+            SQLiteDatabase db = getReadableDatabase();
+            String selection = FRIENDS_COL_ID + "=?";
+            String[] selectionArgs = new String[]{
+                    String.valueOf(friendId)
+            };
+            try (Cursor c = db.query(FRIENDS_TABLE, FRIENDS_COLUMNS, selection, selectionArgs, null, null, null)) {
+                if (c.moveToNext()) {
+                    friend = readFromCursor(c);
+                }
+            }
+            return friend;
+        }
+
+        @WorkerThread
+        @Nullable
+        private FriendLocation getFriendLocation(long friendRecordId) {
+            FriendLocation fl = null;
+            SQLiteDatabase db = getReadableDatabase();
+            String selection = LOCATIONS_COL_FRIEND_ID + "=?";
+            String[] selectionArgs = new String[]{String.valueOf(friendRecordId)};
+            try (Cursor c = db.query(LOCATIONS_TABLE, LOCATIONS_COLUMNS, selection, selectionArgs, null, null, null)) {
+                if (c.moveToNext()) {
+                    double lat = c.getDouble(c.getColumnIndexOrThrow(LOCATIONS_COL_LATITUDE));
+                    double lng = c.getDouble(c.getColumnIndexOrThrow(LOCATIONS_COL_LONGITUDE));
+                    long time = c.getLong(c.getColumnIndexOrThrow(LOCATIONS_COL_TIME));
+                    Float acc = null;
+                    int accColIdx = c.getColumnIndexOrThrow(LOCATIONS_COL_ACCURACY);
+                    if (c.isNull(accColIdx)) {
+                        acc = c.getFloat(accColIdx);
+                    }
+                    Float speed = null;
+                    int speedColIdx = c.getColumnIndexOrThrow(LOCATIONS_COL_SPEED);
+                    if (c.isNull(speedColIdx)) {
+                        speed = c.getFloat(speedColIdx);
+                    }
+                    fl = new FriendLocation(friendRecordId, lat, lng, time, acc, speed);
+                }
+            }
+
+            return fl;
+        }
+
+        @WorkerThread
+        @Nullable
         private FriendRecord getFriendMatchingBlob(@NonNull final byte[] blob, @NonNull String matchingColumn) {
             FriendRecord fr = null;
             SQLiteDatabase db = getReadableDatabase();
@@ -224,15 +301,7 @@ public class DB {
             };
             try (Cursor c = db.rawQueryWithFactory(factory, sql, null, FRIENDS_TABLE)) {
                 if (c.moveToNext()) {
-                    fr = new FriendRecord();
-                    fr.id = c.getLong(c.getColumnIndexOrThrow(FRIENDS_COL_ID));
-                    fr.userId = c.getBlob(c.getColumnIndexOrThrow(FRIENDS_COL_USER_ID));
-                    fr.username = c.getString(c.getColumnIndexOrThrow(FRIENDS_COL_USERNAME));
-                    fr.publicKey = c.getBlob(c.getColumnIndexOrThrow(FRIENDS_COL_PUBLIC_KEY));
-                    fr.sendingBoxId = c.getBlob(c.getColumnIndexOrThrow(FRIENDS_COL_SENDING_BOX_ID));
-                    fr.receivingBoxId = c.getBlob(c.getColumnIndexOrThrow(FRIENDS_COL_RECEIVING_BOX_ID));
-                    fr.shareRequested = c.getInt(c.getColumnIndexOrThrow(FRIENDS_COL_SHARE_REQUESTED)) != 0;
-                    fr.shareRequestNote = c.getString(c.getColumnIndexOrThrow(FRIENDS_COL_SHARE_REQUEST_NOTE));
+                    fr = readFromCursor(c);
                 }
             }
 
@@ -258,34 +327,9 @@ public class DB {
         private ArrayList<FriendRecord> getFriends() {
             ArrayList<FriendRecord> records = new ArrayList<>();
             SQLiteDatabase db = getReadableDatabase();
-            String[] cols = new String[]{
-                    FRIENDS_COL_ID,
-                    FRIENDS_COL_USERNAME,
-                    FRIENDS_COL_USER_ID,
-                    FRIENDS_COL_PUBLIC_KEY,
-                    FRIENDS_COL_SENDING_BOX_ID,
-                    FRIENDS_COL_RECEIVING_BOX_ID,
-                    FRIENDS_COL_SHARE_REQUESTED,
-                    FRIENDS_COL_SHARE_REQUEST_NOTE};
-            try (Cursor cursor = db.query(FRIENDS_TABLE, cols, null, null, null, null, null, null)) {
-                int idIdx = cursor.getColumnIndexOrThrow(FRIENDS_COL_ID);
-                int usernameIdx = cursor.getColumnIndexOrThrow(FRIENDS_COL_USERNAME);
-                int userIdIdx = cursor.getColumnIndexOrThrow(FRIENDS_COL_USER_ID);
-                int publicKeyIdx = cursor.getColumnIndexOrThrow(FRIENDS_COL_PUBLIC_KEY);
-                int sendingBoxIdIdx = cursor.getColumnIndexOrThrow(FRIENDS_COL_SENDING_BOX_ID);
-                int receivingBoxIdIdx = cursor.getColumnIndexOrThrow(FRIENDS_COL_RECEIVING_BOX_ID);
-                int shareRequestedIdx = cursor.getColumnIndexOrThrow(FRIENDS_COL_SHARE_REQUESTED);
-                int shareRequestNoteIdx = cursor.getColumnIndexOrThrow(FRIENDS_COL_SHARE_REQUEST_NOTE);
+            try (Cursor cursor = db.query(FRIENDS_TABLE, FRIENDS_COLUMNS, null, null, null, null, null, null)) {
                 while (cursor.moveToNext()) {
-                    FriendRecord fr = new FriendRecord();
-                    fr.id = cursor.getInt(idIdx);
-                    fr.username = cursor.getString(usernameIdx);
-                    fr.userId = cursor.getBlob(userIdIdx);
-                    fr.publicKey = cursor.getBlob(publicKeyIdx);
-                    fr.sendingBoxId = cursor.getBlob(sendingBoxIdIdx);
-                    fr.receivingBoxId = cursor.getBlob(receivingBoxIdIdx);
-                    fr.shareRequested = cursor.getInt(shareRequestedIdx) != 0;
-                    fr.shareRequestNote = cursor.getString(shareRequestNoteIdx);
+                    FriendRecord fr = readFromCursor(cursor);
                     records.add(fr);
                 }
             }
@@ -298,34 +342,9 @@ public class DB {
         private ArrayList<FriendRecord> getFriendsToShareWith() {
             ArrayList<FriendRecord> records = new ArrayList<>();
             SQLiteDatabase db = getReadableDatabase();
-            String[] cols = new String[]{
-                    FRIENDS_COL_ID,
-                    FRIENDS_COL_USERNAME,
-                    FRIENDS_COL_USER_ID,
-                    FRIENDS_COL_PUBLIC_KEY,
-                    FRIENDS_COL_SENDING_BOX_ID,
-                    FRIENDS_COL_RECEIVING_BOX_ID,
-                    FRIENDS_COL_SHARE_REQUESTED,
-                    FRIENDS_COL_SHARE_REQUEST_NOTE};
-            try (Cursor cursor = db.query(FRIENDS_TABLE, cols, FRIENDS_COL_SENDING_BOX_ID + " IS NOT NULL", null, null, null, null, null)) {
-                int idIdx = cursor.getColumnIndexOrThrow(FRIENDS_COL_ID);
-                int usernameIdx = cursor.getColumnIndexOrThrow(FRIENDS_COL_USERNAME);
-                int userIdIdx = cursor.getColumnIndexOrThrow(FRIENDS_COL_USER_ID);
-                int publicKeyIdx = cursor.getColumnIndexOrThrow(FRIENDS_COL_PUBLIC_KEY);
-                int sendingBoxIdIdx = cursor.getColumnIndexOrThrow(FRIENDS_COL_SENDING_BOX_ID);
-                int receivingBoxIdIdx = cursor.getColumnIndexOrThrow(FRIENDS_COL_RECEIVING_BOX_ID);
-                int shareRequestedIdx = cursor.getColumnIndexOrThrow(FRIENDS_COL_SHARE_REQUESTED);
-                int shareRequestNoteIdx = cursor.getColumnIndexOrThrow(FRIENDS_COL_SHARE_REQUEST_NOTE);
+            try (Cursor cursor = db.query(FRIENDS_TABLE, FRIENDS_COLUMNS, FRIENDS_COL_SENDING_BOX_ID + " IS NOT NULL", null, null, null, null, null)) {
                 while (cursor.moveToNext()) {
-                    FriendRecord fr = new FriendRecord();
-                    fr.id = cursor.getInt(idIdx);
-                    fr.username = cursor.getString(usernameIdx);
-                    fr.userId = cursor.getBlob(userIdIdx);
-                    fr.publicKey = cursor.getBlob(publicKeyIdx);
-                    fr.sendingBoxId = cursor.getBlob(sendingBoxIdIdx);
-                    fr.receivingBoxId = cursor.getBlob(receivingBoxIdIdx);
-                    fr.shareRequested = cursor.getInt(shareRequestedIdx) != 0;
-                    fr.shareRequestNote = cursor.getString(shareRequestNoteIdx);
+                    FriendRecord fr = readFromCursor(cursor);
                     records.add(fr);
                 }
             }
@@ -376,14 +395,30 @@ public class DB {
         }
 
         @WorkerThread
-        private void setSendingDropBoxId(@NonNull String username, @NonNull @Size(Constants.DROP_BOX_ID_LENGTH) byte[] boxId) throws DBException {
+        private void setShareGranted(@NonNull String username, @NonNull @Size(Constants.DROP_BOX_ID_LENGTH) byte[] boxId) throws DBException {
             SQLiteDatabase db = getWritableDatabase();
             ContentValues cv = new ContentValues();
             cv.put(FRIENDS_COL_SENDING_BOX_ID, boxId);
+            cv.put(FRIENDS_COL_SHARE_REQUESTED, false);
             long result = db.update(FRIENDS_TABLE, cv, "username=?", new String[]{username});
             if (result != 1) {
                 throw new DBException("Num affected rows was " + result + " for username '" + username + "'");
             }
+        }
+
+        @WorkerThread
+        @NonNull
+        private FriendRecord readFromCursor(Cursor c) {
+            FriendRecord f = new FriendRecord();
+            f.id = c.getLong(c.getColumnIndexOrThrow(FRIENDS_COL_ID));
+            f.userId = c.getBlob(c.getColumnIndexOrThrow(FRIENDS_COL_USER_ID));
+            f.username = c.getString(c.getColumnIndexOrThrow(FRIENDS_COL_USERNAME));
+            f.publicKey = c.getBlob(c.getColumnIndexOrThrow(FRIENDS_COL_PUBLIC_KEY));
+            f.sendingBoxId = c.getBlob(c.getColumnIndexOrThrow(FRIENDS_COL_SENDING_BOX_ID));
+            f.receivingBoxId = c.getBlob(c.getColumnIndexOrThrow(FRIENDS_COL_RECEIVING_BOX_ID));
+            f.shareRequested = c.getInt(c.getColumnIndexOrThrow(FRIENDS_COL_SHARE_REQUESTED)) != 0;
+            f.shareRequestNote = c.getString(c.getColumnIndexOrThrow(FRIENDS_COL_SHARE_REQUEST_NOTE));
+            return f;
         }
     }
 }

@@ -47,8 +47,8 @@ public class LocationJobService extends JobService implements LocationListener {
         // because Android N has a minimum period duration of 15 minutes.
         ComponentName compName = new ComponentName(context, LocationJobService.class);
         JobInfo.Builder builder = new JobInfo.Builder(LocationJobService.JOB_ID, compName)
-                .setMinimumLatency(10 * DateUtils.MINUTE_IN_MILLIS)
-//                .setMinimumLatency(15 * DateUtils.SECOND_IN_MILLIS)
+//                .setMinimumLatency(10 * DateUtils.MINUTE_IN_MILLIS)
+                .setMinimumLatency(15 * DateUtils.SECOND_IN_MILLIS)
                 .setRequiredNetworkType(JobInfo.NETWORK_TYPE_ANY)
                 .setRequiresCharging(false)
                 .setRequiresDeviceIdle(false);
