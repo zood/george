@@ -37,7 +37,6 @@ public class FriendsActivity extends AppCompatActivity implements FriendsAdapter
     }
 
     private EditText mUsernameField;
-    private EditText mNoteField;
     private CheckBox mShareCheckbox;
     private FriendsAdapter mAdapter;
 
@@ -79,12 +78,11 @@ public class FriendsActivity extends AppCompatActivity implements FriendsAdapter
             @Override
             public void onClick(DialogInterface dialog, int which) {
                 final String username = mUsernameField.getText().toString();
-                final String note = mNoteField.getText().toString();
                 final boolean share = mShareCheckbox.isChecked();
                 App.runInBackground(new WorkerRunnable() {
                     @Override
                     public void run() {
-                        onSendFriendRequest(username, note, share);
+                        onSendFriendRequest(username, share);
                     }
                 });
             }
@@ -94,12 +92,11 @@ public class FriendsActivity extends AppCompatActivity implements FriendsAdapter
         dialog.show();
 
         mUsernameField = (EditText) dialog.findViewById(R.id.username);
-        mNoteField = (EditText) dialog.findViewById(R.id.note);
         mShareCheckbox = (CheckBox) dialog.findViewById(R.id.share_location_checkbox);
     }
 
     @WorkerThread
-    private void onSendFriendRequest(@NonNull String username, String note, boolean shareLocation) {
+    private void onSendFriendRequest(@NonNull String username, boolean shareLocation) {
         Prefs prefs = Prefs.get(this);
         String accessToken = prefs.getAccessToken();
         if (TextUtils.isEmpty(accessToken)) {
@@ -120,7 +117,7 @@ public class FriendsActivity extends AppCompatActivity implements FriendsAdapter
                 return;
             }
             User userToRequest = searchResponse.body();
-            UserComm comm = UserComm.newLocationSharingRequest(note);
+            UserComm comm = UserComm.newLocationSharingRequest();
             PKEncryptedMessage msg = Sodium.publicKeyEncrypt(comm.toJSON(), userToRequest.publicKey, keyPair.secretKey);
             Response<Void> sendResponse = api.sendMessage(Hex.toHexString(userToRequest.id), msg).execute();
             if (!sendResponse.isSuccessful()) {
@@ -130,7 +127,9 @@ public class FriendsActivity extends AppCompatActivity implements FriendsAdapter
             }
 
             byte[] sendingBoxId = null;
+            Long requestSendDate = null;
             if (shareLocation) {
+                requestSendDate = System.currentTimeMillis();
                 sendingBoxId = new byte[Constants.DROP_BOX_ID_LENGTH];
                 new SecureRandom().nextBytes(sendingBoxId);
                 comm = UserComm.newLocationSharingGrant(sendingBoxId);
@@ -144,7 +143,7 @@ public class FriendsActivity extends AppCompatActivity implements FriendsAdapter
             }
 
             DB db = DB.get(this);
-            db.addFriend(username, userToRequest.id, userToRequest.publicKey, sendingBoxId, null, false, null);
+            db.addFriend(username, userToRequest.id, userToRequest.publicKey, sendingBoxId, null, false, requestSendDate);
 
             Utils.showStringAlert(this, null, "User request added");
             mAdapter.reloadFriends(this);
@@ -174,7 +173,7 @@ public class FriendsActivity extends AppCompatActivity implements FriendsAdapter
         byte[] msgBytes = comm.toJSON();
         FriendRecord friend = DB.get(this).getFriend(userId);
         if (friend == null) {
-            L.w("friend with user id " + Hex.toHexString(userId) + " doesn't work");
+            L.w("friend with user id " + Hex.toHexString(userId) + " doesn't exist");
             return;
         }
         PKEncryptedMessage encMsg = Sodium.publicKeyEncrypt(msgBytes, friend.publicKey, kp.secretKey);
@@ -201,6 +200,50 @@ public class FriendsActivity extends AppCompatActivity implements FriendsAdapter
         mAdapter.reloadFriends(this);
     }
 
+    @WorkerThread
+    private void rejectFriendRequest(byte[] userId) {
+        Prefs prefs = Prefs.get(this);
+        String accessToken = prefs.getAccessToken();
+        if (TextUtils.isEmpty(accessToken)) {
+            Utils.showStringAlert(this, null, "Your access token is missing");
+            return;
+        }
+        KeyPair kp = Prefs.get(this).getKeyPair();
+        if (kp == null) {
+            Utils.showStringAlert(this, null, "Your key pair is missing");
+            return;
+        }
+        UserComm comm = UserComm.newLocationSharingRejection();
+        byte[] msgBytes = comm.toJSON();
+        FriendRecord friend = DB.get(this).getFriend(userId);
+        if (friend == null) {
+            L.w("friend with user id " + Hex.toHexString(userId) + " doesn't exist");
+            return;
+        }
+        PKEncryptedMessage encMsg = Sodium.publicKeyEncrypt(msgBytes, friend.publicKey, kp.secretKey);
+        OscarAPI client = OscarClient.newInstance(accessToken);
+        try {
+            Response<Void> response = client.sendMessage(Hex.toHexString(userId), encMsg).execute();
+            if (!response.isSuccessful()) {
+                Utils.showStringAlert(this, null, "Problem sending rejection");
+                return;
+            }
+        } catch (IOException ex) {
+            Utils.showStringAlert(this, null, "Serious problem sending rejection");
+            L.w("Serious problem sending rejection", ex);
+            return;
+        }
+
+        try {
+            DB.get(this).setShareRequestedOfMe(friend.username, false);
+        } catch (DB.DBException ex) {
+            Utils.showStringAlert(this, null, "serious problem recording rejection");
+            L.w("serious problem recording rejection", ex);
+        }
+
+        mAdapter.reloadFriends(this);
+    }
+
     @Override
     @UiThread
     public void onApproveFriendRequest(final byte[] userId) {
@@ -215,7 +258,13 @@ public class FriendsActivity extends AppCompatActivity implements FriendsAdapter
 
     @Override
     @UiThread
-    public void onRejectFriendRequest(byte[] userId) {
+    public void onRejectFriendRequest(final byte[] userId) {
         L.i("onreject: " + Hex.toHexString(userId));
+        App.runInBackground(new WorkerRunnable() {
+            @Override
+            public void run() {
+                rejectFriendRequest(userId);
+            }
+        });
     }
 }

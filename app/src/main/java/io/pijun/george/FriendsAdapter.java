@@ -39,9 +39,9 @@ class FriendsAdapter extends RecyclerView.Adapter {
 
         @Override
         public int compare(FriendRecord l, FriendRecord r) {
-            if (l.shareRequested && !r.shareRequested) {
+            if (l.shareRequestedOfMe && !r.shareRequestedOfMe) {
                 return -1;
-            } else if (r.shareRequested && !l.shareRequested) {
+            } else if (r.shareRequestedOfMe && !l.shareRequestedOfMe) {
                 return 1;
             }
 
@@ -92,9 +92,21 @@ class FriendsAdapter extends RecyclerView.Adapter {
         h.profile.show("arashpayan");
         h.username.setText(record.username);
         if (item.viewType == R.layout.friend_item) {
-            h.location.setText("3682 Sunset Knolls Dr.");
+            if (record.receivingBoxId == null) {
+                if (record.friendRequestSendDate != null) {
+                    h.location.setText("Waiting for friend request response");
+                } else {
+                    h.location.setText("Not sharing location with you");
+                }
+            } else {
+                h.location.setText("3682 Sunset Knolls Dr.");
+            }
         } else if (item.viewType == R.layout.friend_request_item) {
-            h.location.setText("1652 Valecroft Ave.");
+            if (record.receivingBoxId == null) {
+                h.location.setText("Chose not to share location with you");
+            } else {
+                h.location.setText("1652 Valecroft Ave.");
+            }
             String msg = context.getString(R.string.share_your_location_with_msg, record.username);
             h.sharePrompt.setText(msg);
             h.shareButton.setTag(position);
@@ -126,7 +138,7 @@ class FriendsAdapter extends RecyclerView.Adapter {
                 final ArrayList<FriendRecord> records = db.getFriends();
                 final ArrayList<FriendItem> items = new ArrayList<>(records.size());
                 for (FriendRecord fr : records) {
-                    if (fr.shareRequested) {
+                    if (fr.shareRequestedOfMe) {
                         items.add(new FriendItem(R.layout.friend_request_item, fr.id));
                     } else {
                         items.add(new FriendItem(R.layout.friend_item, fr.id));

@@ -1,5 +1,7 @@
 package io.pijun.george.api;
 
+import android.support.annotation.Nullable;
+
 public class ReverseGeocoding {
 
     public static class AddressComponent {
@@ -18,4 +20,21 @@ public class ReverseGeocoding {
     public String status;
     public Result[] results;
 
+    @Nullable
+    public String getLocalityAddress() {
+        if (status == null || !status.equals("OK")) {
+            return null;
+        }
+
+        for (Result r : results) {
+            // check the types for 'locality'
+            for (String t : r.types) {
+                if (t.equals("locality")) {
+                    return r.formattedAddress;
+                }
+            }
+        }
+
+        return null;
+    }
 }

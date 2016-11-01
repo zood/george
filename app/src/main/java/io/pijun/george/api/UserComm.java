@@ -2,8 +2,6 @@ package io.pijun.george.api;
 
 import android.location.Location;
 
-import com.google.gson.annotations.SerializedName;
-
 import java.io.ByteArrayInputStream;
 import java.io.InputStreamReader;
 import java.util.Arrays;
@@ -13,7 +11,6 @@ import io.pijun.george.Constants;
 public class UserComm {
 
     public CommType type;
-    public String note;
     public byte[] dropBox;
 
     public boolean processed;
@@ -25,10 +22,9 @@ public class UserComm {
     public Float accuracy;
     public Float speed;
 
-    public static UserComm newLocationSharingRequest(String note) {
+    public static UserComm newLocationSharingRequest() {
         UserComm c = new UserComm();
         c.type = CommType.LocationSharingRequest;
-        c.note = note;
         return c;
     }
 
@@ -36,6 +32,12 @@ public class UserComm {
         UserComm c = new UserComm();
         c.type = CommType.LocationSharingGrant;
         c.dropBox = boxId;
+        return c;
+    }
+
+    public static UserComm newLocationSharingRejection() {
+        UserComm c = new UserComm();
+        c.type = CommType.LocationSharingRejection;
         return c;
     }
 
@@ -96,7 +98,6 @@ public class UserComm {
     public String toString() {
         return "UserComm{" +
                 "type=" + type +
-                ", note='" + note + '\'' +
                 ", dropBox=" + Arrays.toString(dropBox) +
                 ", processed=" + processed +
                 ", latitude=" + latitude +

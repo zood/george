@@ -1,7 +1,5 @@
 package io.pijun.george.api;
 
-import android.support.annotation.Nullable;
-
 public class User {
 
     public String username;

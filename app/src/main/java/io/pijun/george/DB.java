@@ -53,9 +53,9 @@ public class DB {
                           @NonNull @Size(Constants.PUBLIC_KEY_LENGTH) byte[] publicKey,
                           @Nullable @Size(Constants.DROP_BOX_ID_LENGTH) byte[] sendingBoxId,
                           @Nullable @Size(Constants.DROP_BOX_ID_LENGTH) byte[] receivingBoxId,
-                          boolean shareRequested,
-                          @Nullable String shareRequestNote) throws DBException {
-        return mDbHelper.addFriend(username, userId, publicKey, sendingBoxId, receivingBoxId, shareRequested, shareRequestNote);
+                          boolean shareRequestedOfMe,
+                          Long friendRequestSendDate) throws DBException {
+        return mDbHelper.addFriend(username, userId, publicKey, sendingBoxId, receivingBoxId, shareRequestedOfMe, friendRequestSendDate);
     }
 
     @WorkerThread
@@ -114,8 +114,8 @@ public class DB {
     }
 
     @WorkerThread
-    public void setShareRequested(@NonNull String username, boolean shareRequested) throws DBException {
-        mDbHelper.setShareRequested(username, shareRequested);
+    public void setShareRequestedOfMe(@NonNull String username, boolean shareRequestedOfMe) throws DBException {
+        mDbHelper.setShareRequestedOfMe(username, shareRequestedOfMe);
     }
 
     @WorkerThread
@@ -132,8 +132,8 @@ public class DB {
         private static final String FRIENDS_COL_PUBLIC_KEY = "public_key";
         private static final String FRIENDS_COL_SENDING_BOX_ID = "sending_box_id";
         private static final String FRIENDS_COL_RECEIVING_BOX_ID = "receiving_box_id";
-        private static final String FRIENDS_COL_SHARE_REQUESTED = "share_requested";
-        private static final String FRIENDS_COL_SHARE_REQUEST_NOTE = "share_request_note";
+        private static final String FRIENDS_COL_SHARE_REQUESTED_OF_ME = "share_requested_of_me";
+        private static final String FRIENDS_COL_FRIEND_REQUEST_SEND_DATE = "friend_request_send_date";
         private static final String[] FRIENDS_COLUMNS = new String[]{
                 FRIENDS_COL_ID,
                 FRIENDS_COL_USERNAME,
@@ -141,8 +141,8 @@ public class DB {
                 FRIENDS_COL_PUBLIC_KEY,
                 FRIENDS_COL_SENDING_BOX_ID,
                 FRIENDS_COL_RECEIVING_BOX_ID,
-                FRIENDS_COL_SHARE_REQUESTED,
-                FRIENDS_COL_SHARE_REQUEST_NOTE
+                FRIENDS_COL_SHARE_REQUESTED_OF_ME,
+                FRIENDS_COL_FRIEND_REQUEST_SEND_DATE
         };
 
         private static final String LOCATIONS_TABLE = "locations";
@@ -177,8 +177,8 @@ public class DB {
                     + FRIENDS_COL_PUBLIC_KEY + " BLOB NOT NULL, "
                     + FRIENDS_COL_SENDING_BOX_ID + " BLOB, "
                     + FRIENDS_COL_RECEIVING_BOX_ID + " BLOB, "
-                    + FRIENDS_COL_SHARE_REQUESTED + " INTEGER NOT NULL, " // use as a boolean
-                    + FRIENDS_COL_SHARE_REQUEST_NOTE + " TEXT)";
+                    + FRIENDS_COL_SHARE_REQUESTED_OF_ME + " INTEGER NOT NULL, " // use as a boolean
+                    + FRIENDS_COL_FRIEND_REQUEST_SEND_DATE + " INTEGER)";  // unix epoch time
             db.execSQL(createFriends);
 
             String createLocations = "CREATE TABLE "
@@ -203,8 +203,8 @@ public class DB {
                                @NonNull @Size(Constants.PUBLIC_KEY_LENGTH) byte[] publicKey,
                                @Nullable @Size(Constants.DROP_BOX_ID_LENGTH) byte[] sendingBoxId,
                                @Nullable @Size(Constants.DROP_BOX_ID_LENGTH) byte[] receivingBoxId,
-                               boolean shareRequested,
-                               @Nullable String shareRequestNote) throws DBException {
+                               boolean shareRequestedOfMe,
+                               Long friendRequestSendDate) throws DBException {
             //noinspection ConstantConditions
             if (username == null) {
                 throw new IllegalArgumentException("username must not be null");
@@ -216,8 +216,8 @@ public class DB {
             cv.put(FRIENDS_COL_PUBLIC_KEY, publicKey);
             cv.put(FRIENDS_COL_SENDING_BOX_ID, sendingBoxId);
             cv.put(FRIENDS_COL_RECEIVING_BOX_ID, receivingBoxId);
-            cv.put(FRIENDS_COL_SHARE_REQUESTED, shareRequested);
-            cv.put(FRIENDS_COL_SHARE_REQUEST_NOTE, shareRequestNote);
+            cv.put(FRIENDS_COL_SHARE_REQUESTED_OF_ME, shareRequestedOfMe);
+            cv.put(FRIENDS_COL_FRIEND_REQUEST_SEND_DATE, friendRequestSendDate);
             long result = db.insert(FRIENDS_TABLE, null, cv);
             if (result == 0) {
                 throw new DBException("Error creating friend " + username);
@@ -262,12 +262,12 @@ public class DB {
                     long time = c.getLong(c.getColumnIndexOrThrow(LOCATIONS_COL_TIME));
                     Float acc = null;
                     int accColIdx = c.getColumnIndexOrThrow(LOCATIONS_COL_ACCURACY);
-                    if (c.isNull(accColIdx)) {
+                    if (!c.isNull(accColIdx)) {
                         acc = c.getFloat(accColIdx);
                     }
                     Float speed = null;
                     int speedColIdx = c.getColumnIndexOrThrow(LOCATIONS_COL_SPEED);
-                    if (c.isNull(speedColIdx)) {
+                    if (!c.isNull(speedColIdx)) {
                         speed = c.getFloat(speedColIdx);
                     }
                     fl = new FriendLocation(friendRecordId, lat, lng, time, acc, speed);
@@ -282,16 +282,23 @@ public class DB {
         private FriendRecord getFriendMatchingBlob(@NonNull final byte[] blob, @NonNull String matchingColumn) {
             FriendRecord fr = null;
             SQLiteDatabase db = getReadableDatabase();
-            String sql = "SELECT " + FRIENDS_COL_ID + ", "
-                    + FRIENDS_COL_USERNAME + ", "
-                    + FRIENDS_COL_USER_ID + ", "
-                    + FRIENDS_COL_PUBLIC_KEY + ", "
-                    + FRIENDS_COL_SENDING_BOX_ID + ", "
-                    + FRIENDS_COL_RECEIVING_BOX_ID + ", "
-                    + FRIENDS_COL_SHARE_REQUESTED + ", "
-                    + FRIENDS_COL_SHARE_REQUEST_NOTE
-                    + " FROM " + FRIENDS_TABLE
-                    + " WHERE " + matchingColumn + "=?";
+            StringBuilder sql = new StringBuilder("SELECT ");
+            String delim = "";
+            for (String col : FRIENDS_COLUMNS) {
+                sql.append(delim).append(col);
+                delim = ",";
+            }
+            sql.append(" FROM ").append(FRIENDS_TABLE).append(" WHERE ").append(matchingColumn).append("=?");
+//            String sql = "SELECT " + FRIENDS_COL_ID + ", "
+//                    + FRIENDS_COL_USERNAME + ", "
+//                    + FRIENDS_COL_USER_ID + ", "
+//                    + FRIENDS_COL_PUBLIC_KEY + ", "
+//                    + FRIENDS_COL_SENDING_BOX_ID + ", "
+//                    + FRIENDS_COL_RECEIVING_BOX_ID + ", "
+//                    + FRIENDS_COL_SHARE_REQUESTED_OF_ME + ", "
+//                    + FRIENDS_COL_SHARE_REQUEST_NOTE
+//                    + " FROM " + FRIENDS_TABLE
+//                    + " WHERE " + matchingColumn + "=?";
             SQLiteDatabase.CursorFactory factory = new SQLiteDatabase.CursorFactory() {
                 @Override
                 public Cursor newCursor(SQLiteDatabase sqLiteDatabase, SQLiteCursorDriver driver, String editTable, SQLiteQuery query) {
@@ -299,7 +306,7 @@ public class DB {
                     return new SQLiteCursor(driver, editTable, query);
                 }
             };
-            try (Cursor c = db.rawQueryWithFactory(factory, sql, null, FRIENDS_TABLE)) {
+            try (Cursor c = db.rawQueryWithFactory(factory, sql.toString(), null, FRIENDS_TABLE)) {
                 if (c.moveToNext()) {
                     fr = readFromCursor(c);
                 }
@@ -312,7 +319,7 @@ public class DB {
         private int getFriendRequestsCount() {
             int count = 0;
             SQLiteDatabase db = getReadableDatabase();
-            String sql = "SELECT COUNT(*) FROM " + FRIENDS_TABLE + " WHERE " + FRIENDS_COL_SHARE_REQUESTED + "=1 AND " + FRIENDS_COL_SENDING_BOX_ID + " ISNULL";
+            String sql = "SELECT COUNT(*) FROM " + FRIENDS_TABLE + " WHERE " + FRIENDS_COL_SHARE_REQUESTED_OF_ME + "=1 AND " + FRIENDS_COL_SENDING_BOX_ID + " ISNULL";
             try (Cursor cursor = db.rawQuery(sql, null)) {
                 if (cursor.moveToNext()) {
                     count = cursor.getInt(0);
@@ -384,10 +391,10 @@ public class DB {
         }
 
         @WorkerThread
-        private void setShareRequested(@NonNull String username, boolean shareRequested) throws DBException {
+        private void setShareRequestedOfMe(@NonNull String username, boolean shareRequested) throws DBException {
             SQLiteDatabase db = getWritableDatabase();
             ContentValues cv = new ContentValues();
-            cv.put(FRIENDS_COL_SHARE_REQUESTED, shareRequested);
+            cv.put(FRIENDS_COL_SHARE_REQUESTED_OF_ME, shareRequested);
             long result = db.update(FRIENDS_TABLE, cv, "username=?", new String[]{username});
             if (result != 1) {
                 throw new DBException("Num affected rows was " + result + " for username '" + username + "'");
@@ -399,8 +406,8 @@ public class DB {
             SQLiteDatabase db = getWritableDatabase();
             ContentValues cv = new ContentValues();
             cv.put(FRIENDS_COL_SENDING_BOX_ID, boxId);
-            cv.put(FRIENDS_COL_SHARE_REQUESTED, false);
-            long result = db.update(FRIENDS_TABLE, cv, "username=?", new String[]{username});
+            cv.put(FRIENDS_COL_SHARE_REQUESTED_OF_ME, false);
+            long result = db.update(FRIENDS_TABLE, cv, FRIENDS_COL_USERNAME + "=?", new String[]{username});
             if (result != 1) {
                 throw new DBException("Num affected rows was " + result + " for username '" + username + "'");
             }
@@ -416,8 +423,12 @@ public class DB {
             f.publicKey = c.getBlob(c.getColumnIndexOrThrow(FRIENDS_COL_PUBLIC_KEY));
             f.sendingBoxId = c.getBlob(c.getColumnIndexOrThrow(FRIENDS_COL_SENDING_BOX_ID));
             f.receivingBoxId = c.getBlob(c.getColumnIndexOrThrow(FRIENDS_COL_RECEIVING_BOX_ID));
-            f.shareRequested = c.getInt(c.getColumnIndexOrThrow(FRIENDS_COL_SHARE_REQUESTED)) != 0;
-            f.shareRequestNote = c.getString(c.getColumnIndexOrThrow(FRIENDS_COL_SHARE_REQUEST_NOTE));
+            f.shareRequestedOfMe = c.getInt(c.getColumnIndexOrThrow(FRIENDS_COL_SHARE_REQUESTED_OF_ME)) != 0;
+            int frsdColIdx = c.getColumnIndexOrThrow(FRIENDS_COL_FRIEND_REQUEST_SEND_DATE);
+            if (!c.isNull(frsdColIdx)) {
+                f.friendRequestSendDate = c.getLong(frsdColIdx);
+            }
+
             return f;
         }
     }

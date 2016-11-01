@@ -12,7 +12,6 @@ import io.pijun.george.api.OscarError;
 import io.pijun.george.api.User;
 import io.pijun.george.api.UserComm;
 import io.pijun.george.crypto.KeyPair;
-import io.pijun.george.event.FriendLocationUpdated;
 import io.pijun.george.event.LocationSharingGranted;
 import io.pijun.george.event.LocationSharingRequested;
 import io.pijun.george.models.FriendLocation;
@@ -119,15 +118,17 @@ public class MessageUtils {
             case LocationSharingRequest:
                 try {
                     if (fr != null) {
-                        DB.get(context).setShareRequested(senderUsername, true);
+                        DB.get(context).setShareRequestedOfMe(senderUsername, true);
                     } else {
-                        DB.get(context).addFriend(senderUsername, senderId, senderPubKey, null, null, true, comm.note);
+                        DB.get(context).addFriend(senderUsername, senderId, senderPubKey, null, null, true, null);
                     }
                 } catch (DB.DBException ex) {
                     L.w("error recording sharing request", ex);
                     return ERROR_DATABASE_EXCEPTION;
                 }
                 App.postOnBus(new LocationSharingRequested());
+                break;
+            case LocationSharingRejection:
                 break;
             case LocationInfo:
                 if (fr == null) {

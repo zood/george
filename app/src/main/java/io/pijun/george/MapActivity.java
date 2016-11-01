@@ -53,17 +53,22 @@ import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.squareup.otto.Subscribe;
 
+import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Locale;
 
+import io.pijun.george.api.GMapsClient;
 import io.pijun.george.api.PackageWatcher;
+import io.pijun.george.api.ReverseGeocoding;
 import io.pijun.george.event.LocationSharingRequested;
 import io.pijun.george.models.FriendLocation;
 import io.pijun.george.models.FriendRecord;
 import io.pijun.george.service.FcmTokenRegistrar;
 import io.pijun.george.service.FriendLocationsRefresher;
 import io.pijun.george.service.LocationMonitor;
+import retrofit2.Response;
 
-public class MapActivity extends AppCompatActivity implements OnMapReadyCallback, GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener, LocationListener {
+public class MapActivity extends AppCompatActivity implements OnMapReadyCallback, GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener, LocationListener, GoogleMap.OnMarkerClickListener {
 
     private static final int REQUEST_LOCATION_PERMISSION = 18;
     private static final int REQUEST_LOCATION_SETTINGS = 20;
@@ -104,6 +109,8 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
         mMapView = (MapView) findViewById(R.id.map);
         mMapView.onCreate(savedInstanceState);
         mMapView.getMapAsync(this);
+
+        L.i("locale: " + Locale.getDefault().getLanguage());
 
         findViewById(R.id.bottom_textview).setOnClickListener(new View.OnClickListener() {
             @Override
@@ -552,4 +559,31 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
         App.postOnBus(location);
     }
 
+    @Override
+    @UiThread
+    public boolean onMarkerClick(final Marker marker) {
+        final LatLng pos = marker.getPosition();
+        App.runInBackground(new WorkerRunnable() {
+            @Override
+            public void run() {
+                String ll = pos.latitude + "," + pos.longitude;
+                String lang = Locale.getDefault().getLanguage();
+                try {
+                    Response<ReverseGeocoding> response = GMapsClient.get().getReverseGeocoding(ll, lang).execute();
+                    if (response.isSuccessful()) {
+                        L.i("received snippet");
+                        ReverseGeocoding rg = response.body();
+                        String localityAddress = rg.getLocalityAddress();
+                        L.i("locality address: " + localityAddress);
+                        if (localityAddress != null) {
+                            marker.setSnippet(localityAddress);
+                        }
+                    }
+                } catch (IOException ex) {
+                    L.w("serious problem obtaining reverse geocoding", ex);
+                }
+            }
+        });
+        return false;
+    }
 }

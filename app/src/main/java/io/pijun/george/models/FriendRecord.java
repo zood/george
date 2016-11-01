@@ -1,7 +1,5 @@
 package io.pijun.george.models;
 
-import java.util.Arrays;
-
 import io.pijun.george.Hex;
 
 public class FriendRecord {
@@ -12,8 +10,8 @@ public class FriendRecord {
     public byte[] publicKey;
     public byte[] sendingBoxId;
     public byte[] receivingBoxId;
-    public boolean shareRequested;
-    public String shareRequestNote;
+    public boolean shareRequestedOfMe;
+    public Long friendRequestSendDate;
 
     @Override
     public String toString() {
@@ -24,8 +22,8 @@ public class FriendRecord {
                 ", publicKey=" + Hex.toHexString(publicKey) +
                 ", sendingBoxId=" + Hex.toHexString(sendingBoxId) +
                 ", receivingBoxId=" + Hex.toHexString(receivingBoxId) +
-                ", shareRequested=" + shareRequested +
-                ", shareRequestNote='" + shareRequestNote + '\'' +
+                ", shareRequestedOfMe=" + shareRequestedOfMe +
+                ", friendRequestSendDate='" + friendRequestSendDate + '\'' +
                 '}';
     }
 }

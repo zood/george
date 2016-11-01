@@ -7,7 +7,7 @@ public class GMapsClient {
 
     private static volatile GMapsAPI sGMapsApi;
 
-    public static GMapsAPI newInstance() {
+    private static GMapsAPI newInstance() {
         String url = "https://maps.googleapis.com/maps/api/";
 
         Retrofit retrofit = new Retrofit.Builder()
