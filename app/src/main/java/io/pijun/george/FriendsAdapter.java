@@ -16,12 +16,15 @@ import java.util.Comparator;
 
 import io.pijun.george.models.FriendRecord;
 import io.pijun.george.models.RequestRecord;
+import io.pijun.george.models.RequestResponse;
 import io.pijun.george.models.UserRecord;
 
 class FriendsAdapter extends RecyclerView.Adapter {
 
     private ArrayList<FriendRecord> mFriends = new ArrayList<>();
     private ArrayList<RequestRecord> mRequests = new ArrayList<>();
+    private LongSparseArray<RequestRecord> mOutgoingRequests = new LongSparseArray<>();
+
     private ArrayList<FriendItem> mItems = new ArrayList<>();
     private LongSparseArray<UserRecord> mCachedUsers = new LongSparseArray<>();
     private FriendsAdapterListener mListener;
@@ -100,7 +103,21 @@ class FriendsAdapter extends RecyclerView.Adapter {
             FriendRecord friend = mFriends.get((int)item.id);
             h.profile.show(friend.user.username);
             h.username.setText(friend.user.username);
-            h.location.setText("3682 Sunset Knolls Dr. (not real)");
+            if (friend.receivingBoxId == null) {
+                // check if we have an outgoing request
+                RequestRecord requestRecord = mOutgoingRequests.get(friend.userId);
+                if (requestRecord != null) {
+                    if (requestRecord.response == RequestResponse.Rejected) {
+                        h.location.setText("Not sharing location with you");
+                    } else if (requestRecord.response == RequestResponse.NoResponse) {
+                        h.location.setText("Waiting for sharing approval");
+                    }
+                } else {
+                    h.location.setText("");
+                }
+            } else {
+                h.location.setText("3682 Sunset Knolls Dr. (not real)");
+            }
         } else if (item.viewType == R.layout.friend_request_item) {
             RequestRecord request = mRequests.get((int) item.id);
             UserRecord user = mCachedUsers.get(request.userId);
@@ -139,8 +156,10 @@ class FriendsAdapter extends RecyclerView.Adapter {
                 DB db = DB.get(context);
                 final ArrayList<FriendRecord> friends = db.getFriends();
                 final ArrayList<RequestRecord> incomingRequests = db.getIncomingRequests(true);
+                final ArrayList<RequestRecord> outgoingRequests = db.getOutgoingRequests();
                 final ArrayList<FriendItem> items = new ArrayList<>(friends.size() + incomingRequests.size());
                 Collections.sort(incomingRequests, new RequestComparator());
+                mCachedUsers.clear();
                 for (int i=0; i<incomingRequests.size(); i++) {
                     items.add(new FriendItem(R.layout.friend_request_item, i));
                     // cache the user's record
@@ -158,6 +177,10 @@ class FriendsAdapter extends RecyclerView.Adapter {
                         mFriends = friends;
                         mRequests = incomingRequests;
                         mItems = items;
+                        mOutgoingRequests.clear();
+                        for (RequestRecord rr : outgoingRequests) {
+                            mOutgoingRequests.put(rr.userId, rr);
+                        }
                         notifyDataSetChanged();
                     }
                 });
