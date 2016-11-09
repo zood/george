@@ -14,6 +14,7 @@ import java.util.concurrent.Executors;
 public class App extends Application {
 
     private static volatile App sApp;
+    public static boolean isInForeground = false;
     private Handler mUiThreadHandler;
     private ExecutorService mExecutor;
     private Bus mBus;

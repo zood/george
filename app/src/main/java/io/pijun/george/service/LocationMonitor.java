@@ -5,6 +5,8 @@ import android.app.job.JobScheduler;
 import android.content.Context;
 import android.content.Intent;
 import android.location.Location;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.os.Binder;
 import android.os.Handler;
 import android.os.HandlerThread;
@@ -15,6 +17,7 @@ import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.annotation.UiThread;
 import android.support.annotation.WorkerThread;
+import android.support.v4.net.ConnectivityManagerCompat;
 import android.text.format.DateUtils;
 
 import com.google.android.gms.common.ConnectionResult;
@@ -68,6 +71,7 @@ public class LocationMonitor extends Service {
     private LinkedList<Location> mLocations = new LinkedList<>();
     private final IBinder mBinder = new LocalBinder();
     private GoogleApiClient mGoogleClient;
+    private long mLastFlushTime = 0;
 
     @Nullable
     @Override
@@ -152,6 +156,22 @@ public class LocationMonitor extends Service {
 
                 L.i("LM.onLocationChanged - " + l);
                 mLocations.add(l);
+
+                // If the app is in foreground, and there is internet connectivity, and we haven't
+                // flushed the location in at least a minute, perform a flush
+                long timeSinceFlush = System.currentTimeMillis() - mLastFlushTime;
+                if (App.isInForeground && timeSinceFlush > DateUtils.MINUTE_IN_MILLIS) {
+                    ConnectivityManager cm = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
+                    NetworkInfo activeNetwork = cm.getActiveNetworkInfo();
+                    boolean isConnected = activeNetwork != null && activeNetwork.isConnectedOrConnecting();
+                    if (isConnected) {
+                        L.i("about to perform foreground flush");
+                        flush();
+                        JobScheduler scheduler = (JobScheduler) getSystemService(Context.JOB_SCHEDULER_SERVICE);
+                        L.i("deferring location");
+                        scheduler.schedule(LocationJobService.getJobInfo(LocationMonitor.this));
+                    }
+                }
             }
         });
     }
@@ -190,9 +210,12 @@ public class LocationMonitor extends Service {
                 Response<Void> response = api.dropPackage(Hex.toHexString(fr.sendingBoxId), encryptedMessage).execute();
                 if (!response.isSuccessful()) {
                     L.w("problem dropping location_info package");
+                    return;
                 }
+                mLastFlushTime = System.currentTimeMillis();
             } catch (IOException ex) {
                 L.w("Serious error dropping location_info package", ex);
+                return;
             }
         }
 

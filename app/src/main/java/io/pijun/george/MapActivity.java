@@ -162,6 +162,7 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
     protected void onStart() {
         super.onStart();
 
+        App.isInForeground = true;
         mMapView.onStart();
         checkForLocationPermission();
         App.registerOnBus(this);
@@ -208,6 +209,8 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
             LocationServices.FusedLocationApi.removeLocationUpdates(mGoogleApiClient, this);
         }
         mGoogleApiClient.disconnect();
+
+        App.isInForeground = false;
     }
 
     @Override
