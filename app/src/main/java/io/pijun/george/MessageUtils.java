@@ -5,6 +5,8 @@ import android.support.annotation.NonNull;
 import android.support.annotation.WorkerThread;
 import android.text.TextUtils;
 
+import com.google.firebase.crash.FirebaseCrash;
+
 import java.io.IOException;
 
 import io.pijun.george.api.OscarAPI;
@@ -92,6 +94,7 @@ public class MessageUtils {
             } catch (IOException ioe) {
                 return ERROR_NO_NETWORK;
             } catch (DB.DBException dbe) {
+                FirebaseCrash.report(dbe);
                 return ERROR_DATABASE_EXCEPTION;
             }
         }
@@ -110,18 +113,9 @@ public class MessageUtils {
                 L.i("LocationSharingGrant");
                 try {
                     db.sharingGrantedBy(userRecord.username, comm.dropBox);
-                    /*
-                    // if we already have a record for this user, then add the receiving box id to our database
-                    if (fr != null) {
-                        L.i("|  have the friend, adding box Id");
-                        db.sharingGrantedBy(userRecord.username, comm.dropBox);
-//                        DB.get(context).setReceivingDropBoxId(fr.user.username, comm.dropBox);
-                    } else {
-                        DB.get(context).addFriend(senderUsername, senderId, senderPubKey, null, comm.dropBox, false, null);
-                    }
-                    */
                 } catch (DB.DBException ex) {
                     L.w("error recording location grant", ex);
+                    FirebaseCrash.report(ex);
                     return ERROR_DATABASE_EXCEPTION;
                 }
                 App.postOnBus(new LocationSharingGranted());
@@ -130,14 +124,9 @@ public class MessageUtils {
                 try {
                     // TODO: check if we've already granted sharing to this user, or if we already have a request from them
                     db.addIncomingRequest(userRecord.id, System.currentTimeMillis());
-//                    if (fr != null) {
-//
-//                        DB.get(context).setShareRequestedOfMe(senderUsername, true);
-//                    } else {
-//                        DB.get(context).addFriend(senderUsername, senderId, senderPubKey, null, null, true, null);
-//                    }
                 } catch (DB.DBException ex) {
                     L.w("error recording sharing request", ex);
+                    FirebaseCrash.report(ex);
                     return ERROR_DATABASE_EXCEPTION;
                 }
                 App.postOnBus(new LocationSharingRequested());
@@ -154,6 +143,7 @@ public class MessageUtils {
                     db.setFriendLocation(fr.id, comm.latitude, comm.longitude, comm.time, comm.accuracy, comm.speed);
                 } catch (DB.DBException ex) {
                     L.w("error setting location info for friend", ex);
+                    FirebaseCrash.report(ex);
                     return ERROR_DATABASE_EXCEPTION;
                 }
                 App.postOnBus(new FriendLocation(fr.id, comm));

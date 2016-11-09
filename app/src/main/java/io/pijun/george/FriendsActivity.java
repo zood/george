@@ -17,6 +17,8 @@ import android.view.View;
 import android.widget.CheckBox;
 import android.widget.EditText;
 
+import com.google.firebase.crash.FirebaseCrash;
+
 import java.io.IOException;
 import java.security.SecureRandom;
 
@@ -124,17 +126,6 @@ public class FriendsActivity extends AppCompatActivity implements FriendsAdapter
                 userRecord = db.addUser(userToRequest.id, userToRequest.username, userToRequest.publicKey);
             }
 
-            // check if we have this person in our database already. If not, add them.
-            // add this user to our database (because TOFU)
-//            try {
-//
-//                db.getUser(userToRequest.)
-//                DB.get(this).addUser(userToRequest.id, userToRequest.username, userToRequest.publicKey);
-//            } catch (DB.DBException ex) {
-//                Utils.showStringAlert(this, null, "Unexpected error adding user");
-//                L.w("failed to add user on tofu", ex);
-//            }
-
             UserComm comm = UserComm.newLocationSharingRequest();
             PKEncryptedMessage msg = Sodium.publicKeyEncrypt(comm.toJSON(), userRecord.publicKey, keyPair.secretKey);
             Response<Void> sendResponse = api.sendMessage(Hex.toHexString(userRecord.userId), msg).execute();
@@ -165,8 +156,10 @@ public class FriendsActivity extends AppCompatActivity implements FriendsAdapter
             mAdapter.reloadFriends(this);
         } catch (IOException ex) {
             Utils.showStringAlert(this, null, "Serious error setting up friend request: " + ex.getLocalizedMessage());
-        } catch (DB.DBException re) {
+            FirebaseCrash.report(ex);
+        } catch (DB.DBException dbe) {
             Utils.showStringAlert(this, null, "Error adding friend into database");
+            FirebaseCrash.report(dbe);
         }
     }
 
@@ -202,6 +195,7 @@ public class FriendsActivity extends AppCompatActivity implements FriendsAdapter
         } catch (IOException ex) {
             Utils.showStringAlert(this, null, "Serious problem sending request approval");
             L.w("Serious problem sending request approval", ex);
+            FirebaseCrash.report(ex);
             return;
         }
 
@@ -210,6 +204,7 @@ public class FriendsActivity extends AppCompatActivity implements FriendsAdapter
         } catch (DB.DBException ex) {
             Utils.showStringAlert(this, null, "Serious problem setting drop box id");
             L.w("serious problem setting drop box id", ex);
+            FirebaseCrash.report(ex);
         }
 
         mAdapter.reloadFriends(this);
@@ -246,6 +241,7 @@ public class FriendsActivity extends AppCompatActivity implements FriendsAdapter
         } catch (IOException ex) {
             Utils.showStringAlert(this, null, "Serious problem sending rejection");
             L.w("Serious problem sending rejection", ex);
+            FirebaseCrash.report(ex);
             return;
         }
 
@@ -254,6 +250,7 @@ public class FriendsActivity extends AppCompatActivity implements FriendsAdapter
         } catch (DB.DBException ex) {
             Utils.showStringAlert(this, null, "serious problem recording rejection");
             L.w("serious problem recording rejection", ex);
+            FirebaseCrash.report(ex);
         }
 
         mAdapter.reloadFriends(this);

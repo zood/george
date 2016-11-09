@@ -155,6 +155,8 @@ public class LocationJobService extends JobService implements LocationListener {
         if (!connectionResult.isSuccess()) {
             L.i("|  google client connect failed");
             L.i("|  has resolution? " + connectionResult.hasResolution());
+            finishLocationJobUpdate(false);
+            return;
         }
 
         LocationRequest req = LocationRequest.create();
