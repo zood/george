@@ -116,8 +116,10 @@ public class LocationJobService extends JobService implements LocationListener {
             return;
         }
 
-        LocationServices.FusedLocationApi.removeLocationUpdates(mGoogleClient, LocationJobService.this);
-        mGoogleClient.disconnect();
+        if (mGoogleClient.isConnected()) {
+            LocationServices.FusedLocationApi.removeLocationUpdates(mGoogleClient, LocationJobService.this);
+            mGoogleClient.disconnect();
+        }
 
         // Upload the location
         // If the JobScheduler told us to stop, skip the upload

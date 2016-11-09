@@ -3,6 +3,7 @@ package io.pijun.george;
 import android.content.Context;
 import android.support.annotation.NonNull;
 import android.support.annotation.WorkerThread;
+import android.text.TextUtils;
 
 import java.io.IOException;
 
@@ -16,6 +17,7 @@ import io.pijun.george.event.LocationSharingGranted;
 import io.pijun.george.event.LocationSharingRequested;
 import io.pijun.george.models.FriendLocation;
 import io.pijun.george.models.FriendRecord;
+import io.pijun.george.models.UserRecord;
 import retrofit2.Response;
 
 public class MessageUtils {
@@ -33,6 +35,7 @@ public class MessageUtils {
     public static final int ERROR_MISSING_NONCE = 10;
     public static final int ERROR_NOT_A_FRIEND = 11;
     public static final int ERROR_DECRYPTION_FAILED = 12;
+    public static final int ERROR_DATABASE_INCONSISTENCY = 13;
 
     @WorkerThread
     public static int unwrapAndProcess(@NonNull Context context, @NonNull byte[] senderId, @NonNull byte[] cipherText, @NonNull byte[] nonce) {
@@ -49,21 +52,21 @@ public class MessageUtils {
         if (nonce == null) {
             return ERROR_MISSING_NONCE;
         }
-        FriendRecord fr = DB.get(context).getFriend(senderId);
-        byte[] senderPubKey = null;
-        String senderUsername = null;
-        if (fr != null) {
-            senderPubKey = fr.publicKey;
-            senderUsername = fr.username;
-        }
+        DB db = DB.get(context);
+        UserRecord userRecord = db.getUser(senderId);
+        L.i("unwrap from user: " + userRecord);
         Prefs prefs = Prefs.get(context);
         String token = prefs.getAccessToken();
         KeyPair keyPair = prefs.getKeyPair();
         if (!prefs.isLoggedIn()) {
             return ERROR_NOT_LOGGED_IN;
         }
+        if (TextUtils.isEmpty(token) || keyPair == null) {
+            return ERROR_NOT_LOGGED_IN;
+        }
 
-        if (senderPubKey == null) {
+        if (userRecord == null) {
+            L.i("|  need to download user");
             // we need to retrieve it from the server
             OscarAPI api = OscarClient.newInstance(token);
             try {
@@ -82,33 +85,41 @@ public class MessageUtils {
                     }
                 }
                 User user = response.body();
-                senderPubKey = user.publicKey;
-                senderUsername = user.username;
-            } catch (IOException ex) {
+                // now that we've encountered a new user, add them to the database (because of TOFU)
+
+                userRecord = db.addUser(senderId, user.username, user.publicKey);
+                L.i("|  added user: " + userRecord);
+            } catch (IOException ioe) {
                 return ERROR_NO_NETWORK;
+            } catch (DB.DBException dbe) {
+                return ERROR_DATABASE_EXCEPTION;
             }
         }
 
-        byte[] unwrappedBytes = Sodium.publicKeyDecrypt(cipherText, nonce, senderPubKey, keyPair.secretKey);
+        byte[] unwrappedBytes = Sodium.publicKeyDecrypt(cipherText, nonce, userRecord.publicKey, keyPair.secretKey);
         if (unwrappedBytes == null) {
             return ERROR_DECRYPTION_FAILED;
         }
         UserComm comm = UserComm.fromJSON(unwrappedBytes);
         if (!comm.isValid()) {
-            L.i("usercomm was invalid. here is is: " + comm);
+            L.i("usercomm was invalid. here it is: " + comm);
             return ERROR_INVALID_COMMUNICATION;
         }
         switch (comm.type) {
             case LocationSharingGrant:
                 L.i("LocationSharingGrant");
                 try {
+                    db.sharingGrantedBy(userRecord.username, comm.dropBox);
+                    /*
                     // if we already have a record for this user, then add the receiving box id to our database
                     if (fr != null) {
                         L.i("|  have the friend, adding box Id");
-                        DB.get(context).setReceivingDropBoxId(fr.username, comm.dropBox);
+                        db.sharingGrantedBy(userRecord.username, comm.dropBox);
+//                        DB.get(context).setReceivingDropBoxId(fr.user.username, comm.dropBox);
                     } else {
                         DB.get(context).addFriend(senderUsername, senderId, senderPubKey, null, comm.dropBox, false, null);
                     }
+                    */
                 } catch (DB.DBException ex) {
                     L.w("error recording location grant", ex);
                     return ERROR_DATABASE_EXCEPTION;
@@ -117,11 +128,14 @@ public class MessageUtils {
                 break;
             case LocationSharingRequest:
                 try {
-                    if (fr != null) {
-                        DB.get(context).setShareRequestedOfMe(senderUsername, true);
-                    } else {
-                        DB.get(context).addFriend(senderUsername, senderId, senderPubKey, null, null, true, null);
-                    }
+                    // TODO: check if we've already granted sharing to this user, or if we already have a request from them
+                    db.addIncomingRequest(userRecord.id, System.currentTimeMillis());
+//                    if (fr != null) {
+//
+//                        DB.get(context).setShareRequestedOfMe(senderUsername, true);
+//                    } else {
+//                        DB.get(context).addFriend(senderUsername, senderId, senderPubKey, null, null, true, null);
+//                    }
                 } catch (DB.DBException ex) {
                     L.w("error recording sharing request", ex);
                     return ERROR_DATABASE_EXCEPTION;
@@ -131,12 +145,13 @@ public class MessageUtils {
             case LocationSharingRejection:
                 break;
             case LocationInfo:
+                FriendRecord fr = db.getFriendByUserId(userRecord.id);
                 if (fr == null) {
                     // there should be a friend record for any locations that we receive
                     return ERROR_NOT_A_FRIEND;
                 }
                 try {
-                    DB.get(context).setFriendLocation(fr.id, comm.latitude, comm.longitude, comm.time, comm.accuracy, comm.speed);
+                    db.setFriendLocation(fr.id, comm.latitude, comm.longitude, comm.time, comm.accuracy, comm.speed);
                 } catch (DB.DBException ex) {
                     L.w("error setting location info for friend", ex);
                     return ERROR_DATABASE_EXCEPTION;

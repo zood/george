@@ -63,12 +63,13 @@ import io.pijun.george.api.ReverseGeocoding;
 import io.pijun.george.event.LocationSharingRequested;
 import io.pijun.george.models.FriendLocation;
 import io.pijun.george.models.FriendRecord;
+import io.pijun.george.models.RequestRecord;
 import io.pijun.george.service.FcmTokenRegistrar;
 import io.pijun.george.service.FriendLocationsRefresher;
 import io.pijun.george.service.LocationMonitor;
 import retrofit2.Response;
 
-public class MapActivity extends AppCompatActivity implements OnMapReadyCallback, GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener, LocationListener, GoogleMap.OnMarkerClickListener {
+public class MapActivity extends AppCompatActivity implements OnMapReadyCallback, GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener, GoogleMap.OnMarkerClickListener, LocationListener {
 
     private static final int REQUEST_LOCATION_PERMISSION = 18;
     private static final int REQUEST_LOCATION_SETTINGS = 20;
@@ -148,6 +149,9 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
                     if (fr.receivingBoxId != null) {
                         mPkgWatcher.watch(fr.receivingBoxId);
                     }
+                }
+                for (RequestRecord rr : DB.get(MapActivity.this).getIncomingRequests(true)) {
+                    L.i("incoming request: " + rr);
                 }
             }
         });
@@ -299,7 +303,7 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
                 .position(new LatLng(loc.latitude, loc.longitude))
                 .draggable(false)
                 .flat(false)
-                .title(friend.username);
+                .title(friend.user.username);
         Marker marker = mGoogleMap.addMarker(opts);
         marker.setTag(friend.id);
         mFriendMarkers.put(friend.id, marker);
@@ -376,6 +380,7 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
 
     @AnyThread
     private void beginLocationUpdates() {
+        L.i("beginLocationUpdates");
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
             // This should never happen. Nobody should be calling this method before permission has been obtained.
             L.w("MapActivity.beginLocationUpdates was called before obtaining location permission");
@@ -383,12 +388,19 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
             return;
         }
         if (!mGoogleApiClient.isConnected()) {
+            L.i("|  google api not connected");
             return;
         }
         LocationRequest req = LocationRequest.create();
         req.setInterval(5 * DateUtils.SECOND_IN_MILLIS);
         req.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
-        LocationServices.FusedLocationApi.requestLocationUpdates(mGoogleApiClient, req, this);
+        PendingResult<Status> pendingResult = LocationServices.FusedLocationApi.requestLocationUpdates(mGoogleApiClient, req, this);
+        pendingResult.setResultCallback(new ResultCallback<Status>() {
+            @Override
+            public void onResult(@NonNull Status status) {
+                L.i("result of requestLocationupdates: " + status);
+            }
+        });
     }
 
     @WorkerThread
@@ -504,7 +516,9 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
 
     @Override
     public void onConnected(@Nullable Bundle bundle) {
+        L.i("MA.onConnected");
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            L.i("|  failed permission check");
             return;
         }
         mLastLocation = LocationServices.FusedLocationApi.getLastLocation(mGoogleApiClient);
@@ -542,12 +556,12 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
 
     @Override
     public void onConnectionSuspended(int i) {
-
+        L.i("onConnectionSuspended: " + i);
     }
 
     @Override
     public void onConnectionFailed(@NonNull ConnectionResult connectionResult) {
-
+        L.i("onConnectionFailed: " + connectionResult);
     }
 
     @Override

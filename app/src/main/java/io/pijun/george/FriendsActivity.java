@@ -27,7 +27,7 @@ import io.pijun.george.api.User;
 import io.pijun.george.api.UserComm;
 import io.pijun.george.crypto.KeyPair;
 import io.pijun.george.crypto.PKEncryptedMessage;
-import io.pijun.george.models.FriendRecord;
+import io.pijun.george.models.UserRecord;
 import retrofit2.Response;
 
 public class FriendsActivity extends AppCompatActivity implements FriendsAdapter.FriendsAdapterListener {
@@ -110,16 +110,34 @@ public class FriendsActivity extends AppCompatActivity implements FriendsAdapter
         }
         OscarAPI api = OscarClient.newInstance(prefs.getAccessToken());
         try {
-            Response<User> searchResponse = api.searchForUser(username).execute();
-            if (!searchResponse.isSuccessful()) {
-                OscarError err = OscarError.fromResponse(searchResponse);
-                Utils.showStringAlert(this, null, "Unable to find username: " + err);
-                return;
+            // check if we hae this person in our db. If not, retrieve their data and add it.
+            DB db = DB.get(this);
+            UserRecord userRecord = db.getUser(username);
+            if (userRecord == null) {
+                Response<User> searchResponse = api.searchForUser(username).execute();
+                if (!searchResponse.isSuccessful()) {
+                    OscarError err = OscarError.fromResponse(searchResponse);
+                    Utils.showStringAlert(this, null, "Unable to find username: " + err);
+                    return;
+                }
+                User userToRequest = searchResponse.body();
+                userRecord = db.addUser(userToRequest.id, userToRequest.username, userToRequest.publicKey);
             }
-            User userToRequest = searchResponse.body();
+
+            // check if we have this person in our database already. If not, add them.
+            // add this user to our database (because TOFU)
+//            try {
+//
+//                db.getUser(userToRequest.)
+//                DB.get(this).addUser(userToRequest.id, userToRequest.username, userToRequest.publicKey);
+//            } catch (DB.DBException ex) {
+//                Utils.showStringAlert(this, null, "Unexpected error adding user");
+//                L.w("failed to add user on tofu", ex);
+//            }
+
             UserComm comm = UserComm.newLocationSharingRequest();
-            PKEncryptedMessage msg = Sodium.publicKeyEncrypt(comm.toJSON(), userToRequest.publicKey, keyPair.secretKey);
-            Response<Void> sendResponse = api.sendMessage(Hex.toHexString(userToRequest.id), msg).execute();
+            PKEncryptedMessage msg = Sodium.publicKeyEncrypt(comm.toJSON(), userRecord.publicKey, keyPair.secretKey);
+            Response<Void> sendResponse = api.sendMessage(Hex.toHexString(userRecord.userId), msg).execute();
             if (!sendResponse.isSuccessful()) {
                 OscarError err = OscarError.fromResponse(sendResponse);
                 Utils.showStringAlert(this, null, "Unable to send request message: " + err);
@@ -127,14 +145,12 @@ public class FriendsActivity extends AppCompatActivity implements FriendsAdapter
             }
 
             byte[] sendingBoxId = null;
-            Long requestSendDate = null;
             if (shareLocation) {
-                requestSendDate = System.currentTimeMillis();
                 sendingBoxId = new byte[Constants.DROP_BOX_ID_LENGTH];
                 new SecureRandom().nextBytes(sendingBoxId);
                 comm = UserComm.newLocationSharingGrant(sendingBoxId);
-                msg = Sodium.publicKeyEncrypt(comm.toJSON(), userToRequest.publicKey, keyPair.secretKey);
-                sendResponse = api.sendMessage(Hex.toHexString(userToRequest.id), msg).execute();
+                msg = Sodium.publicKeyEncrypt(comm.toJSON(), userRecord.publicKey, keyPair.secretKey);
+                sendResponse = api.sendMessage(Hex.toHexString(userRecord.userId), msg).execute();
                 if (!sendResponse.isSuccessful()) {
                     OscarError err = OscarError.fromResponse(sendResponse);
                     Utils.showStringAlert(this, null, "Unable to send grand message: " + err);
@@ -142,8 +158,8 @@ public class FriendsActivity extends AppCompatActivity implements FriendsAdapter
                 }
             }
 
-            DB db = DB.get(this);
-            db.addFriend(username, userToRequest.id, userToRequest.publicKey, sendingBoxId, null, false, requestSendDate);
+            db.addFriend(userRecord.id, sendingBoxId, null);
+            db.addOutgoingRequest(userRecord.id, System.currentTimeMillis());
 
             Utils.showStringAlert(this, null, "User request added");
             mAdapter.reloadFriends(this);
@@ -155,7 +171,7 @@ public class FriendsActivity extends AppCompatActivity implements FriendsAdapter
     }
 
     @WorkerThread
-    private void approveFriendRequest(byte[] userId) {
+    private void approveFriendRequest(long userId) {
         Prefs prefs = Prefs.get(this);
         String accessToken = prefs.getAccessToken();
         if (TextUtils.isEmpty(accessToken)) {
@@ -171,15 +187,14 @@ public class FriendsActivity extends AppCompatActivity implements FriendsAdapter
         new SecureRandom().nextBytes(boxId);
         UserComm comm = UserComm.newLocationSharingGrant(boxId);
         byte[] msgBytes = comm.toJSON();
-        FriendRecord friend = DB.get(this).getFriend(userId);
-        if (friend == null) {
-            L.w("friend with user id " + Hex.toHexString(userId) + " doesn't exist");
-            return;
+        UserRecord user = DB.get(this).getUserById(userId);
+        if (user == null) {
+            throw new RuntimeException("How was approve called for an unknown user?");
         }
-        PKEncryptedMessage encMsg = Sodium.publicKeyEncrypt(msgBytes, friend.publicKey, kp.secretKey);
+        PKEncryptedMessage encMsg = Sodium.publicKeyEncrypt(msgBytes, user.publicKey, kp.secretKey);
         OscarAPI client = OscarClient.newInstance(accessToken);
         try {
-            Response<Void> response = client.sendMessage(Hex.toHexString(userId), encMsg).execute();
+            Response<Void> response = client.sendMessage(Hex.toHexString(user.userId), encMsg).execute();
             if (!response.isSuccessful()) {
                 Utils.showStringAlert(this, null, "Problem sending request approval");
                 return;
@@ -191,7 +206,7 @@ public class FriendsActivity extends AppCompatActivity implements FriendsAdapter
         }
 
         try {
-            DB.get(this).setShareGranted(friend.username, boxId);
+            DB.get(this).grantSharingTo(user.userId, boxId);
         } catch (DB.DBException ex) {
             Utils.showStringAlert(this, null, "Serious problem setting drop box id");
             L.w("serious problem setting drop box id", ex);
@@ -201,7 +216,7 @@ public class FriendsActivity extends AppCompatActivity implements FriendsAdapter
     }
 
     @WorkerThread
-    private void rejectFriendRequest(byte[] userId) {
+    private void rejectFriendRequest(long userId) {
         Prefs prefs = Prefs.get(this);
         String accessToken = prefs.getAccessToken();
         if (TextUtils.isEmpty(accessToken)) {
@@ -215,15 +230,15 @@ public class FriendsActivity extends AppCompatActivity implements FriendsAdapter
         }
         UserComm comm = UserComm.newLocationSharingRejection();
         byte[] msgBytes = comm.toJSON();
-        FriendRecord friend = DB.get(this).getFriend(userId);
-        if (friend == null) {
-            L.w("friend with user id " + Hex.toHexString(userId) + " doesn't exist");
+        UserRecord user = DB.get(this).getUserById(userId);
+        if (user == null) {
+            L.w("friend with user id " + userId + " doesn't exist");
             return;
         }
-        PKEncryptedMessage encMsg = Sodium.publicKeyEncrypt(msgBytes, friend.publicKey, kp.secretKey);
+        PKEncryptedMessage encMsg = Sodium.publicKeyEncrypt(msgBytes, user.publicKey, kp.secretKey);
         OscarAPI client = OscarClient.newInstance(accessToken);
         try {
-            Response<Void> response = client.sendMessage(Hex.toHexString(userId), encMsg).execute();
+            Response<Void> response = client.sendMessage(Hex.toHexString(user.userId), encMsg).execute();
             if (!response.isSuccessful()) {
                 Utils.showStringAlert(this, null, "Problem sending rejection");
                 return;
@@ -235,7 +250,7 @@ public class FriendsActivity extends AppCompatActivity implements FriendsAdapter
         }
 
         try {
-            DB.get(this).setShareRequestedOfMe(friend.username, false);
+            DB.get(this).rejectRequest(user);
         } catch (DB.DBException ex) {
             Utils.showStringAlert(this, null, "serious problem recording rejection");
             L.w("serious problem recording rejection", ex);
@@ -246,8 +261,8 @@ public class FriendsActivity extends AppCompatActivity implements FriendsAdapter
 
     @Override
     @UiThread
-    public void onApproveFriendRequest(final byte[] userId) {
-        L.i("onapprove " + Hex.toHexString(userId));
+    public void onApproveFriendRequest(final long userId) {
+        L.i("onapprove " + userId);
         App.runInBackground(new WorkerRunnable() {
             @Override
             public void run() {
@@ -258,8 +273,8 @@ public class FriendsActivity extends AppCompatActivity implements FriendsAdapter
 
     @Override
     @UiThread
-    public void onRejectFriendRequest(final byte[] userId) {
-        L.i("onreject: " + Hex.toHexString(userId));
+    public void onRejectFriendRequest(final long userId) {
+        L.i("onreject: " + userId);
         App.runInBackground(new WorkerRunnable() {
             @Override
             public void run() {

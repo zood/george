@@ -32,7 +32,7 @@ public class FriendLocation {
     @Override
     public String toString() {
         return "FriendLocation{" +
-                "friendId=" + friendId +
+                "userId=" + friendId +
                 ", latitude=" + latitude +
                 ", longitude=" + longitude +
                 ", time=" + time +

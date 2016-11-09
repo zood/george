@@ -1,7 +1,6 @@
 package io.pijun.george.api;
 
 import android.content.Context;
-import android.os.Looper;
 import android.support.annotation.NonNull;
 import android.support.annotation.WorkerThread;
 
@@ -92,7 +91,7 @@ public class PackageWatcher extends WebSocketAdapter {
                 return;
             }
             L.i("|  friend: " + friend);
-            int result = MessageUtils.unwrapAndProcess(mContext, friend.userId, encMsg.cipherText, encMsg.nonce);
+            int result = MessageUtils.unwrapAndProcess(mContext, friend.user.userId, encMsg.cipherText, encMsg.nonce);
             if (result != MessageUtils.ERROR_NONE) {
                 L.i("error unwrapping+processing message: " + result);
             }

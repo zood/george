@@ -23,7 +23,6 @@ import com.google.android.gms.common.api.PendingResult;
 import com.google.android.gms.common.api.ResultCallback;
 import com.google.android.gms.common.api.Status;
 import com.google.android.gms.location.ActivityRecognition;
-import com.google.android.gms.location.ActivityRecognitionApi;
 import com.squareup.otto.Subscribe;
 
 import java.io.IOException;
@@ -186,7 +185,7 @@ public class LocationMonitor extends Service {
         for (FriendRecord fr : friends) {
             L.i("|  friend: " + fr);
             L.i("|  send box: " + Hex.toHexString(fr.sendingBoxId));
-            PKEncryptedMessage encryptedMessage = Sodium.publicKeyEncrypt(msgBytes, fr.publicKey, keyPair.secretKey);
+            PKEncryptedMessage encryptedMessage = Sodium.publicKeyEncrypt(msgBytes, fr.user.publicKey, keyPair.secretKey);
             try {
                 Response<Void> response = api.dropPackage(Hex.toHexString(fr.sendingBoxId), encryptedMessage).execute();
                 if (!response.isSuccessful()) {
