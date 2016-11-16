@@ -75,6 +75,9 @@ public class MessageUtils {
                 Response<User> response = api.getUser(Hex.toHexString(senderId)).execute();
                 if (!response.isSuccessful()) {
                     OscarError apiErr = OscarError.fromResponse(response);
+                    if (apiErr == null) {
+                        return ERROR_UNKNOWN;
+                    }
                     switch (apiErr.code) {
                         case OscarError.ERROR_INVALID_ACCESS_TOKEN:
                             return ERROR_NOT_LOGGED_IN;

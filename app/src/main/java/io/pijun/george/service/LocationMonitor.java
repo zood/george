@@ -17,7 +17,6 @@ import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.annotation.UiThread;
 import android.support.annotation.WorkerThread;
-import android.support.v4.net.ConnectivityManagerCompat;
 import android.text.format.DateUtils;
 
 import com.google.android.gms.common.ConnectionResult;
@@ -42,8 +41,8 @@ import io.pijun.george.WorkerRunnable;
 import io.pijun.george.api.OscarAPI;
 import io.pijun.george.api.OscarClient;
 import io.pijun.george.api.UserComm;
+import io.pijun.george.crypto.EncryptedData;
 import io.pijun.george.crypto.KeyPair;
-import io.pijun.george.crypto.PKEncryptedMessage;
 import io.pijun.george.models.FriendRecord;
 import retrofit2.Response;
 
@@ -205,7 +204,7 @@ public class LocationMonitor extends Service {
         for (FriendRecord fr : friends) {
             L.i("|  friend: " + fr);
             L.i("|  send box: " + Hex.toHexString(fr.sendingBoxId));
-            PKEncryptedMessage encryptedMessage = Sodium.publicKeyEncrypt(msgBytes, fr.user.publicKey, keyPair.secretKey);
+            EncryptedData encryptedMessage = Sodium.publicKeyEncrypt(msgBytes, fr.user.publicKey, keyPair.secretKey);
             try {
                 Response<Void> response = api.dropPackage(Hex.toHexString(fr.sendingBoxId), encryptedMessage).execute();
                 if (!response.isSuccessful()) {

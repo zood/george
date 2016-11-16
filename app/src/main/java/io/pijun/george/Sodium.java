@@ -1,7 +1,11 @@
 package io.pijun.george;
 
+import android.support.annotation.CheckResult;
+import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
+
+import io.pijun.george.crypto.EncryptedData;
 import io.pijun.george.crypto.KeyPair;
-import io.pijun.george.crypto.PKEncryptedMessage;
 
 public class Sodium {
 
@@ -29,21 +33,31 @@ public class Sodium {
      * @param memLimit one of the PASSWORDHASH_MEMLIMIT_* values
      * @return a 32-byte key
      */
-    public native static byte[] createHashFromPassword(int hashSizeBytes, byte[] password, byte[] salt, long opsLimit, long memLimit);
+    @CheckResult
+    public native static byte[] createHashFromPassword(int hashSizeBytes, @NonNull byte[] password, @NonNull byte[] salt, long opsLimit, long memLimit);
 
+    @CheckResult
     public native static int getPasswordHashSaltLength();
 
+    @CheckResult
     public native static int generateKeyPair(KeyPair kp);
 
+    @CheckResult
     public native static int getSymmetricKeyLength();
 
-    public native static PKEncryptedMessage symmetricKeyEncrypt(byte[] msg, byte[] key);
+    @CheckResult
+    public native static EncryptedData symmetricKeyEncrypt(@NonNull byte[] msg, @NonNull byte[] key);
 
-    public native static byte[] symmetricKeyDecrypt(byte[] cipherText, byte[] nonce, byte[] key);
+    @CheckResult
+    @Nullable
+    public native static byte[] symmetricKeyDecrypt(@NonNull byte[] cipherText, @NonNull byte[] nonce, @NonNull byte[] key);
 
-    public native static PKEncryptedMessage publicKeyEncrypt(byte[] msg, byte[] receiverPubKey, byte[] senderSecretKey);
+    @CheckResult
+    public native static EncryptedData publicKeyEncrypt(@NonNull byte[] msg, @NonNull byte[] receiverPubKey, @NonNull byte[] senderSecretKey);
 
-    public native static byte[] publicKeyDecrypt(byte[] cipherText, byte[] nonce, byte[] senderPubKey, byte[] receiverSecretKey);
+    @CheckResult
+    @Nullable
+    public native static byte[] publicKeyDecrypt(@NonNull byte[] cipherText, @NonNull byte[] nonce, @NonNull byte[] senderPubKey, @NonNull byte[] receiverSecretKey);
 
 //    public native static byte[] createHash(byte[] data, byte[] key);
 

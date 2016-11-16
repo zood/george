@@ -17,7 +17,7 @@ import io.pijun.george.DB;
 import io.pijun.george.Hex;
 import io.pijun.george.L;
 import io.pijun.george.MessageUtils;
-import io.pijun.george.crypto.PKEncryptedMessage;
+import io.pijun.george.crypto.EncryptedData;
 import io.pijun.george.models.FriendRecord;
 
 public class PackageWatcher extends WebSocketAdapter {
@@ -84,7 +84,7 @@ public class PackageWatcher extends WebSocketAdapter {
             int msgOffset = 1 + Constants.DROP_BOX_ID_LENGTH;
             ByteArrayInputStream bais = new ByteArrayInputStream(binary, msgOffset, binary.length - msgOffset);
             InputStreamReader isr = new InputStreamReader(bais);
-            PKEncryptedMessage encMsg = OscarClient.sGson.fromJson(isr, PKEncryptedMessage.class);
+            EncryptedData encMsg = OscarClient.sGson.fromJson(isr, EncryptedData.class);
             FriendRecord friend = DB.get(mContext).getFriendByReceivingBoxId(boxId);
             if (friend == null) {
                 L.i("can't find user associated with receiving box id");

@@ -24,18 +24,7 @@
         app:layout_constraintLeft_toRightOf="@+id/profile"
         android:layout_marginEnd="16dp"
         app:layout_constraintRight_toRightOf="parent"
-        tools:text="@kanoong" />
-
-    <TextView
-        android:id="@+id/location"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="16dp"
-        app:layout_constraintLeft_toRightOf="@+id/profile"
-        android:layout_marginEnd="16dp"
-        app:layout_constraintRight_toRightOf="parent"
-        tools:text="3682 Sunset Knolls Dr."
-        app:layout_constraintBottom_toBottomOf="@+id/profile" />
+        tools:text="kanoong" />
 
     <Button
         android:text="Share"
@@ -65,11 +54,10 @@
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:id="@+id/share_prompt"
-        app:layout_constraintLeft_toLeftOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/profile"
         app:layout_constraintRight_toRightOf="parent"
         tools:text="Share your location with @billybob?"
-        android:layout_marginStart="16dp"
         android:layout_marginEnd="16dp"
-        android:layout_marginTop="16dp" />
+        android:layout_marginStart="16dp"
+        app:layout_constraintLeft_toRightOf="@+id/profile"
+        app:layout_constraintBottom_toBottomOf="@+id/profile" />
 </android.support.constraint.ConstraintLayout>

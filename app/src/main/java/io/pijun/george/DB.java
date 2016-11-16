@@ -1,5 +1,6 @@
 package io.pijun.george;
 
+import android.app.job.JobScheduler;
 import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
@@ -13,14 +14,20 @@ import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.annotation.Size;
 import android.support.annotation.WorkerThread;
+import android.support.v4.util.LongSparseArray;
+
+import com.google.firebase.crash.FirebaseCrash;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 
 import io.pijun.george.models.FriendLocation;
 import io.pijun.george.models.FriendRecord;
 import io.pijun.george.models.RequestRecord;
 import io.pijun.george.models.RequestResponse;
+import io.pijun.george.models.Snapshot;
 import io.pijun.george.models.UserRecord;
+import io.pijun.george.service.BackupDatabaseJob;
 
 @SuppressWarnings("WeakerAccess")
 public class DB {
@@ -105,10 +112,12 @@ public class DB {
         }
     }
 
-    private DBHelper mDbHelper;
+    private final DBHelper mDbHelper;
+    private final Context mContext;
 
     private DB(Context context) {
-        mDbHelper = new DBHelper(context);
+        mContext = context.getApplicationContext();
+        mDbHelper = new DBHelper(mContext);
     }
 
     public static DB get(Context context) {
@@ -127,6 +136,14 @@ public class DB {
     public long addFriend(long userId,
                           @Nullable @Size(Constants.DROP_BOX_ID_LENGTH) byte[] sendingBoxId,
                           @Nullable @Size(Constants.DROP_BOX_ID_LENGTH) byte[] receivingBoxId) throws DBException {
+        return addFriend(userId, sendingBoxId, receivingBoxId, true);
+    }
+
+    @WorkerThread
+    public long addFriend(long userId,
+                          @Nullable @Size(Constants.DROP_BOX_ID_LENGTH) byte[] sendingBoxId,
+                          @Nullable @Size(Constants.DROP_BOX_ID_LENGTH) byte[] receivingBoxId,
+                          boolean triggerBackup) throws DBException {
         SQLiteDatabase db = mDbHelper.getWritableDatabase();
         ContentValues cv = new ContentValues();
         cv.put(FRIENDS_COL_USER_ID, userId);
@@ -137,6 +154,10 @@ public class DB {
             result = db.insertOrThrow(FRIENDS_TABLE, null, cv);
         } catch (SQLException ex) {
             throw new DBException("Error creating friend " + userId, ex);
+        }
+
+        if (triggerBackup) {
+            scheduleBackup();
         }
 
         return result;
@@ -155,6 +176,7 @@ public class DB {
             throw new DBException("Error creating incoming request - userId:" + userId + ", sentDate: " + sentDate, ex);
         }
 
+        scheduleBackup();
         return result;
     }
 
@@ -170,6 +192,7 @@ public class DB {
             throw new DBException("Error creating outgoing requests - userId: " + userId + ", sentDate: " + sentDate, ex);
         }
 
+        scheduleBackup();
         return result;
     }
 
@@ -178,6 +201,15 @@ public class DB {
     public UserRecord addUser(@NonNull @Size(Constants.USER_ID_LENGTH) final byte[] userId,
                               @NonNull String username,
                               @NonNull @Size(Constants.PUBLIC_KEY_LENGTH) byte[] publicKey) throws DBException {
+        return addUser(userId, username, publicKey, true);
+    }
+
+    @WorkerThread
+    @NonNull
+    public UserRecord addUser(@NonNull @Size(Constants.USER_ID_LENGTH) final byte[] userId,
+                              @NonNull String username,
+                              @NonNull @Size(Constants.PUBLIC_KEY_LENGTH) byte[] publicKey,
+                              boolean triggerBackup) throws DBException {
         SQLiteDatabase db = mDbHelper.getWritableDatabase();
         ContentValues cv = new ContentValues();
         cv.put(USERS_COL_USER_ID, userId);
@@ -195,6 +227,11 @@ public class DB {
         user.userId = userId;
         user.username = username;
         user.publicKey = publicKey;
+
+        if (triggerBackup) {
+            scheduleBackup();
+        }
+
         return user;
     }
 
@@ -207,14 +244,6 @@ public class DB {
         db.delete(OUTGOING_REQUESTS_TABLE, null, null);
         db.delete(USERS_TABLE, null, null);
     }
-
-    /*
-    @WorkerThread
-    @Nullable
-    public FriendRecord getFriend(@NonNull @Size(Constants.USER_ID_LENGTH) final byte[] userId) {
-        return getFriendMatchingBlob(userId, FRIENDS_COL_USER_ID);
-    }
-    */
 
     @WorkerThread
     @Nullable
@@ -397,6 +426,76 @@ public class DB {
     }
 
     @WorkerThread
+    public int getSchemaVersion() {
+        return mDbHelper.getReadableDatabase().getVersion();
+    }
+
+    @WorkerThread
+    @NonNull
+    public Snapshot getSnapshot() {
+        Snapshot snapshot = new Snapshot();
+        SQLiteDatabase db = mDbHelper.getReadableDatabase();
+        db.beginTransaction();
+        try {
+            LongSparseArray<byte[]> localToGlobalId = new LongSparseArray<>();
+            try (Cursor c = db.query(USERS_TABLE, USERS_COLUMNS, null, null, null, null, null)) {
+                while (c.moveToNext()) {
+                    UserRecord userRecord = readUser(c);
+                    Snapshot.User u = new Snapshot.User();
+                    localToGlobalId.put(userRecord.id, userRecord.userId);
+                    u.userId = userRecord.userId;
+                    u.publicKey = userRecord.publicKey;
+                    u.username= userRecord.username;
+                    snapshot.users.add(u);
+                }
+            }
+            try (Cursor c = db.query(FRIENDS_TABLE, FRIENDS_COLUMNS, null, null, null, null, null)) {
+                while (c.moveToNext()) {
+                    FriendRecord friendRecord = readFriend(c);
+                    Snapshot.Friend f = new Snapshot.Friend();
+                    friendRecord.user = getUserById(friendRecord.userId);
+                    if (friendRecord.user == null) {
+                        FirebaseCrash.report(new DBException("unable to find a user record for a friend"));
+                        continue;
+                    }
+                    f.userId = friendRecord.user.userId;
+                    f.sendingBoxId = friendRecord.sendingBoxId;
+                    f.receivingBoxId = friendRecord.receivingBoxId;
+                    snapshot.friends.add(f);
+                }
+            }
+            try (Cursor c = db.query(INCOMING_REQUESTS_TABLE, INCOMING_REQUESTS_COLUMNS, null, null, null, null, null)) {
+                while (c.moveToNext()) {
+                    RequestRecord requestRecord = readRequest(c);
+                    Snapshot.Request r = new Snapshot.Request();
+                    r.userId = localToGlobalId.get(requestRecord.id);
+                    r.sentDate = requestRecord.sentDate;
+                    r.response = requestRecord.response.val;
+                    snapshot.incomingRequests.add(r);
+                }
+            }
+            try (Cursor c = db.query(OUTGOING_REQUESTS_TABLE, OUTGOING_REQUESTS_COLUMNS, null, null, null, null, null)) {
+                while (c.moveToNext()) {
+                    RequestRecord requestRecord = readRequest(c);
+                    Snapshot.Request r = new Snapshot.Request();
+                    r.userId = localToGlobalId.get(requestRecord.id);
+                    r.sentDate = requestRecord.sentDate;
+                    r.response = requestRecord.response.val;
+                    snapshot.outgoingRequests.add(r);
+                }
+            }
+            snapshot.schemaVersion = db.getVersion();
+            snapshot.timestamp = System.currentTimeMillis();
+
+            db.setTransactionSuccessful();
+        } finally {
+            db.endTransaction();
+        }
+
+        return snapshot;
+    }
+
+    @WorkerThread
     @Nullable
     public UserRecord getUser(@NonNull final byte[] id) {
         StringBuilder sql = new StringBuilder("SELECT ");
@@ -486,6 +585,8 @@ public class DB {
         String selection = INCOMING_REQUESTS_COL_USER_ID + "=?";
         String[] args = new String[]{String.valueOf(user.id)};
         db.update(INCOMING_REQUESTS_TABLE, cv, selection, args);
+
+        scheduleBackup();
     }
 
     @WorkerThread
@@ -539,6 +640,78 @@ public class DB {
         if (result != 1) {
             throw new DBException("Num affected rows was " + result + " for username '" + user.username + "'");
         }
+
+        scheduleBackup();
+    }
+
+    @WorkerThread
+    public void restoreDatabase(@NonNull Snapshot snapshot) throws DBException {
+        SQLiteDatabase db = mDbHelper.getWritableDatabase();
+        if (snapshot.schemaVersion > db.getVersion()) {
+            throw new DBException("Snapshot is from a newer database format");
+        }
+
+        try {
+            db.beginTransaction();
+            deleteUserData();
+
+            for (Snapshot.User u : snapshot.users) {
+                addUser(u.userId, u.username, u.publicKey, false);
+            }
+            for (Snapshot.Friend f : snapshot.friends) {
+                UserRecord user = getUser(f.userId);
+                if (user == null) {
+                    throw new DBException("Found friend without corresponding user");
+                }
+                addFriend(user.id, f.sendingBoxId, f.receivingBoxId, false);
+            }
+            for (Snapshot.Request r : snapshot.incomingRequests) {
+                UserRecord user = getUser(r.userId);
+                if (user == null) {
+                    throw new DBException("Found incoming request without corresponding user");
+                }
+                ContentValues cv = new ContentValues();
+                cv.put(INCOMING_REQUESTS_COL_USER_ID, user.id);
+                cv.put(INCOMING_REQUESTS_COL_SENT_DATE, r.sentDate);
+                if (r.response != null && r.response.equals(RequestResponse.NoResponse.val)) {
+                    cv.put(INCOMING_REQUESTS_COL_RESPONSE, r.response);
+                }
+                try {
+                    db.insertOrThrow(INCOMING_REQUESTS_TABLE, null, cv);
+                } catch (SQLException ex) {
+                    throw new DBException("Error creating incoming request: " + r);
+                }
+            }
+            for (Snapshot.Request r : snapshot.outgoingRequests) {
+                UserRecord user = getUser(r.userId);
+                if (user == null) {
+                    throw new DBException("Found outgoing request without corresponding user");
+                }
+                ContentValues cv = new ContentValues();
+                cv.put(OUTGOING_REQUESTS_COL_USER_ID, user.id);
+                cv.put(OUTGOING_REQUESTS_COL_SENT_DATE, r.sentDate);
+                if (r.response != null && r.response.equals(RequestResponse.NoResponse.val)) {
+                    cv.put(OUTGOING_REQUESTS_COL_RESPONSE, r.response);
+                }
+                try {
+                    db.insertOrThrow(OUTGOING_REQUESTS_TABLE, null, cv);
+                } catch (SQLException ex) {
+                    throw new DBException("Error creating outgoing request: " + r);
+                }
+            }
+
+            db.setTransactionSuccessful();
+        } finally {
+            db.endTransaction();
+        }
+
+    }
+
+    @WorkerThread
+    private void scheduleBackup() {
+        L.i("scheduleBackup");
+        JobScheduler scheduler = (JobScheduler) mContext.getSystemService(Context.JOB_SCHEDULER_SERVICE);
+        scheduler.schedule(BackupDatabaseJob.getJobInfo(mContext));
     }
 
     @WorkerThread
@@ -592,6 +765,8 @@ public class DB {
         String selection = OUTGOING_REQUESTS_COL_USER_ID + "=?";
         String[] args = new String[]{String.valueOf(userRecord.id)};
         db.update(OUTGOING_REQUESTS_TABLE, cv, selection, args);
+
+        scheduleBackup();
     }
 
     private static class DBHelper extends SQLiteOpenHelper {

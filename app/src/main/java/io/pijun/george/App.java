@@ -19,11 +19,6 @@ public class App extends Application {
     private ExecutorService mExecutor;
     private Bus mBus;
 
-    // Used to load the 'native-lib' library on application startup.
-    static {
-        System.loadLibrary("native-lib");
-    }
-
     @Override
     public void onCreate() {
         L.i("App.onCreate");

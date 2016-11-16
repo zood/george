@@ -2,7 +2,7 @@ package io.pijun.george.api;
 
 import java.util.Map;
 
-import io.pijun.george.crypto.PKEncryptedMessage;
+import io.pijun.george.crypto.EncryptedData;
 import retrofit2.Call;
 import retrofit2.http.Body;
 import retrofit2.http.DELETE;
@@ -18,7 +18,7 @@ public interface OscarAPI {
     Call<Void> addFcmToken(@Body Map<String, String> body);
 
     @POST("sessions/{username}/challenge-response")
-    Call<LoginResponse> completeAuthenticationChallenge(@Path("username") String username, @Body PKEncryptedMessage response);
+    Call<LoginResponse> completeAuthenticationChallenge(@Path("username") String username, @Body EncryptedData response);
 
     @POST("users")
     Call<LoginResponse> createUser(@Body User user);
@@ -27,10 +27,13 @@ public interface OscarAPI {
     Call<Void> deleteFcmToken(@Path("fcmToken") String fcmToken);
 
     @PUT("drop-boxes/{boxId}")
-    Call<Void> dropPackage(@Path("boxId") String hexId, @Body PKEncryptedMessage pkg);
+    Call<Void> dropPackage(@Path("boxId") String hexId, @Body EncryptedData pkg);
 
     @POST("sessions/{username}/challenge")
     Call<AuthenticationChallenge> getAuthenticationChallenge(@Path("username") String username);
+
+    @GET("users/me/backup")
+    Call<EncryptedData> getDatabaseBackup();
 
     @GET("messages")
     Call<Message[]> getMessages();
@@ -39,12 +42,15 @@ public interface OscarAPI {
     Call<User> getUser(@Path("id") String hexId);
 
     @GET("drop-boxes/{boxId}")
-    Call<PKEncryptedMessage> pickUpPackage(@Path("boxId") String hexId);
+    Call<EncryptedData> pickUpPackage(@Path("boxId") String hexId);
+
+    @PUT("users/me/backup")
+    Call<Void> saveDatabaseBackup(@Body EncryptedData snapshot);
 
     @GET("users")
     Call<User> searchForUser(@Query("username") String username);
 
     @POST("users/{userId}/messages")
-    Call<Void> sendMessage(@Path("userId") String hexUserId, @Body PKEncryptedMessage msg);
+    Call<Void> sendMessage(@Path("userId") String hexUserId, @Body EncryptedData msg);
 
 }

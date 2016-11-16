@@ -2,14 +2,14 @@ package io.pijun.george.crypto;
 
 import io.pijun.george.Hex;
 
-public class PKEncryptedMessage {
+public class EncryptedData {
 
     public byte[] cipherText;
     public byte[] nonce;
 
     @Override
     public String toString() {
-        StringBuilder sb = new StringBuilder("PKEncryptedMessage:\n");
+        StringBuilder sb = new StringBuilder("EncryptedData:\n");
         sb.append("cipherText: ");
         sb.append(Hex.toHexString(cipherText));
         sb.append('\n');

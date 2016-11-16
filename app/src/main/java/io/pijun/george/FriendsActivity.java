@@ -27,8 +27,8 @@ import io.pijun.george.api.OscarClient;
 import io.pijun.george.api.OscarError;
 import io.pijun.george.api.User;
 import io.pijun.george.api.UserComm;
+import io.pijun.george.crypto.EncryptedData;
 import io.pijun.george.crypto.KeyPair;
-import io.pijun.george.crypto.PKEncryptedMessage;
 import io.pijun.george.models.UserRecord;
 import retrofit2.Response;
 
@@ -127,7 +127,7 @@ public class FriendsActivity extends AppCompatActivity implements FriendsAdapter
             }
 
             UserComm comm = UserComm.newLocationSharingRequest();
-            PKEncryptedMessage msg = Sodium.publicKeyEncrypt(comm.toJSON(), userRecord.publicKey, keyPair.secretKey);
+            EncryptedData msg = Sodium.publicKeyEncrypt(comm.toJSON(), userRecord.publicKey, keyPair.secretKey);
             Response<Void> sendResponse = api.sendMessage(Hex.toHexString(userRecord.userId), msg).execute();
             if (!sendResponse.isSuccessful()) {
                 OscarError err = OscarError.fromResponse(sendResponse);
@@ -184,7 +184,7 @@ public class FriendsActivity extends AppCompatActivity implements FriendsAdapter
         if (user == null) {
             throw new RuntimeException("How was approve called for an unknown user?");
         }
-        PKEncryptedMessage encMsg = Sodium.publicKeyEncrypt(msgBytes, user.publicKey, kp.secretKey);
+        EncryptedData encMsg = Sodium.publicKeyEncrypt(msgBytes, user.publicKey, kp.secretKey);
         OscarAPI client = OscarClient.newInstance(accessToken);
         try {
             Response<Void> response = client.sendMessage(Hex.toHexString(user.userId), encMsg).execute();
@@ -230,7 +230,7 @@ public class FriendsActivity extends AppCompatActivity implements FriendsAdapter
             L.w("friend with user id " + userId + " doesn't exist");
             return;
         }
-        PKEncryptedMessage encMsg = Sodium.publicKeyEncrypt(msgBytes, user.publicKey, kp.secretKey);
+        EncryptedData encMsg = Sodium.publicKeyEncrypt(msgBytes, user.publicKey, kp.secretKey);
         OscarAPI client = OscarClient.newInstance(accessToken);
         try {
             Response<Void> response = client.sendMessage(Hex.toHexString(user.userId), encMsg).execute();

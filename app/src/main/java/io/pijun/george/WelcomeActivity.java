@@ -18,6 +18,8 @@ import android.view.ViewGroup;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
 
+import com.google.firebase.crash.FirebaseCrash;
+
 import java.io.IOException;
 import java.security.SecureRandom;
 
@@ -28,7 +30,8 @@ import io.pijun.george.api.OscarClient;
 import io.pijun.george.api.OscarError;
 import io.pijun.george.api.User;
 import io.pijun.george.crypto.KeyPair;
-import io.pijun.george.crypto.PKEncryptedMessage;
+import io.pijun.george.crypto.EncryptedData;
+import io.pijun.george.models.Snapshot;
 import retrofit2.Response;
 
 public class WelcomeActivity extends AppCompatActivity {
@@ -223,73 +226,128 @@ public class WelcomeActivity extends AppCompatActivity {
     @WorkerThread
     public void login(final String username, final String password) {
         L.i("logging in");
-        boolean startedChallenge = false;
+        OscarAPI api = OscarClient.newInstance(null);
+        Response<AuthenticationChallenge> startChallengeResp;
         try {
-            OscarAPI api = OscarClient.newInstance(null);
-            Response<AuthenticationChallenge> startChallengeResp = api.getAuthenticationChallenge(username).execute();
-            startedChallenge = true;
-            if (!startChallengeResp.isSuccessful()) {
-                OscarError err = OscarError.fromResponse(startChallengeResp);
-                if (err != null && err.code == OscarError.ERROR_USER_NOT_FOUND) {
-                    Utils.showStringAlert(WelcomeActivity.this, null, "Unknown user");
-                } else {
-                    Utils.showStringAlert(WelcomeActivity.this, null, "Unknown error");
-                }
-                return;
-            }
-            AuthenticationChallenge authChallenge = startChallengeResp.body();
+            startChallengeResp = api.getAuthenticationChallenge(username).execute();
+        } catch (IOException ex) {
+            Utils.showStringAlert(this, null, "Unable to start log in process");
+            return;
+        }
 
-            final byte[] passwordHash = Sodium.createHashFromPassword(
-                    Sodium.getSymmetricKeyLength(),
-                    password.getBytes(),
-                    authChallenge.user.passwordSalt,
-                    authChallenge.user.passwordHashOperationsLimit,
-                    authChallenge.user.passwordHashMemoryLimit);
-
-            // now try to decrypt the private key
-            final byte[] secretKey = Sodium.symmetricKeyDecrypt(
-                    authChallenge.user.wrappedSecretKey,
-                    authChallenge.user.wrappedSecretKeyNonce,
-                    passwordHash);
-
-            if (secretKey == null) {
-                Utils.showAlert(this, R.string.incorrect_password, 0);
-                return;
-            }
-            PKEncryptedMessage encChallenge = Sodium.publicKeyEncrypt(authChallenge.challenge, authChallenge.publicKey, secretKey);
-
-            Response<LoginResponse> completeChallengeResp = api.completeAuthenticationChallenge(username, encChallenge).execute();
-            if (!completeChallengeResp.isSuccessful()) {
-                Utils.showStringAlert(this, null, "Login failed: " + OscarError.fromResponse(completeChallengeResp));
-                return;
-            }
-            final LoginResponse loginResponse = completeChallengeResp.body();
-            byte[] symmetricKey = Sodium.symmetricKeyDecrypt(loginResponse.wrappedSymmetricKey,
-                    loginResponse.wrappedSymmetricKeyNonce,
-                    passwordHash);
-            Prefs prefs = Prefs.get(WelcomeActivity.this);
-            prefs.setSymmetricKey(symmetricKey);
-            prefs.setPasswordSalt(authChallenge.user.passwordSalt);
-            KeyPair kp = new KeyPair();
-            kp.publicKey = authChallenge.user.publicKey;
-            kp.secretKey = secretKey;
-            L.i("login will set keypair: " + kp);
-            prefs.setKeyPair(kp);
-
-            App.runOnUiThread(new UiRunnable() {
-                @Override
-                public void run() {
-                    onLoginResponse(loginResponse);
-                }
-            });
-
-        } catch (IOException e) {
-            if (!startedChallenge) {
-                Utils.showStringAlert(this, null, "serious error obtaining authentication challenge: " + e.getLocalizedMessage());
+        if (!startChallengeResp.isSuccessful()) {
+            OscarError err = OscarError.fromResponse(startChallengeResp);
+            if (err != null && err.code == OscarError.ERROR_USER_NOT_FOUND) {
+                Utils.showStringAlert(WelcomeActivity.this, null, "Unknown user");
             } else {
-                Utils.showStringAlert(this, null, "serious error completing authentication challenge: " + e.getLocalizedMessage());
+                Utils.showStringAlert(WelcomeActivity.this, null, "Unknown error");
+            }
+            return;
+        }
+        AuthenticationChallenge authChallenge = startChallengeResp.body();
+
+        final byte[] passwordHash = Sodium.createHashFromPassword(
+                Sodium.getSymmetricKeyLength(),
+                password.getBytes(),
+                authChallenge.user.passwordSalt,
+                authChallenge.user.passwordHashOperationsLimit,
+                authChallenge.user.passwordHashMemoryLimit);
+
+        // now try to decrypt the private key
+        final byte[] secretKey = Sodium.symmetricKeyDecrypt(
+                authChallenge.user.wrappedSecretKey,
+                authChallenge.user.wrappedSecretKeyNonce,
+                passwordHash);
+
+        if (secretKey == null) {
+            Utils.showAlert(this, R.string.incorrect_password, 0);
+            return;
+        }
+        EncryptedData encChallenge = Sodium.publicKeyEncrypt(authChallenge.challenge, authChallenge.publicKey, secretKey);
+
+        Response<LoginResponse> completeChallengeResp;
+        try {
+            completeChallengeResp = api.completeAuthenticationChallenge(username, encChallenge).execute();
+        } catch (IOException ex) {
+            Utils.showStringAlert(this, null, "Unable to complete authentication challenge");
+            return;
+        }
+        if (!completeChallengeResp.isSuccessful()) {
+            Utils.showStringAlert(this, null, "Login failed: " + OscarError.fromResponse(completeChallengeResp));
+            return;
+        }
+
+        final LoginResponse loginResponse = completeChallengeResp.body();
+        byte[] symmetricKey = Sodium.symmetricKeyDecrypt(loginResponse.wrappedSymmetricKey,
+                loginResponse.wrappedSymmetricKeyNonce,
+                passwordHash);
+        if (symmetricKey == null) {
+            Utils.showStringAlert(this, null, "Login failed. Unable to unwrap your symmetric key");
+            return;
+        }
+
+        // retrieve and restore the database backup
+        api = OscarClient.newInstance(loginResponse.accessToken);
+        Response<EncryptedData> dbResponse;
+        try {
+            dbResponse = api.getDatabaseBackup().execute();
+
+        } catch (IOException ex) {
+            Utils.showStringAlert(this, null, "Unable to restore profile. Check your connection then try again.");
+            return;
+        }
+        if (!dbResponse.isSuccessful()) {
+            OscarError err = OscarError.fromResponse(dbResponse);
+            if (err == null || err.code != OscarError.ERROR_BACKUP_NOT_FOUND) {
+                Utils.showStringAlert(this, null, "Unknown error retrieving profile: " + dbResponse.code());
+                return;
+            }
+            // If we get here, that means no backup was found. It's weird, but not strictly wrong.
+        } else {
+            EncryptedData encSnapshot = dbResponse.body();
+            byte[] jsonDb = Sodium.symmetricKeyDecrypt(encSnapshot.cipherText, encSnapshot.nonce, symmetricKey);
+            if (jsonDb == null) {
+                Utils.showStringAlert(this, null, "Unable to restore profile. Did your key change?");
+                return;
+            }
+            L.i("jsondb: " + new String(jsonDb));
+            Snapshot snapshot = Snapshot.fromJson(jsonDb);
+            // restore the database
+            if (snapshot == null) {
+                Utils.showStringAlert(this, null, "Unable to decode your profile");
+                return;
+            }
+
+            if (snapshot.schemaVersion > DB.get(this).getSchemaVersion()) {
+                Utils.showStringAlert(this, null, "This version of Pijun is too old. Update to the latest version then try logging in again.");
+                return;
+            }
+
+            try {
+                DB.get(this).restoreDatabase(snapshot);
+            } catch (DB.DBException ex) {
+                FirebaseCrash.report(ex);
+                Utils.showStringAlert(this, null, "Unable to rebuild your profile. This is a bug.");
+                return;
             }
         }
+
+        Prefs prefs = Prefs.get(this);
+        prefs.setSymmetricKey(symmetricKey);
+        prefs.setPasswordSalt(authChallenge.user.passwordSalt);
+        KeyPair kp = new KeyPair();
+        kp.publicKey = authChallenge.user.publicKey;
+        kp.secretKey = secretKey;
+        prefs.setKeyPair(kp);
+        prefs.setUserId(loginResponse.id);
+        prefs.setAccessToken(loginResponse.accessToken);
+
+        App.runOnUiThread(new UiRunnable() {
+            @Override
+            public void run() {
+                showMapActivity();
+            }
+        });
     }
 
     @WorkerThread
@@ -324,14 +382,14 @@ public class WelcomeActivity extends AppCompatActivity {
         new SecureRandom().nextBytes(symmetricKey);
         prefs.setSymmetricKey(symmetricKey);
 
-        PKEncryptedMessage wrappedSymmetricKey = Sodium.symmetricKeyEncrypt(symmetricKey, passwordHash);
+        EncryptedData wrappedSymmetricKey = Sodium.symmetricKeyEncrypt(symmetricKey, passwordHash);
         if (wrappedSymmetricKey == null) {
             return null;
         }
         u.wrappedSymmetricKey = wrappedSymmetricKey.cipherText;
         u.wrappedSymmetricKeyNonce = wrappedSymmetricKey.nonce;
 
-        PKEncryptedMessage wrappedSecretKey = Sodium.symmetricKeyEncrypt(kp.secretKey, passwordHash);
+        EncryptedData wrappedSecretKey = Sodium.symmetricKeyEncrypt(kp.secretKey, passwordHash);
         u.wrappedSecretKey = wrappedSecretKey.cipherText;
         u.wrappedSecretKeyNonce = wrappedSecretKey.nonce;
 
@@ -344,10 +402,15 @@ public class WelcomeActivity extends AppCompatActivity {
         try {
             final Response<LoginResponse> response = api.createUser(user).execute();
             if (response.isSuccessful()) {
+                LoginResponse resp = response.body();
+                Prefs prefs = Prefs.get(this);
+                prefs.setUserId(resp.id);
+                prefs.setAccessToken(resp.accessToken);
+
                 App.runOnUiThread(new UiRunnable() {
                     @Override
                     public void run() {
-                        onLoginResponse(response.body());
+                        showMapActivity();
                     }
                 });
             } else {
@@ -368,12 +431,7 @@ public class WelcomeActivity extends AppCompatActivity {
     }
 
     @UiThread
-    private void onLoginResponse(LoginResponse lr) {
-        L.i("WA.onLoginResponse");
-        Prefs prefs = Prefs.get(this);
-        prefs.setUserId(lr.id);
-        prefs.setAccessToken(lr.accessToken);
-
+    private void showMapActivity() {
         Intent i = MapActivity.newIntent(this);
         startActivity(i);
         finish();

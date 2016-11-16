@@ -1,5 +1,8 @@
 package io.pijun.george.api;
 
+import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
+
 import com.google.gson.FieldNamingPolicy;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -33,6 +36,7 @@ public class OscarError {
     public static final int ERROR_CHALLENGE_NOT_FOUND = 17;
     public static final int ERROR_CHALLENGE_EXPIRED = 18;
     public static final int ERROR_LOGIN_FAILED = 19;
+    public static final int ERROR_BACKUP_NOT_FOUND = 20;
 
     @SerializedName("error_message")
     public String message;
@@ -48,19 +52,18 @@ public class OscarError {
                 '}';
     }
 
+    @Nullable
     private static OscarError fromReader(Reader r) {
-        Gson gson = new GsonBuilder()
-                .setFieldNamingPolicy(FieldNamingPolicy.LOWER_CASE_WITH_UNDERSCORES)
-                .create();
         OscarError err = null;
         try {
-            err = gson.fromJson(r, OscarError.class);
+            err = OscarClient.sGson.fromJson(r, OscarError.class);
         } catch (Throwable t) {
             L.w("can't deserialize OscarError", t);
         }
         return err;
     }
 
+    @Nullable
     public static OscarError fromResponse(Response r) {
         return fromReader(r.errorBody().charStream());
     }

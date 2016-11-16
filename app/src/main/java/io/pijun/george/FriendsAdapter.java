@@ -71,7 +71,7 @@ class FriendsAdapter extends RecyclerView.Adapter {
             return new FriendItemViewHolder(view);
         } else if (viewType == R.layout.friend_request_item) {
             View view = inflater.inflate(R.layout.friend_request_item, parent, false);
-            final FriendItemViewHolder holder = new FriendItemViewHolder(view);
+            final FriendRequestItemViewHolder holder = new FriendRequestItemViewHolder(view);
             holder.shareButton.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View view) {
@@ -95,11 +95,11 @@ class FriendsAdapter extends RecyclerView.Adapter {
     @SuppressLint("SetTextI18n")
     @Override
     public void onBindViewHolder(RecyclerView.ViewHolder holder, int position) {
-        FriendItemViewHolder h = (FriendItemViewHolder) holder;
         FriendItem item = mItems.get(position);
-        Context context = h.profile.getContext();
+        Context context = holder.itemView.getContext();
 
         if (item.viewType == R.layout.friend_item) {
+            FriendItemViewHolder h = (FriendItemViewHolder) holder;
             FriendRecord friend = mFriends.get((int)item.id);
             h.profile.show(friend.user.username);
             h.username.setText(friend.user.username);
@@ -119,11 +119,11 @@ class FriendsAdapter extends RecyclerView.Adapter {
                 h.location.setText("3682 Sunset Knolls Dr. (not real)");
             }
         } else if (item.viewType == R.layout.friend_request_item) {
+            FriendRequestItemViewHolder h = (FriendRequestItemViewHolder) holder;
             RequestRecord request = mRequests.get((int) item.id);
             UserRecord user = mCachedUsers.get(request.userId);
             h.profile.show(user.username);
             h.username.setText(user.username);
-            h.location.setText("gotta do something here");
             String msg = context.getString(R.string.share_your_location_with_msg, user.username);
             h.sharePrompt.setText(msg);
             h.shareButton.setTag(item.id);
