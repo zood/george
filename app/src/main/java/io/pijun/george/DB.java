@@ -392,6 +392,21 @@ public class DB {
     }
 
     @WorkerThread
+    @Nullable
+    public RequestRecord getIncomingRequestByUserId(long userId) {
+        SQLiteDatabase db = mDbHelper.getReadableDatabase();
+        String selection = INCOMING_REQUESTS_COL_USER_ID + "=?";
+        String[] args = new String[]{String.valueOf(userId)};
+        try (Cursor c = db.query(INCOMING_REQUESTS_TABLE, INCOMING_REQUESTS_COLUMNS, selection, args, null, null, null)) {
+            if (c.moveToNext()) {
+                return readRequest(c);
+            }
+        }
+
+        return null;
+    }
+
+    @WorkerThread
     @NonNull
     public ArrayList<RequestRecord> getIncomingRequests(boolean notRespondedOnly) {
         ArrayList<RequestRecord> requests = new ArrayList<>();
@@ -709,7 +724,6 @@ public class DB {
 
     @WorkerThread
     private void scheduleBackup() {
-        L.i("scheduleBackup");
         JobScheduler scheduler = (JobScheduler) mContext.getSystemService(Context.JOB_SCHEDULER_SERVICE);
         scheduler.schedule(BackupDatabaseJob.getJobInfo(mContext));
     }
@@ -777,7 +791,7 @@ public class DB {
 
         @Override
         public void onCreate(SQLiteDatabase db) {
-            L.i("DBHelper.onCreate");
+//            L.i("DBHelper.onCreate");
 
             String createFriends = "CREATE TABLE "
                     + FRIENDS_TABLE + " ("

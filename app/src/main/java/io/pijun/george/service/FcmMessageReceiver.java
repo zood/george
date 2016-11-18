@@ -11,6 +11,7 @@ import java.util.Map;
 import io.pijun.george.L;
 import io.pijun.george.MessageUtils;
 import io.pijun.george.api.Message;
+import io.pijun.george.api.OscarClient;
 
 public class FcmMessageReceiver extends FirebaseMessagingService {
 
@@ -49,7 +50,10 @@ public class FcmMessageReceiver extends FirebaseMessagingService {
         L.i("FMR.handleMessageReceived: " + msg);
 
         int result = MessageUtils.unwrapAndProcess(this, msg.senderId, msg.cipherText, msg.nonce);
-        if (result != MessageUtils.ERROR_NONE) {
+        if (result == MessageUtils.ERROR_NONE) {
+            // delete the message from the server
+//            OscarClient.queueDeleteMessage(this, msg.id);
+        } else {
             L.w("error processing message: " + result);
         }
     }

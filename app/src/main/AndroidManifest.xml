@@ -47,6 +47,7 @@
         <service android:name=".service.LocationMonitor" />
         <service android:name=".service.LocationJobService" android:permission="android.permission.BIND_JOB_SERVICE" />
         <service android:name=".service.BackupDatabaseJob" android:permission="android.permission.BIND_JOB_SERVICE" />
+        <service android:name=".service.OscarJobService" android:permission="android.permission.BIND_JOB_SERVICE" />
         <!-- END SERVICES -->
 
         <meta-data

@@ -7,8 +7,6 @@ import android.content.Intent;
 
 import com.google.android.gms.location.ActivityRecognitionResult;
 
-import io.pijun.george.L;
-
 public class ActivityMonitor extends IntentService {
 
     private static int REQUEST_CODE = 5592;     // magic number
@@ -25,6 +23,5 @@ public class ActivityMonitor extends IntentService {
     @Override
     protected void onHandleIntent(Intent intent) {
         ActivityRecognitionResult result = ActivityRecognitionResult.extractResult(intent);
-        L.i("AM.onHandleIntent: " + result);
     }
 }

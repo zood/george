@@ -128,12 +128,13 @@ public class FriendsActivity extends AppCompatActivity implements FriendsAdapter
 
             UserComm comm = UserComm.newLocationSharingRequest();
             EncryptedData msg = Sodium.publicKeyEncrypt(comm.toJSON(), userRecord.publicKey, keyPair.secretKey);
-            Response<Void> sendResponse = api.sendMessage(Hex.toHexString(userRecord.userId), msg).execute();
-            if (!sendResponse.isSuccessful()) {
-                OscarError err = OscarError.fromResponse(sendResponse);
-                Utils.showStringAlert(this, null, "Unable to send request message: " + err);
-                return;
-            }
+            OscarClient.queueSendMessage(this, Hex.toHexString(userRecord.userId), msg);
+//            Response<Void> sendResponse = api.sendMessage(, msg).execute();
+//            if (!sendResponse.isSuccessful()) {
+//                OscarError err = OscarError.fromResponse(sendResponse);
+//                Utils.showStringAlert(this, null, "Unable to send request message: " + err);
+//                return;
+//            }
 
             byte[] sendingBoxId = null;
             if (shareLocation) {
@@ -141,12 +142,13 @@ public class FriendsActivity extends AppCompatActivity implements FriendsAdapter
                 new SecureRandom().nextBytes(sendingBoxId);
                 comm = UserComm.newLocationSharingGrant(sendingBoxId);
                 msg = Sodium.publicKeyEncrypt(comm.toJSON(), userRecord.publicKey, keyPair.secretKey);
-                sendResponse = api.sendMessage(Hex.toHexString(userRecord.userId), msg).execute();
-                if (!sendResponse.isSuccessful()) {
-                    OscarError err = OscarError.fromResponse(sendResponse);
-                    Utils.showStringAlert(this, null, "Unable to send grand message: " + err);
-                    return;
-                }
+                OscarClient.queueSendMessage(this, Hex.toHexString(userRecord.userId), msg);
+//                sendResponse = api.sendMessage(Hex.toHexString(userRecord.userId), msg).execute();
+//                if (!sendResponse.isSuccessful()) {
+//                    OscarError err = OscarError.fromResponse(sendResponse);
+//                    Utils.showStringAlert(this, null, "Unable to send grand message: " + err);
+//                    return;
+//                }
             }
 
             db.addFriend(userRecord.id, sendingBoxId, null);
@@ -165,46 +167,9 @@ public class FriendsActivity extends AppCompatActivity implements FriendsAdapter
 
     @WorkerThread
     private void approveFriendRequest(long userId) {
-        Prefs prefs = Prefs.get(this);
-        String accessToken = prefs.getAccessToken();
-        if (TextUtils.isEmpty(accessToken)) {
-            Utils.showStringAlert(this, null, "Your access token is missing");
-            return;
-        }
-        KeyPair kp = Prefs.get(this).getKeyPair();
-        if (kp == null) {
-            Utils.showStringAlert(this, null, "Your key pair is missing");
-            return;
-        }
-        byte[] boxId = new byte[Constants.DROP_BOX_ID_LENGTH];
-        new SecureRandom().nextBytes(boxId);
-        UserComm comm = UserComm.newLocationSharingGrant(boxId);
-        byte[] msgBytes = comm.toJSON();
-        UserRecord user = DB.get(this).getUserById(userId);
-        if (user == null) {
-            throw new RuntimeException("How was approve called for an unknown user?");
-        }
-        EncryptedData encMsg = Sodium.publicKeyEncrypt(msgBytes, user.publicKey, kp.secretKey);
-        OscarAPI client = OscarClient.newInstance(accessToken);
-        try {
-            Response<Void> response = client.sendMessage(Hex.toHexString(user.userId), encMsg).execute();
-            if (!response.isSuccessful()) {
-                Utils.showStringAlert(this, null, "Problem sending request approval");
-                return;
-            }
-        } catch (IOException ex) {
-            Utils.showStringAlert(this, null, "Serious problem sending request approval");
-            L.w("Serious problem sending request approval", ex);
-            FirebaseCrash.report(ex);
-            return;
-        }
-
-        try {
-            DB.get(this).grantSharingTo(user.userId, boxId);
-        } catch (DB.DBException ex) {
-            Utils.showStringAlert(this, null, "Serious problem setting drop box id");
-            L.w("serious problem setting drop box id", ex);
-            FirebaseCrash.report(ex);
+        int err = MessageUtils.approveFriendRequest(this, userId);
+        if (err != MessageUtils.ERROR_NONE) {
+            Utils.showStringAlert(this, null, "Problem approving friend request (" + err + ")");
         }
 
         mAdapter.reloadFriends(this);
@@ -231,19 +196,20 @@ public class FriendsActivity extends AppCompatActivity implements FriendsAdapter
             return;
         }
         EncryptedData encMsg = Sodium.publicKeyEncrypt(msgBytes, user.publicKey, kp.secretKey);
-        OscarAPI client = OscarClient.newInstance(accessToken);
-        try {
-            Response<Void> response = client.sendMessage(Hex.toHexString(user.userId), encMsg).execute();
-            if (!response.isSuccessful()) {
-                Utils.showStringAlert(this, null, "Problem sending rejection");
-                return;
-            }
-        } catch (IOException ex) {
-            Utils.showStringAlert(this, null, "Serious problem sending rejection");
-            L.w("Serious problem sending rejection", ex);
-            FirebaseCrash.report(ex);
-            return;
-        }
+        OscarClient.queueSendMessage(this, Hex.toHexString(user.userId), encMsg);
+//        OscarAPI client = OscarClient.newInstance(accessToken);
+//        try {
+//            Response<Void> response = client.sendMessage(Hex.toHexString(user.userId), encMsg).execute();
+//            if (!response.isSuccessful()) {
+//                Utils.showStringAlert(this, null, "Problem sending rejection");
+//                return;
+//            }
+//        } catch (IOException ex) {
+//            Utils.showStringAlert(this, null, "Serious problem sending rejection");
+//            L.w("Serious problem sending rejection", ex);
+//            FirebaseCrash.report(ex);
+//            return;
+//        }
 
         try {
             DB.get(this).rejectRequest(user);

@@ -26,6 +26,9 @@ public interface OscarAPI {
     @DELETE("users/me/fcm-tokens/{fcmToken}")
     Call<Void> deleteFcmToken(@Path("fcmToken") String fcmToken);
 
+    @DELETE("messages/{messageId}")
+    Call<Void> deleteMessage(@Path("messageId") long msgId);
+
     @PUT("drop-boxes/{boxId}")
     Call<Void> dropPackage(@Path("boxId") String hexId, @Body EncryptedData pkg);
 

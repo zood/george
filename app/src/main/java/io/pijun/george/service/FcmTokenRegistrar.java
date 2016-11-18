@@ -55,13 +55,11 @@ public class FcmTokenRegistrar extends IntentService {
 
     @WorkerThread
     private void register() {
-        L.i("FTR.register");
         String fcmToken = FirebaseInstanceId.getInstance().getToken();
         if (fcmToken == null) {
             return;
         }
 
-        L.i("|  token: " + fcmToken);
         Prefs prefs = Prefs.get(this);
         String savedFcmToken = prefs.getFcmToken();
         // check if we've already uploaded this token

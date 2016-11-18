@@ -29,7 +29,7 @@ public class BackupDatabaseJob extends JobService {
 
     public static JobInfo getJobInfo(Context context) {
         ComponentName compName = new ComponentName(context, BackupDatabaseJob.class);
-        // so any additional db operations complete
+        // so any additional db operations can complete, we add a little latency
         JobInfo.Builder builder = new JobInfo.Builder(JOB_ID, compName)
                 .setMinimumLatency(10 * DateUtils.SECOND_IN_MILLIS)
                 .setRequiredNetworkType(JobInfo.NETWORK_TYPE_ANY)
@@ -43,7 +43,6 @@ public class BackupDatabaseJob extends JobService {
 
     @Override
     public boolean onStartJob(JobParameters params) {
-        L.i("BackupDatabaseJob.onStartJob");
         if (!Prefs.get(this).isLoggedIn()) {
             jobFinished(params, false);
             return false;
@@ -62,14 +61,12 @@ public class BackupDatabaseJob extends JobService {
 
     @Override
     public boolean onStopJob(JobParameters params) {
-        L.i("BackupDatabaseJob.onStopJob");
         mShouldStop = false;
         return false;
     }
 
     @WorkerThread
     private void uploadSnapshot() {
-        L.i("BackupDatabaseJob.uploadSnapshot");
         Snapshot snapshot = DB.get(this).getSnapshot();
         if (mShouldStop) {
             return;
@@ -97,7 +94,6 @@ public class BackupDatabaseJob extends JobService {
                 L.w("Encrypted db backup failed: " + err);
                 jobFinished(mJobParams, true);
             } else {
-                L.i("|  successfully uploaded snapshot");
                 jobFinished(mJobParams, false);
             }
         } catch (IOException ex) {

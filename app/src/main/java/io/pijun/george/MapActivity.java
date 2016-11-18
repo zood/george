@@ -12,6 +12,7 @@ import android.location.Location;
 import android.os.Bundle;
 import android.os.Looper;
 import android.support.annotation.AnyThread;
+import android.support.annotation.Keep;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.annotation.UiThread;
@@ -51,6 +52,8 @@ import com.google.android.gms.maps.model.CameraPosition;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonParser;
 import com.squareup.otto.Subscribe;
 
 import java.io.IOException;
@@ -60,6 +63,7 @@ import java.util.Locale;
 import io.pijun.george.api.GMapsClient;
 import io.pijun.george.api.PackageWatcher;
 import io.pijun.george.api.ReverseGeocoding;
+import io.pijun.george.event.LocationSharingGranted;
 import io.pijun.george.event.LocationSharingRequested;
 import io.pijun.george.models.FriendLocation;
 import io.pijun.george.models.FriendRecord;
@@ -93,7 +97,6 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
 
         // Is there a user account here? If not, send them to the login/sign up screen
         if (!Prefs.get(this).isLoggedIn()) {
-            L.i("MA.onCreate not logged in");
             Intent welcomeIntent = WelcomeActivity.newIntent(this);
             startActivity(welcomeIntent);
             finish();
@@ -110,8 +113,6 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
         mMapView = (MapView) findViewById(R.id.map);
         mMapView.onCreate(savedInstanceState);
         mMapView.getMapAsync(this);
-
-        L.i("locale: " + Locale.getDefault().getLanguage());
 
         findViewById(R.id.bottom_textview).setOnClickListener(new View.OnClickListener() {
             @Override
@@ -130,7 +131,6 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
                 .build();
 
         startService(FcmTokenRegistrar.newIntent(this));
-        startService(FriendLocationsRefresher.newIntent(this));
         App.runInBackground(new WorkerRunnable() {
             @Override
             public void run() {
@@ -251,7 +251,6 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
     @Override
     @UiThread
     public void onMapReady(GoogleMap googleMap) {
-        L.i("onMapReady isMainThread? " + (Looper.getMainLooper() == Looper.myLooper()));
         mGoogleMap = googleMap;
         CameraPosition pos = Prefs.get(this).getCameraPosition();
         if (pos != null) {
@@ -383,7 +382,6 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
 
     @AnyThread
     private void beginLocationUpdates() {
-        L.i("beginLocationUpdates");
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
             // This should never happen. Nobody should be calling this method before permission has been obtained.
             L.w("MapActivity.beginLocationUpdates was called before obtaining location permission");
@@ -391,7 +389,6 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
             return;
         }
         if (!mGoogleApiClient.isConnected()) {
-            L.i("|  google api not connected");
             return;
         }
         LocationRequest req = LocationRequest.create();
@@ -401,7 +398,6 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
         pendingResult.setResultCallback(new ResultCallback<Status>() {
             @Override
             public void onResult(@NonNull Status status) {
-                L.i("result of requestLocationupdates: " + status);
             }
         });
     }
@@ -422,6 +418,28 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
                     drawable = R.drawable.common_google_signin_btn_icon_dark;
                 }
                 tv.setCompoundDrawablesRelativeWithIntrinsicBounds(0, 0, drawable, 0);
+            }
+        });
+    }
+
+    @Subscribe
+    @UiThread
+    public void onLocationSharingGranted(final LocationSharingGranted grant) {
+        L.i("onLocationSharingGranted");
+        if (mPkgWatcher == null) {
+            return;
+        }
+
+        App.runInBackground(new WorkerRunnable() {
+            @Override
+            public void run() {
+                FriendRecord friend = DB.get(MapActivity.this).getFriendByUserId(grant.userId);
+                if (friend == null) {
+                    L.w("MapActivity.onLocationSharingGranted didn't find friend record");
+                    return;
+                }
+                L.i("onLocationSharingGranted: friend found. will watch");
+                mPkgWatcher.watch(friend.user.userId);
             }
         });
     }
@@ -519,7 +537,6 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
 
     @Override
     public void onConnected(@Nullable Bundle bundle) {
-        L.i("MA.onConnected");
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
             L.i("|  failed permission check");
             return;

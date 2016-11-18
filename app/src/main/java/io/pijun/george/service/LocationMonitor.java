@@ -75,8 +75,6 @@ public class LocationMonitor extends Service {
     @Nullable
     @Override
     public IBinder onBind(Intent intent) {
-        L.i("LM.onBind " + this);
-
         return mBinder;
     }
 
@@ -85,7 +83,6 @@ public class LocationMonitor extends Service {
     public void onCreate() {
         super.onCreate();
 
-        L.i("LM.onCreate");
         JobScheduler scheduler = (JobScheduler) getSystemService(Context.JOB_SCHEDULER_SERVICE);
         scheduler.schedule(LocationJobService.getJobInfo(this));
 
@@ -102,14 +99,12 @@ public class LocationMonitor extends Service {
     @Override
     @UiThread
     public int onStartCommand(Intent intent, int flags, int startId) {
-        L.i("LM.onStartCommand");
         return START_STICKY;
     }
 
     @Override
     @UiThread
     public void onDestroy() {
-        L.i("LM.onDestroy " + this);
         App.unregisterFromBus(this);
 
         super.onDestroy();
@@ -133,9 +128,7 @@ public class LocationMonitor extends Service {
         result.setResultCallback(new ResultCallback<Status>() {
             @Override
             public void onResult(@NonNull Status status) {
-                if (status.isSuccess()) {
-                    L.i("successfully registered for activity recognition");
-                } else {
+                if (!status.isSuccess()) {
                     L.i("failed to register for activity recognition");
                 }
             }
@@ -153,21 +146,19 @@ public class LocationMonitor extends Service {
                     return;
                 }
 
-                L.i("LM.onLocationChanged - " + l);
+//                L.i("LM.onLocationChanged - " + l);
                 mLocations.add(l);
 
-                // If the app is in foreground, and there is internet connectivity, and we haven't
-                // flushed the location in at least a minute, perform a flush
+                // If 1) the app is in foreground, 2) and there is internet connectivity, and
+                // 3) we haven't flushed the location in at least a minute, then perform a flush
                 long timeSinceFlush = System.currentTimeMillis() - mLastFlushTime;
                 if (App.isInForeground && timeSinceFlush > DateUtils.MINUTE_IN_MILLIS) {
                     ConnectivityManager cm = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
                     NetworkInfo activeNetwork = cm.getActiveNetworkInfo();
                     boolean isConnected = activeNetwork != null && activeNetwork.isConnectedOrConnecting();
                     if (isConnected) {
-                        L.i("about to perform foreground flush");
                         flush();
                         JobScheduler scheduler = (JobScheduler) getSystemService(Context.JOB_SCHEDULER_SERVICE);
-                        L.i("deferring location");
                         scheduler.schedule(LocationJobService.getJobInfo(LocationMonitor.this));
                     }
                 }
@@ -180,8 +171,6 @@ public class LocationMonitor extends Service {
      */
     @WorkerThread
     void flush() {
-        L.i("LM.flush");
-
         // If we have no location to report, just get out of here.
         if (mLocations.isEmpty()) {
             return;

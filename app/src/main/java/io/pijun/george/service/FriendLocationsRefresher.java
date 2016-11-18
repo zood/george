@@ -9,6 +9,7 @@ import io.pijun.george.L;
 public class FriendLocationsRefresher extends IntentService {
 
     public static Intent newIntent(Context context) {
+        // TODO: What was my intention when building this class? Is it obviated by PackageWatcher?
         return new Intent(context, FriendLocationsRefresher.class);
     }
 
@@ -18,6 +19,5 @@ public class FriendLocationsRefresher extends IntentService {
 
     @Override
     protected void onHandleIntent(Intent intent) {
-        L.i("FLR.onHandleIntent: " + FriendLocationsRefresher.class.getSimpleName());
     }
 }

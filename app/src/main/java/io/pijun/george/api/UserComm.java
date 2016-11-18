@@ -1,6 +1,7 @@
 package io.pijun.george.api;
 
 import android.location.Location;
+import android.support.annotation.NonNull;
 
 import java.io.ByteArrayInputStream;
 import java.io.InputStreamReader;
@@ -13,8 +14,6 @@ public class UserComm {
     public CommType type;
     public byte[] dropBox;
 
-    public boolean processed;
-
     // location_info
     public double latitude;
     public double longitude;
@@ -22,26 +21,30 @@ public class UserComm {
     public Float accuracy;
     public Float speed;
 
+    @NonNull
     public static UserComm newLocationSharingRequest() {
         UserComm c = new UserComm();
         c.type = CommType.LocationSharingRequest;
         return c;
     }
 
-    public static UserComm newLocationSharingGrant(byte[] boxId) {
+    @NonNull
+    public static UserComm newLocationSharingGrant(@NonNull byte[] boxId) {
         UserComm c = new UserComm();
         c.type = CommType.LocationSharingGrant;
         c.dropBox = boxId;
         return c;
     }
 
+    @NonNull
     public static UserComm newLocationSharingRejection() {
         UserComm c = new UserComm();
         c.type = CommType.LocationSharingRejection;
         return c;
     }
 
-    public static UserComm newLocationInfo(Location l) {
+    @NonNull
+    public static UserComm newLocationInfo(@NonNull Location l) {
         UserComm c = new UserComm();
         c.type = CommType.LocationInfo;
         c.latitude = l.getLatitude();
@@ -99,7 +102,6 @@ public class UserComm {
         return "UserComm{" +
                 "type=" + type +
                 ", dropBox=" + Arrays.toString(dropBox) +
-                ", processed=" + processed +
                 ", latitude=" + latitude +
                 ", longitude=" + longitude +
                 ", time=" + time +

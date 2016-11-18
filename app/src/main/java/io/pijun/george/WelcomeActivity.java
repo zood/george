@@ -310,7 +310,6 @@ public class WelcomeActivity extends AppCompatActivity {
                 Utils.showStringAlert(this, null, "Unable to restore profile. Did your key change?");
                 return;
             }
-            L.i("jsondb: " + new String(jsonDb));
             Snapshot snapshot = Snapshot.fromJson(jsonDb);
             // restore the database
             if (snapshot == null) {
