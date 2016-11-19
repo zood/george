@@ -6,25 +6,8 @@ import android.app.job.JobService;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
-import android.support.annotation.WorkerThread;
-import android.text.TextUtils;
 
-import com.squareup.tape.FileObjectQueue;
-
-import java.io.IOException;
-
-import io.pijun.george.App;
 import io.pijun.george.L;
-import io.pijun.george.Prefs;
-import io.pijun.george.WorkerRunnable;
-import io.pijun.george.api.OscarAPI;
-import io.pijun.george.api.OscarClient;
-import io.pijun.george.api.OscarError;
-import io.pijun.george.api.task.DeleteMessageTask;
-import io.pijun.george.api.task.OscarTask;
-import io.pijun.george.api.task.SendMessageTask;
-import retrofit2.Call;
-import retrofit2.Response;
 
 public class OscarJobService extends JobService {
 
@@ -42,6 +25,9 @@ public class OscarJobService extends JobService {
     @Override
     public boolean onStartJob(JobParameters params) {
         L.i("OscarJobService.onStartJob");
+        // We do the actual work in an IntentService, so there's only ever one processor of the
+        // message queue. The reason we get the JobService involved at all, is so the IntentService
+        // only gets started when we actually have a network connection.
         Intent i = OscarTasksService.newIntent(this);
         startService(i);
 

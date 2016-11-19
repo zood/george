@@ -439,7 +439,7 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
                     return;
                 }
                 L.i("onLocationSharingGranted: friend found. will watch");
-                mPkgWatcher.watch(friend.user.userId);
+                mPkgWatcher.watch(friend.receivingBoxId);
             }
         });
     }
