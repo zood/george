@@ -45,6 +45,7 @@
         <service android:name=".service.FcmTokenRegistrar" />
         <service android:name=".service.FriendLocationsRefresher" />
         <service android:name=".service.LocationMonitor" />
+        <service android:name=".service.OscarTasksService" />
         <service android:name=".service.LocationJobService" android:permission="android.permission.BIND_JOB_SERVICE" />
         <service android:name=".service.BackupDatabaseJob" android:permission="android.permission.BIND_JOB_SERVICE" />
         <service android:name=".service.OscarJobService" android:permission="android.permission.BIND_JOB_SERVICE" />

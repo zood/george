@@ -43,6 +43,7 @@ public class BackupDatabaseJob extends JobService {
 
     @Override
     public boolean onStartJob(JobParameters params) {
+        L.i("BackupDatabaseJob.onStartJob");
         if (!Prefs.get(this).isLoggedIn()) {
             jobFinished(params, false);
             return false;
@@ -67,6 +68,7 @@ public class BackupDatabaseJob extends JobService {
 
     @WorkerThread
     private void uploadSnapshot() {
+        L.i("BackupDatabaseJob.uploadSnapshot");
         Snapshot snapshot = DB.get(this).getSnapshot();
         if (mShouldStop) {
             return;

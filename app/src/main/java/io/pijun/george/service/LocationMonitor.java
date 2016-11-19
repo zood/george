@@ -158,6 +158,7 @@ public class LocationMonitor extends Service {
                     boolean isConnected = activeNetwork != null && activeNetwork.isConnectedOrConnecting();
                     if (isConnected) {
                         flush();
+                        // we just flushed our location, so reschedule the next check
                         JobScheduler scheduler = (JobScheduler) getSystemService(Context.JOB_SCHEDULER_SERVICE);
                         scheduler.schedule(LocationJobService.getJobInfo(LocationMonitor.this));
                     }

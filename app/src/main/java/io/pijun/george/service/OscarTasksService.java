@@ -1,22 +1,17 @@
 package io.pijun.george.service;
 
-import android.app.job.JobInfo;
-import android.app.job.JobParameters;
-import android.app.job.JobService;
-import android.content.ComponentName;
+import android.app.IntentService;
+import android.app.job.JobScheduler;
 import android.content.Context;
 import android.content.Intent;
-import android.support.annotation.WorkerThread;
 import android.text.TextUtils;
 
 import com.squareup.tape.FileObjectQueue;
 
 import java.io.IOException;
 
-import io.pijun.george.App;
 import io.pijun.george.L;
 import io.pijun.george.Prefs;
-import io.pijun.george.WorkerRunnable;
 import io.pijun.george.api.OscarAPI;
 import io.pijun.george.api.OscarClient;
 import io.pijun.george.api.OscarError;
@@ -26,37 +21,20 @@ import io.pijun.george.api.task.SendMessageTask;
 import retrofit2.Call;
 import retrofit2.Response;
 
-public class OscarJobService extends JobService {
+public class OscarTasksService extends IntentService {
 
-    private static final int JOB_ID = 11938;    // made up number
+    public static Intent newIntent(Context context) {
+        return new Intent(context, OscarTasksService.class);
+    }
 
-    public static JobInfo getJobInfo(Context context) {
-        ComponentName compName = new ComponentName(context, OscarJobService.class);
-        JobInfo.Builder builder = new JobInfo.Builder(JOB_ID, compName)
-                .setRequiredNetworkType(JobInfo.NETWORK_TYPE_ANY)
-                .setRequiresCharging(false)
-                .setRequiresDeviceIdle(false);
-        return builder.build();
+    public OscarTasksService() {
+        super(OscarTasksService.class.getSimpleName());
     }
 
     @Override
-    public boolean onStartJob(JobParameters params) {
-        L.i("OscarJobService.onStartJob");
-        Intent i = OscarTasksService.newIntent(this);
-        startService(i);
-
-        return false;
-    }
-
-    @Override
-    public boolean onStopJob(JobParameters params) {
-        return false;
-    }
-
-    /*
-    @WorkerThread
-    private void processQueue() {
-        mQueue = OscarClient.getQueue(this);
+    protected void onHandleIntent(Intent intent) {
+        L.i("OscarTasksService.onHandleIntent");
+        FileObjectQueue<OscarTask> mQueue = OscarClient.getQueue(this);
 
         // make sure we're still logged in
         String token = Prefs.get(this).getAccessToken();
@@ -65,17 +43,11 @@ public class OscarJobService extends JobService {
             while (mQueue.size() > 0) {
                 mQueue.remove();
             }
-            jobFinished(mParams, false);
             return;
         }
 
         OscarAPI api = OscarClient.newInstance(token);
-
         while (mQueue.size() > 0) {
-            if (mShouldStop) {
-                return;
-            }
-
             OscarTask task = mQueue.peek();
             Call call;
             L.i("processQueue: peeked " + task);
@@ -106,9 +78,13 @@ public class OscarJobService extends JobService {
                 }
             } catch (IOException e) {
                 L.w("|  task exception", e);
+                // a connection problem, so schedule this to continue when the network is back
+                JobScheduler scheduler = (JobScheduler) getSystemService(Context.JOB_SCHEDULER_SERVICE);
+                scheduler.schedule(OscarJobService.getJobInfo(this));
+                return;
             }
             L.i("|  end processQueue loop");
         }
     }
-    */
+
 }

@@ -10,7 +10,6 @@ import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 
-import io.pijun.george.L;
 import io.pijun.george.api.OscarClient;
 
 public class QueueConverter implements FileObjectQueue.Converter<OscarTask> {

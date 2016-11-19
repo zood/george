@@ -3,6 +3,7 @@ package io.pijun.george.api;
 import android.app.job.JobScheduler;
 import android.content.Context;
 import android.support.annotation.NonNull;
+import android.support.annotation.WorkerThread;
 
 import com.google.firebase.crash.FirebaseCrash;
 import com.google.gson.FieldNamingPolicy;
@@ -91,6 +92,7 @@ public class OscarClient {
         return retrofit.create(OscarAPI.class);
     }
 
+    @WorkerThread
     public static void queueDeleteMessage(@NonNull Context context, long msgId) {
         DeleteMessageTask dmt = new DeleteMessageTask();
         dmt.messageId = msgId;
@@ -99,8 +101,9 @@ public class OscarClient {
         scheduler.schedule(OscarJobService.getJobInfo(context));
     }
 
+    @WorkerThread
     public static void queueSendMessage(@NonNull Context context, @NonNull String toUserId, @NonNull EncryptedData msg) {
-        L.i("OscarClient.queueSendMessage: to: " + toUserId + ", cipherText: " + Hex.toHexString(msg.cipherText));
+        L.i("queueSendMessage");
         SendMessageTask smt = new SendMessageTask();
         smt.hexUserId = toUserId;
         smt.message = msg;

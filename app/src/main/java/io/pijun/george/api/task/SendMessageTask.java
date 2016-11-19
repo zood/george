@@ -10,4 +10,12 @@ public class SendMessageTask extends OscarTask {
     public SendMessageTask() {
         super(NAME);
     }
+
+    @Override
+    public String toString() {
+        return "SendMessageTask{" +
+                "hexUserId='" + hexUserId + '\'' +
+                ", message=" + message +
+                '}';
+    }
 }
