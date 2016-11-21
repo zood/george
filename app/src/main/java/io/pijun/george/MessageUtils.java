@@ -80,20 +80,7 @@ public class MessageUtils {
             throw new RuntimeException("How was approve called for an unknown user?");
         }
         EncryptedData encMsg = Sodium.publicKeyEncrypt(msgBytes, user.publicKey, kp.secretKey);
-        OscarClient.queueSendMessage(context, Hex.toHexString(user.userId), encMsg);
-//        OscarAPI client = OscarClient.newInstance(accessToken);
-//        try {
-//            Response<Void> response = client.sendMessage(Hex.toHexString(user.userId), encMsg).execute();
-//            if (!response.isSuccessful()) {
-//                Utils.showStringAlert(this, null, "Problem sending request approval");
-//                return;
-//            }
-//        } catch (IOException ex) {
-//            Utils.showStringAlert(this, null, "Serious problem sending request approval");
-//            L.w("Serious problem sending request approval", ex);
-//            FirebaseCrash.report(ex);
-//            return;
-//        }
+        OscarClient.queueSendMessage(context, accessToken, Hex.toHexString(user.userId), encMsg);
 
         try {
             DB.get(context).grantSharingTo(user.userId, boxId);

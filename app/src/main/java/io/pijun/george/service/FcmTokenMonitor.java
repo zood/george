@@ -4,6 +4,7 @@ import com.google.firebase.iid.FirebaseInstanceId;
 import com.google.firebase.iid.FirebaseInstanceIdService;
 
 import io.pijun.george.L;
+import io.pijun.george.Prefs;
 
 public class FcmTokenMonitor extends FirebaseInstanceIdService {
 
@@ -12,6 +13,8 @@ public class FcmTokenMonitor extends FirebaseInstanceIdService {
         super.onTokenRefresh();
         String token = FirebaseInstanceId.getInstance().getToken();
         L.i("FirebaseToken refreshed: " + token);
+        // clear it out so the registrar will recognize it as new
+        Prefs.get(this).setFcmToken(null);
 
         startService(FcmTokenRegistrar.newIntent(this));
     }

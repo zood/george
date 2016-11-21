@@ -4,7 +4,7 @@ public class DeleteMessageTask extends OscarTask {
     public static final transient String NAME = "delete_message";
     public long messageId;
 
-    public DeleteMessageTask() {
-        super(NAME);
+    public DeleteMessageTask(String accessToken) {
+        super(NAME, accessToken);
     }
 }

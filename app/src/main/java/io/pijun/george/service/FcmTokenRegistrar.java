@@ -5,18 +5,15 @@ import android.content.Context;
 import android.content.Intent;
 import android.support.annotation.NonNull;
 import android.support.annotation.WorkerThread;
+import android.text.TextUtils;
 
 import com.google.firebase.iid.FirebaseInstanceId;
 
-import java.io.IOException;
 import java.util.Collections;
 
 import io.pijun.george.L;
 import io.pijun.george.Prefs;
-import io.pijun.george.api.OscarAPI;
 import io.pijun.george.api.OscarClient;
-import io.pijun.george.api.OscarError;
-import retrofit2.Response;
 
 public class FcmTokenRegistrar extends IntentService {
 
@@ -46,6 +43,7 @@ public class FcmTokenRegistrar extends IntentService {
 
     @Override
     protected void onHandleIntent(Intent intent) {
+        L.i("FcmTokenRegistrar.onHandleIntent");
         if (intent.getBooleanExtra(ARG_UNREGISTER, false)) {
             unregister(intent.getStringExtra(ARG_ACCESS_TOKEN));
         } else {
@@ -67,22 +65,13 @@ public class FcmTokenRegistrar extends IntentService {
             return;
         }
 
-        // if someone is logged in, perform the upload
+        // if we're not logged in, return
         String apiAccessToken = prefs.getAccessToken();
-        if (!prefs.isLoggedIn()) {
+        if (TextUtils.isEmpty(apiAccessToken)) {
             return;
         }
-        OscarAPI api = OscarClient.newInstance(apiAccessToken);
-        try {
-            Response<Void> response = api.addFcmToken(Collections.singletonMap("token", fcmToken)).execute();
-            if (!response.isSuccessful()) {
-                L.i("problem uploading fcm token: " + OscarError.fromResponse(response));
-                return;
-            }
-        } catch (IOException ex) {
-            L.w("serious error adding fcm token", ex);
-            return;
-        }
+
+        OscarClient.queueAddFcmToken(this, apiAccessToken, Collections.singletonMap("token", fcmToken));
 
         // upon success, save the token to our prefs
         prefs.setFcmToken(fcmToken);
@@ -95,15 +84,7 @@ public class FcmTokenRegistrar extends IntentService {
             return;
         }
 
-        OscarAPI api = OscarClient.newInstance(accessToken);
-        try {
-            Response<Void> response = api.deleteFcmToken(fcmToken).execute();
-            if (!response.isSuccessful()) {
-                L.i("problem deleting fcm token: " + OscarError.fromResponse(response));
-            }
-        } catch (IOException ex) {
-            L.w("serious error deleting fcm token", ex);
-        }
+        OscarClient.queueDeleteFcmToken(this, accessToken, fcmToken);
 
         Prefs.get(this).setFcmToken(null);
     }

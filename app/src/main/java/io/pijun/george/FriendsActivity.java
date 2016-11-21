@@ -67,7 +67,6 @@ public class FriendsActivity extends AppCompatActivity implements FriendsAdapter
     @UiThread
     public void onFABAction(View v) {
         L.i("onFABAction");
-//        Snackbar.make(findViewById(R.id.coordinator), "Fabulous!", Snackbar.LENGTH_SHORT).show();
         onAddFriend();
     }
 
@@ -110,7 +109,7 @@ public class FriendsActivity extends AppCompatActivity implements FriendsAdapter
             Utils.showStringAlert(this, null, "How are you not logged in right now? (missing key pair)");
             return;
         }
-        OscarAPI api = OscarClient.newInstance(prefs.getAccessToken());
+        OscarAPI api = OscarClient.newInstance(accessToken);
         try {
             // check if we hae this person in our db. If not, retrieve their data and add it.
             DB db = DB.get(this);
@@ -128,13 +127,7 @@ public class FriendsActivity extends AppCompatActivity implements FriendsAdapter
 
             UserComm comm = UserComm.newLocationSharingRequest();
             EncryptedData msg = Sodium.publicKeyEncrypt(comm.toJSON(), userRecord.publicKey, keyPair.secretKey);
-            OscarClient.queueSendMessage(this, Hex.toHexString(userRecord.userId), msg);
-//            Response<Void> sendResponse = api.sendMessage(, msg).execute();
-//            if (!sendResponse.isSuccessful()) {
-//                OscarError err = OscarError.fromResponse(sendResponse);
-//                Utils.showStringAlert(this, null, "Unable to send request message: " + err);
-//                return;
-//            }
+            OscarClient.queueSendMessage(this, accessToken, Hex.toHexString(userRecord.userId), msg);
 
             byte[] sendingBoxId = null;
             if (shareLocation) {
@@ -142,13 +135,7 @@ public class FriendsActivity extends AppCompatActivity implements FriendsAdapter
                 new SecureRandom().nextBytes(sendingBoxId);
                 comm = UserComm.newLocationSharingGrant(sendingBoxId);
                 msg = Sodium.publicKeyEncrypt(comm.toJSON(), userRecord.publicKey, keyPair.secretKey);
-                OscarClient.queueSendMessage(this, Hex.toHexString(userRecord.userId), msg);
-//                sendResponse = api.sendMessage(Hex.toHexString(userRecord.userId), msg).execute();
-//                if (!sendResponse.isSuccessful()) {
-//                    OscarError err = OscarError.fromResponse(sendResponse);
-//                    Utils.showStringAlert(this, null, "Unable to send grand message: " + err);
-//                    return;
-//                }
+                OscarClient.queueSendMessage(this, accessToken, Hex.toHexString(userRecord.userId), msg);
             }
 
             db.addFriend(userRecord.id, sendingBoxId, null);
@@ -196,20 +183,7 @@ public class FriendsActivity extends AppCompatActivity implements FriendsAdapter
             return;
         }
         EncryptedData encMsg = Sodium.publicKeyEncrypt(msgBytes, user.publicKey, kp.secretKey);
-        OscarClient.queueSendMessage(this, Hex.toHexString(user.userId), encMsg);
-//        OscarAPI client = OscarClient.newInstance(accessToken);
-//        try {
-//            Response<Void> response = client.sendMessage(Hex.toHexString(user.userId), encMsg).execute();
-//            if (!response.isSuccessful()) {
-//                Utils.showStringAlert(this, null, "Problem sending rejection");
-//                return;
-//            }
-//        } catch (IOException ex) {
-//            Utils.showStringAlert(this, null, "Serious problem sending rejection");
-//            L.w("Serious problem sending rejection", ex);
-//            FirebaseCrash.report(ex);
-//            return;
-//        }
+        OscarClient.queueSendMessage(this, accessToken, Hex.toHexString(user.userId), encMsg);
 
         try {
             DB.get(this).rejectRequest(user);

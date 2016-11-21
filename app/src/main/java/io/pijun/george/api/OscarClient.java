@@ -1,6 +1,5 @@
 package io.pijun.george.api;
 
-import android.app.job.JobScheduler;
 import android.content.Context;
 import android.support.annotation.NonNull;
 import android.support.annotation.WorkerThread;
@@ -13,17 +12,18 @@ import com.squareup.tape.FileObjectQueue;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Map;
 
-import io.pijun.george.Hex;
-import io.pijun.george.L;
 import io.pijun.george.api.adapter.BytesToBase64Adapter;
 import io.pijun.george.api.adapter.CommTypeAdapter;
+import io.pijun.george.api.task.AddFcmTokenTask;
+import io.pijun.george.api.task.DeleteFcmTokenTask;
 import io.pijun.george.api.task.DeleteMessageTask;
 import io.pijun.george.api.task.OscarTask;
 import io.pijun.george.api.task.QueueConverter;
 import io.pijun.george.api.task.SendMessageTask;
 import io.pijun.george.crypto.EncryptedData;
-import io.pijun.george.service.OscarJobService;
+import io.pijun.george.service.OscarTasksService;
 import okhttp3.Interceptor;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
@@ -93,23 +93,36 @@ public class OscarClient {
     }
 
     @WorkerThread
-    public static void queueDeleteMessage(@NonNull Context context, long msgId) {
-        DeleteMessageTask dmt = new DeleteMessageTask();
-        dmt.messageId = msgId;
-        getQueue(context).add(dmt);
-        JobScheduler scheduler = (JobScheduler) context.getSystemService(Context.JOB_SCHEDULER_SERVICE);
-        scheduler.schedule(OscarJobService.getJobInfo(context));
+    public static void queueAddFcmToken(@NonNull Context context, @NonNull String accessToken, @NonNull Map<String, String> body) {
+        AddFcmTokenTask aftt = new AddFcmTokenTask(accessToken);
+        aftt.body = body;
+        getQueue(context).add(aftt);
+        context.startService(OscarTasksService.newIntent(context));
     }
 
     @WorkerThread
-    public static void queueSendMessage(@NonNull Context context, @NonNull String toUserId, @NonNull EncryptedData msg) {
-        L.i("queueSendMessage");
-        SendMessageTask smt = new SendMessageTask();
+    public static void queueDeleteFcmToken(@NonNull Context context, @NonNull String accessToken, @NonNull String fcmToken) {
+        DeleteFcmTokenTask dftt = new DeleteFcmTokenTask(accessToken);
+        dftt.fcmToken = fcmToken;
+        getQueue(context).add(dftt);
+        context.startService(OscarTasksService.newIntent(context));
+    }
+
+    @WorkerThread
+    public static void queueDeleteMessage(@NonNull Context context, @NonNull String accessToken, long msgId) {
+        DeleteMessageTask dmt = new DeleteMessageTask(accessToken);
+        dmt.messageId = msgId;
+        getQueue(context).add(dmt);
+        context.startService(OscarTasksService.newIntent(context));
+    }
+
+    @WorkerThread
+    public static void queueSendMessage(@NonNull Context context, @NonNull String accessToken, @NonNull String toUserId, @NonNull EncryptedData msg) {
+        SendMessageTask smt = new SendMessageTask(accessToken);
         smt.hexUserId = toUserId;
         smt.message = msg;
         getQueue(context).add(smt);
-        JobScheduler scheduler = (JobScheduler) context.getSystemService(Context.JOB_SCHEDULER_SERVICE);
-        scheduler.schedule(OscarJobService.getJobInfo(context));
+        context.startService(OscarTasksService.newIntent(context));
     }
 
 }

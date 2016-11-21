@@ -1,6 +1,7 @@
 package io.pijun.george.service;
 
 import android.support.annotation.WorkerThread;
+import android.text.TextUtils;
 import android.util.Base64;
 
 import com.google.firebase.messaging.FirebaseMessagingService;
@@ -10,6 +11,7 @@ import java.util.Map;
 
 import io.pijun.george.L;
 import io.pijun.george.MessageUtils;
+import io.pijun.george.Prefs;
 import io.pijun.george.api.Message;
 import io.pijun.george.api.OscarClient;
 
@@ -26,6 +28,9 @@ public class FcmMessageReceiver extends FirebaseMessagingService {
         }
 
         String type = data.get("type");
+        if (TextUtils.isEmpty(type)) {
+            return;
+        }
         try {
             switch (type) {
                 case TYPE_MESSAGE_RECEIVED:
@@ -52,7 +57,10 @@ public class FcmMessageReceiver extends FirebaseMessagingService {
         int result = MessageUtils.unwrapAndProcess(this, msg.senderId, msg.cipherText, msg.nonce);
         if (result == MessageUtils.ERROR_NONE) {
             // delete the message from the server
-//            OscarClient.queueDeleteMessage(this, msg.id);
+            String token = Prefs.get(this).getAccessToken();
+            if (!TextUtils.isEmpty(token)) {
+                OscarClient.queueDeleteMessage(this, token, msg.id);
+            }
         } else {
             L.w("error processing message: " + result);
         }

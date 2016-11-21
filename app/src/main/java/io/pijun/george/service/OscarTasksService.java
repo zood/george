@@ -15,6 +15,8 @@ import io.pijun.george.Prefs;
 import io.pijun.george.api.OscarAPI;
 import io.pijun.george.api.OscarClient;
 import io.pijun.george.api.OscarError;
+import io.pijun.george.api.task.AddFcmTokenTask;
+import io.pijun.george.api.task.DeleteFcmTokenTask;
 import io.pijun.george.api.task.DeleteMessageTask;
 import io.pijun.george.api.task.OscarTask;
 import io.pijun.george.api.task.SendMessageTask;
@@ -39,6 +41,7 @@ public class OscarTasksService extends IntentService {
         // make sure we're still logged in
         String token = Prefs.get(this).getAccessToken();
         if (TextUtils.isEmpty(token)) {
+            L.i("|  we're not logged in. clearing the queue.");
             // not logged in, so empty the queue and get out of here
             while (mQueue.size() > 0) {
                 mQueue.remove();
@@ -46,19 +49,24 @@ public class OscarTasksService extends IntentService {
             return;
         }
 
-        OscarAPI api = OscarClient.newInstance(token);
         while (mQueue.size() > 0) {
             OscarTask task = mQueue.peek();
+            OscarAPI api = OscarClient.newInstance(task.accessToken);
             Call call;
-            L.i("processQueue: peeked " + task);
             switch (task.apiMethod) {
+                case AddFcmTokenTask.NAME:
+                    AddFcmTokenTask aftt = (AddFcmTokenTask) task;
+                    call = api.addFcmToken(aftt.body);
+                    break;
+                case DeleteFcmTokenTask.NAME:
+                    DeleteFcmTokenTask dftt = (DeleteFcmTokenTask) task;
+                    call = api.deleteFcmToken(dftt.fcmToken);
+                    break;
                 case DeleteMessageTask.NAME:
-                    L.i("|  casting to DeleteMessageTask");
                     DeleteMessageTask dmt = (DeleteMessageTask) task;
                     call = api.deleteMessage(dmt.messageId);
                     break;
                 case SendMessageTask.NAME:
-                    L.i("|  casting to SendMessageTask");
                     SendMessageTask smt = (SendMessageTask) task;
                     call = api.sendMessage(smt.hexUserId, smt.message);
                     break;
@@ -66,24 +74,21 @@ public class OscarTasksService extends IntentService {
                     throw new RuntimeException("Unknown task type");
             }
             try {
-                L.i("|  about to execute");
                 Response response = call.execute();
                 if (response.isSuccessful()) {
-                    L.i("|  successfully executed oscar task");
                     mQueue.remove();
                 } else {
                     OscarError err = OscarError.fromResponse(response);
-                    L.i("|  problem executing task: " + call.request().method() + " " + call.request().url());
+                    L.i("problem executing task: " + call.request().method() + " " + call.request().url());
                     L.i("|  " + err);
                 }
             } catch (IOException e) {
-                L.w("|  task exception", e);
+                L.w("task exception", e);
                 // a connection problem, so schedule this to continue when the network is back
                 JobScheduler scheduler = (JobScheduler) getSystemService(Context.JOB_SCHEDULER_SERVICE);
                 scheduler.schedule(OscarJobService.getJobInfo(this));
                 return;
             }
-            L.i("|  end processQueue loop");
         }
     }
 

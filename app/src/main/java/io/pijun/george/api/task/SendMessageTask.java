@@ -7,8 +7,8 @@ public class SendMessageTask extends OscarTask {
     public String hexUserId;
     public EncryptedData message;
 
-    public SendMessageTask() {
-        super(NAME);
+    public SendMessageTask(String accessToken) {
+        super(NAME, accessToken);
     }
 
     @Override
