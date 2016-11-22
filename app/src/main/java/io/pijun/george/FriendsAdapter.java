@@ -95,6 +95,7 @@ class FriendsAdapter extends RecyclerView.Adapter {
     @SuppressLint("SetTextI18n")
     @Override
     public void onBindViewHolder(RecyclerView.ViewHolder holder, int position) {
+        L.i("FriendsAdapter.onBindViewHolder: " + position);
         FriendItem item = mItems.get(position);
         Context context = holder.itemView.getContext();
 
@@ -116,7 +117,12 @@ class FriendsAdapter extends RecyclerView.Adapter {
                     h.location.setText("");
                 }
             } else {
-                h.location.setText("3682 Sunset Knolls Dr. (not real)");
+                h.location.setText(R.string.ellipsis);
+                if (h.getAddressBinder() != null) {
+                    h.getAddressBinder().cancel();
+                }
+                AddressBinder binder = new AddressBinder(h, context, friend.id);
+                binder.start();
             }
         } else if (item.viewType == R.layout.friend_request_item) {
             FriendRequestItemViewHolder h = (FriendRequestItemViewHolder) holder;

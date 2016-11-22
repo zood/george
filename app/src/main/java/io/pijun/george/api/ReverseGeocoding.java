@@ -2,19 +2,38 @@ package io.pijun.george.api;
 
 import android.support.annotation.Nullable;
 
+import java.util.Arrays;
+
 public class ReverseGeocoding {
 
     public static class AddressComponent {
         public String longName;
         public String shortName;
         public String[] types;
+
+        @Override
+        public String toString() {
+            return "AddressComponent{" +
+                    "longName='" + longName + '\'' +
+                    ", shortName='" + shortName + '\'' +
+                    ", types=" + Arrays.toString(types) +
+                    '}';
+        }
     }
 
     public static class Result {
-//        public AddressComponent[] addressComponents;
         public String formattedAddress;
         public String placeId;
         public String[] types;
+
+        @Override
+        public String toString() {
+            return "Result{" +
+                    "formattedAddress='" + formattedAddress + '\'' +
+                    ", placeId='" + placeId + '\'' +
+                    ", types=" + Arrays.toString(types) +
+                    '}';
+        }
     }
 
     public String status;
@@ -27,14 +46,22 @@ public class ReverseGeocoding {
         }
 
         for (Result r : results) {
-            // check the types for 'locality'
+            // check the types for 'locality', then 'political' as the fallback
             for (String t : r.types) {
-                if (t.equals("locality")) {
+                if (t.equals("locality") || t.equals("political")) {
                     return r.formattedAddress;
                 }
             }
         }
 
         return null;
+    }
+
+    @Override
+    public String toString() {
+        return "ReverseGeocoding{" +
+                "status='" + status + '\'' +
+                ", results=" + Arrays.toString(results) +
+                '}';
     }
 }

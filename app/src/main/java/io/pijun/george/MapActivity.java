@@ -7,6 +7,8 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentSender;
 import android.content.pm.PackageManager;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.location.Location;
 import android.os.Bundle;
@@ -48,6 +50,8 @@ import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.LocationSource;
 import com.google.android.gms.maps.MapView;
 import com.google.android.gms.maps.OnMapReadyCallback;
+import com.google.android.gms.maps.model.BitmapDescriptor;
+import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.CameraPosition;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
@@ -301,8 +305,11 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
 
     @UiThread
     private void addMapMarker(FriendRecord friend, FriendLocation loc) {
+        Bitmap bitmap = BitmapFactory.decodeResource(getResources(), R.drawable.android);
+        BitmapDescriptor descriptor = BitmapDescriptorFactory.fromBitmap(bitmap);
         MarkerOptions opts = new MarkerOptions()
                 .position(new LatLng(loc.latitude, loc.longitude))
+                .icon(descriptor)
                 .draggable(false)
                 .flat(false)
                 .title(friend.user.username);
@@ -607,10 +614,16 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
                     if (response.isSuccessful()) {
                         L.i("received snippet");
                         ReverseGeocoding rg = response.body();
-                        String localityAddress = rg.getLocalityAddress();
+                        final String localityAddress = rg.getLocalityAddress();
                         L.i("locality address: " + localityAddress);
                         if (localityAddress != null) {
-                            marker.setSnippet(localityAddress);
+                            App.runOnUiThread(new UiRunnable() {
+                                @Override
+                                public void run() {
+                                    marker.setSnippet(localityAddress);
+                                    marker.showInfoWindow();
+                                }
+                            });
                         }
                     }
                 } catch (IOException ex) {
