@@ -102,7 +102,7 @@ class FriendsAdapter extends RecyclerView.Adapter {
         if (item.viewType == R.layout.friend_item) {
             FriendItemViewHolder h = (FriendItemViewHolder) holder;
             FriendRecord friend = mFriends.get((int)item.id);
-            h.profile.show(friend.user.username);
+            h.profile.setData(friend.user.username);
             h.username.setText(friend.user.username);
             if (friend.receivingBoxId == null) {
                 // check if we have an outgoing request

@@ -5,16 +5,14 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content">
 
-    <im.delight.android.identicons.SymmetricIdenticon
+    <io.pijun.george.Identicon
         android:id="@+id/profile"
-        android:layout_width="56dp"
         app:layout_constraintLeft_toLeftOf="parent"
         app:layout_constraintTop_toTopOf="parent"
         android:layout_marginStart="16dp"
         android:layout_marginTop="16dp"
-        app:layout_constraintBottom_toBottomOf="parent"
-        android:layout_marginBottom="16dp"
-        android:layout_height="56dp" />
+        android:layout_height="60dp"
+        android:layout_width="60dp" />
 
     <TextView
         android:id="@+id/username"
