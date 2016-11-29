@@ -54,16 +54,17 @@ public class FcmMessageReceiver extends FirebaseMessagingService {
         msg.senderId = Base64.decode(data.get("sender_id"), Base64.NO_WRAP);
         L.i("FMR.handleMessageReceived: " + msg);
 
-        int result = MessageUtils.unwrapAndProcess(this, msg.senderId, msg.cipherText, msg.nonce);
-        if (result == MessageUtils.ERROR_NONE) {
-            // delete the message from the server
-            String token = Prefs.get(this).getAccessToken();
-            if (!TextUtils.isEmpty(token)) {
-                OscarClient.queueDeleteMessage(this, token, msg.id);
-            }
-        } else {
-            L.w("error processing message: " + result);
-        }
+        MessageQueueService.queueMessage(this, msg);
+//        int result = MessageUtils.unwrapAndProcess(this, msg.senderId, msg.cipherText, msg.nonce);
+//        if (result == MessageUtils.ERROR_NONE) {
+//            // delete the message from the server
+//            String token = Prefs.get(this).getAccessToken();
+//            if (!TextUtils.isEmpty(token)) {
+//                OscarClient.queueDeleteMessage(this, token, msg.id);
+//            }
+//        } else {
+//            L.w("error processing message: " + result);
+//        }
     }
 
     private void handleMesssageSyncNeeded(Map<String, String> data) {

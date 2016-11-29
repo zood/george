@@ -128,7 +128,7 @@ class FriendsAdapter extends RecyclerView.Adapter {
             FriendRequestItemViewHolder h = (FriendRequestItemViewHolder) holder;
             RequestRecord request = mRequests.get((int) item.id);
             UserRecord user = mCachedUsers.get(request.userId);
-            h.profile.show(user.username);
+            h.profile.setData(user.username);
             h.username.setText(user.username);
             String msg = context.getString(R.string.share_your_location_with_msg, user.username);
             h.sharePrompt.setText(msg);

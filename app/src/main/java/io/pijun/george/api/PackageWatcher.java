@@ -93,7 +93,7 @@ public class PackageWatcher extends WebSocketAdapter {
             L.i("|  friend: " + friend);
             int result = MessageUtils.unwrapAndProcess(mContext, friend.user.userId, encMsg.cipherText, encMsg.nonce);
             if (result != MessageUtils.ERROR_NONE) {
-                L.i("error unwrapping+processing message: " + result);
+                L.i("error unwrapping+processing dropped message: " + result);
             }
         } catch (Throwable t) {
             L.w("PackageWatcher exception", t);

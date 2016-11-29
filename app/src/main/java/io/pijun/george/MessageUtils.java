@@ -7,17 +7,21 @@ import android.support.annotation.WorkerThread;
 import android.text.TextUtils;
 
 import com.google.firebase.crash.FirebaseCrash;
+import com.squareup.tape.FileObjectQueue;
 
+import java.io.File;
 import java.io.IOException;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.security.SecureRandom;
 
+import io.pijun.george.api.Message;
 import io.pijun.george.api.OscarAPI;
 import io.pijun.george.api.OscarClient;
 import io.pijun.george.api.OscarError;
 import io.pijun.george.api.User;
 import io.pijun.george.api.UserComm;
+import io.pijun.george.api.task.MessageConverter;
 import io.pijun.george.crypto.EncryptedData;
 import io.pijun.george.crypto.KeyPair;
 import io.pijun.george.event.LocationSharingGranted;
