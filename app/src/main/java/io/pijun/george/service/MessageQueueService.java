@@ -76,8 +76,16 @@ public class MessageQueueService extends IntentService {
                     }
                     break;
                 case MessageUtils.ERROR_NO_NETWORK:
-                    L.w("network needed to process message. rescheduling for later.");
+                case MessageUtils.ERROR_REMOTE_INTERNAL:
+                    L.w("reschedulable message processing error");
                     rescheduleService();
+                    break;
+                case MessageUtils.ERROR_INVALID_SENDER_ID:
+                case MessageUtils.ERROR_MISSING_CIPHER_TEXT:
+                case MessageUtils.ERROR_MISSING_NONCE:
+                case MessageUtils.ERROR_INVALID_COMMUNICATION:
+                    // just remove the invalid message
+                    mQueue.remove();
                     break;
                 default:
                     L.w("error processing message: " + result);

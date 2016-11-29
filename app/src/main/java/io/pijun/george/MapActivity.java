@@ -8,13 +8,10 @@ import android.content.Intent;
 import android.content.IntentSender;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.location.Location;
 import android.os.Bundle;
-import android.os.Looper;
 import android.support.annotation.AnyThread;
-import android.support.annotation.Keep;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.annotation.UiThread;
@@ -56,8 +53,6 @@ import com.google.android.gms.maps.model.CameraPosition;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonParser;
 import com.squareup.otto.Subscribe;
 
 import java.io.IOException;
@@ -65,6 +60,10 @@ import java.util.ArrayList;
 import java.util.Locale;
 
 import io.pijun.george.api.GMapsClient;
+import io.pijun.george.api.Message;
+import io.pijun.george.api.OscarAPI;
+import io.pijun.george.api.OscarClient;
+import io.pijun.george.api.OscarError;
 import io.pijun.george.api.PackageWatcher;
 import io.pijun.george.api.ReverseGeocoding;
 import io.pijun.george.event.LocationSharingGranted;
@@ -73,8 +72,8 @@ import io.pijun.george.models.FriendLocation;
 import io.pijun.george.models.FriendRecord;
 import io.pijun.george.models.RequestRecord;
 import io.pijun.george.service.FcmTokenRegistrar;
-import io.pijun.george.service.FriendLocationsRefresher;
 import io.pijun.george.service.LocationMonitor;
+import io.pijun.george.service.MessageQueueService;
 import retrofit2.Response;
 
 public class MapActivity extends AppCompatActivity implements OnMapReadyCallback, GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener, GoogleMap.OnMarkerClickListener, LocationListener {
@@ -149,13 +148,37 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
                 }
                 ArrayList<FriendRecord> friends = DB.get(MapActivity.this).getFriends();
                 for (FriendRecord fr: friends) {
-                    L.i(fr.toString());
+//                    L.i(fr.toString());
                     if (fr.receivingBoxId != null) {
                         mPkgWatcher.watch(fr.receivingBoxId);
                     }
                 }
-                for (RequestRecord rr : DB.get(MapActivity.this).getIncomingRequests(true)) {
-                    L.i("incoming request: " + rr);
+            }
+        });
+        App.runInBackground(new WorkerRunnable() {
+            @Override
+            public void run() {
+                String token = Prefs.get(MapActivity.this).getAccessToken();
+                if (token == null) {
+                    return;
+                }
+                OscarAPI api = OscarClient.newInstance(token);
+                try {
+                    Response<Message[]> response = api.getMessages().execute();
+                    if (!response.isSuccessful()) {
+                        OscarError err = OscarError.fromResponse(response);
+                        L.w("error checking for messages: " + err);
+                        return;
+                    }
+                    Message[] msgs = response.body();
+                    if (msgs == null) {
+                        return;
+                    }
+                    for (Message msg : msgs) {
+                        MessageQueueService.queueMessage(MapActivity.this, msg);
+                    }
+                } catch (IOException ignore) {
+                    // meh, we'll try again later
                 }
             }
         });
