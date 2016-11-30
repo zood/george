@@ -146,7 +146,6 @@ public class LocationMonitor extends Service {
                     return;
                 }
 
-//                L.i("LM.onLocationChanged - " + l);
                 mLocations.add(l);
 
                 // If 1) the app is in foreground, 2) and there is internet connectivity, and
@@ -172,6 +171,7 @@ public class LocationMonitor extends Service {
      */
     @WorkerThread
     void flush() {
+        L.i("LocationMonitor.flush");
         // If we have no location to report, just get out of here.
         if (mLocations.isEmpty()) {
             return;
@@ -181,7 +181,7 @@ public class LocationMonitor extends Service {
         String token = prefs.getAccessToken();
         KeyPair keyPair = prefs.getKeyPair();
         if (token == null || keyPair == null) {
-            L.i("LM.flush token or keypair was null, so skipping upload");
+            L.i("|  LM.flush token or keypair was null, so skipping upload");
             mLocations.clear();
             return;
         }
@@ -192,8 +192,7 @@ public class LocationMonitor extends Service {
         ArrayList<FriendRecord> friends = DB.get(this).getFriendsToShareWith();
         OscarAPI api = OscarClient.newInstance(token);
         for (FriendRecord fr : friends) {
-            L.i("|  friend: " + fr);
-            L.i("|  send box: " + Hex.toHexString(fr.sendingBoxId));
+            L.i("|  to friend: " + fr);
             EncryptedData encryptedMessage = Sodium.publicKeyEncrypt(msgBytes, fr.user.publicKey, keyPair.secretKey);
             try {
                 Response<Void> response = api.dropPackage(Hex.toHexString(fr.sendingBoxId), encryptedMessage).execute();

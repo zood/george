@@ -64,7 +64,8 @@ public class OscarClient {
     }
 
     public static OscarAPI newInstance(final String accessToken) {
-        String url = "http://192.168.1.76:9999/alpha/";
+//        String url = "http://192.168.1.76:9999/alpha/";
+        String url = "https://api.pijun.io/alpha/";
 
         OkHttpClient.Builder httpBuilder = new OkHttpClient.Builder();
 //        HttpLoggingInterceptor interceptor = new HttpLoggingInterceptor();

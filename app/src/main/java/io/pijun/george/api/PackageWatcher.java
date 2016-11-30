@@ -28,9 +28,11 @@ public class PackageWatcher extends WebSocketAdapter {
     @WorkerThread
     public static PackageWatcher createWatcher(@NonNull Context context, @NonNull String accessToken) {
         PackageWatcher watcher = new PackageWatcher(context);
+//        String url = "ws://192.168.1.76:9999/alpha/drop-boxes/watch";
+        String url = "wss://api.pijun.io/alpha/drop-boxes/watch";
         try {
             watcher.mSocket = new WebSocketFactory()
-                    .createSocket("ws://192.168.1.76:9999/alpha/drop-boxes/watch", 15000)
+                    .createSocket(url, 15000)
                     .addListener(watcher)
                     .addHeader("X-Oscar-Access-Token", accessToken)
                     .connect();
@@ -59,7 +61,7 @@ public class PackageWatcher extends WebSocketAdapter {
         L.i("PW.onBinaryMessage");
         try {
             if (binary == null || binary.length == 0) {
-                L.i("received a null/empty binary message");
+                L.i("|  received a null/empty binary message");
                 return;
             }
 
@@ -67,19 +69,18 @@ public class PackageWatcher extends WebSocketAdapter {
             // message is command (1 byte) + box id + msg (at least 2 bytes)
             int minLength = 1 + Constants.DROP_BOX_ID_LENGTH + 1;
             if (binary.length <= minLength) {
-                L.w("received an invalid message from the server. length was only " + binary.length);
+                L.w("|  received an invalid message from the server. length was only " + binary.length);
                 return;
             }
 
             // check for the opening byte
             if (binary[0] != 1) {
-                L.w("PackageWatcher received incorrect opening byte: " + binary[0]);
+                L.w("|  PackageWatcher received incorrect opening byte: " + binary[0]);
                 return;
             }
 
             byte[] boxId = new byte[Constants.DROP_BOX_ID_LENGTH];
             System.arraycopy(binary, 1, boxId, 0, Constants.DROP_BOX_ID_LENGTH);
-            L.i("|  boxId: " + Hex.toHexString(boxId));
 
             int msgOffset = 1 + Constants.DROP_BOX_ID_LENGTH;
             ByteArrayInputStream bais = new ByteArrayInputStream(binary, msgOffset, binary.length - msgOffset);
@@ -87,13 +88,12 @@ public class PackageWatcher extends WebSocketAdapter {
             EncryptedData encMsg = OscarClient.sGson.fromJson(isr, EncryptedData.class);
             FriendRecord friend = DB.get(mContext).getFriendByReceivingBoxId(boxId);
             if (friend == null) {
-                L.i("can't find user associated with receiving box id");
+                L.i("|  can't find user associated with receiving box id");
                 return;
             }
-            L.i("|  friend: " + friend);
             int result = MessageUtils.unwrapAndProcess(mContext, friend.user.userId, encMsg.cipherText, encMsg.nonce);
             if (result != MessageUtils.ERROR_NONE) {
-                L.i("error unwrapping+processing dropped message: " + result);
+                L.i("|  error unwrapping+processing dropped message: " + result);
             }
         } catch (Throwable t) {
             L.w("PackageWatcher exception", t);

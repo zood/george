@@ -57,20 +57,16 @@ import com.squareup.otto.Subscribe;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Locale;
 
-import io.pijun.george.api.GMapsClient;
 import io.pijun.george.api.Message;
 import io.pijun.george.api.OscarAPI;
 import io.pijun.george.api.OscarClient;
 import io.pijun.george.api.OscarError;
 import io.pijun.george.api.PackageWatcher;
-import io.pijun.george.api.ReverseGeocoding;
 import io.pijun.george.event.LocationSharingGranted;
 import io.pijun.george.event.LocationSharingRequested;
 import io.pijun.george.models.FriendLocation;
 import io.pijun.george.models.FriendRecord;
-import io.pijun.george.models.RequestRecord;
 import io.pijun.george.service.FcmTokenRegistrar;
 import io.pijun.george.service.LocationMonitor;
 import io.pijun.george.service.MessageQueueService;
@@ -88,6 +84,7 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
     private Location mLastLocation;
     private volatile PackageWatcher mPkgWatcher;
     private LongSparseArray<Marker> mFriendMarkers = new LongSparseArray<>();
+    private LongSparseArray<FriendLocation> mFriendLocations = new LongSparseArray<>();
 
     public static Intent newIntent(Context ctx) {
         return new Intent(ctx, MapActivity.class);
@@ -134,9 +131,25 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
                 .build();
 
         startService(FcmTokenRegistrar.newIntent(this));
+
+    }
+
+    @Override
+    @UiThread
+    protected void onStart() {
+        super.onStart();
+
+        App.isInForeground = true;
+        mMapView.onStart();
+        checkForLocationPermission();
+        App.registerOnBus(this);
+        mGoogleApiClient.connect();
+
         App.runInBackground(new WorkerRunnable() {
             @Override
             public void run() {
+                loadFriendRequests();
+
                 String token = Prefs.get(MapActivity.this).getAccessToken();
                 if (token == null) {
                     return;
@@ -146,6 +159,7 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
                     L.w("unable to create package watcher");
                     return;
                 }
+
                 ArrayList<FriendRecord> friends = DB.get(MapActivity.this).getFriends();
                 for (FriendRecord fr: friends) {
 //                    L.i(fr.toString());
@@ -153,15 +167,7 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
                         mPkgWatcher.watch(fr.receivingBoxId);
                     }
                 }
-            }
-        });
-        App.runInBackground(new WorkerRunnable() {
-            @Override
-            public void run() {
-                String token = Prefs.get(MapActivity.this).getAccessToken();
-                if (token == null) {
-                    return;
-                }
+
                 OscarAPI api = OscarClient.newInstance(token);
                 try {
                     Response<Message[]> response = api.getMessages().execute();
@@ -180,25 +186,6 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
                 } catch (IOException ignore) {
                     // meh, we'll try again later
                 }
-            }
-        });
-    }
-
-    @Override
-    @UiThread
-    protected void onStart() {
-        super.onStart();
-
-        App.isInForeground = true;
-        mMapView.onStart();
-        checkForLocationPermission();
-        App.registerOnBus(this);
-        mGoogleApiClient.connect();
-
-        App.runInBackground(new WorkerRunnable() {
-            @Override
-            public void run() {
-                loadFriendRequests();
             }
         });
     }
@@ -236,13 +223,6 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
             LocationServices.FusedLocationApi.removeLocationUpdates(mGoogleApiClient, this);
         }
         mGoogleApiClient.disconnect();
-
-        App.isInForeground = false;
-    }
-
-    @Override
-    @UiThread
-    protected void onDestroy() {
         App.runInBackground(new WorkerRunnable() {
             @Override
             public void run() {
@@ -252,6 +232,13 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
                 }
             }
         });
+
+        App.isInForeground = false;
+    }
+
+    @Override
+    @UiThread
+    protected void onDestroy() {
         mMapView.onDestroy();
         mMapView = null;
         mFriendMarkers.clear();
@@ -341,6 +328,7 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
         Marker marker = mGoogleMap.addMarker(opts);
         marker.setTag(friend.id);
         mFriendMarkers.put(friend.id, marker);
+        mFriendLocations.put(friend.id, loc);
     }
 
     @UiThread
@@ -508,6 +496,7 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
             });
         } else {
             marker.setPosition(new LatLng(loc.latitude, loc.longitude));
+            mFriendLocations.put(loc.friendId, loc);
         }
     }
 
@@ -628,34 +617,49 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
     @Override
     @UiThread
     public boolean onMarkerClick(final Marker marker) {
-        final LatLng pos = marker.getPosition();
-        App.runInBackground(new WorkerRunnable() {
-            @Override
-            public void run() {
-                String ll = pos.latitude + "," + pos.longitude;
-                String lang = Locale.getDefault().getLanguage();
-                try {
-                    Response<ReverseGeocoding> response = GMapsClient.get().getReverseGeocoding(ll, lang).execute();
-                    if (response.isSuccessful()) {
-                        L.i("received snippet");
-                        ReverseGeocoding rg = response.body();
-                        final String localityAddress = rg.getLocalityAddress();
-                        L.i("locality address: " + localityAddress);
-                        if (localityAddress != null) {
-                            App.runOnUiThread(new UiRunnable() {
-                                @Override
-                                public void run() {
-                                    marker.setSnippet(localityAddress);
-                                    marker.showInfoWindow();
-                                }
-                            });
-                        }
-                    }
-                } catch (IOException ex) {
-                    L.w("serious problem obtaining reverse geocoding", ex);
-                }
-            }
-        });
+        long friendId = (long) marker.getTag();
+        FriendLocation loc = mFriendLocations.get(friendId);
+        long now = System.currentTimeMillis();
+        final CharSequence relTime;
+//        L.i("loc.time: " + (loc.time) + ", now-60: " + (now-60));
+        if (loc.time >= now-60*DateUtils.SECOND_IN_MILLIS) {
+            relTime = getString(R.string.now);
+        } else {
+            relTime = DateUtils.getRelativeTimeSpanString(
+                    loc.time,
+                    System.currentTimeMillis(),
+                    DateUtils.MINUTE_IN_MILLIS,
+                    DateUtils.FORMAT_ABBREV_RELATIVE);
+        }
+        marker.setSnippet(relTime.toString());
+
+//        App.runInBackground(new WorkerRunnable() {
+//            @Override
+//            public void run() {
+//                String ll = pos.latitude + "," + pos.longitude;
+//                String lang = Locale.getDefault().getLanguage();
+//                try {
+//                    Response<ReverseGeocoding> response = GMapsClient.get().getReverseGeocoding(ll, lang).execute();
+//                    if (response.isSuccessful()) {
+//                        L.i("received snippet");
+//                        ReverseGeocoding rg = response.body();
+//                        final String localityAddress = rg.getLocalityAddress();
+//                        L.i("locality address: " + localityAddress);
+//                        if (localityAddress != null) {
+//                            App.runOnUiThread(new UiRunnable() {
+//                                @Override
+//                                public void run() {
+//                                    marker.setSnippet(relTime + "\n" + localityAddress);
+//                                    marker.showInfoWindow();
+//                                }
+//                            });
+//                        }
+//                    }
+//                } catch (IOException ex) {
+//                    L.w("serious problem obtaining reverse geocoding", ex);
+//                }
+//            }
+//        });
         return false;
     }
 }
