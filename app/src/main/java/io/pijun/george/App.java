@@ -10,6 +10,7 @@ import com.squareup.otto.Bus;
 
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.FutureTask;
 
 public class App extends Application {
 
@@ -36,6 +37,7 @@ public class App extends Application {
         return sApp;
     }
 
+    @AnyThread
     public static void postOnBus(final Object passenger) {
         if (Looper.myLooper() == Looper.getMainLooper()) {
             sApp.mBus.post(passenger);
@@ -85,6 +87,13 @@ public class App extends Application {
     @AnyThread
     public static void runInBackground(WorkerRunnable r) {
         sApp.mExecutor.execute(r);
+        FutureTask<?> future = (FutureTask<?>) sApp.mExecutor.submit(new WorkerRunnable() {
+            @Override
+            public void run() {
+
+            }
+        });
+        future.cancel(true);
     }
 
     @AnyThread

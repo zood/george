@@ -68,7 +68,7 @@ import io.pijun.george.event.LocationSharingRequested;
 import io.pijun.george.models.FriendLocation;
 import io.pijun.george.models.FriendRecord;
 import io.pijun.george.service.FcmTokenRegistrar;
-import io.pijun.george.service.LocationMonitor;
+import io.pijun.george.service.LocationUploadService;
 import io.pijun.george.service.MessageQueueService;
 import retrofit2.Response;
 
@@ -379,7 +379,7 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
     @SuppressWarnings("MissingPermission")
     @UiThread
     private void locationPermissionVerified() {
-        startService(LocationMonitor.newIntent(this));
+        startService(LocationUploadService.newIntent(this));
         if (mGoogleMap != null) {
             mGoogleMap.setMyLocationEnabled(true);
             if (mMyLocationListener != null && mLastLocation != null) {

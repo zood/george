@@ -13,18 +13,11 @@ import android.os.HandlerThread;
 import android.os.IBinder;
 import android.os.Looper;
 import android.support.annotation.Keep;
-import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.annotation.UiThread;
 import android.support.annotation.WorkerThread;
 import android.text.format.DateUtils;
 
-import com.google.android.gms.common.ConnectionResult;
-import com.google.android.gms.common.api.GoogleApiClient;
-import com.google.android.gms.common.api.PendingResult;
-import com.google.android.gms.common.api.ResultCallback;
-import com.google.android.gms.common.api.Status;
-import com.google.android.gms.location.ActivityRecognition;
 import com.squareup.otto.Subscribe;
 
 import java.io.IOException;
@@ -46,15 +39,15 @@ import io.pijun.george.crypto.KeyPair;
 import io.pijun.george.models.FriendRecord;
 import retrofit2.Response;
 
-public class LocationMonitor extends Service {
+public class LocationUploadService extends Service {
 
     public static Intent newIntent(Context ctx) {
-        return new Intent(ctx, LocationMonitor.class);
+        return new Intent(ctx, LocationUploadService.class);
     }
 
     private static Handler sServiceHandler;
     static {
-        HandlerThread thread = new HandlerThread("LocationMonitor");
+        HandlerThread thread = new HandlerThread(LocationUploadService.class.getSimpleName());
         thread.start();
 
         Looper looper = thread.getLooper();
@@ -62,14 +55,14 @@ public class LocationMonitor extends Service {
     }
 
     public class LocalBinder extends Binder {
-        LocationMonitor getService() {
-            return LocationMonitor.this;
+        LocationUploadService getService() {
+            return LocationUploadService.this;
         }
     }
 
     private LinkedList<Location> mLocations = new LinkedList<>();
     private final IBinder mBinder = new LocalBinder();
-    private GoogleApiClient mGoogleClient;
+//    private GoogleApiClient mGoogleClient;
     private long mLastFlushTime = 0;
 
     @Nullable
@@ -86,12 +79,14 @@ public class LocationMonitor extends Service {
         JobScheduler scheduler = (JobScheduler) getSystemService(Context.JOB_SCHEDULER_SERVICE);
         scheduler.schedule(LocationJobService.getJobInfo(this));
 
+        /*
         App.runInBackground(new WorkerRunnable() {
             @Override
             public void run() {
                 beginActivityMonitoring();
             }
         });
+        */
 
         App.registerOnBus(this);
     }
@@ -110,6 +105,7 @@ public class LocationMonitor extends Service {
         super.onDestroy();
     }
 
+    /*
     @WorkerThread
     private void beginActivityMonitoring() {
         mGoogleClient = new GoogleApiClient.Builder(this)
@@ -134,6 +130,7 @@ public class LocationMonitor extends Service {
             }
         });
     }
+    */
 
     @Subscribe
     @Keep
@@ -159,7 +156,7 @@ public class LocationMonitor extends Service {
                         flush();
                         // we just flushed our location, so reschedule the next check
                         JobScheduler scheduler = (JobScheduler) getSystemService(Context.JOB_SCHEDULER_SERVICE);
-                        scheduler.schedule(LocationJobService.getJobInfo(LocationMonitor.this));
+                        scheduler.schedule(LocationJobService.getJobInfo(LocationUploadService.this));
                     }
                 }
             }
@@ -171,7 +168,7 @@ public class LocationMonitor extends Service {
      */
     @WorkerThread
     void flush() {
-        L.i("LocationMonitor.flush");
+        L.i("LocationUploadService.flush");
         // If we have no location to report, just get out of here.
         if (mLocations.isEmpty()) {
             return;
