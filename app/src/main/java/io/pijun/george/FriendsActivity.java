@@ -30,6 +30,7 @@ import io.pijun.george.api.UserComm;
 import io.pijun.george.crypto.EncryptedData;
 import io.pijun.george.crypto.KeyPair;
 import io.pijun.george.models.UserRecord;
+import io.pijun.george.service.LocationListenerService;
 import retrofit2.Response;
 
 public class FriendsActivity extends AppCompatActivity implements FriendsAdapter.FriendsAdapterListener {
@@ -160,6 +161,9 @@ public class FriendsActivity extends AppCompatActivity implements FriendsAdapter
         }
 
         mAdapter.reloadFriends(this);
+
+        // retrieve the current location and upload it, so this new friend will data soon
+        startService(LocationListenerService.newIntent(this));
     }
 
     @WorkerThread
