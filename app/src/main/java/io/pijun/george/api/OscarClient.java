@@ -14,6 +14,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Map;
 
+import io.pijun.george.Constants;
 import io.pijun.george.api.adapter.BytesToBase64Adapter;
 import io.pijun.george.api.adapter.CommTypeAdapter;
 import io.pijun.george.api.task.AddFcmTokenTask;
@@ -64,8 +65,12 @@ public class OscarClient {
     }
 
     public static OscarAPI newInstance(final String accessToken) {
-//        String url = "http://192.168.1.76:9999/alpha/";
-        String url = "https://api.pijun.io/alpha/";
+        String url;
+        if (Constants.USE_PRODUCTION) {
+            url = "https://api.pijun.io/alpha/";
+        } else {
+            url = "http://192.168.1.76:9999/alpha/";
+        }
 
         OkHttpClient.Builder httpBuilder = new OkHttpClient.Builder();
 //        HttpLoggingInterceptor interceptor = new HttpLoggingInterceptor();
@@ -118,10 +123,11 @@ public class OscarClient {
     }
 
     @WorkerThread
-    public static void queueSendMessage(@NonNull Context context, @NonNull String accessToken, @NonNull String toUserId, @NonNull EncryptedData msg) {
+    public static void queueSendMessage(@NonNull Context context, @NonNull String accessToken, @NonNull String toUserId, @NonNull EncryptedData msg, boolean urgent) {
         SendMessageTask smt = new SendMessageTask(accessToken);
         smt.hexUserId = toUserId;
         smt.message = msg;
+        smt.urgent = urgent;
         getQueue(context).add(smt);
         context.startService(OscarTasksService.newIntent(context));
     }

@@ -148,7 +148,7 @@ public class LocationUploadService extends Service {
                 // If 1) the app is in foreground, 2) and there is internet connectivity, and
                 // 3) we haven't flushed the location in at least a minute, then perform a flush
                 long timeSinceFlush = System.currentTimeMillis() - mLastFlushTime;
-                if (App.isInForeground && timeSinceFlush > DateUtils.MINUTE_IN_MILLIS) {
+                if (App.isInForeground && timeSinceFlush > 15 * DateUtils.SECOND_IN_MILLIS) {
                     ConnectivityManager cm = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
                     NetworkInfo activeNetwork = cm.getActiveNetworkInfo();
                     boolean isConnected = activeNetwork != null && activeNetwork.isConnectedOrConnecting();

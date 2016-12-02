@@ -6,6 +6,7 @@ public class SendMessageTask extends OscarTask {
     public static final transient String NAME = "send_message";
     public String hexUserId;
     public EncryptedData message;
+    public boolean urgent;
 
     public SendMessageTask(String accessToken) {
         super(NAME, accessToken);
@@ -16,6 +17,7 @@ public class SendMessageTask extends OscarTask {
         return "SendMessageTask{" +
                 "hexUserId='" + hexUserId + '\'' +
                 ", message=" + message +
+                ", urgent=" + urgent +
                 '}';
     }
 }

@@ -128,7 +128,7 @@ public class FriendsActivity extends AppCompatActivity implements FriendsAdapter
 
             UserComm comm = UserComm.newLocationSharingRequest();
             EncryptedData msg = Sodium.publicKeyEncrypt(comm.toJSON(), userRecord.publicKey, keyPair.secretKey);
-            OscarClient.queueSendMessage(this, accessToken, Hex.toHexString(userRecord.userId), msg);
+            OscarClient.queueSendMessage(this, accessToken, Hex.toHexString(userRecord.userId), msg, false);
 
             byte[] sendingBoxId = null;
             if (shareLocation) {
@@ -136,7 +136,7 @@ public class FriendsActivity extends AppCompatActivity implements FriendsAdapter
                 new SecureRandom().nextBytes(sendingBoxId);
                 comm = UserComm.newLocationSharingGrant(sendingBoxId);
                 msg = Sodium.publicKeyEncrypt(comm.toJSON(), userRecord.publicKey, keyPair.secretKey);
-                OscarClient.queueSendMessage(this, accessToken, Hex.toHexString(userRecord.userId), msg);
+                OscarClient.queueSendMessage(this, accessToken, Hex.toHexString(userRecord.userId), msg, false);
             }
 
             db.addFriend(userRecord.id, sendingBoxId, null);
@@ -187,7 +187,7 @@ public class FriendsActivity extends AppCompatActivity implements FriendsAdapter
             return;
         }
         EncryptedData encMsg = Sodium.publicKeyEncrypt(msgBytes, user.publicKey, kp.secretKey);
-        OscarClient.queueSendMessage(this, accessToken, Hex.toHexString(user.userId), encMsg);
+        OscarClient.queueSendMessage(this, accessToken, Hex.toHexString(user.userId), encMsg, false);
 
         try {
             DB.get(this).rejectRequest(user);

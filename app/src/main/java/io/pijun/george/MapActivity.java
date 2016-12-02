@@ -497,6 +497,9 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
         } else {
             marker.setPosition(new LatLng(loc.latitude, loc.longitude));
             mFriendLocations.put(loc.friendId, loc);
+            if (marker.isInfoWindowShown()) {
+                onMarkerClick(marker);
+            }
         }
     }
 

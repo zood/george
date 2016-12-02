@@ -9,9 +9,11 @@ import android.text.TextUtils;
 import com.squareup.tape.FileObjectQueue;
 
 import java.io.IOException;
+import java.util.Map;
 
 import io.pijun.george.L;
 import io.pijun.george.Prefs;
+import io.pijun.george.Utils;
 import io.pijun.george.api.OscarAPI;
 import io.pijun.george.api.OscarClient;
 import io.pijun.george.api.OscarError;
@@ -68,7 +70,8 @@ public class OscarTasksService extends IntentService {
                     break;
                 case SendMessageTask.NAME:
                     SendMessageTask smt = (SendMessageTask) task;
-                    call = api.sendMessage(smt.hexUserId, smt.message);
+                    Map<String, Object> map = Utils.map("cipher_text", smt.message.cipherText, "nonce", smt.message.nonce, "urgent", smt.urgent);
+                    call = api.sendMessage(smt.hexUserId, map);
                     break;
                 default:
                     throw new RuntimeException("Unknown task type");

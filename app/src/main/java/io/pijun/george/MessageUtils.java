@@ -80,7 +80,7 @@ public class MessageUtils {
             throw new RuntimeException("How was approve called for an unknown user?");
         }
         EncryptedData encMsg = Sodium.publicKeyEncrypt(msgBytes, user.publicKey, kp.secretKey);
-        OscarClient.queueSendMessage(context, accessToken, Hex.toHexString(user.userId), encMsg);
+        OscarClient.queueSendMessage(context, accessToken, Hex.toHexString(user.userId), encMsg, false);
 
         try {
             DB.get(context).grantSharingTo(user.userId, boxId);

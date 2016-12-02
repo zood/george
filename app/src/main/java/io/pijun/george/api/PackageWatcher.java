@@ -14,7 +14,6 @@ import java.io.InputStreamReader;
 
 import io.pijun.george.Constants;
 import io.pijun.george.DB;
-import io.pijun.george.Hex;
 import io.pijun.george.L;
 import io.pijun.george.MessageUtils;
 import io.pijun.george.crypto.EncryptedData;
@@ -28,8 +27,12 @@ public class PackageWatcher extends WebSocketAdapter {
     @WorkerThread
     public static PackageWatcher createWatcher(@NonNull Context context, @NonNull String accessToken) {
         PackageWatcher watcher = new PackageWatcher(context);
-//        String url = "ws://192.168.1.76:9999/alpha/drop-boxes/watch";
-        String url = "wss://api.pijun.io/alpha/drop-boxes/watch";
+        String url;
+        if (Constants.USE_PRODUCTION) {
+            url = "wss://api.pijun.io/alpha/drop-boxes/watch";
+        } else {
+            url = "ws://192.168.1.76:9999/alpha/drop-boxes/watch";
+        }
         try {
             watcher.mSocket = new WebSocketFactory()
                     .createSocket(url, 15000)

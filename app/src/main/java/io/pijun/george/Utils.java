@@ -7,7 +7,23 @@ import android.support.annotation.StringRes;
 import android.support.annotation.UiThread;
 import android.support.v7.app.AlertDialog;
 
+import java.util.HashMap;
+import java.util.Map;
+
 public class Utils {
+
+    public static Map<String, Object> map(Object... args) {
+        if (args.length % 2 != 0) {
+            throw new IllegalArgumentException("You need to provide an even number of arguments. (Keys and values)");
+        }
+        HashMap<String, Object> map = new HashMap<>();
+        for (int i=0; i<args.length; i++) {
+            map.put((String)args[i], args[i+1]);
+            i += 1;
+        }
+
+        return map;
+    }
 
     @AnyThread
     public static void showAlert(final Context ctx, @StringRes final int titleId, @StringRes final int msgId) {

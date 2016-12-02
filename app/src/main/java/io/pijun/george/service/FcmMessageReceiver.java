@@ -10,10 +10,7 @@ import com.google.firebase.messaging.RemoteMessage;
 import java.util.Map;
 
 import io.pijun.george.L;
-import io.pijun.george.MessageUtils;
-import io.pijun.george.Prefs;
 import io.pijun.george.api.Message;
-import io.pijun.george.api.OscarClient;
 
 public class FcmMessageReceiver extends FirebaseMessagingService {
 
@@ -55,18 +52,9 @@ public class FcmMessageReceiver extends FirebaseMessagingService {
         L.i("FMR.handleMessageReceived: " + msg);
 
         MessageQueueService.queueMessage(this, msg);
-//        int result = MessageUtils.unwrapAndProcess(this, msg.senderId, msg.cipherText, msg.nonce);
-//        if (result == MessageUtils.ERROR_NONE) {
-//            // delete the message from the server
-//            String token = Prefs.get(this).getAccessToken();
-//            if (!TextUtils.isEmpty(token)) {
-//                OscarClient.queueDeleteMessage(this, token, msg.id);
-//            }
-//        } else {
-//            L.w("error processing message: " + result);
-//        }
     }
 
+    @WorkerThread
     private void handleMesssageSyncNeeded(Map<String, String> data) {
         long msgId = Long.parseLong(data.get("message_id"));
 
