@@ -43,6 +43,12 @@ public class UserComm {
         return c;
     }
 
+    public static UserComm newLocationUpdateRequest() {
+        UserComm c = new UserComm();
+        c.type = CommType.LocationUpdateRequest;
+        return c;
+    }
+
     @NonNull
     public static UserComm newLocationInfo(@NonNull Location l) {
         UserComm c = new UserComm();
@@ -81,6 +87,8 @@ public class UserComm {
                 if (time <= 0) {
                     return false;
                 }
+                return true;
+            case LocationUpdateRequest:
                 return true;
             default:
                 throw new UnsupportedOperationException("unknown commtype: '" + type.val + "'");

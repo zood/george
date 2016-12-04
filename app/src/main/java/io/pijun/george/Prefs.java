@@ -33,6 +33,9 @@ public class Prefs {
     private final static String KEY_CAMERA_POSITION_TILT = "camera_position_tilt";
     private final static String KEY_CAMERA_POSITION_ZOOM = "camera_position_zoom";
 
+    private final static String KEY_LAST_LOCATION_UPDATE_REQUEST_TIME = "last_location_update_request_time";
+    private final static String KEY_LAST_LOCATION_UPDATE_TIME = "last_location_update_time";
+
     private Prefs(Context context) {
         mPrefs = context.getSharedPreferences("secret.xml", Context.MODE_PRIVATE);
     }
@@ -58,6 +61,7 @@ public class Prefs {
         byte[] symmetricKey = getSymmetricKey();
         byte[] userId = getUserId();
 
+        //noinspection RedundantIfStatement
         if (token != null && keyPair != null && passwordSalt != null && symmetricKey != null && userId != null) {
             return true;
         }
@@ -208,6 +212,22 @@ public class Prefs {
                 .putLong(KEY_CAMERA_POSITION_LONGITUDE, Double.doubleToRawLongBits(pos.target.longitude))
                 .putBoolean(KEY_CAMERA_POSITION_SAVED, true)
                 .apply();
+    }
+
+    public long getLastLocationUpdateRequestTime() {
+        return mPrefs.getLong(KEY_LAST_LOCATION_UPDATE_REQUEST_TIME, 0);
+    }
+
+    public void setLastLocationUpdateRequestTime(long time) {
+        mPrefs.edit().putLong(KEY_LAST_LOCATION_UPDATE_REQUEST_TIME, time).apply();
+    }
+
+    public long getLastLocationUpdateTime() {
+        return mPrefs.getLong(KEY_LAST_LOCATION_UPDATE_TIME, 0);
+    }
+
+    public void setLastLocationUpdateTime(long time) {
+        mPrefs.edit().putLong(KEY_LAST_LOCATION_UPDATE_TIME, time).apply();
     }
 
 }

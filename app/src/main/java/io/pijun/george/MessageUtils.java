@@ -5,6 +5,7 @@ import android.support.annotation.IntDef;
 import android.support.annotation.NonNull;
 import android.support.annotation.WorkerThread;
 import android.text.TextUtils;
+import android.text.format.DateUtils;
 
 import com.google.firebase.crash.FirebaseCrash;
 
@@ -26,6 +27,7 @@ import io.pijun.george.models.FriendLocation;
 import io.pijun.george.models.FriendRecord;
 import io.pijun.george.models.RequestRecord;
 import io.pijun.george.models.UserRecord;
+import io.pijun.george.service.LocationListenerService;
 import retrofit2.Response;
 
 public class MessageUtils {
@@ -221,6 +223,17 @@ public class MessageUtils {
                     return ERROR_DATABASE_EXCEPTION;
                 }
                 App.postOnBus(new FriendLocation(fr.id, comm));
+                break;
+            case LocationUpdateRequest:
+                long updateTime = prefs.getLastLocationUpdateTime();
+                // only perform the update if it's been more than 5 minutes since the last one
+                long now = System.currentTimeMillis();
+                if (now - updateTime > 5 * DateUtils.MINUTE_IN_MILLIS) {
+                    L.i("|  It's been long enough, so we'll request another location update");
+                    context.startService(LocationListenerService.newIntent(context));
+                } else {
+                    L.i("|  Not long enough since we've requested an update");
+                }
                 break;
         }
 

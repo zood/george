@@ -19,7 +19,6 @@ import android.support.v4.util.LongSparseArray;
 import com.google.firebase.crash.FirebaseCrash;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 
 import io.pijun.george.models.FriendLocation;
 import io.pijun.george.models.FriendRecord;
@@ -105,10 +104,6 @@ public class DB {
 
         DBException(String msg, Throwable t) {
             super(msg, t);
-        }
-
-        DBException(Throwable t) {
-            super(t);
         }
     }
 

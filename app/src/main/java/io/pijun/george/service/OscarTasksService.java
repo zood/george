@@ -20,6 +20,7 @@ import io.pijun.george.api.OscarError;
 import io.pijun.george.api.task.AddFcmTokenTask;
 import io.pijun.george.api.task.DeleteFcmTokenTask;
 import io.pijun.george.api.task.DeleteMessageTask;
+import io.pijun.george.api.task.DropPackageTask;
 import io.pijun.george.api.task.OscarTask;
 import io.pijun.george.api.task.SendMessageTask;
 import retrofit2.Call;
@@ -67,6 +68,10 @@ public class OscarTasksService extends IntentService {
                 case DeleteMessageTask.NAME:
                     DeleteMessageTask dmt = (DeleteMessageTask) task;
                     call = api.deleteMessage(dmt.messageId);
+                    break;
+                case DropPackageTask.NAME:
+                    DropPackageTask dpt = (DropPackageTask) task;
+                    call = api.dropPackage(dpt.hexBoxId, dpt.pkg);
                     break;
                 case SendMessageTask.NAME:
                     SendMessageTask smt = (SendMessageTask) task;

@@ -26,6 +26,8 @@ public class QueueConverter implements FileObjectQueue.Converter<OscarTask> {
                 return OscarClient.sGson.fromJson(root, DeleteFcmTokenTask.class);
             case DeleteMessageTask.NAME:
                 return OscarClient.sGson.fromJson(root, DeleteMessageTask.class);
+            case DropPackageTask.NAME:
+                return OscarClient.sGson.fromJson(root, DropPackageTask.class);
             case SendMessageTask.NAME:
                 return OscarClient.sGson.fromJson(root, SendMessageTask.class);
             default:
@@ -48,6 +50,10 @@ public class QueueConverter implements FileObjectQueue.Converter<OscarTask> {
             case DeleteMessageTask.NAME:
                 DeleteMessageTask dmt = (DeleteMessageTask) task;
                 OscarClient.sGson.toJson(dmt, writer);
+                break;
+            case DropPackageTask.NAME:
+                DropPackageTask dpt = (DropPackageTask) task;
+                OscarClient.sGson.toJson(dpt, writer);
                 break;
             case SendMessageTask.NAME:
                 SendMessageTask smt = (SendMessageTask) task;

@@ -2,6 +2,7 @@ package io.pijun.george.service;
 
 import android.app.job.JobInfo;
 import android.app.job.JobParameters;
+import android.app.job.JobScheduler;
 import android.app.job.JobService;
 import android.content.ComponentName;
 import android.content.Context;
@@ -19,8 +20,7 @@ public class LocationJobService extends JobService {
         // because Android N has a minimum period duration of 15 minutes.
         ComponentName compName = new ComponentName(context, LocationJobService.class);
         JobInfo.Builder builder = new JobInfo.Builder(LocationJobService.JOB_ID, compName)
-                .setMinimumLatency(10 * DateUtils.MINUTE_IN_MILLIS)
-//                .setMinimumLatency(15 * DateUtils.SECOND_IN_MILLIS)
+                .setPeriodic(10 * DateUtils.MINUTE_IN_MILLIS)
                 .setRequiredNetworkType(JobInfo.NETWORK_TYPE_ANY)
                 .setRequiresCharging(false)
                 .setRequiresDeviceIdle(false);
@@ -30,9 +30,12 @@ public class LocationJobService extends JobService {
     @Override
     public boolean onStartJob(JobParameters params) {
         L.i("LJS.onStartJob");
-        // If we're not logged in, just get out of here. This also makes sure we don't get rescheduled.
+        // If we're not logged in, cancel the job, then get out of here.
         if (!Prefs.get(this).isLoggedIn()) {
             jobFinished(params, false);
+
+            JobScheduler scheduler = (JobScheduler) getSystemService(Context.JOB_SCHEDULER_SERVICE);
+            scheduler.cancel(LocationJobService.JOB_ID);
             return false;
         }
 
@@ -43,7 +46,6 @@ public class LocationJobService extends JobService {
 
     @Override
     public boolean onStopJob(JobParameters params) {
-        L.i("LJS.onStopJob");
         return false;
     }
 }

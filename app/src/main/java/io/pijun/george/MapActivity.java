@@ -63,6 +63,9 @@ import io.pijun.george.api.OscarAPI;
 import io.pijun.george.api.OscarClient;
 import io.pijun.george.api.OscarError;
 import io.pijun.george.api.PackageWatcher;
+import io.pijun.george.api.UserComm;
+import io.pijun.george.crypto.EncryptedData;
+import io.pijun.george.crypto.KeyPair;
 import io.pijun.george.event.LocationSharingGranted;
 import io.pijun.george.event.LocationSharingRequested;
 import io.pijun.george.models.FriendLocation;
@@ -150,7 +153,8 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
             public void run() {
                 loadFriendRequests();
 
-                String token = Prefs.get(MapActivity.this).getAccessToken();
+                Prefs prefs = Prefs.get(MapActivity.this);
+                String token = prefs.getAccessToken();
                 if (token == null) {
                     return;
                 }
@@ -162,10 +166,29 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
 
                 ArrayList<FriendRecord> friends = DB.get(MapActivity.this).getFriends();
                 for (FriendRecord fr: friends) {
-//                    L.i(fr.toString());
                     if (fr.receivingBoxId != null) {
                         mPkgWatcher.watch(fr.receivingBoxId);
                     }
+                }
+
+                // We can request a location update from our friends, if it has been more than
+                // 5 minutes since the last request
+                long now = System.currentTimeMillis();
+                if (now - prefs.getLastLocationUpdateRequestTime() > 5 * DateUtils.MINUTE_IN_MILLIS) {
+                    KeyPair keyPair = prefs.getKeyPair();
+                    if (keyPair != null) {
+                        UserComm comm = UserComm.newLocationUpdateRequest();
+                        byte[] msgBytes = comm.toJSON();
+                        for (FriendRecord fr : friends) {
+                            // check if this friend shares location data with us
+                            if (fr.receivingBoxId == null) {
+                                continue;
+                            }
+                            EncryptedData encMsg = Sodium.publicKeyEncrypt(msgBytes, fr.user.publicKey, keyPair.secretKey);
+                            OscarClient.queueSendMessage(MapActivity.this, token, Hex.toHexString(fr.user.userId), encMsg, true);
+                        }
+                    }
+                    prefs.setLastLocationUpdateRequestTime(System.currentTimeMillis());
                 }
 
                 OscarAPI api = OscarClient.newInstance(token);
@@ -495,11 +518,11 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
                 }
             });
         } else {
+            if (marker.isInfoWindowShown()) {
+                marker.hideInfoWindow();
+            }
             marker.setPosition(new LatLng(loc.latitude, loc.longitude));
             mFriendLocations.put(loc.friendId, loc);
-            if (marker.isInfoWindowShown()) {
-                onMarkerClick(marker);
-            }
         }
     }
 

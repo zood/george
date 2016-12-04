@@ -12,7 +12,9 @@ import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.IBinder;
 import android.os.Looper;
+import android.support.annotation.AnyThread;
 import android.support.annotation.Keep;
+import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.annotation.UiThread;
 import android.support.annotation.WorkerThread;
@@ -41,6 +43,8 @@ import retrofit2.Response;
 
 public class LocationUploadService extends Service {
 
+    @AnyThread
+    @NonNull
     public static Intent newIntent(Context ctx) {
         return new Intent(ctx, LocationUploadService.class);
     }
@@ -154,9 +158,6 @@ public class LocationUploadService extends Service {
                     boolean isConnected = activeNetwork != null && activeNetwork.isConnectedOrConnecting();
                     if (isConnected) {
                         flush();
-                        // we just flushed our location, so reschedule the next check
-                        JobScheduler scheduler = (JobScheduler) getSystemService(Context.JOB_SCHEDULER_SERVICE);
-                        scheduler.schedule(LocationJobService.getJobInfo(LocationUploadService.this));
                     }
                 }
             }
@@ -191,18 +192,10 @@ public class LocationUploadService extends Service {
         for (FriendRecord fr : friends) {
             L.i("|  to friend: " + fr);
             EncryptedData encryptedMessage = Sodium.publicKeyEncrypt(msgBytes, fr.user.publicKey, keyPair.secretKey);
-            try {
-                Response<Void> response = api.dropPackage(Hex.toHexString(fr.sendingBoxId), encryptedMessage).execute();
-                if (!response.isSuccessful()) {
-                    L.w("problem dropping location_info package");
-                    return;
-                }
-                mLastFlushTime = System.currentTimeMillis();
-            } catch (IOException ex) {
-                L.w("Serious error dropping location_info package", ex);
-                return;
-            }
+            OscarClient.queueDropPackage(this, token, Hex.toHexString(fr.sendingBoxId), encryptedMessage);
         }
+        mLastFlushTime = System.currentTimeMillis();
+        prefs.setLastLocationUpdateTime(mLastFlushTime);
 
         mLocations.clear();
     }

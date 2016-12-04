@@ -20,6 +20,7 @@ import io.pijun.george.api.adapter.CommTypeAdapter;
 import io.pijun.george.api.task.AddFcmTokenTask;
 import io.pijun.george.api.task.DeleteFcmTokenTask;
 import io.pijun.george.api.task.DeleteMessageTask;
+import io.pijun.george.api.task.DropPackageTask;
 import io.pijun.george.api.task.OscarTask;
 import io.pijun.george.api.task.QueueConverter;
 import io.pijun.george.api.task.SendMessageTask;
@@ -122,10 +123,18 @@ public class OscarClient {
         context.startService(OscarTasksService.newIntent(context));
     }
 
+    public static void queueDropPackage(@NonNull Context context, @NonNull String accessToken, @NonNull String hexBoxId, @NonNull EncryptedData pkg) {
+        DropPackageTask dpt = new DropPackageTask(accessToken);
+        dpt.hexBoxId = hexBoxId;
+        dpt.pkg = pkg;
+        getQueue(context).add(dpt);
+        context.startService(OscarTasksService.newIntent(context));
+    }
+
     @WorkerThread
-    public static void queueSendMessage(@NonNull Context context, @NonNull String accessToken, @NonNull String toUserId, @NonNull EncryptedData msg, boolean urgent) {
+    public static void queueSendMessage(@NonNull Context context, @NonNull String accessToken, @NonNull String toHexUserId, @NonNull EncryptedData msg, boolean urgent) {
         SendMessageTask smt = new SendMessageTask(accessToken);
-        smt.hexUserId = toUserId;
+        smt.hexUserId = toHexUserId;
         smt.message = msg;
         smt.urgent = urgent;
         getQueue(context).add(smt);
