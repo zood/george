@@ -22,8 +22,10 @@ public class App extends Application {
 
     @Override
     public void onCreate() {
-        L.i("App.onCreate");
         sApp = this;
+        L.i("========================");
+        L.i("      App.onCreate");
+        L.i("========================");
         super.onCreate();
         AppCompatDelegate.setCompatVectorFromResourcesEnabled(true);
         Sodium.init();
@@ -94,18 +96,5 @@ public class App extends Application {
             }
         });
         future.cancel(true);
-    }
-
-    @AnyThread
-    public static void runInBackground(final WorkerRunnable r, final long delayInMs) {
-        sApp.mExecutor.execute(new WorkerRunnable() {
-            @Override
-            public void run() {
-                try {
-                    Thread.sleep(delayInMs);
-                } catch (InterruptedException ignore) {}
-                r.run();
-            }
-        });
     }
 }

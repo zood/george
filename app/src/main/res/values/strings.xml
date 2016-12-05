@@ -38,4 +38,6 @@
     <string name="share_your_location_with_msg">Share your location with %s?</string>
     <string name="ellipsis">…</string>
     <string name="now">Now</string>
+    <string name="view_logs">View logs</string>
+    <string name="share">Share</string>
 </resources>

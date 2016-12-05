@@ -490,7 +490,6 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
     @Subscribe
     @UiThread
     public void onLocationSharingRequested(LocationSharingRequested req) {
-        L.i("MA.onLocationSharingRequested");
         App.runInBackground(new WorkerRunnable() {
             @Override
             public void run() {
@@ -528,7 +527,6 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
 
     @UiThread
     public void onShowDrawerAction(View v) {
-        L.i("onShowDrawerAction");
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
         drawer.openDrawer(GravityCompat.START, true);
     }
@@ -541,7 +539,6 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
 
     @UiThread
     private void onLogOutAction() {
-        L.i("about to cancel all jobs");
         JobScheduler jobScheduler = (JobScheduler) getSystemService(Context.JOB_SCHEDULER_SERVICE);
         jobScheduler.cancelAll();
 
@@ -565,10 +562,15 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
         builder.show();
     }
 
+    @UiThread
+    private void onShowLogs() {
+        Intent i = LogActivity.newIntent(this);
+        startActivity(i);
+    }
+
     private NavigationView.OnNavigationItemSelectedListener navItemListener = new NavigationView.OnNavigationItemSelectedListener() {
         @Override
         public boolean onNavigationItemSelected(@NonNull MenuItem item) {
-            L.i("clicked item: " + item.getTitle());
             DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
             drawer.closeDrawers();
 
@@ -576,6 +578,8 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
                 onShowFriends();
             } else if (item.getItemId() == R.id.log_out) {
                 onLogOutAction();
+            } else if (item.getItemId() == R.id.view_logs) {
+                onShowLogs();
             }
 
             return false;
@@ -623,12 +627,12 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
 
     @Override
     public void onConnectionSuspended(int i) {
-        L.i("onConnectionSuspended: " + i);
+        L.w("onConnectionSuspended: " + i);
     }
 
     @Override
     public void onConnectionFailed(@NonNull ConnectionResult connectionResult) {
-        L.i("onConnectionFailed: " + connectionResult);
+        L.w("onConnectionFailed: " + connectionResult);
     }
 
     @Override

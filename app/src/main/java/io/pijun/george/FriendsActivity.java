@@ -67,7 +67,6 @@ public class FriendsActivity extends AppCompatActivity implements FriendsAdapter
 
     @UiThread
     public void onFABAction(View v) {
-        L.i("onFABAction");
         onAddFriend();
     }
 
@@ -203,7 +202,6 @@ public class FriendsActivity extends AppCompatActivity implements FriendsAdapter
     @Override
     @UiThread
     public void onApproveFriendRequest(final long userId) {
-        L.i("onapprove " + userId);
         App.runInBackground(new WorkerRunnable() {
             @Override
             public void run() {
@@ -215,7 +213,6 @@ public class FriendsActivity extends AppCompatActivity implements FriendsAdapter
     @Override
     @UiThread
     public void onRejectFriendRequest(final long userId) {
-        L.i("onreject: " + userId);
         App.runInBackground(new WorkerRunnable() {
             @Override
             public void run() {

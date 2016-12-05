@@ -9,4 +9,7 @@
         <!--<item android:id="@+id/check_messages" android:title="@string/check_messages" />-->
         <!--<item android:id="@+id/friend_requests" android:title="@string/friend_requests" />-->
     </group>
+    <group>
+        <item android:id="@+id/view_logs" android:title="@string/view_logs"/>
+    </group>
 </menu>

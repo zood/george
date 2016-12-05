@@ -22,7 +22,6 @@ import android.text.format.DateUtils;
 
 import com.squareup.otto.Subscribe;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.LinkedList;
 
@@ -33,13 +32,11 @@ import io.pijun.george.L;
 import io.pijun.george.Prefs;
 import io.pijun.george.Sodium;
 import io.pijun.george.WorkerRunnable;
-import io.pijun.george.api.OscarAPI;
 import io.pijun.george.api.OscarClient;
 import io.pijun.george.api.UserComm;
 import io.pijun.george.crypto.EncryptedData;
 import io.pijun.george.crypto.KeyPair;
 import io.pijun.george.models.FriendRecord;
-import retrofit2.Response;
 
 public class LocationUploadService extends Service {
 
@@ -172,6 +169,7 @@ public class LocationUploadService extends Service {
         L.i("LocationUploadService.flush");
         // If we have no location to report, just get out of here.
         if (mLocations.isEmpty()) {
+            L.i("|  no location to flush");
             return;
         }
 
@@ -188,9 +186,8 @@ public class LocationUploadService extends Service {
         UserComm locMsg = UserComm.newLocationInfo(location);
         byte[] msgBytes = locMsg.toJSON();
         ArrayList<FriendRecord> friends = DB.get(this).getFriendsToShareWith();
-        OscarAPI api = OscarClient.newInstance(token);
         for (FriendRecord fr : friends) {
-            L.i("|  to friend: " + fr);
+            L.i("|  to friend " + fr.user.username + ": " + fr);
             EncryptedData encryptedMessage = Sodium.publicKeyEncrypt(msgBytes, fr.user.publicKey, keyPair.secretKey);
             OscarClient.queueDropPackage(this, token, Hex.toHexString(fr.sendingBoxId), encryptedMessage);
         }

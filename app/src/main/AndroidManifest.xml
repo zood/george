@@ -30,6 +30,10 @@
             android:name=".FriendsActivity"
             android:windowSoftInputMode="adjustResize"
             android:theme="@style/AppTheme" />
+        <activity
+            android:name=".LogActivity"
+            android:windowSoftInputMode="adjustResize"
+            android:theme="@style/AppTheme" />
 
         <!-- BEGIN SERVICES -->
         <service android:name=".service.FcmMessageReceiver">

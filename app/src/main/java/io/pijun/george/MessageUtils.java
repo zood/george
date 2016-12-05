@@ -229,10 +229,10 @@ public class MessageUtils {
                 // only perform the update if it's been more than 5 minutes since the last one
                 long now = System.currentTimeMillis();
                 if (now - updateTime > 5 * DateUtils.MINUTE_IN_MILLIS) {
-                    L.i("|  It's been long enough, so we'll request another location update");
+                    L.i("|  ok, provide a location update");
                     context.startService(LocationListenerService.newIntent(context));
                 } else {
-                    L.i("|  Not long enough since we've requested an update");
+                    L.i("|  already provided an update at " + updateTime + ". It's " + now + " now");
                 }
                 break;
         }
