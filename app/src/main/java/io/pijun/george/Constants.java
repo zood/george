@@ -7,6 +7,6 @@ public class Constants {
     public static final int USER_ID_LENGTH = 16;
     public static final int PUBLIC_KEY_LENGTH = 32;
 
-    public static final boolean USE_PRODUCTION = false;
+    public static final boolean USE_PRODUCTION = true;
 
 }

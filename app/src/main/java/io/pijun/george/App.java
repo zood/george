@@ -89,12 +89,5 @@ public class App extends Application {
     @AnyThread
     public static void runInBackground(WorkerRunnable r) {
         sApp.mExecutor.execute(r);
-        FutureTask<?> future = (FutureTask<?>) sApp.mExecutor.submit(new WorkerRunnable() {
-            @Override
-            public void run() {
-
-            }
-        });
-        future.cancel(true);
     }
 }
