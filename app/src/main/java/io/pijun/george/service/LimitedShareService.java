@@ -187,8 +187,8 @@ public class LimitedShareService extends Service implements LocationListener {
     private void shareLink() {
         Intent sendIntent = new Intent();
         sendIntent.setAction(Intent.ACTION_SEND);
-        sendIntent.putExtra(Intent.EXTRA_TITLE, "Bob's location");
-        sendIntent.putExtra(Intent.EXTRA_TEXT, "https://pijun.io/track#ddjijsosdj");
+        sendIntent.putExtra(Intent.EXTRA_TITLE, "Track location");
+        sendIntent.putExtra(Intent.EXTRA_TEXT, getUrl());
         sendIntent.setType("text/plain");
         startActivity(Intent.createChooser(sendIntent, "Send to"));
     }
