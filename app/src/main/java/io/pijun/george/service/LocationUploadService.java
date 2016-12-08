@@ -37,6 +37,7 @@ import io.pijun.george.api.UserComm;
 import io.pijun.george.crypto.EncryptedData;
 import io.pijun.george.crypto.KeyPair;
 import io.pijun.george.models.FriendRecord;
+import io.pijun.george.models.LimitedShare;
 
 public class LocationUploadService extends Service {
 
@@ -114,11 +115,11 @@ public class LocationUploadService extends Service {
                 .build();
         ConnectionResult connectionResult = mGoogleClient.blockingConnect();
         if (!connectionResult.isSuccess()) {
-            L.i("|  google client connect failed");
-            L.i("|  has resolution? " + connectionResult.hasResolution());
+            L.i("  google client connect failed");
+            L.i("  has resolution? " + connectionResult.hasResolution());
         }
 
-        PendingResult<Status> result = ActivityRecognition.ActivityRecognitionApi.requestActivityUpdates(
+        PendingResult<Status> result = ActivityRecognition.ActivityFRecognitionApi.requestActivityUpdates(
                 mGoogleClient,
                 5 * DateUtils.MINUTE_IN_MILLIS,
                 ActivityMonitor.getPendingIntent(this));
@@ -147,7 +148,7 @@ public class LocationUploadService extends Service {
                 mLocations.add(l);
 
                 // If 1) the app is in foreground, 2) and there is internet connectivity, and
-                // 3) we haven't flushed the location in at least a minute, then perform a flush
+                // 3) we haven't flushed the location in <some amount of time>, then perform a flush
                 long timeSinceFlush = System.currentTimeMillis() - mLastFlushTime;
                 if (App.isInForeground && timeSinceFlush > 15 * DateUtils.SECOND_IN_MILLIS) {
                     ConnectivityManager cm = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
@@ -169,7 +170,7 @@ public class LocationUploadService extends Service {
         L.i("LocationUploadService.flush");
         // If we have no location to report, just get out of here.
         if (mLocations.isEmpty()) {
-            L.i("|  no location to flush");
+            L.i("  no location to flush");
             return;
         }
 
@@ -177,7 +178,7 @@ public class LocationUploadService extends Service {
         String token = prefs.getAccessToken();
         KeyPair keyPair = prefs.getKeyPair();
         if (token == null || keyPair == null) {
-            L.i("|  LM.flush token or keypair was null, so skipping upload");
+            L.i("  LM.flush token or keypair was null, so skipping upload");
             mLocations.clear();
             return;
         }
@@ -185,11 +186,27 @@ public class LocationUploadService extends Service {
         Location location = mLocations.getLast();
         UserComm locMsg = UserComm.newLocationInfo(location);
         byte[] msgBytes = locMsg.toJSON();
+        // share to our friends
         ArrayList<FriendRecord> friends = DB.get(this).getFriendsToShareWith();
         for (FriendRecord fr : friends) {
-            L.i("|  to friend " + fr.user.username + ": " + fr);
-            EncryptedData encryptedMessage = Sodium.publicKeyEncrypt(msgBytes, fr.user.publicKey, keyPair.secretKey);
-            OscarClient.queueDropPackage(this, token, Hex.toHexString(fr.sendingBoxId), encryptedMessage);
+            L.i("  to friend " + fr.user.username + ": " + fr);
+            EncryptedData encMsg = Sodium.publicKeyEncrypt(msgBytes, fr.user.publicKey, keyPair.secretKey);
+            if (encMsg == null) {
+                L.w("  encryption failed");
+                continue;
+            }
+            OscarClient.queueDropPackage(this, token, Hex.toHexString(fr.sendingBoxId), encMsg);
+        }
+        // also check for a limited share
+        LimitedShare ls = DB.get(this).getLimitedShare();
+        if (ls != null) {
+            L.i("  to limited share");
+            EncryptedData encMsg = Sodium.publicKeyEncrypt(msgBytes, ls.publicKey, keyPair.secretKey);
+            if (encMsg != null) {
+                OscarClient.queueDropPackage(this, token, Hex.toHexString(ls.sendingBoxId), encMsg);
+            } else {
+                L.w("  encryption failed");
+            }
         }
         mLastFlushTime = System.currentTimeMillis();
         prefs.setLastLocationUpdateTime(mLastFlushTime);

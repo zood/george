@@ -4,6 +4,7 @@ import android.app.IntentService;
 import android.app.job.JobScheduler;
 import android.content.Context;
 import android.content.Intent;
+import android.os.PowerManager;
 import android.text.TextUtils;
 
 import com.squareup.tape.FileObjectQueue;
@@ -44,7 +45,7 @@ public class OscarTasksService extends IntentService {
         // make sure we're still logged in
         String token = Prefs.get(this).getAccessToken();
         if (TextUtils.isEmpty(token)) {
-            L.i("|  we're not logged in. clearing the queue.");
+            L.i("  we're not logged in. clearing the queue.");
             // not logged in, so empty the queue and get out of here
             while (mQueue.size() > 0) {
                 mQueue.remove();
@@ -52,51 +53,58 @@ public class OscarTasksService extends IntentService {
             return;
         }
 
-        while (mQueue.size() > 0) {
-            OscarTask task = mQueue.peek();
-            OscarAPI api = OscarClient.newInstance(task.accessToken);
-            Call call;
-            switch (task.apiMethod) {
-                case AddFcmTokenTask.NAME:
-                    AddFcmTokenTask aftt = (AddFcmTokenTask) task;
-                    call = api.addFcmToken(aftt.body);
-                    break;
-                case DeleteFcmTokenTask.NAME:
-                    DeleteFcmTokenTask dftt = (DeleteFcmTokenTask) task;
-                    call = api.deleteFcmToken(dftt.fcmToken);
-                    break;
-                case DeleteMessageTask.NAME:
-                    DeleteMessageTask dmt = (DeleteMessageTask) task;
-                    call = api.deleteMessage(dmt.messageId);
-                    break;
-                case DropPackageTask.NAME:
-                    DropPackageTask dpt = (DropPackageTask) task;
-                    call = api.dropPackage(dpt.hexBoxId, dpt.pkg);
-                    break;
-                case SendMessageTask.NAME:
-                    SendMessageTask smt = (SendMessageTask) task;
-                    Map<String, Object> map = Utils.map("cipher_text", smt.message.cipherText, "nonce", smt.message.nonce, "urgent", smt.urgent);
-                    call = api.sendMessage(smt.hexUserId, map);
-                    break;
-                default:
-                    throw new RuntimeException("Unknown task type");
-            }
-            try {
-                Response response = call.execute();
-                if (response.isSuccessful()) {
-                    mQueue.remove();
-                } else {
-                    OscarError err = OscarError.fromResponse(response);
-                    L.i("problem executing task: " + call.request().method() + " " + call.request().url());
-                    L.i("|  " + err);
+        PowerManager pwrMgr = (PowerManager) getSystemService(POWER_SERVICE);
+        PowerManager.WakeLock wakeLock = pwrMgr.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "OscarTasksLock");
+        try {
+            wakeLock.acquire();
+            while (mQueue.size() > 0) {
+                OscarTask task = mQueue.peek();
+                OscarAPI api = OscarClient.newInstance(task.accessToken);
+                Call call;
+                switch (task.apiMethod) {
+                    case AddFcmTokenTask.NAME:
+                        AddFcmTokenTask aftt = (AddFcmTokenTask) task;
+                        call = api.addFcmToken(aftt.body);
+                        break;
+                    case DeleteFcmTokenTask.NAME:
+                        DeleteFcmTokenTask dftt = (DeleteFcmTokenTask) task;
+                        call = api.deleteFcmToken(dftt.fcmToken);
+                        break;
+                    case DeleteMessageTask.NAME:
+                        DeleteMessageTask dmt = (DeleteMessageTask) task;
+                        call = api.deleteMessage(dmt.messageId);
+                        break;
+                    case DropPackageTask.NAME:
+                        DropPackageTask dpt = (DropPackageTask) task;
+                        call = api.dropPackage(dpt.hexBoxId, dpt.pkg);
+                        break;
+                    case SendMessageTask.NAME:
+                        SendMessageTask smt = (SendMessageTask) task;
+                        Map<String, Object> map = Utils.map("cipher_text", smt.message.cipherText, "nonce", smt.message.nonce, "urgent", smt.urgent);
+                        call = api.sendMessage(smt.hexUserId, map);
+                        break;
+                    default:
+                        throw new RuntimeException("Unknown task type");
                 }
-            } catch (IOException e) {
-                L.w("task exception", e);
-                // a connection problem, so schedule this to continue when the network is back
-                JobScheduler scheduler = (JobScheduler) getSystemService(Context.JOB_SCHEDULER_SERVICE);
-                scheduler.schedule(OscarJobService.getJobInfo(this));
-                return;
+                try {
+                    Response response = call.execute();
+                    if (response.isSuccessful()) {
+                        mQueue.remove();
+                    } else {
+                        OscarError err = OscarError.fromResponse(response);
+                        L.i("problem executing task: " + call.request().method() + " " + call.request().url());
+                        L.i("  " + err);
+                    }
+                } catch (IOException e) {
+                    L.w("task exception", e);
+                    // a connection problem, so schedule this to continue when the network is back
+                    JobScheduler scheduler = (JobScheduler) getSystemService(Context.JOB_SCHEDULER_SERVICE);
+                    scheduler.schedule(OscarJobService.getJobInfo(this));
+                    return;
+                }
             }
+        } finally {
+            wakeLock.release();
         }
     }
 

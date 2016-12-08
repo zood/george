@@ -6,6 +6,7 @@
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     <uses-permission android:name="com.google.android.gms.permission.ACTIVITY_RECOGNITION" />
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
 
     <application
         android:name=".App"
@@ -52,6 +53,7 @@
         <service android:name=".service.OscarTasksService" />
         <service android:name=".service.MessageQueueService" />
         <service android:name=".service.LocationListenerService" />
+        <service android:name=".service.LimitedShareService" />
         <service android:name=".service.LocationJobService" android:permission="android.permission.BIND_JOB_SERVICE" />
         <service android:name=".service.BackupDatabaseJob" android:permission="android.permission.BIND_JOB_SERVICE" />
         <service android:name=".service.OscarJobService" android:permission="android.permission.BIND_JOB_SERVICE" />

@@ -37,7 +37,7 @@ public class MessageUtils {
             ERROR_NONE, ERROR_NOT_LOGGED_IN, ERROR_NO_NETWORK, ERROR_UNKNOWN_SENDER, ERROR_REMOTE_INTERNAL,
             ERROR_UNKNOWN, ERROR_INVALID_COMMUNICATION, ERROR_DATABASE_EXCEPTION, ERROR_INVALID_SENDER_ID,
             ERROR_MISSING_CIPHER_TEXT, ERROR_MISSING_NONCE, ERROR_NOT_A_FRIEND, ERROR_DECRYPTION_FAILED,
-            ERROR_DATABASE_INCONSISTENCY
+            ERROR_DATABASE_INCONSISTENCY, ERROR_ENCRYPTION_FAILED
     })
     public @interface Error {}
 
@@ -55,6 +55,7 @@ public class MessageUtils {
     public static final int ERROR_NOT_A_FRIEND = 11;
     public static final int ERROR_DECRYPTION_FAILED = 12;
     public static final int ERROR_DATABASE_INCONSISTENCY = 13;
+    public static final int ERROR_ENCRYPTION_FAILED = 14;
 
     @Error
     public static int approveFriendRequest(@NonNull Context context, long userId) {
@@ -82,6 +83,9 @@ public class MessageUtils {
             throw new RuntimeException("How was approve called for an unknown user?");
         }
         EncryptedData encMsg = Sodium.publicKeyEncrypt(msgBytes, user.publicKey, kp.secretKey);
+        if (encMsg == null) {
+            return ERROR_ENCRYPTION_FAILED;
+        }
         OscarClient.queueSendMessage(context, accessToken, Hex.toHexString(user.userId), encMsg, false);
 
         try {
@@ -125,7 +129,7 @@ public class MessageUtils {
         }
 
         if (userRecord == null) {
-            L.i("|  need to download user");
+            L.i("  need to download user");
             // we need to retrieve it from the server
             OscarAPI api = OscarClient.newInstance(token);
             try {
@@ -150,7 +154,7 @@ public class MessageUtils {
                 // now that we've encountered a new user, add them to the database (because of TOFU)
 
                 userRecord = db.addUser(senderId, user.username, user.publicKey);
-                L.i("|  added user: " + userRecord);
+                L.i("  added user: " + userRecord);
             } catch (IOException ioe) {
                 return ERROR_NO_NETWORK;
             } catch (DB.DBException dbe) {
@@ -168,7 +172,7 @@ public class MessageUtils {
             L.i("usercomm was invalid. here it is: " + comm);
             return ERROR_INVALID_COMMUNICATION;
         }
-        L.i("|  comm type: " + comm.type);
+        L.i("  comm type: " + comm.type);
         switch (comm.type) {
             case LocationSharingGrant:
                 L.i("LocationSharingGrant");
@@ -229,10 +233,10 @@ public class MessageUtils {
                 // only perform the update if it's been more than 5 minutes since the last one
                 long now = System.currentTimeMillis();
                 if (now - updateTime > 5 * DateUtils.MINUTE_IN_MILLIS) {
-                    L.i("|  ok, provide a location update");
+                    L.i("  ok, provide a location update");
                     context.startService(LocationListenerService.newIntent(context));
                 } else {
-                    L.i("|  already provided an update at " + updateTime + ". It's " + now + " now");
+                    L.i("  already provided an update at " + updateTime + ". It's " + now + " now");
                 }
                 break;
         }

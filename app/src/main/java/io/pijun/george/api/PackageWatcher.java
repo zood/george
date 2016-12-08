@@ -64,7 +64,7 @@ public class PackageWatcher extends WebSocketAdapter {
         L.i("PW.onBinaryMessage");
         try {
             if (binary == null || binary.length == 0) {
-                L.i("|  received a null/empty binary message");
+                L.i("  received a null/empty binary message");
                 return;
             }
 
@@ -72,13 +72,13 @@ public class PackageWatcher extends WebSocketAdapter {
             // message is command (1 byte) + box id + msg (at least 2 bytes)
             int minLength = 1 + Constants.DROP_BOX_ID_LENGTH + 1;
             if (binary.length <= minLength) {
-                L.w("|  received an invalid message from the server. length was only " + binary.length);
+                L.w("  received an invalid message from the server. length was only " + binary.length);
                 return;
             }
 
             // check for the opening byte
             if (binary[0] != 1) {
-                L.w("|  PackageWatcher received incorrect opening byte: " + binary[0]);
+                L.w("  PackageWatcher received incorrect opening byte: " + binary[0]);
                 return;
             }
 
@@ -91,12 +91,12 @@ public class PackageWatcher extends WebSocketAdapter {
             EncryptedData encMsg = OscarClient.sGson.fromJson(isr, EncryptedData.class);
             FriendRecord friend = DB.get(mContext).getFriendByReceivingBoxId(boxId);
             if (friend == null) {
-                L.i("|  can't find user associated with receiving box id");
+                L.i("  can't find user associated with receiving box id");
                 return;
             }
             int result = MessageUtils.unwrapAndProcess(mContext, friend.user.userId, encMsg.cipherText, encMsg.nonce);
             if (result != MessageUtils.ERROR_NONE) {
-                L.i("|  error unwrapping+processing dropped message: " + result);
+                L.i("  error unwrapping+processing dropped message: " + result);
             }
         } catch (Throwable t) {
             L.w("PackageWatcher exception", t);

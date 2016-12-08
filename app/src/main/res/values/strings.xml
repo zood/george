@@ -40,4 +40,6 @@
     <string name="now">Now</string>
     <string name="view_logs">View logs</string>
     <string name="share">Share</string>
+    <string name="delete">Delete</string>
+    <string name="pijun">Pijun</string>
 </resources>

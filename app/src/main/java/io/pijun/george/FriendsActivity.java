@@ -30,12 +30,14 @@ import io.pijun.george.api.UserComm;
 import io.pijun.george.crypto.EncryptedData;
 import io.pijun.george.crypto.KeyPair;
 import io.pijun.george.models.UserRecord;
+import io.pijun.george.service.LimitedShareService;
 import io.pijun.george.service.LocationListenerService;
 import retrofit2.Response;
 
 public class FriendsActivity extends AppCompatActivity implements FriendsAdapter.FriendsAdapterListener {
 
-    public static Intent newIntent(Context context) {
+    @NonNull
+    public static Intent newIntent(@NonNull Context context) {
         return new Intent(context, FriendsActivity.class);
     }
 
@@ -63,6 +65,11 @@ public class FriendsActivity extends AppCompatActivity implements FriendsAdapter
         mAdapter = new FriendsAdapter(this);
         mAdapter.setListener(this);
         list.setAdapter(mAdapter);
+    }
+
+    public void onCreateLimitedShareAction(View v) {
+        L.i("FriendsActivity.onCreateLimitedShareAction");
+        startService(LimitedShareService.newIntent(this, LimitedShareService.ACTION_START));
     }
 
     @UiThread
@@ -127,6 +134,10 @@ public class FriendsActivity extends AppCompatActivity implements FriendsAdapter
 
             UserComm comm = UserComm.newLocationSharingRequest();
             EncryptedData msg = Sodium.publicKeyEncrypt(comm.toJSON(), userRecord.publicKey, keyPair.secretKey);
+            if (msg == null) {
+                Utils.showStringAlert(this, null, "Unable to create sharing request");
+                return;
+            }
             OscarClient.queueSendMessage(this, accessToken, Hex.toHexString(userRecord.userId), msg, false);
 
             byte[] sendingBoxId = null;
@@ -135,7 +146,12 @@ public class FriendsActivity extends AppCompatActivity implements FriendsAdapter
                 new SecureRandom().nextBytes(sendingBoxId);
                 comm = UserComm.newLocationSharingGrant(sendingBoxId);
                 msg = Sodium.publicKeyEncrypt(comm.toJSON(), userRecord.publicKey, keyPair.secretKey);
-                OscarClient.queueSendMessage(this, accessToken, Hex.toHexString(userRecord.userId), msg, false);
+                if (msg != null) {
+                    OscarClient.queueSendMessage(this, accessToken, Hex.toHexString(userRecord.userId), msg, false);
+                } else {
+                    Utils.showStringAlert(this, null, "Unable to create sharing grant");
+                    return;
+                }
             }
 
             db.addFriend(userRecord.id, sendingBoxId, null);
@@ -186,6 +202,10 @@ public class FriendsActivity extends AppCompatActivity implements FriendsAdapter
             return;
         }
         EncryptedData encMsg = Sodium.publicKeyEncrypt(msgBytes, user.publicKey, kp.secretKey);
+        if (encMsg == null) {
+            L.w("unable to create share rejection message");
+            return;
+        }
         OscarClient.queueSendMessage(this, accessToken, Hex.toHexString(user.userId), encMsg, false);
 
         try {

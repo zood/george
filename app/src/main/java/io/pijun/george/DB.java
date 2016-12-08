@@ -22,6 +22,7 @@ import java.util.ArrayList;
 
 import io.pijun.george.models.FriendLocation;
 import io.pijun.george.models.FriendRecord;
+import io.pijun.george.models.LimitedShare;
 import io.pijun.george.models.RequestRecord;
 import io.pijun.george.models.RequestResponse;
 import io.pijun.george.models.Snapshot;
@@ -41,6 +42,16 @@ public class DB {
             FRIENDS_COL_USER_ID,
             FRIENDS_COL_SENDING_BOX_ID,
             FRIENDS_COL_RECEIVING_BOX_ID
+    };
+
+    private static final String LIMITED_SHARES_TABLE = "limited_shares";
+    private static final String LIMITED_SHARES_COL_ID = "id";
+    private static final String LIMITED_SHARES_COL_SENDING_BOX_ID = "sending_box_id";
+    private static final String LIMITED_SHARES_COL_PUBLIC_KEY = "public_key";
+    private static final String[] LIMITED_SHARES_COLUMNS = new String[]{
+            LIMITED_SHARES_COL_ID,
+            LIMITED_SHARES_COL_SENDING_BOX_ID,
+            LIMITED_SHARES_COL_PUBLIC_KEY
     };
 
     private static final String LOCATIONS_TABLE = "locations";
@@ -97,7 +108,7 @@ public class DB {
 
     private static volatile DB sDb;
 
-    static class DBException extends Exception {
+    public static class DBException extends Exception {
         DBException(String msg) {
             super(msg);
         }
@@ -110,12 +121,13 @@ public class DB {
     private final DBHelper mDbHelper;
     private final Context mContext;
 
-    private DB(Context context) {
+    private DB(@NonNull Context context) {
         mContext = context.getApplicationContext();
         mDbHelper = new DBHelper(mContext);
     }
 
-    public static DB get(Context context) {
+    @NonNull
+    public static DB get(@NonNull Context context) {
         if (sDb == null) {
             synchronized (DB.class) {
                 if (sDb == null) {
@@ -175,6 +187,24 @@ public class DB {
         return result;
     }
 
+    @WorkerThread
+    public long addLimitedShare(@NonNull @Size(Constants.PUBLIC_KEY_LENGTH) byte[] publicKey, @NonNull @Size(Constants.DROP_BOX_ID_LENGTH) byte[] sendingBoxId) throws DBException {
+        SQLiteDatabase db = mDbHelper.getWritableDatabase();
+        ContentValues cv = new ContentValues();
+        cv.put(LIMITED_SHARES_COL_PUBLIC_KEY, publicKey);
+        cv.put(LIMITED_SHARES_COL_SENDING_BOX_ID, sendingBoxId);
+        long result;
+        try {
+            result = db.insertOrThrow(LIMITED_SHARES_TABLE, null, cv);
+        } catch (SQLException ex) {
+            throw new DBException("Error adding limited share {pubKey:"+Hex.toHexString(publicKey) + ", sendingBoxId:"+Hex.toHexString(sendingBoxId) + "}", ex);
+        }
+
+        // NOTE: We don't bother scheduling a backup here because this data is (purposely) not
+        // included in a snapshot.
+        return result;
+    }
+
     public long addOutgoingRequest(long userId, long sentDate) throws DBException {
         SQLiteDatabase db = mDbHelper.getWritableDatabase();
         ContentValues cv = new ContentValues();
@@ -231,6 +261,12 @@ public class DB {
     }
 
     @WorkerThread
+    public void deleteLimitedShares() {
+        SQLiteDatabase db = mDbHelper.getWritableDatabase();
+        db.delete(LIMITED_SHARES_TABLE, null, null);
+    }
+
+    @WorkerThread
     public void deleteUserData() {
         SQLiteDatabase db = mDbHelper.getWritableDatabase();
         db.delete(FRIENDS_TABLE, null, null);
@@ -238,6 +274,7 @@ public class DB {
         db.delete(LOCATIONS_TABLE, null, null);
         db.delete(OUTGOING_REQUESTS_TABLE, null, null);
         db.delete(USERS_TABLE, null, null);
+        db.delete(LIMITED_SHARES_TABLE, null, null);
     }
 
     @WorkerThread
@@ -418,6 +455,19 @@ public class DB {
         }
 
         return requests;
+    }
+
+    @WorkerThread
+    @Nullable
+    public LimitedShare getLimitedShare() {
+        SQLiteDatabase db = mDbHelper.getReadableDatabase();
+        try (Cursor c = db.query(LIMITED_SHARES_TABLE, LIMITED_SHARES_COLUMNS, null, null, null, null, null)) {
+            if (c.moveToNext()) {
+                return readLimitedShare(c);
+            }
+        }
+
+        return null;
     }
 
     @WorkerThread
@@ -613,6 +663,17 @@ public class DB {
 
     @WorkerThread
     @NonNull
+    private static LimitedShare readLimitedShare(Cursor c) {
+        LimitedShare ls = new LimitedShare();
+        ls.id = c.getLong(c.getColumnIndexOrThrow(LIMITED_SHARES_COL_ID));
+        ls.publicKey = c.getBlob(c.getColumnIndexOrThrow(LIMITED_SHARES_COL_PUBLIC_KEY));
+        ls.sendingBoxId = c.getBlob(c.getColumnIndexOrThrow(LIMITED_SHARES_COL_SENDING_BOX_ID));
+
+        return ls;
+    }
+
+    @WorkerThread
+    @NonNull
     private static RequestRecord readRequest(Cursor c) {
         RequestRecord rr = new RequestRecord();
         rr.id = c.getLong(c.getColumnIndexOrThrow(INCOMING_REQUESTS_COL_ID));
@@ -725,7 +786,7 @@ public class DB {
 
     @WorkerThread
     public void setFriendLocation(long friendId, double lat, double lng, long time, Float accuracy, Float speed) throws DBException {
-        L.i("setFriendLocation: {id: " + friendId + ", lat: " + lat + ", lng: " + lng);
+//        L.i("setFriendLocation: {id: " + friendId + ", lat: " + lat + ", lng: " + lng);
         SQLiteDatabase db = mDbHelper.getWritableDatabase();
         ContentValues cv = new ContentValues();
         cv.put(LOCATIONS_COL_FRIEND_ID, friendId);
@@ -829,6 +890,13 @@ public class DB {
                     + INCOMING_REQUESTS_COL_SENT_DATE + " INTEGER NOT NULL, "
                     + INCOMING_REQUESTS_COL_RESPONSE + " TEXT)";
             db.execSQL(createIncomingRequests);
+
+            String createLimitedShares = "CREATE TABLE "
+                    + LIMITED_SHARES_TABLE + " ("
+                    + LIMITED_SHARES_COL_ID + " INTEGER PRIMARY KEY, "
+                    + LIMITED_SHARES_COL_PUBLIC_KEY + " BLOB NOT NULL, "
+                    + LIMITED_SHARES_COL_SENDING_BOX_ID + " BLOB NOT NULL)";
+            db.execSQL(createLimitedShares);
         }
 
         @Override

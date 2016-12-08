@@ -1,12 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <menu
-    xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto">
+    xmlns:android="http://schemas.android.com/apk/res/android">
     <group android:id="@+id/primary_drawer_group">
         <item
-            android:id="@+id/share_log"
-            app:showAsAction="always"
-            android:title="@string/share"
-            app:actionProviderClass="android.support.v7.widget.ShareActionProvider" />
+            android:id="@+id/delete_log"
+            android:title="@string/delete" />
     </group>
 </menu>

@@ -100,7 +100,7 @@ public class BackupDatabaseJob extends JobService {
             }
         } catch (IOException ex) {
             // network error
-            L.w("|  snapshot upload failed");
+            L.w("  snapshot upload failed");
             if (mShouldStop) {
                 return;
             }

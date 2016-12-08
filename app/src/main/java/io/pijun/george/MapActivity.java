@@ -185,7 +185,11 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
                                 continue;
                             }
                             EncryptedData encMsg = Sodium.publicKeyEncrypt(msgBytes, fr.user.publicKey, keyPair.secretKey);
-                            OscarClient.queueSendMessage(MapActivity.this, token, Hex.toHexString(fr.user.userId), encMsg, true);
+                            if (encMsg != null) {
+                                OscarClient.queueSendMessage(MapActivity.this, token, Hex.toHexString(fr.user.userId), encMsg, true);
+                            } else {
+                                L.w("Failed to encrypt a location update request message to " + fr.user.username);
+                            }
                         }
                     }
                     prefs.setLastLocationUpdateRequestTime(System.currentTimeMillis());
@@ -237,6 +241,15 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
         if (mGoogleMap != null) {
             CameraPosition pos = mGoogleMap.getCameraPosition();
             Prefs.get(this).setCameraPosition(pos);
+        }
+
+        // hide visible info windows, so outdated info is not visible in case the activity is
+        // brought back into view
+        for (int i=0; i<mFriendMarkers.size(); i++) {
+            Marker m = mFriendMarkers.valueAt(i);
+            if (m.isInfoWindowShown()) {
+                m.hideInfoWindow();
+            }
         }
 
         mMapView.onStop();
@@ -589,7 +602,7 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
     @Override
     public void onConnected(@Nullable Bundle bundle) {
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-            L.i("|  failed permission check");
+            L.i("  failed permission check");
             return;
         }
         mLastLocation = LocationServices.FusedLocationApi.getLastLocation(mGoogleApiClient);

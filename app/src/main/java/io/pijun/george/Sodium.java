@@ -34,6 +34,7 @@ public class Sodium {
      * @return a 32-byte key
      */
     @CheckResult
+    @Nullable
     public native static byte[] createHashFromPassword(int hashSizeBytes, @NonNull byte[] password, @NonNull byte[] salt, long opsLimit, long memLimit);
 
     @CheckResult
@@ -46,6 +47,7 @@ public class Sodium {
     public native static int getSymmetricKeyLength();
 
     @CheckResult
+    @Nullable
     public native static EncryptedData symmetricKeyEncrypt(@NonNull byte[] msg, @NonNull byte[] key);
 
     @CheckResult
@@ -53,12 +55,11 @@ public class Sodium {
     public native static byte[] symmetricKeyDecrypt(@NonNull byte[] cipherText, @NonNull byte[] nonce, @NonNull byte[] key);
 
     @CheckResult
+    @Nullable
     public native static EncryptedData publicKeyEncrypt(@NonNull byte[] msg, @NonNull byte[] receiverPubKey, @NonNull byte[] senderSecretKey);
 
     @CheckResult
     @Nullable
     public native static byte[] publicKeyDecrypt(@NonNull byte[] cipherText, @NonNull byte[] nonce, @NonNull byte[] senderPubKey, @NonNull byte[] receiverSecretKey);
-
-//    public native static byte[] createHash(byte[] data, byte[] key);
 
 }

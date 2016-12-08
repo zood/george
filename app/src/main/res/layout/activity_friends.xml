@@ -23,6 +23,34 @@
 
     </android.support.design.widget.AppBarLayout>
 
+    <android.support.constraint.ConstraintLayout
+        android:id="@+id/fab_options"
+        android:background="@android:color/holo_orange_light"
+        app:layout_anchorGravity="bottom|end"
+        app:layout_anchor="@id/friends_list"
+        android:layout_marginEnd="16dp"
+        android:layout_marginBottom="32dp"
+        android:layout_width="40dp"
+        android:layout_height="152dp">
+        <ImageButton
+            android:id="@+id/create_limited_share"
+            android:clickable="true"
+            android:onClick="onCreateLimitedShareAction"
+            app:srcCompat="@drawable/ic_schedule_black_24px"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            android:layout_width="40dp"
+            android:layout_height="40dp" />
+        <ImageButton
+            android:id="@+id/add_friend"
+            app:srcCompat="@drawable/ic_person_black_24px"
+            android:layout_marginTop="16dp"
+            app:layout_constraintTop_toBottomOf="@id/create_limited_share"
+            app:layout_constraintStart_toStartOf="parent"
+            android:layout_width="40dp"
+            android:layout_height="40dp" />
+    </android.support.constraint.ConstraintLayout>
+
     <android.support.design.widget.FloatingActionButton
         android:id="@+id/friends_fab"
         android:clickable="true"

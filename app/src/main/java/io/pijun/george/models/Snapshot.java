@@ -4,16 +4,12 @@ import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 
 import com.google.firebase.crash.FirebaseCrash;
-import com.google.gson.FieldNamingPolicy;
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
 
 import java.io.ByteArrayInputStream;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
 
 import io.pijun.george.Hex;
-import io.pijun.george.L;
 import io.pijun.george.api.OscarClient;
 
 public class Snapshot {

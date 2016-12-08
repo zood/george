@@ -8,7 +8,8 @@ import android.support.annotation.Nullable;
 import android.support.annotation.UiThread;
 import android.support.annotation.WorkerThread;
 import android.support.v7.app.AppCompatActivity;
-import android.view.Menu;
+import android.support.v7.widget.Toolbar;
+import android.view.MenuItem;
 import android.widget.TextView;
 
 import java.io.BufferedInputStream;
@@ -17,7 +18,7 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.StringWriter;
 
-public class LogActivity extends AppCompatActivity {
+public class LogActivity extends AppCompatActivity implements Toolbar.OnMenuItemClickListener {
 
     public static Intent newIntent(@NonNull Context context) {
         return new Intent(context, LogActivity.class);
@@ -30,6 +31,10 @@ public class LogActivity extends AppCompatActivity {
 
         setContentView(R.layout.activity_log);
 
+        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
+        toolbar.inflateMenu(R.menu.activity_log);
+        toolbar.setOnMenuItemClickListener(this);
+
         App.runInBackground(new WorkerRunnable() {
             @Override
             public void run() {
@@ -39,11 +44,14 @@ public class LogActivity extends AppCompatActivity {
     }
 
     @Override
-    @UiThread
-    public boolean onCreateOptionsMenu(Menu menu) {
-        getMenuInflater().inflate(R.menu.activity_log, menu);
+    public boolean onMenuItemClick(MenuItem item) {
+        if (item.getItemId() == R.id.delete_log) {
+            L.resetLog(this);
+            setLogContents("");
+            return true;
+        }
 
-        return true;
+        return false;
     }
 
     @WorkerThread
