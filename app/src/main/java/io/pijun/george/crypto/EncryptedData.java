@@ -9,13 +9,10 @@ public class EncryptedData {
 
     @Override
     public String toString() {
-        StringBuilder sb = new StringBuilder("EncryptedData:\n");
-        sb.append("cipherText: ");
-        sb.append(Hex.toHexString(cipherText));
-        sb.append('\n');
-        sb.append("nonce: ");
-        sb.append(Hex.toHexString(nonce));
-
-        return sb.toString();
+        return "EncryptedData:\n" + "cipherText: " +
+                Hex.toHexString(cipherText) +
+                '\n' +
+                "nonce: " +
+                Hex.toHexString(nonce);
     }
 }
