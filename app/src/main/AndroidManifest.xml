@@ -48,7 +48,6 @@
             </intent-filter>
         </service>
         <service android:name=".service.FcmTokenRegistrar" />
-        <service android:name=".service.FriendLocationsRefresher" />
         <service android:name=".service.LocationUploadService" />
         <service android:name=".service.OscarTasksService" />
         <service android:name=".service.MessageQueueService" />

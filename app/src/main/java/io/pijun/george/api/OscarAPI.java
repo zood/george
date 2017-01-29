@@ -18,10 +18,10 @@ public interface OscarAPI {
     Call<Void> addFcmToken(@Body Map<String, String> body);
 
     @POST("sessions/{username}/challenge-response")
-    Call<LoginResponse> completeAuthenticationChallenge(@Path("username") String username, @Body EncryptedData response);
+    Call<LoginResponse> completeAuthenticationChallenge(@Path("username") String username, @Body FinishedAuthenticationChallenge response);
 
     @POST("users")
-    Call<LoginResponse> createUser(@Body User user);
+    Call<CreateUserResponse> createUser(@Body User user);
 
     @DELETE("users/me/fcm-tokens/{fcmToken}")
     Call<Void> deleteFcmToken(@Path("fcmToken") String fcmToken);
@@ -40,6 +40,9 @@ public interface OscarAPI {
 
     @GET("messages")
     Call<Message[]> getMessages();
+
+    @GET("public-key")
+    Call<ServerPublicKeyResponse> getServerPublicKey();
 
     @GET("users/{id}")
     Call<User> getUser(@Path("id") String hexId);

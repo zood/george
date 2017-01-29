@@ -201,11 +201,16 @@ public class LocationUploadService extends Service {
         LimitedShare ls = DB.get(this).getLimitedShare();
         if (ls != null) {
             L.i("  to limited share");
-            EncryptedData encMsg = Sodium.publicKeyEncrypt(msgBytes, ls.publicKey, keyPair.secretKey);
-            if (encMsg != null) {
-                OscarClient.queueDropPackage(this, token, Hex.toHexString(ls.sendingBoxId), encMsg);
+            if (LimitedShareService.IsRunning) {
+                EncryptedData encMsg = Sodium.publicKeyEncrypt(msgBytes, ls.publicKey, keyPair.secretKey);
+                if (encMsg != null) {
+                    OscarClient.queueDropPackage(this, token, Hex.toHexString(ls.sendingBoxId), encMsg);
+                } else {
+                    L.w("  encryption failed");
+                }
             } else {
-                L.w("  encryption failed");
+                L.i("  oops. the limited share isn't running. we'll delete it.");
+                DB.get(this).deleteLimitedShares();
             }
         }
         mLastFlushTime = System.currentTimeMillis();

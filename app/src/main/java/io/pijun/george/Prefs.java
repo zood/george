@@ -25,6 +25,7 @@ public class Prefs {
     private final static String KEY_ACCESS_TOKEN = "key_access_token";
     private final static String KEY_USER_ID = "key_user_id";
     private final static String KEY_FCM_TOKEN = "fcm_token";
+    private final static String KEY_USERNAME = "key_username";
 
     private final static String KEY_CAMERA_POSITION_SAVED = "camera_position_saved";
     private final static String KEY_CAMERA_POSITION_LATITUDE = "camera_position_latitude";
@@ -171,6 +172,14 @@ public class Prefs {
 
     public void setUserId(byte[] id) {
         setBytes(id, KEY_USER_ID);
+    }
+
+    public String getUsername() {
+        return mPrefs.getString(KEY_USERNAME, null);
+    }
+
+    public void setUsername(String username) {
+        mPrefs.edit().putString(KEY_USERNAME, username).apply();
     }
 
     @Nullable

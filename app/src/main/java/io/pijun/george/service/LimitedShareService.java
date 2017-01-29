@@ -51,6 +51,14 @@ public class LimitedShareService extends Service implements LocationListener {
     public static final String ACTION_START = "start";
     public static final String ACTION_END = "end";
     public static final String ACTION_COPY_LINK = "copy_link";
+    /**
+     * IsRunning is checked by LocationUploadService. In the event that the process is cleaned
+     * up without notice, the record of this limited share will still exist in the database
+     * when the app comes back, and location data will continue to be shared with the limited share.
+     * That's bad, so LocationUploadService checks this to see if the service is actually running,
+     * and if it's not, it will wipe the limited share data from the db.
+     */
+    public static volatile boolean IsRunning = false;
 
     private boolean mIsStarted = false;
     private KeyPair mKeyPair;
@@ -106,6 +114,8 @@ public class LimitedShareService extends Service implements LocationListener {
     @UiThread
     public void onDestroy() {
         L.i("LSS.onDestroy");
+        IsRunning = false;
+        stopLimitedShare(false);
     }
 
     @Override
@@ -133,11 +143,11 @@ public class LimitedShareService extends Service implements LocationListener {
                 shareLink();
                 break;
             case ACTION_END:
-                stopLimitedShare();
+                stopLimitedShare(true);
                 break;
         }
         L.i("  service_action: " + action);
-        return START_STICKY;
+        return START_NOT_STICKY;
     }
 
     @AnyThread
@@ -153,8 +163,12 @@ public class LimitedShareService extends Service implements LocationListener {
         if (id == null) {
             throw new RuntimeException("How is the user id null?");
         }
+        String username = prefs.getUsername();
+        if (username == null) {
+            throw new RuntimeException("How is the username null?");
+        }
         return String.format("https://t.pijun.io/#u=%s&k=%s&b=%s&i=%s",
-                "skippy",
+                username,
                 Hex.toHexString(mKeyPair.secretKey),
                 Hex.toHexString(mSendingBoxId),
                 Hex.toHexString(id));
@@ -217,13 +231,15 @@ public class LimitedShareService extends Service implements LocationListener {
             return;
         }
 
+        LimitedShareService.IsRunning = true;
+
         // start the fused location provider
         mGoogleClient = new GoogleApiClient.Builder(this)
                 .addApi(LocationServices.API)
                 .build();
         ConnectionResult connectionResult = mGoogleClient.blockingConnect();
         if (!connectionResult.isSuccess()) {
-            L.w("LLS was unable to connect to google api");
+            L.w("LSS was unable to connect to google api");
             L.w("  has resolution? " + connectionResult.hasResolution());
             // TODO: handle this
             return;
@@ -248,17 +264,22 @@ public class LimitedShareService extends Service implements LocationListener {
         Toast.makeText(this, "Link copied to clipboard", Toast.LENGTH_SHORT).show();
     }
 
-    private void stopLimitedShare() {
+    private void stopLimitedShare(boolean userStopped) {
         stopForeground(true);
 
         if (mGoogleClient != null && mGoogleClient.isConnected()) {
             LocationServices.FusedLocationApi.removeLocationUpdates(mGoogleClient, this);
             mGoogleClient.disconnect();
+            mGoogleClient = null;
         }
 
         DB.get(this).deleteLimitedShares();
+        LimitedShareService.IsRunning = false;
 
-        stopSelf();
+
+        if (userStopped) {
+            stopSelf();
+        }
     }
 
     @Override

@@ -189,6 +189,9 @@ public class DB {
 
     @WorkerThread
     public long addLimitedShare(@NonNull @Size(Constants.PUBLIC_KEY_LENGTH) byte[] publicKey, @NonNull @Size(Constants.DROP_BOX_ID_LENGTH) byte[] sendingBoxId) throws DBException {
+        // to make sure we always have just one at a time, wipe the database before proceeding
+        deleteLimitedShares();
+
         SQLiteDatabase db = mDbHelper.getWritableDatabase();
         ContentValues cv = new ContentValues();
         cv.put(LIMITED_SHARES_COL_PUBLIC_KEY, publicKey);

@@ -6,14 +6,14 @@ public class AuthenticationChallenge {
 
     public User user;
     public byte[] challenge;
-    public byte[] publicKey;
+    public byte[] creationDate;
 
     @Override
     public String toString() {
         return "AuthenticationChallenge{" +
                 "user=" + user +
                 ", challenge=" + Hex.toHexString(challenge) +
-                ", publicKey=" + Hex.toHexString(publicKey) +
+                ", creationDate=" + Hex.toHexString(creationDate) +
                 '}';
     }
 }

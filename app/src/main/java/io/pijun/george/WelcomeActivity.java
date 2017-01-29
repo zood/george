@@ -24,10 +24,13 @@ import java.io.IOException;
 import java.security.SecureRandom;
 
 import io.pijun.george.api.AuthenticationChallenge;
+import io.pijun.george.api.CreateUserResponse;
+import io.pijun.george.api.FinishedAuthenticationChallenge;
 import io.pijun.george.api.LoginResponse;
 import io.pijun.george.api.OscarAPI;
 import io.pijun.george.api.OscarClient;
 import io.pijun.george.api.OscarError;
+import io.pijun.george.api.ServerPublicKeyResponse;
 import io.pijun.george.api.User;
 import io.pijun.george.crypto.KeyPair;
 import io.pijun.george.crypto.EncryptedData;
@@ -167,7 +170,7 @@ public class WelcomeActivity extends AppCompatActivity {
                     Utils.showAlert(WelcomeActivity.this, 0, R.string.unknown_user_generation_error_msg);
                     return;
                 }
-                registerUser(user);
+                registerUser(user, password);
             }
         });
     }
@@ -263,11 +266,28 @@ public class WelcomeActivity extends AppCompatActivity {
             Utils.showAlert(this, R.string.incorrect_password, 0);
             return;
         }
-        EncryptedData encChallenge = Sodium.publicKeyEncrypt(authChallenge.challenge, authChallenge.publicKey, secretKey);
+
+        // grab the server's public key
+        Response<ServerPublicKeyResponse> pubKeyResp;
+        try {
+            pubKeyResp = api.getServerPublicKey().execute();
+        } catch (IOException ex) {
+            Utils.showStringAlert(this, null, "Unable to retrieve server's public key (network error?)");
+            return;
+        }
+        if (!pubKeyResp.isSuccessful()) {
+            Utils.showStringAlert(this, null, "Unknown error retrieving server's public key");
+            return;
+        }
+        byte[] pubKey = pubKeyResp.body().publicKey;
+
+        FinishedAuthenticationChallenge finishedChallenge = new FinishedAuthenticationChallenge();
+        finishedChallenge.challenge = Sodium.publicKeyEncrypt(authChallenge.challenge, pubKey, secretKey);
+        finishedChallenge.creationDate = Sodium.publicKeyEncrypt(authChallenge.creationDate, pubKey, secretKey);
 
         Response<LoginResponse> completeChallengeResp;
         try {
-            completeChallengeResp = api.completeAuthenticationChallenge(username, encChallenge).execute();
+            completeChallengeResp = api.completeAuthenticationChallenge(username, finishedChallenge).execute();
         } catch (IOException ex) {
             Utils.showStringAlert(this, null, "Unable to complete authentication challenge");
             return;
@@ -396,22 +416,24 @@ public class WelcomeActivity extends AppCompatActivity {
     }
 
     @WorkerThread
-    private void registerUser(User user) {
+    private void registerUser(User user, String password) {
         OscarAPI api = OscarClient.newInstance(null);
         try {
-            final Response<LoginResponse> response = api.createUser(user).execute();
+            final Response<CreateUserResponse> response = api.createUser(user).execute();
             if (response.isSuccessful()) {
-                LoginResponse resp = response.body();
+                CreateUserResponse resp = response.body();
                 Prefs prefs = Prefs.get(this);
                 prefs.setUserId(resp.id);
-                prefs.setAccessToken(resp.accessToken);
+                prefs.setUsername(user.username);
 
-                App.runOnUiThread(new UiRunnable() {
-                    @Override
-                    public void run() {
-                        showMapActivity();
-                    }
-                });
+                login(user.username, password);
+
+//                App.runOnUiThread(new UiRunnable() {
+//                    @Override
+//                    public void run() {
+//                        showMapActivity();
+//                    }
+//                });
             } else {
                 OscarError err = OscarError.fromResponse(response);
                 if (err != null) {
