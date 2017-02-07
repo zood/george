@@ -6,14 +6,12 @@ import com.google.gson.JsonParser;
 import java.io.ByteArrayInputStream;
 import java.io.InputStreamReader;
 
-import io.pijun.george.L;
 import io.pijun.george.api.OscarClient;
 
 public class QueueConverter implements PersistentQueue.Converter<OscarTask> {
 
     @Override
     public OscarTask deserialize(byte[] bytes) {
-        L.i("json: " + new String(bytes));
         InputStreamReader reader = new InputStreamReader(new ByteArrayInputStream(bytes));
         JsonElement root = new JsonParser().parse(reader);
         String apiMethod = root.getAsJsonObject().get("api_method").getAsString();
