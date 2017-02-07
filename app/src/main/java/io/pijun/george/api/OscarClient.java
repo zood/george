@@ -4,13 +4,10 @@ import android.content.Context;
 import android.support.annotation.NonNull;
 import android.support.annotation.WorkerThread;
 
-import com.google.firebase.crash.FirebaseCrash;
 import com.google.gson.FieldNamingPolicy;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import com.squareup.tape.FileObjectQueue;
 
-import java.io.File;
 import java.io.IOException;
 import java.util.Map;
 
@@ -24,6 +21,7 @@ import io.pijun.george.api.task.DropPackageTask;
 import io.pijun.george.api.task.OscarTask;
 import io.pijun.george.api.task.QueueConverter;
 import io.pijun.george.api.task.SendMessageTask;
+import io.pijun.george.api.task.PersistentQueue;
 import io.pijun.george.crypto.EncryptedData;
 import io.pijun.george.service.OscarTasksService;
 import okhttp3.Interceptor;
@@ -36,7 +34,7 @@ import retrofit2.converter.gson.GsonConverterFactory;
 public class OscarClient {
 
     public static final Gson sGson;
-    private static volatile FileObjectQueue<OscarTask> sQueue;
+    private static volatile PersistentQueue<OscarTask> sQueue;
     private static final String QUEUE_FILENAME = "oscar.queue";
 
     static {
@@ -47,17 +45,11 @@ public class OscarClient {
                 .create();
     }
 
-    public static FileObjectQueue<OscarTask> getQueue(Context context) {
+    public static PersistentQueue<OscarTask> getQueue(Context context) {
         if (sQueue == null) {
             synchronized (OscarClient.class) {
                 if (sQueue == null) {
-                    File queueFile = new File(context.getFilesDir(), QUEUE_FILENAME);
-                    try {
-                        sQueue = new FileObjectQueue<>(queueFile, new QueueConverter());
-                    } catch (IOException ex) {
-                        // out of disk space?
-                        FirebaseCrash.report(ex);
-                    }
+                    sQueue = new PersistentQueue<>(context, QUEUE_FILENAME, new QueueConverter());
                 }
             }
         }
@@ -103,7 +95,7 @@ public class OscarClient {
     public static void queueAddFcmToken(@NonNull Context context, @NonNull String accessToken, @NonNull Map<String, String> body) {
         AddFcmTokenTask aftt = new AddFcmTokenTask(accessToken);
         aftt.body = body;
-        getQueue(context).add(aftt);
+        getQueue(context).offer(aftt);
         context.startService(OscarTasksService.newIntent(context));
     }
 
@@ -111,7 +103,7 @@ public class OscarClient {
     public static void queueDeleteFcmToken(@NonNull Context context, @NonNull String accessToken, @NonNull String fcmToken) {
         DeleteFcmTokenTask dftt = new DeleteFcmTokenTask(accessToken);
         dftt.fcmToken = fcmToken;
-        getQueue(context).add(dftt);
+        getQueue(context).offer(dftt);
         context.startService(OscarTasksService.newIntent(context));
     }
 
@@ -119,7 +111,7 @@ public class OscarClient {
     public static void queueDeleteMessage(@NonNull Context context, @NonNull String accessToken, long msgId) {
         DeleteMessageTask dmt = new DeleteMessageTask(accessToken);
         dmt.messageId = msgId;
-        getQueue(context).add(dmt);
+        getQueue(context).offer(dmt);
         context.startService(OscarTasksService.newIntent(context));
     }
 
@@ -127,7 +119,7 @@ public class OscarClient {
         DropPackageTask dpt = new DropPackageTask(accessToken);
         dpt.hexBoxId = hexBoxId;
         dpt.pkg = pkg;
-        getQueue(context).add(dpt);
+        getQueue(context).offer(dpt);
         context.startService(OscarTasksService.newIntent(context));
     }
 
@@ -137,7 +129,7 @@ public class OscarClient {
         smt.hexUserId = toHexUserId;
         smt.message = msg;
         smt.urgent = urgent;
-        getQueue(context).add(smt);
+        getQueue(context).offer(smt);
         context.startService(OscarTasksService.newIntent(context));
     }
 

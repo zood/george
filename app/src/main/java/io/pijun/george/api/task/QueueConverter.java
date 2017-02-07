@@ -2,20 +2,18 @@ package io.pijun.george.api.task;
 
 import com.google.gson.JsonElement;
 import com.google.gson.JsonParser;
-import com.squareup.tape.FileObjectQueue;
 
 import java.io.ByteArrayInputStream;
-import java.io.IOException;
 import java.io.InputStreamReader;
-import java.io.OutputStream;
-import java.io.OutputStreamWriter;
 
+import io.pijun.george.L;
 import io.pijun.george.api.OscarClient;
 
-public class QueueConverter implements FileObjectQueue.Converter<OscarTask> {
+public class QueueConverter implements PersistentQueue.Converter<OscarTask> {
 
     @Override
-    public OscarTask from(byte[] bytes) throws IOException {
+    public OscarTask deserialize(byte[] bytes) {
+        L.i("json: " + new String(bytes));
         InputStreamReader reader = new InputStreamReader(new ByteArrayInputStream(bytes));
         JsonElement root = new JsonParser().parse(reader);
         String apiMethod = root.getAsJsonObject().get("api_method").getAsString();
@@ -36,33 +34,25 @@ public class QueueConverter implements FileObjectQueue.Converter<OscarTask> {
     }
 
     @Override
-    public void toStream(OscarTask task, OutputStream os) throws IOException {
-        OutputStreamWriter writer = new OutputStreamWriter(os);
+    public byte[] serialize(OscarTask task) {
         switch (task.apiMethod) {
             case AddFcmTokenTask.NAME:
                 AddFcmTokenTask aftt = (AddFcmTokenTask) task;
-                OscarClient.sGson.toJson(aftt, writer);
-                break;
+                return OscarClient.sGson.toJson(aftt).getBytes();
             case DeleteFcmTokenTask.NAME:
                 DeleteFcmTokenTask dftt = (DeleteFcmTokenTask) task;
-                OscarClient.sGson.toJson(dftt, writer);
-                break;
+                return OscarClient.sGson.toJson(dftt).getBytes();
             case DeleteMessageTask.NAME:
                 DeleteMessageTask dmt = (DeleteMessageTask) task;
-                OscarClient.sGson.toJson(dmt, writer);
-                break;
+                return OscarClient.sGson.toJson(dmt).getBytes();
             case DropPackageTask.NAME:
                 DropPackageTask dpt = (DropPackageTask) task;
-                OscarClient.sGson.toJson(dpt, writer);
-                break;
+                return OscarClient.sGson.toJson(dpt).getBytes();
             case SendMessageTask.NAME:
                 SendMessageTask smt = (SendMessageTask) task;
-                OscarClient.sGson.toJson(smt, writer);
-                break;
+                return OscarClient.sGson.toJson(smt).getBytes();
             default:
                 throw new RuntimeException("Unknown task type: " + task.apiMethod);
         }
-        writer.close();
     }
-
 }

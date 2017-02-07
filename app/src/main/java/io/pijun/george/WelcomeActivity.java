@@ -359,6 +359,7 @@ public class WelcomeActivity extends AppCompatActivity {
         kp.secretKey = secretKey;
         prefs.setKeyPair(kp);
         prefs.setUserId(loginResponse.id);
+        prefs.setUsername(username);
         prefs.setAccessToken(loginResponse.accessToken);
 
         App.runOnUiThread(new UiRunnable() {

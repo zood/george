@@ -7,8 +7,6 @@ import android.content.Intent;
 import android.os.PowerManager;
 import android.text.TextUtils;
 
-import com.squareup.tape.FileObjectQueue;
-
 import java.io.IOException;
 import java.util.Map;
 
@@ -24,6 +22,7 @@ import io.pijun.george.api.task.DeleteMessageTask;
 import io.pijun.george.api.task.DropPackageTask;
 import io.pijun.george.api.task.OscarTask;
 import io.pijun.george.api.task.SendMessageTask;
+import io.pijun.george.api.task.PersistentQueue;
 import retrofit2.Call;
 import retrofit2.Response;
 
@@ -40,16 +39,14 @@ public class OscarTasksService extends IntentService {
     @Override
     protected void onHandleIntent(Intent intent) {
         L.i("OscarTasksService.onHandleIntent");
-        FileObjectQueue<OscarTask> mQueue = OscarClient.getQueue(this);
+        PersistentQueue<OscarTask> queue = OscarClient.getQueue(this);
 
         // make sure we're still logged in
         String token = Prefs.get(this).getAccessToken();
         if (TextUtils.isEmpty(token)) {
             L.i("  we're not logged in. clearing the queue.");
             // not logged in, so empty the queue and get out of here
-            while (mQueue.size() > 0) {
-                mQueue.remove();
-            }
+            queue.clear();
             return;
         }
 
@@ -57,8 +54,8 @@ public class OscarTasksService extends IntentService {
         PowerManager.WakeLock wakeLock = pwrMgr.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "OscarTasksLock");
         try {
             wakeLock.acquire();
-            while (mQueue.size() > 0) {
-                OscarTask task = mQueue.peek();
+            OscarTask task;
+            while ((task = queue.peek()) != null) {
                 OscarAPI api = OscarClient.newInstance(task.accessToken);
                 Call call;
                 switch (task.apiMethod) {
@@ -89,7 +86,7 @@ public class OscarTasksService extends IntentService {
                 try {
                     Response response = call.execute();
                     if (response.isSuccessful()) {
-                        mQueue.remove();
+                        queue.poll();
                     } else {
                         OscarError err = OscarError.fromResponse(response);
                         L.i("problem executing task: " + call.request().method() + " " + call.request().url());

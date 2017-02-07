@@ -351,7 +351,8 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
 
     @UiThread
     private void addMapMarker(FriendRecord friend, FriendLocation loc) {
-        Bitmap bitmap = Bitmap.createBitmap(60, 60, Bitmap.Config.ARGB_8888);
+        int fortyEight = getResources().getDimensionPixelSize(R.dimen.fortyEight);
+        Bitmap bitmap = Bitmap.createBitmap(fortyEight, fortyEight, Bitmap.Config.ARGB_8888);
         Identicon.draw(bitmap, friend.user.username);
 
         BitmapDescriptor descriptor = BitmapDescriptorFactory.fromBitmap(bitmap);

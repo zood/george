@@ -8,18 +8,13 @@ import android.support.annotation.NonNull;
 import android.support.annotation.WorkerThread;
 import android.text.TextUtils;
 
-import com.google.firebase.crash.FirebaseCrash;
-import com.squareup.tape.FileObjectQueue;
-
-import java.io.File;
-import java.io.IOException;
-
 import io.pijun.george.L;
 import io.pijun.george.MessageUtils;
 import io.pijun.george.Prefs;
 import io.pijun.george.api.Message;
 import io.pijun.george.api.OscarClient;
 import io.pijun.george.api.task.MessageConverter;
+import io.pijun.george.api.task.PersistentQueue;
 
 public class MessageQueueService extends IntentService {
 
@@ -27,20 +22,14 @@ public class MessageQueueService extends IntentService {
         return new Intent(context, MessageQueueService.class);
     }
 
-    private static volatile FileObjectQueue<Message> sQueue;
+    private static volatile PersistentQueue<Message> sQueue;
     private static final String QUEUE_FILENAME = "message.queue";
 
-    public static FileObjectQueue<Message> getQueue(Context context) {
+    public static PersistentQueue<Message> getQueue(Context context) {
         if (sQueue == null) {
             synchronized (MessageUtils.class) {
                 if (sQueue == null) {
-                    File queueFile = new File(context.getFilesDir(), QUEUE_FILENAME);
-                    try {
-                        sQueue = new FileObjectQueue<>(queueFile, new MessageConverter());
-                    } catch (IOException ex) {
-                        // out of disk space?
-                        FirebaseCrash.report(ex);
-                    }
+                    sQueue = new PersistentQueue<>(context, QUEUE_FILENAME, new MessageConverter());
                 }
             }
         }
@@ -50,7 +39,7 @@ public class MessageQueueService extends IntentService {
 
     @WorkerThread
     public static void queueMessage(@NonNull Context context, @NonNull Message msg) {
-        getQueue(context).add(msg);
+        getQueue(context).offer(msg);
         context.startService(MessageQueueService.newIntent(context));
     }
 
@@ -61,14 +50,14 @@ public class MessageQueueService extends IntentService {
     @Override
     protected void onHandleIntent(Intent intent) {
         L.i("MessageQueueService.onHandleIntent");
-        FileObjectQueue<Message> mQueue = getQueue(this);
+        PersistentQueue<Message> queue = getQueue(this);
 
-        while (mQueue.size() > 0) {
-            Message msg = mQueue.peek();
+        Message msg;
+        while ((msg = queue.peek()) != null) {
             int result = MessageUtils.unwrapAndProcess(this, msg.senderId, msg.cipherText, msg.nonce);
             switch (result) {
                 case MessageUtils.ERROR_NONE:
-                    mQueue.remove();
+                    queue.poll();
                     // delete the message from the server
                     String token = Prefs.get(this).getAccessToken();
                     if (!TextUtils.isEmpty(token)) {
@@ -85,7 +74,7 @@ public class MessageQueueService extends IntentService {
                 case MessageUtils.ERROR_MISSING_NONCE:
                 case MessageUtils.ERROR_INVALID_COMMUNICATION:
                     // just remove the invalid message
-                    mQueue.remove();
+                    queue.poll();
                     break;
                 default:
                     L.w("error processing message: " + result);
