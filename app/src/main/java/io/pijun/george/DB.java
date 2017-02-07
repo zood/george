@@ -720,6 +720,7 @@ public class DB {
 
     @WorkerThread
     public void restoreDatabase(@NonNull Snapshot snapshot) throws DBException {
+        L.i("snapshot: " + new String(snapshot.toJson()));
         SQLiteDatabase db = mDbHelper.getWritableDatabase();
         if (snapshot.schemaVersion > db.getVersion()) {
             throw new DBException("Snapshot is from a newer database format");
@@ -747,7 +748,7 @@ public class DB {
                 ContentValues cv = new ContentValues();
                 cv.put(INCOMING_REQUESTS_COL_USER_ID, user.id);
                 cv.put(INCOMING_REQUESTS_COL_SENT_DATE, r.sentDate);
-                if (r.response != null && r.response.equals(RequestResponse.NoResponse.val)) {
+                if (r.response != null && !r.response.equals(RequestResponse.NoResponse.val)) {
                     cv.put(INCOMING_REQUESTS_COL_RESPONSE, r.response);
                 }
                 try {
@@ -764,7 +765,7 @@ public class DB {
                 ContentValues cv = new ContentValues();
                 cv.put(OUTGOING_REQUESTS_COL_USER_ID, user.id);
                 cv.put(OUTGOING_REQUESTS_COL_SENT_DATE, r.sentDate);
-                if (r.response != null && r.response.equals(RequestResponse.NoResponse.val)) {
+                if (r.response != null && !r.response.equals(RequestResponse.NoResponse.val)) {
                     cv.put(OUTGOING_REQUESTS_COL_RESPONSE, r.response);
                 }
                 try {
