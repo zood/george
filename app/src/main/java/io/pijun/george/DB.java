@@ -790,7 +790,6 @@ public class DB {
 
     @WorkerThread
     public void setFriendLocation(long friendId, double lat, double lng, long time, Float accuracy, Float speed) throws DBException {
-//        L.i("setFriendLocation: {id: " + friendId + ", lat: " + lat + ", lng: " + lng);
         SQLiteDatabase db = mDbHelper.getWritableDatabase();
         ContentValues cv = new ContentValues();
         cv.put(LOCATIONS_COL_FRIEND_ID, friendId);
