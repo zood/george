@@ -1,7 +1,7 @@
-<android.support.constraint.ConstraintLayout
-    xmlns:android="http://schemas.android.com/apk/res/android"
+<android.support.constraint.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:mapbox="http://schemas.android.com/apk/res-auto"
     android:id="@+id/map_content"
     android:focusable="true"
     android:focusableInTouchMode="true"
@@ -9,9 +9,10 @@
     android:layout_height="match_parent"
     tools:context=".MapActivity">
 
-    <com.google.android.gms.maps.MapView
+    <com.mapbox.mapboxsdk.maps.MapView
         android:id="@+id/map"
         android:layout_width="0dp"
+        mapbox:style_url="mapbox://styles/arashpayan/ciyy3rvkj001e2sll2lvg36so"
         tools:background="@android:color/holo_green_light"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintLeft_toLeftOf="parent"

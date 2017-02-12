@@ -61,7 +61,7 @@ public class PackageWatcher extends WebSocketAdapter {
 
     @Override
     public void onBinaryMessage(WebSocket websocket, byte[] binary) throws Exception {
-        L.i("PW.onBinaryMessage");
+//        L.i("PW.onBinaryMessage");
         try {
             if (binary == null || binary.length == 0) {
                 L.i("  received a null/empty binary message");

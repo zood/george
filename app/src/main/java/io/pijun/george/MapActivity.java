@@ -5,13 +5,11 @@ import android.app.job.JobScheduler;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
-import android.content.IntentSender;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.location.Location;
 import android.os.Bundle;
-import android.support.annotation.AnyThread;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.annotation.UiThread;
@@ -20,7 +18,6 @@ import android.support.constraint.ConstraintLayout;
 import android.support.design.widget.NavigationView;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
-import android.support.v4.util.LongSparseArray;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.AlertDialog;
@@ -31,28 +28,16 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
 
-import com.google.android.gms.common.ConnectionResult;
-import com.google.android.gms.common.api.GoogleApiClient;
-import com.google.android.gms.common.api.PendingResult;
-import com.google.android.gms.common.api.ResultCallback;
-import com.google.android.gms.common.api.Status;
-import com.google.android.gms.location.LocationListener;
-import com.google.android.gms.location.LocationRequest;
-import com.google.android.gms.location.LocationServices;
-import com.google.android.gms.location.LocationSettingsRequest;
-import com.google.android.gms.location.LocationSettingsResult;
-import com.google.android.gms.location.LocationSettingsStatusCodes;
-import com.google.android.gms.maps.CameraUpdateFactory;
-import com.google.android.gms.maps.GoogleMap;
-import com.google.android.gms.maps.LocationSource;
-import com.google.android.gms.maps.MapView;
-import com.google.android.gms.maps.OnMapReadyCallback;
-import com.google.android.gms.maps.model.BitmapDescriptor;
-import com.google.android.gms.maps.model.BitmapDescriptorFactory;
-import com.google.android.gms.maps.model.CameraPosition;
-import com.google.android.gms.maps.model.LatLng;
-import com.google.android.gms.maps.model.Marker;
-import com.google.android.gms.maps.model.MarkerOptions;
+import com.mapbox.mapboxsdk.annotations.Icon;
+import com.mapbox.mapboxsdk.annotations.IconFactory;
+import com.mapbox.mapboxsdk.annotations.Marker;
+import com.mapbox.mapboxsdk.annotations.MarkerOptions;
+import com.mapbox.mapboxsdk.camera.CameraPosition;
+import com.mapbox.mapboxsdk.camera.CameraUpdateFactory;
+import com.mapbox.mapboxsdk.geometry.LatLng;
+import com.mapbox.mapboxsdk.maps.MapView;
+import com.mapbox.mapboxsdk.maps.MapboxMap;
+import com.mapbox.mapboxsdk.maps.OnMapReadyCallback;
 import com.squareup.otto.Subscribe;
 
 import java.io.IOException;
@@ -75,19 +60,14 @@ import io.pijun.george.service.LocationUploadService;
 import io.pijun.george.service.MessageQueueService;
 import retrofit2.Response;
 
-public class MapActivity extends AppCompatActivity implements OnMapReadyCallback, GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener, GoogleMap.OnMarkerClickListener, LocationListener {
+public class MapActivity extends AppCompatActivity implements OnMapReadyCallback, MapboxMap.OnMarkerClickListener, MapboxMap.OnMyLocationChangeListener {
 
     private static final int REQUEST_LOCATION_PERMISSION = 18;
-    private static final int REQUEST_LOCATION_SETTINGS = 20;
 
     private MapView mMapView;
-    private GoogleMap mGoogleMap;
-    private LocationSource.OnLocationChangedListener mMyLocationListener;
-    private GoogleApiClient mGoogleApiClient;
-    private Location mLastLocation;
+    private MapboxMap mMapboxMap;
     private volatile PackageWatcher mPkgWatcher;
-    private LongSparseArray<Marker> mFriendMarkers = new LongSparseArray<>();
-    private LongSparseArray<FriendLocation> mFriendLocations = new LongSparseArray<>();
+    private MarkerTracker mMarkerTracker = new MarkerTracker();
 
     public static Intent newIntent(Context ctx) {
         return new Intent(ctx, MapActivity.class);
@@ -103,6 +83,7 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
             Intent welcomeIntent = WelcomeActivity.newIntent(this);
             startActivity(welcomeIntent);
             finish();
+            return;
         }
 
         getWindow().getDecorView().setBackground(null);
@@ -127,12 +108,6 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
         NavigationView navView = (NavigationView) findViewById(R.id.navigation);
         navView.setNavigationItemSelectedListener(navItemListener);
 
-        mGoogleApiClient = new GoogleApiClient.Builder(this)
-                .addConnectionCallbacks(this)
-                .addOnConnectionFailedListener(this)
-                .addApi(LocationServices.API)
-                .build();
-
         startService(FcmTokenRegistrar.newIntent(this));
 
     }
@@ -143,10 +118,8 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
         super.onStart();
 
         App.isInForeground = true;
-        mMapView.onStart();
         checkForLocationPermission();
         App.registerOnBus(this);
-        mGoogleApiClient.connect();
 
         App.runInBackground(new WorkerRunnable() {
             @Override
@@ -238,27 +211,20 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
     protected void onStop() {
         super.onStop();
 
-        if (mGoogleMap != null) {
-            CameraPosition pos = mGoogleMap.getCameraPosition();
+        if (mMapboxMap != null) {
+            CameraPosition pos = mMapboxMap.getCameraPosition();
             Prefs.get(this).setCameraPosition(pos);
         }
 
         // hide visible info windows, so outdated info is not visible in case the activity is
         // brought back into view
-        for (int i=0; i<mFriendMarkers.size(); i++) {
-            Marker m = mFriendMarkers.valueAt(i);
+        for (Marker m : mMarkerTracker.getMarkers()) {
             if (m.isInfoWindowShown()) {
                 m.hideInfoWindow();
             }
         }
 
-        mMapView.onStop();
         App.unregisterFromBus(this);
-
-        if (mGoogleApiClient.isConnected()) {
-            LocationServices.FusedLocationApi.removeLocationUpdates(mGoogleApiClient, this);
-        }
-        mGoogleApiClient.disconnect();
         App.runInBackground(new WorkerRunnable() {
             @Override
             public void run() {
@@ -275,9 +241,12 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
     @Override
     @UiThread
     protected void onDestroy() {
-        mMapView.onDestroy();
-        mMapView = null;
-        mFriendMarkers.clear();
+        if (mMapView != null) {
+            mMapView.onDestroy();
+            mMapView = null;
+        }
+
+        mMarkerTracker.clear();
 
         super.onDestroy();
     }
@@ -300,27 +269,17 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
 
     @Override
     @UiThread
-    public void onMapReady(GoogleMap googleMap) {
-        mGoogleMap = googleMap;
+    public void onMapReady(MapboxMap googleMap) {
+        if (googleMap == null) {
+            L.i("onMapReady has a null map arg");
+        }
+        mMapboxMap = googleMap;
         CameraPosition pos = Prefs.get(this).getCameraPosition();
         if (pos != null) {
-            mGoogleMap.moveCamera(CameraUpdateFactory.newCameraPosition(pos));
+            mMapboxMap.moveCamera(CameraUpdateFactory.newCameraPosition(pos));
         }
-        mGoogleMap.setLocationSource(new LocationSource() {
-            @Override
-            public void activate(OnLocationChangedListener onLocationChangedListener) {
-                mMyLocationListener = onLocationChangedListener;
-                if (mLastLocation != null) {
-                    mMyLocationListener.onLocationChanged(mLastLocation);
-                }
-            }
-
-            @Override
-            public void deactivate() {
-                mMyLocationListener = null;
-            }
-        });
-        mGoogleMap.setOnMarkerClickListener(this);
+        mMapboxMap.setOnMyLocationChangeListener(this);
+        mMapboxMap.setOnMarkerClickListener(this);
 
         // add markers for all friends
         App.runInBackground(new WorkerRunnable() {
@@ -345,27 +304,26 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
         });
 
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
-            mGoogleMap.setMyLocationEnabled(true);
+            mMapboxMap.setMyLocationEnabled(true);
         }
     }
 
     @UiThread
     private void addMapMarker(FriendRecord friend, FriendLocation loc) {
+        if (mMapboxMap == null) {
+            return;
+        }
         int fortyEight = getResources().getDimensionPixelSize(R.dimen.fortyEight);
         Bitmap bitmap = Bitmap.createBitmap(fortyEight, fortyEight, Bitmap.Config.ARGB_8888);
         Identicon.draw(bitmap, friend.user.username);
 
-        BitmapDescriptor descriptor = BitmapDescriptorFactory.fromBitmap(bitmap);
+        Icon descriptor = IconFactory.getInstance(this).fromBitmap(bitmap);
         MarkerOptions opts = new MarkerOptions()
                 .position(new LatLng(loc.latitude, loc.longitude))
                 .icon(descriptor)
-                .draggable(false)
-                .flat(false)
                 .title(friend.user.username);
-        Marker marker = mGoogleMap.addMarker(opts);
-        marker.setTag(friend.id);
-        mFriendMarkers.put(friend.id, marker);
-        mFriendLocations.put(friend.id, loc);
+        Marker marker = mMapboxMap.addMarker(opts);
+        mMarkerTracker.add(marker, friend.id, loc);
     }
 
     @UiThread
@@ -417,13 +375,9 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
     @UiThread
     private void locationPermissionVerified() {
         startService(LocationUploadService.newIntent(this));
-        if (mGoogleMap != null) {
-            mGoogleMap.setMyLocationEnabled(true);
-            if (mMyLocationListener != null && mLastLocation != null) {
-                mMyLocationListener.onLocationChanged(mLastLocation);
-            }
+        if (mMapboxMap != null) {
+            mMapboxMap.setMyLocationEnabled(true);
         }
-        beginLocationUpdates();
     }
 
     @UiThread
@@ -435,28 +389,6 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
         }
 
         return result;
-    }
-
-    @AnyThread
-    private void beginLocationUpdates() {
-        if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-            // This should never happen. Nobody should be calling this method before permission has been obtained.
-            L.w("MapActivity.beginLocationUpdates was called before obtaining location permission");
-            // TODO: log the stack trace to a server for debugging
-            return;
-        }
-        if (!mGoogleApiClient.isConnected()) {
-            return;
-        }
-        LocationRequest req = LocationRequest.create();
-        req.setInterval(5 * DateUtils.SECOND_IN_MILLIS);
-        req.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
-        PendingResult<Status> pendingResult = LocationServices.FusedLocationApi.requestLocationUpdates(mGoogleApiClient, req, this);
-        pendingResult.setResultCallback(new ResultCallback<Status>() {
-            @Override
-            public void onResult(@NonNull Status status) {
-            }
-        });
     }
 
     @WorkerThread
@@ -516,7 +448,7 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
     @UiThread
     public void onFriendLocationUpdated(final FriendLocation loc) {
         // check if we already have a marker for this friend
-        Marker marker = mFriendMarkers.get(loc.friendId);
+        Marker marker = mMarkerTracker.getById(loc.friendId);
         if (marker == null) {
             App.runInBackground(new WorkerRunnable() {
                 @Override
@@ -535,7 +467,7 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
                 marker.hideInfoWindow();
             }
             marker.setPosition(new LatLng(loc.latitude, loc.longitude));
-            mFriendLocations.put(loc.friendId, loc);
+            mMarkerTracker.updateLocation(loc.friendId, loc);
         }
     }
 
@@ -601,71 +533,12 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
     };
 
     @Override
-    public void onConnected(@Nullable Bundle bundle) {
-        if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-            L.i("  failed permission check");
-            return;
-        }
-        mLastLocation = LocationServices.FusedLocationApi.getLastLocation(mGoogleApiClient);
-        if (mLastLocation != null) {
-            App.postOnBus(mLastLocation);
-            if (mMyLocationListener != null) {
-                mMyLocationListener.onLocationChanged(mLastLocation);
-            }
-        }
-
-        // these are the location settings we want
-        LocationRequest req = LocationRequest.create();
-        req.setInterval(5 * DateUtils.SECOND_IN_MILLIS);
-        req.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
-        // check whether the location settings can currently be met by the hardware
-        LocationSettingsRequest.Builder builder = new LocationSettingsRequest.Builder()
-                .addLocationRequest(req);
-        PendingResult<LocationSettingsResult> result =
-                LocationServices.SettingsApi.checkLocationSettings(mGoogleApiClient, builder.build());
-        result.setResultCallback(new ResultCallback<LocationSettingsResult>() {
-            @Override
-            public void onResult(@NonNull LocationSettingsResult result) {
-                Status status = result.getStatus();
-                if (status.getStatusCode() != LocationSettingsStatusCodes.RESOLUTION_REQUIRED) {
-                    beginLocationUpdates();
-                    return;
-                }
-
-                try {
-                    status.startResolutionForResult(MapActivity.this, REQUEST_LOCATION_SETTINGS);
-                } catch (IntentSender.SendIntentException ignore) {}
-            }
-        });
-    }
-
-    @Override
-    public void onConnectionSuspended(int i) {
-        L.w("onConnectionSuspended: " + i);
-    }
-
-    @Override
-    public void onConnectionFailed(@NonNull ConnectionResult connectionResult) {
-        L.w("onConnectionFailed: " + connectionResult);
-    }
-
-    @Override
-    public void onLocationChanged(Location location) {
-        if (mMyLocationListener != null) {
-            mMyLocationListener.onLocationChanged(location);
-        }
-
-        App.postOnBus(location);
-    }
-
-    @Override
     @UiThread
-    public boolean onMarkerClick(final Marker marker) {
-        long friendId = (long) marker.getTag();
-        FriendLocation loc = mFriendLocations.get(friendId);
+    public boolean onMarkerClick(@NonNull final Marker marker) {
+        L.i("onMarkerClick: " + marker);
+        FriendLocation loc = mMarkerTracker.getLocation(marker);
         long now = System.currentTimeMillis();
         final CharSequence relTime;
-//        L.i("loc.time: " + (loc.time) + ", now-60: " + (now-60));
         if (loc.time >= now-60*DateUtils.SECOND_IN_MILLIS) {
             relTime = getString(R.string.now);
         } else {
@@ -705,5 +578,10 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
 //            }
 //        });
         return false;
+    }
+
+    @Override
+    public void onMyLocationChange(@Nullable Location location) {
+        App.postOnBus(location);
     }
 }

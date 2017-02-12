@@ -38,13 +38,13 @@ public class OscarTasksService extends IntentService {
 
     @Override
     protected void onHandleIntent(Intent intent) {
-        L.i("OscarTasksService.onHandleIntent");
+//        L.i("OscarTasksService.onHandleIntent");
         PersistentQueue<OscarTask> queue = OscarClient.getQueue(this);
 
         // make sure we're still logged in
         String token = Prefs.get(this).getAccessToken();
         if (TextUtils.isEmpty(token)) {
-            L.i("  we're not logged in. clearing the queue.");
+            L.i("OscarTasksService.onHandleIntent - we're not logged in. clearing the queue.");
             // not logged in, so empty the queue and get out of here
             queue.clear();
             return;

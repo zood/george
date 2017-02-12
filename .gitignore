@@ -9,3 +9,4 @@
 .externalNativeBuild
 /app/externalNativeBuild
 google-services.json
+app/src/main/res/values/secrets.xml

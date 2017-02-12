@@ -71,7 +71,7 @@ public class LocationListenerService extends IntentService implements LocationLi
                 .build();
         ConnectionResult connectionResult = mGoogleClient.blockingConnect();
         if (!connectionResult.isSuccess()) {
-            L.i("  google client connect failed");
+            L.i("  google client connect failed: " + connectionResult.getErrorMessage());
             L.i("  has resolution? " + connectionResult.hasResolution());
             cleanUp();
             return;
