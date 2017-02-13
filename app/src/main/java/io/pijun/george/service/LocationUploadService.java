@@ -7,7 +7,6 @@ import android.content.Intent;
 import android.location.Location;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
-import android.os.Binder;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.IBinder;
@@ -18,7 +17,6 @@ import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.annotation.UiThread;
 import android.support.annotation.WorkerThread;
-import android.text.format.DateUtils;
 
 import com.squareup.otto.Subscribe;
 
@@ -56,20 +54,12 @@ public class LocationUploadService extends Service {
         sServiceHandler = new Handler(looper);
     }
 
-    public class LocalBinder extends Binder {
-        LocationUploadService getService() {
-            return LocationUploadService.this;
-        }
-    }
-
     private LinkedBlockingQueue<Location> mLocations = new LinkedBlockingQueue<>();
-    private final IBinder mBinder = new LocalBinder();
-    private long mLastFlushTime = 0;
 
     @Nullable
     @Override
     public IBinder onBind(Intent intent) {
-        return mBinder;
+        return null;
     }
 
     @Override
@@ -125,7 +115,7 @@ public class LocationUploadService extends Service {
      * Get the most recent location and report it.
      */
     @WorkerThread
-    void flush() {
+    private void flush() {
         L.i("LocationUploadService.flush");
         // If we have no location to report, just get out of here.
         if (mLocations.isEmpty()) {
@@ -172,8 +162,6 @@ public class LocationUploadService extends Service {
                 DB.get(this).deleteLimitedShares();
             }
         }
-        mLastFlushTime = System.currentTimeMillis();
-        prefs.setLastLocationUpdateTime(mLastFlushTime);
 
         mLocations.clear();
     }
