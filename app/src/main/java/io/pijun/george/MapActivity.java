@@ -42,6 +42,7 @@ import com.squareup.otto.Subscribe;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Map;
 
 import io.pijun.george.api.Message;
 import io.pijun.george.api.OscarAPI;
@@ -144,29 +145,49 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
                     }
                 }
 
-                // We can request a location update from our friends, if it has been more than
-                // 5 minutes since the last request
+                // Request a location update from any friend that hasn't given us an update for
+                // 3 minutes
                 long now = System.currentTimeMillis();
-                if (now - prefs.getLastLocationUpdateRequestTime() > 5 * DateUtils.MINUTE_IN_MILLIS) {
-                    KeyPair keyPair = prefs.getKeyPair();
-                    if (keyPair != null) {
-                        UserComm comm = UserComm.newLocationUpdateRequest();
-                        byte[] msgBytes = comm.toJSON();
-                        for (FriendRecord fr : friends) {
-                            // check if this friend shares location data with us
-                            if (fr.receivingBoxId == null) {
-                                continue;
-                            }
-                            EncryptedData encMsg = Sodium.publicKeyEncrypt(msgBytes, fr.user.publicKey, keyPair.secretKey);
+                KeyPair keypair = prefs.getKeyPair();
+                for (FriendRecord fr : friends) {
+                    // check if this friend shares location with us
+                    if (fr.receivingBoxId == null) {
+                        continue;
+                    }
+                    FriendLocation loc = DB.get(MapActivity.this).getFriendLocation(fr.id);
+                    if (loc == null || (now-loc.time) > 180 * DateUtils.SECOND_IN_MILLIS) {
+                        if (keypair != null) {
+                            UserComm comm = UserComm.newLocationUpdateRequest();
+                            byte[] msgBytes = comm.toJSON();
+                            EncryptedData encMsg = Sodium.publicKeyEncrypt(msgBytes, fr.user.publicKey, keypair.secretKey);
                             if (encMsg != null) {
-                                OscarClient.queueSendMessage(MapActivity.this, token, Hex.toHexString(fr.user.userId), encMsg, true);
+                                OscarClient.queueSendMessage(MapActivity.this, token, fr.user.userId, encMsg, true);
                             } else {
                                 L.w("Failed to encrypt a location update request message to " + fr.user.username);
                             }
                         }
                     }
-                    prefs.setLastLocationUpdateRequestTime(System.currentTimeMillis());
                 }
+//                if (now - prefs.getLastLocationUpdateRequestTime() > 2 * DateUtils.MINUTE_IN_MILLIS) {
+//                    KeyPair keyPair = prefs.getKeyPair();
+//                    if (keyPair != null) {
+//                        UserComm comm = UserComm.newLocationUpdateRequest();
+//                        byte[] msgBytes = comm.toJSON();
+//                        for (FriendRecord fr : friends) {
+//                            // check if this friend shares location data with us
+//                            if (fr.receivingBoxId == null) {
+//                                continue;
+//                            }
+//                            EncryptedData encMsg = Sodium.publicKeyEncrypt(msgBytes, fr.user.publicKey, keyPair.secretKey);
+//                            if (encMsg != null) {
+//                                OscarClient.queueSendMessage(MapActivity.this, token, Hex.toHexString(fr.user.userId), encMsg, true);
+//                            } else {
+//                                L.w("Failed to encrypt a location update request message to " + fr.user.username);
+//                            }
+//                        }
+//                    }
+//                    prefs.setLastLocationUpdateRequestTime(System.currentTimeMillis());
+//                }
 
                 OscarAPI api = OscarClient.newInstance(token);
                 try {

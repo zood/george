@@ -5,6 +5,7 @@ import android.app.job.JobScheduler;
 import android.content.Context;
 import android.content.Intent;
 import android.os.PowerManager;
+import android.support.annotation.WorkerThread;
 import android.text.TextUtils;
 
 import java.io.IOException;
@@ -37,6 +38,7 @@ public class OscarTasksService extends IntentService {
     }
 
     @Override
+    @WorkerThread
     protected void onHandleIntent(Intent intent) {
 //        L.i("OscarTasksService.onHandleIntent");
         PersistentQueue<OscarTask> queue = OscarClient.getQueue(this);

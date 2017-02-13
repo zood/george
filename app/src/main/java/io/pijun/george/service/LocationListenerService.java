@@ -13,6 +13,7 @@ import android.os.IBinder;
 import android.os.Looper;
 import android.support.annotation.AnyThread;
 import android.support.annotation.NonNull;
+import android.support.annotation.WorkerThread;
 import android.support.v4.content.ContextCompat;
 import android.text.format.DateUtils;
 
@@ -43,28 +44,29 @@ public class LocationListenerService extends IntentService implements LocationLi
 
     private Thread mServiceThread;
     private GoogleApiClient mGoogleClient;
-    private LocationUploadService mMonitorService;
-    private ServiceConnection mConnection = new ServiceConnection() {
-        @Override
-        public void onServiceConnected(ComponentName name, IBinder service) {
-            LocationUploadService.LocalBinder binder = (LocationUploadService.LocalBinder) service;
-            mMonitorService = binder.getService();
-        }
-
-        @Override
-        public void onServiceDisconnected(ComponentName name) {
-            mMonitorService = null;
-        }
-    };
+//    private LocationUploadService mMonitorService;
+//    private ServiceConnection mConnection = new ServiceConnection() {
+//        @Override
+//        public void onServiceConnected(ComponentName name, IBinder service) {
+//            LocationUploadService.LocalBinder binder = (LocationUploadService.LocalBinder) service;
+//            mMonitorService = binder.getService();
+//        }
+//
+//        @Override
+//        public void onServiceDisconnected(ComponentName name) {
+//            mMonitorService = null;
+//        }
+//    };
 
     public LocationListenerService() {
         super(LocationListenerService.class.getSimpleName());
     }
 
     @Override
+    @WorkerThread
     protected void onHandleIntent(Intent intent) {
         L.i("LLS.onHandleIntent");
-        bindService(LocationUploadService.newIntent(this), mConnection, 0);
+//        bindService(LocationUploadService.newIntent(this), mConnection, 0);
 
         mGoogleClient = new GoogleApiClient.Builder(this)
                 .addApi(LocationServices.API)
@@ -77,6 +79,11 @@ public class LocationListenerService extends IntentService implements LocationLi
             return;
         }
 
+        Location lastLocation = LocationServices.FusedLocationApi.getLastLocation(mGoogleClient);
+        if (lastLocation != null) {
+            App.postOnBus(lastLocation);
+        }
+
         LocationRequest req = LocationRequest.create();
         req.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
         req.setInterval(5 * DateUtils.SECOND_IN_MILLIS);
@@ -86,7 +93,7 @@ public class LocationListenerService extends IntentService implements LocationLi
             LocationServices.FusedLocationApi.requestLocationUpdates(mGoogleClient, req, this, sServiceLooper);
 
             // we only try to obtain the location for 15 seconds. If we receive a high enough
-            // accuracy location before this, we'll stop it sooner.
+            // accuracy location before this, we'll be interrupted from onLocationChanged()
             try {
                 Thread.sleep(15 * DateUtils.SECOND_IN_MILLIS);
             } catch (InterruptedException ignore) {}
@@ -96,10 +103,10 @@ public class LocationListenerService extends IntentService implements LocationLi
             return;
         }
 
-        // Upload the location
-        if (mMonitorService != null) {
-            mMonitorService.flush();
-        }
+//        // Upload the location
+//        if (mMonitorService != null) {
+//            mMonitorService.flush();
+//        }
 
         cleanUp();
     }
@@ -110,9 +117,9 @@ public class LocationListenerService extends IntentService implements LocationLi
             mGoogleClient.disconnect();
         }
 
-        try {
-            unbindService(mConnection);
-        } catch (Exception ignore) {}
+//        try {
+//            unbindService(mConnection);
+//        } catch (Exception ignore) {}
     }
 
     @Override

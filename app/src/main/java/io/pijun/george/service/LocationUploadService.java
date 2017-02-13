@@ -23,7 +23,7 @@ import android.text.format.DateUtils;
 import com.squareup.otto.Subscribe;
 
 import java.util.ArrayList;
-import java.util.LinkedList;
+import java.util.concurrent.LinkedBlockingQueue;
 
 import io.pijun.george.App;
 import io.pijun.george.DB;
@@ -62,9 +62,8 @@ public class LocationUploadService extends Service {
         }
     }
 
-    private LinkedList<Location> mLocations = new LinkedList<>();
+    private LinkedBlockingQueue<Location> mLocations = new LinkedBlockingQueue<>();
     private final IBinder mBinder = new LocalBinder();
-//    private GoogleApiClient mGoogleClient;
     private long mLastFlushTime = 0;
 
     @Nullable
@@ -80,15 +79,6 @@ public class LocationUploadService extends Service {
 
         JobScheduler scheduler = (JobScheduler) getSystemService(Context.JOB_SCHEDULER_SERVICE);
         scheduler.schedule(LocationJobService.getJobInfo(this));
-
-        /*
-        App.runInBackground(new WorkerRunnable() {
-            @Override
-            public void run() {
-                beginActivityMonitoring();
-            }
-        });
-        */
 
         App.registerOnBus(this);
     }
@@ -107,33 +97,6 @@ public class LocationUploadService extends Service {
         super.onDestroy();
     }
 
-    /*
-    @WorkerThread
-    private void beginActivityMonitoring() {
-        mGoogleClient = new GoogleApiClient.Builder(this)
-                .addApi(ActivityRecognition.API)
-                .build();
-        ConnectionResult connectionResult = mGoogleClient.blockingConnect();
-        if (!connectionResult.isSuccess()) {
-            L.i("  google client connect failed");
-            L.i("  has resolution? " + connectionResult.hasResolution());
-        }
-
-        PendingResult<Status> result = ActivityRecognition.ActivityFRecognitionApi.requestActivityUpdates(
-                mGoogleClient,
-                5 * DateUtils.MINUTE_IN_MILLIS,
-                ActivityMonitor.getPendingIntent(this));
-        result.setResultCallback(new ResultCallback<Status>() {
-            @Override
-            public void onResult(@NonNull Status status) {
-                if (!status.isSuccess()) {
-                    L.i("failed to register for activity recognition");
-                }
-            }
-        });
-    }
-    */
-
     @Subscribe
     @Keep
     public void onLocationChanged(final Location l) {
@@ -141,22 +104,18 @@ public class LocationUploadService extends Service {
             @Override
             public void run() {
                 // check if this is a duplicate location
-                if (!mLocations.isEmpty() && mLocations.getLast().getElapsedRealtimeNanos() == l.getElapsedRealtimeNanos()) {
+                if (!mLocations.isEmpty() && mLocations.peek().getElapsedRealtimeNanos() == l.getElapsedRealtimeNanos()) {
                     return;
                 }
 
                 mLocations.add(l);
 
-                // If 1) the app is in foreground, 2) and there is internet connectivity, and
-                // 3) we haven't flushed the location in <some amount of time>, then perform a flush
-                long timeSinceFlush = System.currentTimeMillis() - mLastFlushTime;
-                if (App.isInForeground && timeSinceFlush > 15 * DateUtils.SECOND_IN_MILLIS) {
-                    ConnectivityManager cm = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
-                    NetworkInfo activeNetwork = cm.getActiveNetworkInfo();
-                    boolean isConnected = activeNetwork != null && activeNetwork.isConnectedOrConnecting();
-                    if (isConnected) {
-                        flush();
-                    }
+                // make sure we have an internet connection before attempting to send
+                ConnectivityManager cm = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
+                NetworkInfo activeNetwork = cm.getActiveNetworkInfo();
+                boolean isConnected = activeNetwork != null && activeNetwork.isConnectedOrConnecting();
+                if (isConnected) {
+                    flush();
                 }
             }
         });
@@ -183,7 +142,7 @@ public class LocationUploadService extends Service {
             return;
         }
 
-        Location location = mLocations.getLast();
+        Location location = mLocations.peek();
         UserComm locMsg = UserComm.newLocationInfo(location);
         byte[] msgBytes = locMsg.toJSON();
         // share to our friends

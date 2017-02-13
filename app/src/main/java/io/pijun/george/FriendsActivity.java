@@ -138,7 +138,7 @@ public class FriendsActivity extends AppCompatActivity implements FriendsAdapter
                 Utils.showStringAlert(this, null, "Unable to create sharing request");
                 return;
             }
-            OscarClient.queueSendMessage(this, accessToken, Hex.toHexString(userRecord.userId), msg, false);
+            OscarClient.queueSendMessage(this, accessToken, userRecord.userId, msg, false);
 
             byte[] sendingBoxId = null;
             if (shareLocation) {
@@ -147,7 +147,7 @@ public class FriendsActivity extends AppCompatActivity implements FriendsAdapter
                 comm = UserComm.newLocationSharingGrant(sendingBoxId);
                 msg = Sodium.publicKeyEncrypt(comm.toJSON(), userRecord.publicKey, keyPair.secretKey);
                 if (msg != null) {
-                    OscarClient.queueSendMessage(this, accessToken, Hex.toHexString(userRecord.userId), msg, false);
+                    OscarClient.queueSendMessage(this, accessToken, userRecord.userId, msg, false);
                 } else {
                     Utils.showStringAlert(this, null, "Unable to create sharing grant");
                     return;
@@ -206,7 +206,7 @@ public class FriendsActivity extends AppCompatActivity implements FriendsAdapter
             L.w("unable to create share rejection message");
             return;
         }
-        OscarClient.queueSendMessage(this, accessToken, Hex.toHexString(user.userId), encMsg, false);
+        OscarClient.queueSendMessage(this, accessToken, user.userId, encMsg, false);
 
         try {
             DB.get(this).rejectRequest(user);

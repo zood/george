@@ -12,6 +12,7 @@ import java.io.IOException;
 import java.util.Map;
 
 import io.pijun.george.Constants;
+import io.pijun.george.Hex;
 import io.pijun.george.api.adapter.BytesToBase64Adapter;
 import io.pijun.george.api.adapter.CommTypeAdapter;
 import io.pijun.george.api.task.AddFcmTokenTask;
@@ -124,9 +125,9 @@ public class OscarClient {
     }
 
     @WorkerThread
-    public static void queueSendMessage(@NonNull Context context, @NonNull String accessToken, @NonNull String toHexUserId, @NonNull EncryptedData msg, boolean urgent) {
+    public static void queueSendMessage(@NonNull Context context, @NonNull String accessToken, @NonNull byte[] userId, @NonNull EncryptedData msg, boolean urgent) {
         SendMessageTask smt = new SendMessageTask(accessToken);
-        smt.hexUserId = toHexUserId;
+        smt.hexUserId = Hex.toHexString(userId);
         smt.message = msg;
         smt.urgent = urgent;
         getQueue(context).offer(smt);

@@ -5,8 +5,14 @@
     android:id="@+id/sign_in_container"
     android:paddingStart="32dp"
     android:paddingEnd="32dp"
-    android:layout_width="match_parent"
-    android:layout_height="wrap_content">
+    android:layout_width="0dp"
+    tools:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    app:layout_constraintWidth_default="spread"
+    app:layout_constraintBottom_toBottomOf="parent"
+    app:layout_constraintLeft_toLeftOf="parent"
+    app:layout_constraintRight_toRightOf="parent"
+    app:layout_constraintTop_toTopOf="parent">
 
     <EditText
         android:layout_width="0dp"
@@ -51,7 +57,7 @@
 
     <Button
         android:text="@string/log_in"
-        android:layout_width="match_parent"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:id="@+id/login_button"
         android:layout_marginTop="8dp"

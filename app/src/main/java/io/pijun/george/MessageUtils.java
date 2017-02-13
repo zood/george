@@ -86,7 +86,7 @@ public class MessageUtils {
         if (encMsg == null) {
             return ERROR_ENCRYPTION_FAILED;
         }
-        OscarClient.queueSendMessage(context, accessToken, Hex.toHexString(user.userId), encMsg, false);
+        OscarClient.queueSendMessage(context, accessToken, user.userId, encMsg, false);
 
         try {
             DB.get(context).grantSharingTo(user.userId, boxId);
@@ -230,9 +230,9 @@ public class MessageUtils {
                 break;
             case LocationUpdateRequest:
                 long updateTime = prefs.getLastLocationUpdateTime();
-                // only perform the update if it's been more than 5 minutes since the last one
+                // only perform the update if it's been more than 3 minutes since the last one
                 long now = System.currentTimeMillis();
-                if (now - updateTime > 5 * DateUtils.MINUTE_IN_MILLIS) {
+                if (now - updateTime > 3 * DateUtils.MINUTE_IN_MILLIS) {
                     L.i("  ok, provide a location update");
                     context.startService(LocationListenerService.newIntent(context));
                 } else {

@@ -1,76 +1,82 @@
-<android.support.constraint.ConstraintLayout
-    xmlns:android="http://schemas.android.com/apk/res/android"
+<android.support.constraint.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/create_account_container"
-    android:paddingStart="32dp"
     android:paddingEnd="32dp"
-    android:layout_width="match_parent"
-    android:layout_height="wrap_content">
+    android:paddingStart="32dp"
+    android:layout_width="0dp"
+    tools:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    app:layout_constraintWidth_default="spread"
+    app:layout_constraintBottom_toBottomOf="parent"
+    app:layout_constraintLeft_toLeftOf="parent"
+    app:layout_constraintRight_toRightOf="parent"
+    app:layout_constraintTop_toTopOf="parent">
 
     <EditText
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
         android:id="@+id/username_field"
-        android:privateImeOptions="nm"
-        android:imeOptions="actionNext"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintRight_toRightOf="parent"
-        app:layout_constraintLeft_toLeftOf="parent"
-        android:inputType="text|textNoSuggestions"
-        android:hint="@string/username"
-        android:maxLines="1"
-        tools:layout_constraintRight_creator="1"
-        tools:layout_constraintLeft_creator="1" />
-
-    <EditText
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:inputType="textPassword"
+        android:hint="@string/username"
         android:imeOptions="actionNext"
-        android:id="@+id/password_field"
-        app:layout_constraintRight_toLeftOf="@+id/password_reveal"
+        android:inputType="text|textNoSuggestions"
+        android:maxLines="1"
+        android:privateImeOptions="nm"
         app:layout_constraintLeft_toLeftOf="parent"
-        android:hint="@string/password"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        tools:layout_constraintLeft_creator="1"
+        tools:layout_constraintRight_creator="1" />
+
+    <EditText
+        android:id="@+id/password_field"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
         android:layout_marginTop="8dp"
+        android:hint="@string/password"
+        android:imeOptions="actionNext"
+        android:inputType="textPassword"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toLeftOf="@+id/password_reveal"
         app:layout_constraintTop_toBottomOf="@+id/username_field" />
 
     <Button
-        android:text="@string/show"
+        android:id="@+id/password_reveal"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:id="@+id/password_reveal"
-        android:onClick="onTogglePasswordVisibility"
         android:layout_marginStart="8dp"
+        android:onClick="onTogglePasswordVisibility"
+        android:text="@string/show"
+        app:layout_constraintBottom_toBottomOf="@+id/password_field"
         app:layout_constraintLeft_toRightOf="@+id/password_field"
         app:layout_constraintRight_toRightOf="parent"
-        app:layout_constraintBottom_toBottomOf="@+id/password_field"
-        app:layout_constraintTop_toTopOf="@+id/password_field" />
+        app:layout_constraintTop_toTopOf="@+id/password_field"
+        app:layout_constraintVertical_bias="0.6" />
 
     <EditText
+        android:id="@+id/email_field"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:inputType="textEmailAddress"
-        android:id="@+id/email_field"
         android:layout_marginTop="8dp"
+        android:hint="@string/email_optional_lowercase"
         android:imeOptions="actionGo"
-        app:layout_constraintTop_toBottomOf="@+id/password_field"
+        android:inputType="textEmailAddress"
         app:layout_constraintLeft_toLeftOf="parent"
         app:layout_constraintRight_toRightOf="parent"
-        android:hint="@string/email_optional_lowercase"
-        tools:layout_constraintRight_creator="1"
-        tools:layout_constraintLeft_creator="1" />
+        app:layout_constraintTop_toBottomOf="@+id/password_field"
+        tools:layout_constraintLeft_creator="1"
+        tools:layout_constraintRight_creator="1" />
 
     <Button
-        android:text="@string/lets_go_exclamation"
+        android:id="@+id/button10"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:id="@+id/button10"
-        android:onClick="onCreateAccountAction"
-        app:layout_constraintRight_toRightOf="parent"
-        app:layout_constraintLeft_toLeftOf="parent"
         android:layout_marginTop="8dp"
+        android:onClick="onCreateAccountAction"
+        android:text="@string/lets_go_exclamation"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toRightOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/email_field"
-        tools:layout_constraintRight_creator="1"
-        tools:layout_constraintLeft_creator="1" />
+        tools:layout_constraintLeft_creator="1"
+        tools:layout_constraintRight_creator="1" />
 </android.support.constraint.ConstraintLayout>
