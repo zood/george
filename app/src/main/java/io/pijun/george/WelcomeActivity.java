@@ -99,14 +99,7 @@ public class WelcomeActivity extends AppCompatActivity {
         ViewGroup root = (ViewGroup) findViewById(R.id.constraintLayout);
         final View fieldsView = getLayoutInflater().inflate(layoutId, root, false);
         fieldsView.setTranslationX(root.getWidth());
-        ConstraintLayout.LayoutParams params = new ConstraintLayout.LayoutParams(0, ConstraintLayout.LayoutParams.WRAP_CONTENT);
-        // configure the parameters for the fields then add them to the hierarchy
-        params.topToTop = ConstraintLayout.LayoutParams.PARENT_ID;
-        params.bottomToBottom = ConstraintLayout.LayoutParams.PARENT_ID;
-        params.leftToLeft = ConstraintLayout.LayoutParams.PARENT_ID;
-        params.rightToRight = ConstraintLayout.LayoutParams.PARENT_ID;
         root.addView(fieldsView);
-//        root.addView(fieldsView, params);
 
         // have the keyboard focus on the username field
         final EditText usernameField = (EditText) fieldsView.findViewById(R.id.username_field);

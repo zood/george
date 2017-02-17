@@ -42,7 +42,6 @@ import com.squareup.otto.Subscribe;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Map;
 
 import io.pijun.george.api.Message;
 import io.pijun.george.api.OscarAPI;
@@ -556,7 +555,6 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
     @Override
     @UiThread
     public boolean onMarkerClick(@NonNull final Marker marker) {
-        L.i("onMarkerClick: " + marker);
         FriendLocation loc = mMarkerTracker.getLocation(marker);
         long now = System.currentTimeMillis();
         final CharSequence relTime;

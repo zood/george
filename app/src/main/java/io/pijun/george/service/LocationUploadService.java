@@ -138,7 +138,7 @@ public class LocationUploadService extends Service {
         // share to our friends
         ArrayList<FriendRecord> friends = DB.get(this).getFriendsToShareWith();
         for (FriendRecord fr : friends) {
-            L.i("  to friend " + fr.user.username + ": " + fr);
+            L.i("  to friend " + fr.user.username);
             EncryptedData encMsg = Sodium.publicKeyEncrypt(msgBytes, fr.user.publicKey, keyPair.secretKey);
             if (encMsg == null) {
                 L.w("  encryption failed");
