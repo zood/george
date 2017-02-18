@@ -43,11 +43,13 @@ import com.squareup.otto.Subscribe;
 import java.io.IOException;
 import java.util.ArrayList;
 
+import io.pijun.george.api.LocationIQClient;
 import io.pijun.george.api.Message;
 import io.pijun.george.api.OscarAPI;
 import io.pijun.george.api.OscarClient;
 import io.pijun.george.api.OscarError;
 import io.pijun.george.api.PackageWatcher;
+import io.pijun.george.api.RevGeocoding;
 import io.pijun.george.api.UserComm;
 import io.pijun.george.crypto.EncryptedData;
 import io.pijun.george.crypto.KeyPair;
@@ -58,6 +60,7 @@ import io.pijun.george.models.FriendRecord;
 import io.pijun.george.service.FcmTokenRegistrar;
 import io.pijun.george.service.LocationUploadService;
 import io.pijun.george.service.MessageQueueService;
+import retrofit2.Call;
 import retrofit2.Response;
 
 public class MapActivity extends AppCompatActivity implements OnMapReadyCallback, MapboxMap.OnMarkerClickListener, MapboxMap.OnMyLocationChangeListener {
@@ -167,26 +170,6 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
                         }
                     }
                 }
-//                if (now - prefs.getLastLocationUpdateRequestTime() > 2 * DateUtils.MINUTE_IN_MILLIS) {
-//                    KeyPair keyPair = prefs.getKeyPair();
-//                    if (keyPair != null) {
-//                        UserComm comm = UserComm.newLocationUpdateRequest();
-//                        byte[] msgBytes = comm.toJSON();
-//                        for (FriendRecord fr : friends) {
-//                            // check if this friend shares location data with us
-//                            if (fr.receivingBoxId == null) {
-//                                continue;
-//                            }
-//                            EncryptedData encMsg = Sodium.publicKeyEncrypt(msgBytes, fr.user.publicKey, keyPair.secretKey);
-//                            if (encMsg != null) {
-//                                OscarClient.queueSendMessage(MapActivity.this, token, Hex.toHexString(fr.user.userId), encMsg, true);
-//                            } else {
-//                                L.w("Failed to encrypt a location update request message to " + fr.user.username);
-//                            }
-//                        }
-//                    }
-//                    prefs.setLastLocationUpdateRequestTime(System.currentTimeMillis());
-//                }
 
                 OscarAPI api = OscarClient.newInstance(token);
                 try {
@@ -555,7 +538,7 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
     @Override
     @UiThread
     public boolean onMarkerClick(@NonNull final Marker marker) {
-        FriendLocation loc = mMarkerTracker.getLocation(marker);
+        final FriendLocation loc = mMarkerTracker.getLocation(marker);
         long now = System.currentTimeMillis();
         final CharSequence relTime;
         if (loc.time >= now-60*DateUtils.SECOND_IN_MILLIS) {
@@ -567,35 +550,30 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
                     DateUtils.MINUTE_IN_MILLIS,
                     DateUtils.FORMAT_ABBREV_RELATIVE);
         }
-        marker.setSnippet(relTime.toString());
+        marker.setSnippet("(" + relTime.toString() + ")");
 
-//        App.runInBackground(new WorkerRunnable() {
-//            @Override
-//            public void run() {
-//                String ll = pos.latitude + "," + pos.longitude;
-//                String lang = Locale.getDefault().getLanguage();
-//                try {
-//                    Response<ReverseGeocoding> response = GMapsClient.get().getReverseGeocoding(ll, lang).execute();
-//                    if (response.isSuccessful()) {
-//                        L.i("received snippet");
-//                        ReverseGeocoding rg = response.body();
-//                        final String localityAddress = rg.getLocalityAddress();
-//                        L.i("locality address: " + localityAddress);
-//                        if (localityAddress != null) {
-//                            App.runOnUiThread(new UiRunnable() {
-//                                @Override
-//                                public void run() {
-//                                    marker.setSnippet(relTime + "\n" + localityAddress);
-//                                    marker.showInfoWindow();
-//                                }
-//                            });
-//                        }
-//                    }
-//                } catch (IOException ex) {
-//                    L.w("serious problem obtaining reverse geocoding", ex);
-//                }
-//            }
-//        });
+        App.runInBackground(new WorkerRunnable() {
+            @Override
+            public void run() {
+                try {
+                    Call<RevGeocoding> call = LocationIQClient.get(MapActivity.this).getReverseGeocoding("" + loc.latitude, "" + loc.longitude);
+                    Response<RevGeocoding> response = call.execute();
+                    if (response.isSuccessful()) {
+                        final RevGeocoding revGeocoding = response.body();
+                        App.runOnUiThread(new UiRunnable() {
+                            @Override
+                            public void run() {
+                                marker.setSnippet(revGeocoding.getArea() + " (" + relTime.toString() + ")");
+                            }
+                        });
+                    } else {
+                        L.w("error calling locationiq");
+                    }
+                } catch (Exception ex) {
+                    L.w("network error obtaining reverse geocoding", ex);
+                }
+            }
+        });
         return false;
     }
 

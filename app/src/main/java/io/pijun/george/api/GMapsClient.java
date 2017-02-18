@@ -9,7 +9,6 @@ public class GMapsClient {
 
     private static GMapsAPI newInstance() {
         String url = "https://maps.googleapis.com/maps/api/";
-
         Retrofit retrofit = new Retrofit.Builder()
                 .baseUrl(url)
                 .addConverterFactory(GsonConverterFactory.create(OscarClient.sGson))
