@@ -57,6 +57,8 @@ import io.pijun.george.event.LocationSharingGranted;
 import io.pijun.george.event.LocationSharingRequested;
 import io.pijun.george.models.FriendLocation;
 import io.pijun.george.models.FriendRecord;
+import io.pijun.george.models.MovementType;
+import io.pijun.george.service.ActivityMonitor;
 import io.pijun.george.service.FcmTokenRegistrar;
 import io.pijun.george.service.LocationUploadService;
 import io.pijun.george.service.MessageQueueService;
@@ -112,7 +114,7 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
         navView.setNavigationItemSelectedListener(navItemListener);
 
         startService(FcmTokenRegistrar.newIntent(this));
-
+        startService(ActivityMonitor.newIntent(this));
     }
 
     @Override
@@ -550,7 +552,23 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
                     DateUtils.MINUTE_IN_MILLIS,
                     DateUtils.FORMAT_ABBREV_RELATIVE);
         }
-        marker.setSnippet("(" + relTime.toString() + ")");
+        StringBuilder snippetBuilder = new StringBuilder(relTime.toString() + ", ");
+        if (loc.speed != null) {
+            snippetBuilder.append(loc.speed).append(" m/s, ");
+        }
+        if (loc.bearing != null) {
+            snippetBuilder.append(loc.bearing).append("°, ");
+        }
+        if (loc.accuracy != null) {
+            snippetBuilder.append("±").append(loc.accuracy).append(" m, ");
+        }
+        String movements = MovementType.serialize(loc.movements);
+        if (movements.length() > 0) {
+            snippetBuilder.append(movements).append(", ");
+        }
+        final String snippet = snippetBuilder.toString();
+
+        marker.setSnippet(snippet);
 
         App.runInBackground(new WorkerRunnable() {
             @Override
@@ -563,7 +581,7 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
                         App.runOnUiThread(new UiRunnable() {
                             @Override
                             public void run() {
-                                marker.setSnippet(revGeocoding.getArea() + " (" + relTime.toString() + ")");
+                                marker.setSnippet(snippet + revGeocoding.getArea());
                             }
                         });
                     } else {

@@ -34,8 +34,10 @@ import io.pijun.george.api.OscarClient;
 import io.pijun.george.api.UserComm;
 import io.pijun.george.crypto.EncryptedData;
 import io.pijun.george.crypto.KeyPair;
+import io.pijun.george.event.MovementsUpdated;
 import io.pijun.george.models.FriendRecord;
 import io.pijun.george.models.LimitedShare;
+import io.pijun.george.models.MovementType;
 
 public class LocationUploadService extends Service {
 
@@ -55,6 +57,7 @@ public class LocationUploadService extends Service {
     }
 
     private LinkedBlockingQueue<Location> mLocations = new LinkedBlockingQueue<>();
+    private ArrayList<MovementType> mMovements = new ArrayList<>();
 
     @Nullable
     @Override
@@ -111,6 +114,12 @@ public class LocationUploadService extends Service {
         });
     }
 
+    @Subscribe
+    @Keep
+    public void onMovementsUpdated(MovementsUpdated mu) {
+        this.mMovements = mu.movements;
+    }
+
     /**
      * Get the most recent location and report it.
      */
@@ -133,12 +142,12 @@ public class LocationUploadService extends Service {
         }
 
         Location location = mLocations.peek();
-        UserComm locMsg = UserComm.newLocationInfo(location);
+        UserComm locMsg = UserComm.newLocationInfo(location, mMovements);
         byte[] msgBytes = locMsg.toJSON();
         // share to our friends
         ArrayList<FriendRecord> friends = DB.get(this).getFriendsToShareWith();
         for (FriendRecord fr : friends) {
-            L.i("  to friend " + fr.user.username);
+//            L.i("  to friend " + fr.user.username);
             EncryptedData encMsg = Sodium.publicKeyEncrypt(msgBytes, fr.user.publicKey, keyPair.secretKey);
             if (encMsg == null) {
                 L.w("  encryption failed");

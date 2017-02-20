@@ -49,7 +49,6 @@ public class FcmMessageReceiver extends FirebaseMessagingService {
         msg.cipherText = Base64.decode(data.get("cipher_text"), Base64.NO_WRAP);
         msg.nonce = Base64.decode(data.get("nonce"), Base64.NO_WRAP);
         msg.senderId = Base64.decode(data.get("sender_id"), Base64.NO_WRAP);
-        L.i("FMR.handleMessageReceived: " + msg);
 
         MessageQueueService.queueMessage(this, msg);
     }
@@ -57,6 +56,6 @@ public class FcmMessageReceiver extends FirebaseMessagingService {
     @WorkerThread
     private void handleMesssageSyncNeeded(Map<String, String> data) {
         long msgId = Long.parseLong(data.get("message_id"));
-
+        // TODO
     }
 }

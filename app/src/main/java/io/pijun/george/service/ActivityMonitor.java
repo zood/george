@@ -1,27 +1,70 @@
 package io.pijun.george.service;
 
-import android.app.IntentService;
-import android.app.PendingIntent;
+import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
+import android.os.Bundle;
+import android.os.IBinder;
+import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
+import android.text.format.DateUtils;
 
-import com.google.android.gms.location.ActivityRecognitionResult;
+import com.google.android.gms.common.ConnectionResult;
+import com.google.android.gms.common.api.GoogleApiClient;
+import com.google.android.gms.location.ActivityRecognition;
 
-public class ActivityMonitor extends IntentService {
+import io.pijun.george.L;
 
-    private static int REQUEST_CODE = 5592;     // magic number
+public class ActivityMonitor extends Service implements GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener {
 
-    public static PendingIntent getPendingIntent(Context context) {
-        Intent i = new Intent(context, ActivityMonitor.class);
-        return PendingIntent.getService(context, REQUEST_CODE, i, 0);
+    @NonNull
+    public static Intent newIntent(@NonNull Context ctx) {
+        return new Intent(ctx, ActivityMonitor.class);
     }
 
-    public ActivityMonitor() {
-        super("ActivityMonitor");
+    private GoogleApiClient mGoogleClient;
+
+    @Nullable
+    @Override
+    public IBinder onBind(Intent intent) {
+        return null;
     }
 
     @Override
-    protected void onHandleIntent(Intent intent) {
-        ActivityRecognitionResult result = ActivityRecognitionResult.extractResult(intent);
+    public int onStartCommand(Intent intent, int flags, int startId) {
+        L.i("ActivityMonitor.onStartCommand");
+        mGoogleClient = new GoogleApiClient.Builder(this)
+                .addConnectionCallbacks(this)
+                .addOnConnectionFailedListener(this)
+                .addApi(ActivityRecognition.API)
+                .build();
+        mGoogleClient.connect();
+
+        return START_STICKY;
+    }
+
+    @Override
+    public void onDestroy() {
+        L.i("ActivityMonitor.onDestroy");
+        super.onDestroy();
+    }
+
+    @Override
+    public void onConnected(@Nullable Bundle bundle) {
+        L.i("ActivityMonitor.onConnected");
+        ActivityRecognition.ActivityRecognitionApi.requestActivityUpdates(
+                mGoogleClient,
+                60 * DateUtils.SECOND_IN_MILLIS,
+                UserActivityReceiver.getPendingIntent(this));
+    }
+
+    @Override
+    public void onConnectionSuspended(int i) {
+        L.i("ActivityMonitor.onConnectionSuspended: " + i);
+    }
+
+    @Override
+    public void onConnectionFailed(@NonNull ConnectionResult connectionResult) {
+        L.i("ActivityMonitor.onConnetionFailed: " + connectionResult.getErrorMessage());
     }
 }

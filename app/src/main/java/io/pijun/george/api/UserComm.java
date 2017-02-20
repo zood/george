@@ -6,8 +6,10 @@ import android.support.annotation.NonNull;
 import java.io.ByteArrayInputStream;
 import java.io.InputStreamReader;
 import java.util.Arrays;
+import java.util.List;
 
 import io.pijun.george.Constants;
+import io.pijun.george.models.MovementType;
 
 public class UserComm {
 
@@ -20,6 +22,8 @@ public class UserComm {
     public long time;
     public Float accuracy;
     public Float speed;
+    public Float bearing;
+    public String movements;
 
     @NonNull
     public static UserComm newLocationSharingRequest() {
@@ -50,7 +54,7 @@ public class UserComm {
     }
 
     @NonNull
-    public static UserComm newLocationInfo(@NonNull Location l) {
+    public static UserComm newLocationInfo(@NonNull Location l, List<MovementType> movements) {
         UserComm c = new UserComm();
         c.type = CommType.LocationInfo;
         c.latitude = l.getLatitude();
@@ -62,6 +66,10 @@ public class UserComm {
         if (l.hasSpeed()) {
             c.speed = l.getSpeed();
         }
+        if (l.hasBearing() && l.getBearing() != 0.0f) {
+            c.bearing = l.getBearing();
+        }
+        c.movements = MovementType.serialize(movements);
 
         return c;
     }

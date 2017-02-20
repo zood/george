@@ -95,7 +95,7 @@ public class OscarTasksService extends IntentService {
                         L.i("  " + err);
                     }
                 } catch (IOException e) {
-                    L.w("task exception", e);
+                    L.w("task exception: " + e.getMessage());
                     // a connection problem, so schedule this to continue when the network is back
                     JobScheduler scheduler = (JobScheduler) getSystemService(Context.JOB_SCHEDULER_SERVICE);
                     scheduler.schedule(OscarJobService.getJobInfo(this));

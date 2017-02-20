@@ -220,7 +220,7 @@ public class MessageUtils {
                     return ERROR_NOT_A_FRIEND;
                 }
                 try {
-                    db.setFriendLocation(fr.id, comm.latitude, comm.longitude, comm.time, comm.accuracy, comm.speed);
+                    db.setFriendLocation(fr.id, comm.latitude, comm.longitude, comm.time, comm.accuracy, comm.speed, comm.bearing);
                 } catch (DB.DBException ex) {
                     L.w("error setting location info for friend", ex);
                     FirebaseCrash.report(ex);

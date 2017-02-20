@@ -19,10 +19,12 @@ import android.support.v4.util.LongSparseArray;
 import com.google.firebase.crash.FirebaseCrash;
 
 import java.util.ArrayList;
+import java.util.List;
 
 import io.pijun.george.models.FriendLocation;
 import io.pijun.george.models.FriendRecord;
 import io.pijun.george.models.LimitedShare;
+import io.pijun.george.models.MovementType;
 import io.pijun.george.models.RequestRecord;
 import io.pijun.george.models.RequestResponse;
 import io.pijun.george.models.Snapshot;
@@ -61,13 +63,17 @@ public class DB {
     private static final String LOCATIONS_COL_TIME = "time";
     private static final String LOCATIONS_COL_ACCURACY = "accuracy";
     private static final String LOCATIONS_COL_SPEED = "speed";
+    private static final String LOCATIONS_COL_BEARING = "bearing";
+    private static final String LOCATIONS_COL_MOVEMENTS = "movements";
     private static final String[] LOCATIONS_COLUMNS = new String[]{
             LOCATIONS_COL_FRIEND_ID,
             LOCATIONS_COL_LATITUDE,
             LOCATIONS_COL_LONGITUDE,
             LOCATIONS_COL_TIME,
             LOCATIONS_COL_ACCURACY,
-            LOCATIONS_COL_SPEED
+            LOCATIONS_COL_SPEED,
+            LOCATIONS_COL_BEARING,
+            LOCATIONS_COL_MOVEMENTS,
     };
 
     private static final String OUTGOING_REQUESTS_TABLE = "outgoing_requests";
@@ -342,7 +348,15 @@ public class DB {
                 if (!c.isNull(speedColIdx)) {
                     speed = c.getFloat(speedColIdx);
                 }
-                fl = new FriendLocation(friendRecordId, lat, lng, time, acc, speed);
+                Float bearing = null;
+                int bearingColIdx = c.getColumnIndexOrThrow(LOCATIONS_COL_BEARING);
+                if (!c.isNull(bearingColIdx)) {
+                    bearing = c.getFloat(bearingColIdx);
+                }
+                List<MovementType> movements;
+                int movementsColIdx = c.getColumnIndexOrThrow(LOCATIONS_COL_MOVEMENTS);
+                movements = MovementType.deserialize(c.getString(movementsColIdx));
+                fl = new FriendLocation(friendRecordId, lat, lng, time, acc, speed, bearing, movements);
             }
         }
 
@@ -789,7 +803,7 @@ public class DB {
     }
 
     @WorkerThread
-    public void setFriendLocation(long friendId, double lat, double lng, long time, Float accuracy, Float speed) throws DBException {
+    public void setFriendLocation(long friendId, double lat, double lng, long time, Float accuracy, Float speed, Float bearing) throws DBException {
         SQLiteDatabase db = mDbHelper.getWritableDatabase();
         ContentValues cv = new ContentValues();
         cv.put(LOCATIONS_COL_FRIEND_ID, friendId);
@@ -801,6 +815,9 @@ public class DB {
         }
         if (speed != null) {
             cv.put(LOCATIONS_COL_SPEED, speed);
+        }
+        if (bearing != null) {
+            cv.put(LOCATIONS_COL_BEARING, bearing);
         }
         long result = db.replace(LOCATIONS_TABLE, null, cv);
         if (result == -1) {
@@ -867,7 +884,9 @@ public class DB {
                     + LOCATIONS_COL_LONGITUDE + " REAL NOT NULL, "
                     + LOCATIONS_COL_TIME + " INTEGER NOT NULL, "
                     + LOCATIONS_COL_ACCURACY + " REAL, "
-                    + LOCATIONS_COL_SPEED + " REAL)";
+                    + LOCATIONS_COL_SPEED + " REAL, "
+                    + LOCATIONS_COL_BEARING + " REAL, "
+                    + LOCATIONS_COL_MOVEMENTS + " TEXT)";
             db.execSQL(createLocations);
 
             String createUsers = "CREATE TABLE "
