@@ -1,15 +1,19 @@
 package io.pijun.george;
 
 import android.Manifest;
+import android.animation.ObjectAnimator;
+import android.animation.ValueAnimator;
 import android.app.job.JobScheduler;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.IntentSender;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.location.Location;
 import android.os.Bundle;
+import android.support.annotation.AnyThread;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.annotation.UiThread;
@@ -28,6 +32,17 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
 
+import com.google.android.gms.common.ConnectionResult;
+import com.google.android.gms.common.api.GoogleApiClient;
+import com.google.android.gms.common.api.PendingResult;
+import com.google.android.gms.common.api.ResultCallback;
+import com.google.android.gms.common.api.Status;
+import com.google.android.gms.location.LocationListener;
+import com.google.android.gms.location.LocationRequest;
+import com.google.android.gms.location.LocationServices;
+import com.google.android.gms.location.LocationSettingsRequest;
+import com.google.android.gms.location.LocationSettingsResult;
+import com.google.android.gms.location.LocationSettingsStatusCodes;
 import com.mapbox.mapboxsdk.annotations.Icon;
 import com.mapbox.mapboxsdk.annotations.IconFactory;
 import com.mapbox.mapboxsdk.annotations.Marker;
@@ -62,17 +77,21 @@ import io.pijun.george.service.ActivityMonitor;
 import io.pijun.george.service.FcmTokenRegistrar;
 import io.pijun.george.service.LocationUploadService;
 import io.pijun.george.service.MessageQueueService;
+import io.pijun.george.view.MyLocationView;
 import retrofit2.Call;
 import retrofit2.Response;
 
-public class MapActivity extends AppCompatActivity implements OnMapReadyCallback, MapboxMap.OnMarkerClickListener, MapboxMap.OnMyLocationChangeListener {
+public class MapActivity extends AppCompatActivity implements OnMapReadyCallback, MapboxMap.OnMarkerClickListener, MapboxMap.OnMyLocationChangeListener, GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener, LocationListener {
 
     private static final int REQUEST_LOCATION_PERMISSION = 18;
+    private static final int REQUEST_LOCATION_SETTINGS = 20;
 
     private MapView mMapView;
     private MapboxMap mMapboxMap;
     private volatile PackageWatcher mPkgWatcher;
     private MarkerTracker mMarkerTracker = new MarkerTracker();
+    private GoogleApiClient mGoogleClient;
+    private Marker mMeMarker;
 
     public static Intent newIntent(Context ctx) {
         return new Intent(ctx, MapActivity.class);
@@ -113,6 +132,12 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
         NavigationView navView = (NavigationView) findViewById(R.id.navigation);
         navView.setNavigationItemSelectedListener(navItemListener);
 
+        mGoogleClient = new GoogleApiClient.Builder(this)
+                .addConnectionCallbacks(this)
+                .addOnConnectionFailedListener(this)
+                .addApi(LocationServices.API)
+                .build();
+
         startService(FcmTokenRegistrar.newIntent(this));
         startService(ActivityMonitor.newIntent(this));
     }
@@ -125,6 +150,7 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
         App.isInForeground = true;
         checkForLocationPermission();
         App.registerOnBus(this);
+        mGoogleClient.connect();
 
         App.runInBackground(new WorkerRunnable() {
             @Override
@@ -229,6 +255,11 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
             }
         }
 
+        if (mGoogleClient.isConnected()) {
+            LocationServices.FusedLocationApi.removeLocationUpdates(mGoogleClient, this);
+        }
+        mGoogleClient.disconnect();
+
         App.unregisterFromBus(this);
         App.runInBackground(new WorkerRunnable() {
             @Override
@@ -274,11 +305,11 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
 
     @Override
     @UiThread
-    public void onMapReady(MapboxMap googleMap) {
-        if (googleMap == null) {
+    public void onMapReady(MapboxMap mapboxMap ) {
+        if (mapboxMap == null) {
             L.i("onMapReady has a null map arg");
         }
-        mMapboxMap = googleMap;
+        mMapboxMap = mapboxMap;
         CameraPosition pos = Prefs.get(this).getCameraPosition();
         if (pos != null) {
             mMapboxMap.moveCamera(CameraUpdateFactory.newCameraPosition(pos));
@@ -307,10 +338,103 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
                 }
             }
         });
+    }
 
-        if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
-            mMapboxMap.setMyLocationEnabled(true);
+    @Override
+    public void onConnected(@Nullable Bundle bundle) {
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            L.i("  failed permission check");
+            return;
         }
+        Location lastLocation = LocationServices.FusedLocationApi.getLastLocation(mGoogleClient);
+        if (lastLocation != null) {
+            App.postOnBus(lastLocation);
+        }
+
+        // these are the location settings we want
+        LocationRequest req = LocationRequest.create();
+        req.setInterval(5 * DateUtils.SECOND_IN_MILLIS);
+        req.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
+        // check whether the location settings can currently be met by the hardware
+        LocationSettingsRequest.Builder builder = new LocationSettingsRequest.Builder()
+                .addLocationRequest(req);
+        PendingResult<LocationSettingsResult> result =
+                LocationServices.SettingsApi.checkLocationSettings(mGoogleClient, builder.build());
+        result.setResultCallback(new ResultCallback<LocationSettingsResult>() {
+            @Override
+            public void onResult(@NonNull LocationSettingsResult result) {
+                Status status = result.getStatus();
+                if (status.getStatusCode() != LocationSettingsStatusCodes.RESOLUTION_REQUIRED) {
+                    beginLocationUpdates();
+                    return;
+                }
+
+                try {
+                    status.startResolutionForResult(MapActivity.this, REQUEST_LOCATION_SETTINGS);
+                } catch (IntentSender.SendIntentException ignore) {}
+            }
+        });
+    }
+
+    @Override
+    public void onConnectionSuspended(int i) {
+        L.w("onConnectionSuspended: " + i);
+    }
+
+    @Override
+    public void onConnectionFailed(@NonNull ConnectionResult connectionResult) {
+        L.w("onConnectionFailed: " + connectionResult);
+    }
+
+    @AnyThread
+    private void beginLocationUpdates() {
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            // This should never happen. Nobody should be calling this method before permission has been obtained.
+            L.w("MapActivity.beginLocationUpdates was called before obtaining location permission");
+            // TODO: log the stack trace to a server for debugging
+            return;
+        }
+        if (!mGoogleClient.isConnected()) {
+            return;
+        }
+        LocationRequest req = LocationRequest.create();
+        req.setInterval(5 * DateUtils.SECOND_IN_MILLIS);
+        req.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
+        PendingResult<Status> pendingResult = LocationServices.FusedLocationApi.requestLocationUpdates(mGoogleClient, req, this);
+        pendingResult.setResultCallback(new ResultCallback<Status>() {
+            @Override
+            public void onResult(@NonNull Status status) {
+            }
+        });
+    }
+
+    @Override
+    public void onLocationChanged(Location location) {
+        if (mMeMarker == null) {
+            addMyLocation(location);
+        } else {
+            ValueAnimator animator = ObjectAnimator.ofObject(
+                    mMeMarker,
+                    "position",
+                    new Utils.LatLngEvaluator(),
+                    mMeMarker.getPosition(),
+                    new LatLng(location.getLatitude(), location.getLongitude()));
+            animator.setDuration(300);
+            animator.start();
+        }
+        App.postOnBus(location);
+    }
+
+    private void addMyLocation(Location location) {
+        int sixteen = getResources().getDimensionPixelSize(R.dimen.sixteen);
+        Bitmap bitmap = Bitmap.createBitmap(sixteen, sixteen, Bitmap.Config.ARGB_8888);
+        MyLocationView.draw(bitmap);
+
+        Icon descriptor = IconFactory.getInstance(this).fromBitmap(bitmap);
+        MarkerOptions opts = new MarkerOptions()
+                .position(new LatLng(location.getLatitude(), location.getLongitude()))
+                .icon(descriptor);
+        mMeMarker = mMapboxMap.addMarker(opts);
     }
 
     @UiThread
@@ -380,9 +504,8 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
     @UiThread
     private void locationPermissionVerified() {
         startService(LocationUploadService.newIntent(this));
-        if (mMapboxMap != null) {
-            mMapboxMap.setMyLocationEnabled(true);
-        }
+
+        beginLocationUpdates();
     }
 
     @UiThread
@@ -540,6 +663,10 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
     @Override
     @UiThread
     public boolean onMarkerClick(@NonNull final Marker marker) {
+        if (marker == mMeMarker) {
+            return true;
+        }
+
         final FriendLocation loc = mMarkerTracker.getLocation(marker);
         long now = System.currentTimeMillis();
         final CharSequence relTime;

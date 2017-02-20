@@ -1,11 +1,14 @@
 package io.pijun.george;
 
+import android.animation.TypeEvaluator;
 import android.content.Context;
 import android.os.Looper;
 import android.support.annotation.AnyThread;
 import android.support.annotation.StringRes;
 import android.support.annotation.UiThread;
 import android.support.v7.app.AlertDialog;
+
+import com.mapbox.mapboxsdk.geometry.LatLng;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -79,6 +82,21 @@ public class Utils {
         builder.setMessage(msg);
         builder.setPositiveButton(R.string.ok, null);
         builder.show();
+    }
+
+    static class LatLngEvaluator implements TypeEvaluator<LatLng> {
+        // Method is used to interpolate the marker animation.
+
+        private LatLng latLng = new LatLng();
+
+        @Override
+        public LatLng evaluate(float fraction, LatLng startValue, LatLng endValue) {
+            latLng.setLatitude(startValue.getLatitude()
+                    + ((endValue.getLatitude() - startValue.getLatitude()) * fraction));
+            latLng.setLongitude(startValue.getLongitude()
+                    + ((endValue.getLongitude() - startValue.getLongitude()) * fraction));
+            return latLng;
+        }
     }
 
 }
