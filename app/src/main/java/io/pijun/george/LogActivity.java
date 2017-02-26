@@ -18,6 +18,8 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.StringWriter;
 
+import io.pijun.george.service.LocationListenerService;
+
 public class LogActivity extends AppCompatActivity implements Toolbar.OnMenuItemClickListener {
 
     public static Intent newIntent(@NonNull Context context) {
@@ -45,10 +47,27 @@ public class LogActivity extends AppCompatActivity implements Toolbar.OnMenuItem
 
     @Override
     public boolean onMenuItemClick(MenuItem item) {
-        if (item.getItemId() == R.id.delete_log) {
+        int id = item.getItemId();
+        if (id == R.id.delete_log) {
             L.resetLog(this);
             setLogContents("");
             return true;
+        } else if (id == R.id.log_lls_stack) {
+            StackTraceElement[] stackTrace = LocationListenerService.sServiceLooper.getThread().getStackTrace();
+            StringBuilder sb = new StringBuilder();
+            sb.append("LLS stack trace\n");
+            for (StackTraceElement ste : stackTrace) {
+                sb.append(ste.getClassName()).
+                        append('.').
+                        append(ste.getMethodName()).
+                        append('(').
+                        append(ste.getFileName()).
+                        append(':').
+                        append(ste.getLineNumber()).
+                        append(')').
+                        append('\n');
+            }
+            L.i(sb.toString());
         }
 
         return false;

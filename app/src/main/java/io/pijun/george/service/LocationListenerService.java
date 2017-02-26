@@ -33,7 +33,7 @@ public class LocationListenerService extends IntentService implements LocationLi
         return new Intent(context, LocationListenerService.class);
     }
 
-    private static Looper sServiceLooper;
+    public static Looper sServiceLooper;
     static {
         HandlerThread thread = new HandlerThread(LocationListenerService.class.getSimpleName());
         thread.start();
