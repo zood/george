@@ -19,6 +19,7 @@ import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.location.LocationListener;
 import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationServices;
+import com.google.firebase.crash.FirebaseCrash;
 
 import io.pijun.george.App;
 import io.pijun.george.L;
@@ -51,60 +52,73 @@ public class LocationListenerService extends IntentService implements LocationLi
     @Override
     @WorkerThread
     protected void onHandleIntent(Intent intent) {
-        L.i("LLS.onHandleIntent");
-        mGoogleClient = new GoogleApiClient.Builder(this)
-                .addApi(LocationServices.API)
-                .build();
-        ConnectionResult connectionResult = mGoogleClient.blockingConnect();
-        if (!connectionResult.isSuccess()) {
-            L.i("  google client connect failed: " + connectionResult.getErrorMessage());
-            L.i("  has resolution? " + connectionResult.hasResolution());
+        try {
+            L.i("LLS.onHandleIntent");
+            mGoogleClient = new GoogleApiClient.Builder(this)
+                    .addApi(LocationServices.API)
+                    .build();
+            ConnectionResult connectionResult = mGoogleClient.blockingConnect();
+            if (!connectionResult.isSuccess()) {
+                L.i("  google client connect failed: " + connectionResult.getErrorMessage());
+                L.i("  has resolution? " + connectionResult.hasResolution());
+                cleanUp();
+                return;
+            }
+
+            Location lastLocation = LocationServices.FusedLocationApi.getLastLocation(mGoogleClient);
+            if (lastLocation != null) {
+                App.postOnBus(lastLocation);
+            }
+
+            LocationRequest req = LocationRequest.create();
+            req.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
+            req.setInterval(5 * DateUtils.SECOND_IN_MILLIS);
+
+            mServiceThread = Thread.currentThread();
+            if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
+                LocationServices.FusedLocationApi.requestLocationUpdates(mGoogleClient, req, this, sServiceLooper);
+
+                // We only try to obtain the location for a short while. If we receive a high enough
+                // accuracy location before this, we'll be interrupted from onLocationChanged()
+                try {
+                    Thread.sleep(MAX_WAIT_SECONDS * DateUtils.SECOND_IN_MILLIS);
+                } catch (InterruptedException ignore) {
+                }
+            } else {
+                L.w("LocationListenerService ran without Location permission");
+                cleanUp();
+                return;
+            }
+
             cleanUp();
-            return;
+        } catch (Throwable t) {
+            FirebaseCrash.report(t);
         }
-
-        Location lastLocation = LocationServices.FusedLocationApi.getLastLocation(mGoogleClient);
-        if (lastLocation != null) {
-            App.postOnBus(lastLocation);
-        }
-
-        LocationRequest req = LocationRequest.create();
-        req.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
-        req.setInterval(5 * DateUtils.SECOND_IN_MILLIS);
-
-        mServiceThread = Thread.currentThread();
-        if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
-            LocationServices.FusedLocationApi.requestLocationUpdates(mGoogleClient, req, this, sServiceLooper);
-
-            // We only try to obtain the location for a short while. If we receive a high enough
-            // accuracy location before this, we'll be interrupted from onLocationChanged()
-            try {
-                Thread.sleep(MAX_WAIT_SECONDS * DateUtils.SECOND_IN_MILLIS);
-            } catch (InterruptedException ignore) {}
-        } else {
-            L.w("LocationListenerService ran without Location permission");
-            cleanUp();
-            return;
-        }
-
-        cleanUp();
     }
 
     private void cleanUp() {
-        if (mGoogleClient != null && mGoogleClient.isConnected()) {
-            LocationServices.FusedLocationApi.removeLocationUpdates(mGoogleClient, this);
-            mGoogleClient.disconnect();
+        try {
+            if (mGoogleClient != null && mGoogleClient.isConnected()) {
+                LocationServices.FusedLocationApi.removeLocationUpdates(mGoogleClient, this);
+                mGoogleClient.disconnect();
+            }
+        } catch (Throwable t) {
+            FirebaseCrash.report(t);
         }
     }
 
     @Override
     public void onLocationChanged(Location location) {
-        if (location != null) {
-            App.postOnBus(location);
-            // if we get a location with an accuracy within 10 meters, that's good enough
-            if (location.hasAccuracy() && location.getAccuracy() <= 10) {
-                mServiceThread.interrupt();
+        try {
+            if (location != null) {
+                App.postOnBus(location);
+                // if we get a location with an accuracy within 10 meters, that's good enough
+                if (location.hasAccuracy() && location.getAccuracy() <= 10) {
+                    mServiceThread.interrupt();
+                }
             }
+        } catch (Throwable t) {
+            FirebaseCrash.report(t);
         }
     }
 }
