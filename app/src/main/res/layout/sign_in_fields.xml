@@ -17,7 +17,6 @@
     <EditText
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:ems="10"
         android:id="@+id/username_field"
         android:privateImeOptions="nm"
         android:imeOptions="actionNext"

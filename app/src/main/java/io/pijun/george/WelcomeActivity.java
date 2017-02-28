@@ -10,6 +10,7 @@ import android.support.annotation.Nullable;
 import android.support.annotation.UiThread;
 import android.support.annotation.WorkerThread;
 import android.support.constraint.ConstraintLayout;
+import android.support.design.widget.TextInputEditText;
 import android.support.v7.app.AppCompatActivity;
 import android.text.InputType;
 import android.text.TextUtils;
@@ -108,7 +109,7 @@ public class WelcomeActivity extends AppCompatActivity {
         fieldsView.animate().translationX(0).start();
 
         // hide the 'get started' and 'sign in' buttons
-        final View getStartedButton = findViewById(R.id.get_started_button);
+        final View getStartedButton = findViewById(R.id.register_button);
         getStartedButton.animate().translationX(-root.getWidth()).start();
         final View signInButton = findViewById(R.id.sign_in_button);
         signInButton.animate().translationX(-root.getWidth()).start();
@@ -125,7 +126,21 @@ public class WelcomeActivity extends AppCompatActivity {
     public void onSignInAction(View v) {
         mShowingSignIn = true;
 
-        inflateAndPresent(R.layout.sign_in_fields);
+//        inflateAndPresent(R.layout.sign_in_fields);
+        View root = findViewById(R.id.constraintLayout);
+        View globe = findViewById(R.id.globe);
+
+        View usernameContainer = findViewById(R.id.username_container);
+        usernameContainer.setTranslationX(root.getWidth());
+        View passwordContainer = findViewById(R.id.password_container);
+        passwordContainer.setTranslationX(root.getWidth());
+
+        usernameContainer.animate().translationX(0).setDuration(300).start();
+        passwordContainer.animate().translationX(0).setDuration(300).start();
+        globe.animate().translationY(globe.getHeight()).setDuration(300).start();
+
+        final TextInputEditText usernameField = (TextInputEditText) findViewById(R.id.username_field);
+        showKeyboard(usernameField);
     }
 
     @UiThread
@@ -214,7 +229,7 @@ public class WelcomeActivity extends AppCompatActivity {
         }).start();
 
         // bring the bottom buttons back
-        final View getStartedButton = findViewById(R.id.get_started_button);
+        final View getStartedButton = findViewById(R.id.register_button);
         getStartedButton.animate().translationX(0).start();
         final View signInButton = findViewById(R.id.sign_in_button);
         signInButton.animate().translationX(0).start();
