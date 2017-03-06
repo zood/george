@@ -4,6 +4,7 @@ import android.content.Context;
 import android.graphics.Rect;
 import android.support.annotation.NonNull;
 import android.support.annotation.Px;
+import android.support.annotation.UiThread;
 import android.util.AttributeSet;
 import android.view.View;
 import android.view.ViewGroup;
@@ -150,12 +151,9 @@ public class WelcomeLayout extends ViewGroup {
         if (mTask == TASK_SPLASH) {
             logoW = pix(96);
             logoH = pix(113);
-//            logoScale = 1;
         } else {
             logoW = pix(79);
             logoH = pix(93);
-            //noinspection NumericOverflow
-//            logoScale = (float) (79.0/96.0);
         }
         float logoScale;
         if (mLogo.getWidth() != 0) {
@@ -412,6 +410,7 @@ public class WelcomeLayout extends ViewGroup {
         }
     }
 
+    @UiThread
     public void setTask(int task, boolean animate) {
         if (task == mTask) {
             return;
@@ -431,6 +430,7 @@ public class WelcomeLayout extends ViewGroup {
         layoutChildren(getWidth(), getHeight(), animate, 300);
     }
 
+    @UiThread
     public void setCloudMovementEnabled(boolean enabled) {
         if (mCloudsMoving == enabled) {
             return;
@@ -444,10 +444,16 @@ public class WelcomeLayout extends ViewGroup {
             if (mCloud2 != null) {
                 scheduleCloudMovement(mCloud2);
             }
+        } else {
+            mCloud1.animate().cancel();
+            mCloud2.animate().cancel();
         }
     }
 
     private void scheduleCloudMovement(@NonNull final ImageView cloud) {
+        if (!mCloudsMoving) {
+            return;
+        }
         int width = getWidth();
         if (cloud.getX() >= width) {
             cloud.setTranslationX(-cloud.getRight());
