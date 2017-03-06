@@ -104,8 +104,10 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
 
         // Is there a user account here? If not, send them to the login/sign up screen
         if (!Prefs.get(this).isLoggedIn()) {
-            Intent welcomeIntent = WelcomeActivity.newIntent(this);
-            startActivity(welcomeIntent);
+            Intent testIntent = TestActivity.newIntent(this);
+            startActivity(testIntent);
+//            Intent welcomeIntent = WelcomeActivity.newIntent(this);
+//            startActivity(welcomeIntent);
             finish();
             return;
         }

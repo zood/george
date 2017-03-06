@@ -14,7 +14,7 @@
     app:layout_constraintTop_toTopOf="parent">
 
     <EditText
-        android:id="@+id/username_field"
+        android:id="@+id/si_username"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:hint="@string/username"
@@ -29,7 +29,7 @@
         tools:layout_constraintRight_creator="1" />
 
     <EditText
-        android:id="@+id/password_field"
+        android:id="@+id/si_password"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_marginTop="8dp"
@@ -38,7 +38,7 @@
         android:inputType="textPassword"
         app:layout_constraintLeft_toLeftOf="parent"
         app:layout_constraintRight_toLeftOf="@+id/password_reveal"
-        app:layout_constraintTop_toBottomOf="@+id/username_field" />
+        app:layout_constraintTop_toBottomOf="@+id/si_username" />
 
     <Button
         android:id="@+id/password_reveal"
@@ -47,10 +47,10 @@
         android:layout_marginStart="8dp"
         android:onClick="onTogglePasswordVisibility"
         android:text="@string/show"
-        app:layout_constraintBottom_toBottomOf="@+id/password_field"
-        app:layout_constraintLeft_toRightOf="@+id/password_field"
+        app:layout_constraintBottom_toBottomOf="@+id/si_password"
+        app:layout_constraintLeft_toRightOf="@+id/si_password"
         app:layout_constraintRight_toRightOf="parent"
-        app:layout_constraintTop_toTopOf="@+id/password_field"
+        app:layout_constraintTop_toTopOf="@+id/si_password"
         app:layout_constraintVertical_bias="0.6" />
 
     <EditText
@@ -63,7 +63,7 @@
         android:inputType="textEmailAddress"
         app:layout_constraintLeft_toLeftOf="parent"
         app:layout_constraintRight_toRightOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/password_field"
+        app:layout_constraintTop_toBottomOf="@+id/si_password"
         tools:layout_constraintLeft_creator="1"
         tools:layout_constraintRight_creator="1" />
 

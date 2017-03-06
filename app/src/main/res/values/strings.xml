@@ -42,4 +42,5 @@
     <string name="share">Share</string>
     <string name="delete">Delete</string>
     <string name="pijun">Pijun</string>
+    <string name="email_hint_msg">Email (optional)</string>
 </resources>

@@ -99,4 +99,13 @@ public class Utils {
         }
     }
 
+    public static int pixToDps(Context ctx, int pixs) {
+        float scale = ctx.getResources().getDisplayMetrics().density;
+        return (int)((pixs - 0.5f)/scale);
+    }
+
+    public static int dpsToPix(Context ctx, int dps) {
+        float scale = ctx.getResources().getDisplayMetrics().density;
+        return (int) (dps * scale + 0.5f);
+    }
 }

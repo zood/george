@@ -3,21 +3,23 @@ package io.pijun.george;
 import android.animation.LayoutTransition;
 import android.content.Context;
 import android.content.Intent;
+import android.graphics.Rect;
 import android.os.Bundle;
 import android.support.annotation.IdRes;
 import android.support.annotation.LayoutRes;
 import android.support.annotation.Nullable;
 import android.support.annotation.UiThread;
 import android.support.annotation.WorkerThread;
-import android.support.constraint.ConstraintLayout;
-import android.support.design.widget.TextInputEditText;
+import android.support.percent.PercentRelativeLayout;
 import android.support.v7.app.AppCompatActivity;
 import android.text.InputType;
 import android.text.TextUtils;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.inputmethod.InputMethodManager;
+import android.widget.Button;
 import android.widget.EditText;
+import android.widget.RelativeLayout;
 
 import com.google.firebase.crash.FirebaseCrash;
 
@@ -38,10 +40,13 @@ import io.pijun.george.crypto.EncryptedData;
 import io.pijun.george.models.Snapshot;
 import retrofit2.Response;
 
-public class WelcomeActivity extends AppCompatActivity {
+public class WelcomeActivity extends AppCompatActivity implements View.OnLayoutChangeListener {
 
     private boolean mShowingCreateAccount;
     private boolean mShowingSignIn;
+    private long mLayoutDuration;
+    private boolean mCapturedSize = false;
+    private Rect mScreenSize = null;
 
     public static Intent newIntent(Context ctx) {
         return new Intent(ctx, WelcomeActivity.class);
@@ -53,15 +58,20 @@ public class WelcomeActivity extends AppCompatActivity {
 
         mShowingCreateAccount = false;
         mShowingSignIn = false;
-        setContentView(R.layout.activity_welcome);
-        ConstraintLayout root = (ConstraintLayout) findViewById(R.id.constraintLayout);
+        setContentView(R.layout.activity_test);
+        PercentRelativeLayout root = (PercentRelativeLayout) findViewById(R.id.root);
         LayoutTransition lt = new LayoutTransition();
-        lt.disableTransitionType(LayoutTransition.CHANGE_APPEARING);
-        lt.disableTransitionType(LayoutTransition.CHANGE_DISAPPEARING);
-        lt.disableTransitionType(LayoutTransition.DISAPPEARING);
-        lt.disableTransitionType(LayoutTransition.APPEARING);
-        lt.enableTransitionType(LayoutTransition.CHANGING);
+//        lt.setDuration(LayoutTransition.CHANGE_DISAPPEARING, 100);
+//        lt.setDuration(100);
+        mLayoutDuration = lt.getDuration(LayoutTransition.CHANGING);
+//        lt.disableTransitionType(LayoutTransition.CHANGE_APPEARING);
+//        lt.disableTransitionType(LayoutTransition.CHANGE_DISAPPEARING);
+//        lt.enableTransitionType(LayoutTransition.DISAPPEARING);
+//        lt.disableTransitionType(LayoutTransition.APPEARING);
+//        lt.enableTransitionType(LayoutTransition.CHANGING);
         root.setLayoutTransition(lt);
+
+        root.addOnLayoutChangeListener(this);
     }
 
     @Override
@@ -97,13 +107,13 @@ public class WelcomeActivity extends AppCompatActivity {
         subtitle.animate().alpha(0).start();
 
         // inflate all our fields
-        ViewGroup root = (ViewGroup) findViewById(R.id.constraintLayout);
+        ViewGroup root = (ViewGroup) findViewById(R.id.root);
         final View fieldsView = getLayoutInflater().inflate(layoutId, root, false);
         fieldsView.setTranslationX(root.getWidth());
         root.addView(fieldsView);
 
         // have the keyboard focus on the username field
-        final EditText usernameField = (EditText) fieldsView.findViewById(R.id.username_field);
+        final EditText usernameField = (EditText) fieldsView.findViewById(R.id.si_username);
         showKeyboard(usernameField);
         // animate the fields into view
         fieldsView.animate().translationX(0).start();
@@ -127,25 +137,93 @@ public class WelcomeActivity extends AppCompatActivity {
         mShowingSignIn = true;
 
 //        inflateAndPresent(R.layout.sign_in_fields);
-        View root = findViewById(R.id.constraintLayout);
+        // retrieve all the view objects
+        PercentRelativeLayout root = (PercentRelativeLayout) findViewById(R.id.root);
         View globe = findViewById(R.id.globe);
+        final View logo = findViewById(R.id.logo);
+        Button signIn = (Button) findViewById(R.id.sign_in_button);
+        Button register = (Button) findViewById(R.id.register_button);
+        View username = findViewById(R.id.si_username_container);
+        View password = findViewById(R.id.si_password_container);
+        // move the inputs to just outside of the screen view
+        username.setTranslationX(root.getWidth());
+        password.setTranslationX(root.getWidth());
+        int thirtyTwo = getResources().getDimensionPixelSize(R.dimen.thirtyTwo);
 
-        View usernameContainer = findViewById(R.id.username_container);
-        usernameContainer.setTranslationX(root.getWidth());
-        View passwordContainer = findViewById(R.id.password_container);
-        passwordContainer.setTranslationX(root.getWidth());
+        // MAKE SPACE FOR THE INPUT BUTTONS
+        // First, move the sign in and register buttons to the bottom right.
+        PercentRelativeLayout.LayoutParams signInParams = new PercentRelativeLayout.LayoutParams(PercentRelativeLayout.LayoutParams.WRAP_CONTENT, PercentRelativeLayout.LayoutParams.WRAP_CONTENT); //(PercentRelativeLayout.LayoutParams) signIn.getLayoutParams();
+        signInParams.addRule(RelativeLayout.ALIGN_PARENT_END);
+        signInParams.addRule(RelativeLayout.ALIGN_PARENT_BOTTOM);
+        signInParams.setMarginEnd(thirtyTwo);
+        signInParams.bottomMargin = thirtyTwo;
+        root.updateViewLayout(signIn, signInParams);
+        PercentRelativeLayout.LayoutParams regParams = new PercentRelativeLayout.LayoutParams(PercentRelativeLayout.LayoutParams.WRAP_CONTENT, PercentRelativeLayout.LayoutParams.WRAP_CONTENT);
+        regParams.addRule(RelativeLayout.ALIGN_PARENT_BOTTOM);
+        regParams.addRule(RelativeLayout.LEFT_OF, signIn.getId());
+        regParams.setMarginEnd(thirtyTwo);
+        regParams.bottomMargin = thirtyTwo;
+        root.updateViewLayout(register, regParams);
 
-        usernameContainer.animate().translationX(0).setDuration(300).start();
-        passwordContainer.animate().translationX(0).setDuration(300).start();
-        globe.animate().translationY(globe.getHeight()).setDuration(300).start();
+//        PercentRelativeLayout.LayoutParams logoParams = (PercentRelativeLayout.LayoutParams) logo.getLayoutParams();
+//        PercentLayoutHelper.PercentLayoutInfo logoPctInfo = logoParams.getPercentLayoutInfo();
+//        L.i("top is: " + logoPctInfo.topMarginPercent);
+//        logoPctInfo.topMarginPercent = 0.0704f;
+//        root.updateViewLayout(logo, logoParams);
+//        root.invalidate();
 
-        final TextInputEditText usernameField = (TextInputEditText) findViewById(R.id.username_field);
-        showKeyboard(usernameField);
+        // also, hide the globe
+        globe.animate().translationY(globe.getHeight()).alpha(0).start();
+
+        // after the space has been made, animate the inputs into view
+        username.animate().
+                translationX(0).
+                setStartDelay(mLayoutDuration).
+                withEndAction(new UiRunnable() {
+                    @Override
+                    public void run() {
+//                        EditText usernameField = (EditText) findViewById(R.id.username_field);
+//                        showKeyboard(usernameField);
+                    }
+                });
+        password.animate().translationX(0).setStartDelay(mLayoutDuration);
+//        inputsContainer.setVisibility(View.VISIBLE);
+//        inputsContainer.animate().
+//                translationX(0).
+//                setStartDelay(mLayoutDuration).
+//                withEndAction(new UiRunnable() {
+//                    @Override
+//                    public void run() {
+//                        EditText usernameField = (EditText) findViewById(R.id.username_field);
+//                        showKeyboard(usernameField);
+//                    }
+//                }).start();
+
+//        signIn.animate().
+//                x(root.getWidth() - signIn.getWidth() - thirtyTwo).
+//                y(root.getHeight() - signIn.getHeight() - thirtyTwo).
+//                start();
+
+//        ConstraintLayout.LayoutParams signInParams = (ConstraintLayout.LayoutParams) signIn.getLayoutParams();
+//        signInParams.bottomToBottom = ConstraintLayout.LayoutParams.PARENT_ID;
+//        signInParams.rightToRight = ConstraintLayout.LayoutParams.PARENT_ID;
+//        signInParams.leftToLeft = ConstraintLayout.LayoutParams.UNSET;
+//        signInParams.topToTop = ConstraintLayout.LayoutParams.UNSET;
+//        signInParams.setMarginEnd(getResources().getDimensionPixelSize(R.dimen.thirtyTwo));
+//        root.updateViewLayout(signIn, signInParams);
+//
+//        ConstraintLayout.LayoutParams regParams = (ConstraintLayout.LayoutParams) register.getLayoutParams();
+//        regParams.rightToRight = signIn.getId();
+//        regParams.bottomToBottom = ConstraintLayout.LayoutParams.PARENT_ID;
+//        regParams.leftToLeft = ConstraintLayout.LayoutParams.UNSET;
+//        regParams.topToTop = ConstraintLayout.LayoutParams.UNSET;
+//        regParams.setMarginEnd(getResources().getDimensionPixelSize(R.dimen.sixteen));
+//        root.updateViewLayout(signIn, regParams);
     }
 
     @UiThread
     public void onTogglePasswordVisibility(View v) {
-        EditText field = (EditText) findViewById(R.id.password_field);
+        EditText field = (EditText) findViewById(R.id.si_password);
         L.i("on password toggle: " + field.getInputType());
         int basicPassword = InputType.TYPE_TEXT_VARIATION_PASSWORD | InputType.TYPE_CLASS_TEXT;
         if (field.getInputType() == basicPassword) {
@@ -157,14 +235,14 @@ public class WelcomeActivity extends AppCompatActivity {
 
     @UiThread
     public void onCreateAccountAction(View v) {
-        EditText usernameField = (EditText) findViewById(R.id.username_field);
+        EditText usernameField = (EditText) findViewById(R.id.si_username);
         final String username = usernameField.getText().toString();
         if (TextUtils.isEmpty(username)) {
             Utils.showAlert(this, 0, R.string.need_username_msg);
             return;
         }
 
-        EditText passwordField = (EditText) findViewById(R.id.password_field);
+        EditText passwordField = (EditText) findViewById(R.id.si_password);
         final String password = passwordField.getText().toString();
         if (password.length() < 6) {
             Utils.showAlert(this, 0, R.string.password_too_short_msg);
@@ -186,13 +264,13 @@ public class WelcomeActivity extends AppCompatActivity {
 
     @UiThread
     public void onLoginAction(View v) {
-        EditText usernameField = (EditText) findViewById(R.id.username_field);
+        EditText usernameField = (EditText) findViewById(R.id.si_username);
         final String username = usernameField.getText().toString();
         if (TextUtils.isEmpty(username)) {
             Utils.showAlert(this, 0, R.string.enter_username_msg);
         }
 
-        EditText passwordField = (EditText) findViewById(R.id.password_field);
+        EditText passwordField = (EditText) findViewById(R.id.si_password);
         final String password = passwordField.getText().toString();
 
         App.runInBackground(new WorkerRunnable() {
@@ -219,7 +297,7 @@ public class WelcomeActivity extends AppCompatActivity {
         subtitle.animate().alpha(1).start();
 
         // animate out the fields and then remove them
-        final ViewGroup root = (ViewGroup) findViewById(R.id.constraintLayout);
+        final ViewGroup root = (ViewGroup) findViewById(R.id.root);
         final View fields = findViewById(containerId);
         fields.animate().translationX(root.getWidth()).withEndAction(new Runnable() {
             @Override
@@ -478,6 +556,46 @@ public class WelcomeActivity extends AppCompatActivity {
     @UiThread
     private void hideKeyboard() {
         InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
-        imm.hideSoftInputFromWindow(findViewById(R.id.constraintLayout).getWindowToken(), 0);
+        imm.hideSoftInputFromWindow(findViewById(R.id.root).getWindowToken(), 0);
+    }
+
+    @Override
+    public void onLayoutChange(View v, int left, int top, int right, int bottom, int oldLeft, int oldTop, int oldRight, int oldBottom) {
+        L.i("onLayoutChanged: " + bottom);
+        if (left == oldLeft && right == oldRight && top == oldTop && bottom == oldBottom) {
+            L.i("\tno actual chage");
+            return;
+        }
+        if (!mCapturedSize) {
+            mCapturedSize = true;
+            mScreenSize = new Rect(left, top, right, bottom);
+        }
+
+        final View logo = findViewById(R.id.logo);
+        View title = findViewById(R.id.screen_title);
+        View subtitle = findViewById(R.id.screen_subtitle);
+        View username = findViewById(R.id.si_username_container);
+        View password = findViewById(R.id.si_password_container);
+        View root = findViewById(R.id.root);
+//        PercentRelativeLayout.LayoutParams inputsParams = (PercentRelativeLayout.LayoutParams) inputs.getLayoutParams();
+//        PercentRelativeLayout.LayoutParams logoParams = (PercentRelativeLayout.LayoutParams) logo.getLayoutParams();
+//        PercentLayoutHelper.PercentLayoutInfo logoPctInfo = logoParams.getPercentLayoutInfo();
+        int duration = 70;
+        if (bottom < mScreenSize.bottom) {
+            logo.animate().alpha(0).setDuration(30).withLayer();
+            int deltaY = logo.getTop() - title.getTop();
+            title.animate().translationY(deltaY).setDuration(duration).withLayer();
+            subtitle.animate().translationY(deltaY).setDuration(duration).withLayer();
+            username.animate().translationY(deltaY).translationX(0).setDuration(duration);
+            password.animate().translationY(deltaY).translationX(0).setDuration(duration);
+        } else {
+            logo.animate().alpha(1).setDuration(duration).withLayer();
+            title.animate().translationY(0).setDuration(duration).withLayer();
+            subtitle.animate().translationY(0).setDuration(duration).withLayer();
+            int xTranslation = mShowingSignIn ? 0 : root.getWidth();
+            L.i("\txTranslation: " + xTranslation);
+            username.animate().translationY(0).translationX(xTranslation).setDuration(duration);
+            password.animate().translationY(0).translationX(xTranslation).setDuration(duration);
+        }
     }
 }
