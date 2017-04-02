@@ -65,8 +65,6 @@ public class MyLocationView extends View {
 
     @Override
     protected void onDraw(Canvas canvas) {
-        super.onDraw(canvas);
-
         MyLocationView.draw(canvas, mFill, mBorder);
     }
 }

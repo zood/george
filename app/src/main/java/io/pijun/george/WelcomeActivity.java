@@ -44,16 +44,43 @@ public class WelcomeActivity extends AppCompatActivity implements View.OnLayoutC
         super.onCreate(savedInstanceState);
 
         setContentView(R.layout.activity_welcome);
-        WelcomeLayout root = (WelcomeLayout) findViewById(R.id.root);
-        root.addOnLayoutChangeListener(this);
+        final WelcomeLayout root = (WelcomeLayout) findViewById(R.id.root);
+//        root.addOnLayoutChangeListener(this);
+
+        App.runOnUiThread(new UiRunnable() {
+            @Override
+            public void run() {
+                root.transitionTo(WelcomeLayout.STATE_LOGO_AND_TITLES);
+            }
+        }, 1000);
+    }
+
+    @Override
+    protected void onStart() {
+        super.onStart();
+
+        final WelcomeLayout root = (WelcomeLayout) findViewById(R.id.root);
+        if (root != null) {
+            root.setCloudMovementEnabled(true);
+        }
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+
+        final WelcomeLayout root = (WelcomeLayout) findViewById(R.id.root);
+        if (root != null) {
+            root.setCloudMovementEnabled(false);
+        }
     }
 
     @Override
     public void onBackPressed() {
-        if (mCurrentTask != WelcomeLayout.TASK_SPLASH) {
-            mCurrentTask = WelcomeLayout.TASK_SPLASH;
-            WelcomeLayout root = (WelcomeLayout) findViewById(R.id.root);
-            root.setTask(WelcomeLayout.TASK_SPLASH, true);
+        WelcomeLayout root = (WelcomeLayout) findViewById(R.id.root);
+        int state = root.getState();
+        if (state == WelcomeLayout.STATE_REGISTER || state == WelcomeLayout.STATE_SIGN_IN) {
+            root.transitionTo(WelcomeLayout.STATE_SPLASH);
             return;
         }
 
@@ -63,18 +90,24 @@ public class WelcomeActivity extends AppCompatActivity implements View.OnLayoutC
     @UiThread
     public void onSignInAction(View v) {
         // If we're already in sign in mode, then attempt to login
-        if (mCurrentTask == WelcomeLayout.TASK_SIGN_IN) {
-            onLoginAction();
-            return;
-        }
+//        if (mCurrentTask == WelcomeLayout.TASK_SIGN_IN) {
+//            onLoginAction();
+//            return;
+//        }
+//
+//        mCurrentTask = WelcomeLayout.TASK_SIGN_IN;
+//        WelcomeLayout root = (WelcomeLayout) findViewById(R.id.root);
+//        root.setTask(WelcomeLayout.TASK_SIGN_IN, true);
+    }
 
-        mCurrentTask = WelcomeLayout.TASK_SIGN_IN;
+    public void onShowRegistration(View v) {
         WelcomeLayout root = (WelcomeLayout) findViewById(R.id.root);
-        root.setTask(WelcomeLayout.TASK_SIGN_IN, true);
+        root.transitionTo(WelcomeLayout.STATE_REGISTER);
     }
 
     @UiThread
     public void onRegisterAction(View v) {
+        /*
         // If we're already in register mode, then attempt to create an account
         if (mCurrentTask == WelcomeLayout.TASK_REGISTER) {
             onCreateAccountAction();
@@ -84,6 +117,7 @@ public class WelcomeActivity extends AppCompatActivity implements View.OnLayoutC
         mCurrentTask = WelcomeLayout.TASK_REGISTER;
         WelcomeLayout root = (WelcomeLayout) findViewById(R.id.root);
         root.setTask(WelcomeLayout.TASK_REGISTER, true);
+        */
     }
 
     @UiThread

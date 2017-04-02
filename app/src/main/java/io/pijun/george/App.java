@@ -92,6 +92,10 @@ public class App extends Application {
         sApp.mUiThreadHandler.post(r);
     }
 
+    public static void runOnUiThread(UiRunnable r, long delay) {
+        sApp.mUiThreadHandler.postDelayed(r, delay);
+    }
+
     @AnyThread
     public static void runInBackground(WorkerRunnable r) {
         sApp.mExecutor.execute(r);
