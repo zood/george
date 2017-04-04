@@ -11,6 +11,8 @@
         android:id="@+id/root"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:focusable="true"
+        android:focusableInTouchMode="true"
         tools:context=".TestActivity">
         <ImageView
             android:contentDescription="@null"
@@ -99,52 +101,62 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="8dp"
             android:layout_marginBottom="32dp"
-            android:onClick="onSignInAction" />
+            android:onClick="onShowSignIn" />
 
-        <LinearLayout
-            android:id="@+id/si_inputs"
-            android:orientation="vertical"
-            android:layout_marginTop="32dp"
+        <android.support.design.widget.TextInputLayout
+            android:id="@+id/si_username_container"
             android:layout_marginStart="64dp"
             android:layout_marginEnd="96dp"
+            android:layout_marginTop="32dp"
             android:layout_width="match_parent"
             android:layout_height="wrap_content">
-            <android.support.design.widget.TextInputLayout
-                android:id="@+id/si_username_container"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content">
-                <android.support.design.widget.TextInputEditText
-                    android:id="@+id/si_username"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:drawableStart="@drawable/ic_user"
-                    android:drawableTint="@color/common_gray"
-                    android:hint="@string/username"
-                    android:imeOptions="actionNext"
-                    android:inputType="text|textNoSuggestions"
-                    android:maxLines="1"
-                    android:privateImeOptions="nm"
-                    android:textSize="16sp" />
-            </android.support.design.widget.TextInputLayout>
-            <android.support.design.widget.TextInputLayout
-                android:id="@+id/si_password_container"
+            <android.support.design.widget.TextInputEditText
+                android:id="@+id/si_username"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                app:passwordToggleEnabled="true"
-                app:passwordToggleTint="@color/common_gray">
-                <android.support.design.widget.TextInputEditText
-                    android:id="@+id/si_password"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:drawableStart="@drawable/ic_padlock"
-                    android:drawableTint="@color/common_gray"
-                    android:hint="@string/password"
-                    android:imeOptions="actionNext"
-                    android:inputType="textPassword"
-                    android:maxLines="1"
-                    android:textSize="16sp" />
-            </android.support.design.widget.TextInputLayout>
-        </LinearLayout>
+                android:drawableStart="@drawable/ic_user"
+                android:drawableTint="@color/common_gray"
+                android:hint="@string/username"
+                android:imeOptions="actionNext"
+                android:inputType="text|textNoSuggestions"
+                android:maxLines="1"
+                android:privateImeOptions="nm"
+                android:textSize="16sp" />
+        </android.support.design.widget.TextInputLayout>
+        <android.support.design.widget.TextInputLayout
+            android:id="@+id/si_password_container"
+            android:layout_marginStart="64dp"
+            android:layout_marginEnd="96dp"
+            android:layout_marginTop="0dp"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:passwordToggleEnabled="true"
+            app:passwordToggleTint="@color/common_gray">
+            <android.support.design.widget.TextInputEditText
+                android:id="@+id/si_password"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:drawableStart="@drawable/ic_padlock"
+                android:drawableTint="@color/common_gray"
+                android:hint="@string/password"
+                android:imeOptions="actionNext"
+                android:inputType="textPassword"
+                android:maxLines="1"
+                android:textSize="16sp" />
+        </android.support.design.widget.TextInputLayout>
+        <Button
+            android:id="@+id/sign_in_button"
+            android:text="@string/sign_in"
+            style="@style/Widget.AppCompat.Button.Colored"
+            android:textAllCaps="false"
+            android:textSize="16sp"
+            android:backgroundTint="@color/colorPrimary"
+            android:minHeight="48dp"
+            android:minWidth="112dp"
+            android:layout_margin="32dp"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:onClick="onSignInAction" />
 
         <android.support.design.widget.TextInputLayout
             android:id="@+id/reg_username_container"
@@ -212,7 +224,6 @@
             android:textAllCaps="false"
             android:textSize="16sp"
             android:backgroundTint="@color/colorPrimary"
-            android:layout_centerHorizontal="true"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_margin="32dp"

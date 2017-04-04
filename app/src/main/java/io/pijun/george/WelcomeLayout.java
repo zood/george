@@ -1,18 +1,16 @@
 package io.pijun.george;
 
+import android.annotation.SuppressLint;
 import android.content.Context;
-import android.support.annotation.AnyThread;
 import android.support.annotation.IntDef;
 import android.support.annotation.NonNull;
 import android.support.annotation.Px;
 import android.support.annotation.UiThread;
-import android.support.annotation.WorkerThread;
 import android.support.design.widget.TextInputLayout;
 import android.support.percent.PercentRelativeLayout;
 import android.util.AttributeSet;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.animation.AccelerateDecelerateInterpolator;
 import android.view.animation.LinearInterpolator;
 import android.widget.Button;
 import android.widget.ImageView;
@@ -35,12 +33,12 @@ public class WelcomeLayout extends ViewGroup {
     public static final int STATE_SIGN_IN = 4;
     @Retention(RetentionPolicy.SOURCE)
     @IntDef({STATE_ANIMATED_INTRO, STATE_LOGO_AND_TITLES, STATE_SPLASH, STATE_REGISTER, STATE_SIGN_IN})
-    public @interface State {}
+    @interface State {}
 
     private boolean mHasInited = false;
     private Integer mOriginalHeight = null;
     private float mDensity = 0;
-    @State private int mState = STATE_SIGN_IN;
+    @State private int mState = 0;//STATE_SIGN_IN;
     private boolean mCloudsMoving = true;
     private View mLogo;
     private View mGlobe;
@@ -48,8 +46,6 @@ public class WelcomeLayout extends ViewGroup {
     private TextView mSubtitle;
     private Button mShowSignIn;
     private Button mShowRegister;
-    private View mSiInputs;
-    private View mRegInputs;
     private ImageView mCloud1;
     private ImageView mCloud2;
     private SignInElements siViews = new SignInElements();
@@ -97,9 +93,6 @@ public class WelcomeLayout extends ViewGroup {
                 case R.id.show_register_button:
                     mShowRegister = (Button) child;
                     break;
-                case R.id.si_inputs:
-                    mSiInputs = child;
-                    break;
                 case R.id.cloud1:
                     mCloud1 = (ImageView) child;
                     break;
@@ -118,6 +111,15 @@ public class WelcomeLayout extends ViewGroup {
                 case R.id.register_button:
                     regViews.button = (Button) child;
                     break;
+                case R.id.si_username_container:
+                    siViews.username = (TextInputLayout) child;
+                    break;
+                case R.id.si_password_container:
+                    siViews.password = (TextInputLayout) child;
+                    break;
+                case R.id.sign_in_button:
+                    siViews.button = (Button) child;
+                    break;
             }
         }
     }
@@ -131,21 +133,9 @@ public class WelcomeLayout extends ViewGroup {
         return (int) (dps * mDensity + 0.5f);
     }
 
-    public int dps(int pix) {
-        return (int)((pix - 0.5f)/mDensity);
-    }
-
     @Override
+    @UiThread
     protected void onLayout(boolean changed, int l, int t, int r, int b) {
-//        L.i("changed: "+ changed + ", " + l + ", " + t + ", " + r + ", " + b);
-//        boolean animate = false;
-//        long duration = 0;
-//        if (mScreenSize == null) {
-//            mScreenSize = new Rect(l, t, r, b);
-//        } else {
-//            animate = true;
-//            duration = 150;
-//        }
         if (!mHasInited) {
             init();
         }
@@ -163,11 +153,17 @@ public class WelcomeLayout extends ViewGroup {
             case STATE_REGISTER:
                 layoutRegistration(r-l, b-t);
                 break;
+            case STATE_SIGN_IN:
+                layoutSignIn(r-l, b-t);
+                break;
+            default:
+                throw new RuntimeException("Unhandled layout state: " + mState);
         }
 
 //        layoutChildren(r-l, b-t, animate, duration);
     }
 
+    @UiThread
     private void layoutLogoAndTitles(int width, int height) {
         int contentHeight;
         contentHeight = mLogo.getMeasuredHeight();
@@ -202,6 +198,7 @@ public class WelcomeLayout extends ViewGroup {
         mSubtitle.layout(subtitleL, subtitleT, subtitleR, subtitleB);
     }
 
+    @UiThread
     private void layoutAnimatedIntro() {
         L.i("layoutAnimatedIntro");
         // everything should be hidden while the animation is playing
@@ -215,6 +212,7 @@ public class WelcomeLayout extends ViewGroup {
         mCloud2.layout(0, 0, 0, 0);
     }
 
+    @UiThread
     private void layoutSplash(int width, int height) {
         /*
         TOP ELEMENTS
@@ -268,28 +266,10 @@ public class WelcomeLayout extends ViewGroup {
         srB = srT + mShowRegister.getMeasuredHeight();
         mShowRegister.layout(srL, srT, srR, srB);
 
-        /*
-        CLOUDS
-         */
-        // CLOUD 1
-        int cl1L, cl1T, cl1R, cl1B;
-        LayoutParams cl1Params = (LayoutParams) mCloud1.getLayoutParams();
-        cl1L = width - mCloud1.getMeasuredWidth() - cl1Params.getMarginEnd();
-        cl1T = cl1Params.topMargin;
-        cl1R = cl1L + mCloud1.getMeasuredWidth();
-        cl1B = cl1T + mCloud1.getMeasuredHeight();
-        mCloud1.layout(cl1L, cl1T, cl1R, cl1B);
-
-        // CLOUD 2
-        int cl2L, cl2T, cl2R, cl2B;
-        LayoutParams cl2Params = (LayoutParams) mCloud2.getLayoutParams();
-        cl2L = cl2Params.getMarginStart();
-        cl2T = cl2Params.topMargin;
-        cl2R = cl2L + mCloud2.getMeasuredWidth();
-        cl2B = cl2T + mCloud2.getMeasuredHeight();
-        mCloud2.layout(cl2L, cl2T, cl2R, cl2B);
+        layoutClouds(width);
     }
 
+    @UiThread
     private void layoutRegistration(int width, int height) {
         float headerScale = 80.0f/96.0f;
         int fourPctPix = (int)(0.04f * (float)height);
@@ -365,9 +345,82 @@ public class WelcomeLayout extends ViewGroup {
         mShowRegister.setTranslationX(-mShowRegister.getRight());
         mShowSignIn.setTranslationX(-mShowSignIn.getRight());
 
-        /*
-        CLOUDS
-         */
+        layoutClouds(width);
+    }
+
+    @UiThread
+    private void layoutSignIn(int width, int height) {
+        float headerScale = 80.0f/96.0f;
+        int fourPctPix = (int)(0.04f * (float)height);
+        int logoL, logoT, logoR, logoB;
+        logoL = width/2 - mLogo.getMeasuredWidth()/2;
+        logoT = (int)(0.062*(float)height);
+        logoR = logoL + mLogo.getMeasuredWidth();
+        logoB = logoT + mLogo.getMeasuredHeight();
+        mLogo.setPivotX(mLogo.getMeasuredWidth()/2);
+        mLogo.setPivotY(0);
+        mLogo.setScaleX(headerScale);
+        mLogo.setScaleY(headerScale);
+        mLogo.layout(logoL, logoT, logoR, logoB);
+
+        int titleL, titleT, titleR, titleB;
+        titleL = width/2 - mTitle.getMeasuredWidth()/2;
+        titleT = logoT + (int)((float)mLogo.getMeasuredHeight()*headerScale) + fourPctPix;
+        titleR = titleL + mTitle.getMeasuredWidth();
+        titleB = titleT + mTitle.getMeasuredHeight();
+        mTitle.setPivotX(mTitle.getMeasuredWidth()/2);
+        mTitle.setPivotY(0);
+        mTitle.setScaleX(headerScale);
+        mTitle.setScaleY(headerScale);
+        mTitle.layout(titleL, titleT, titleR, titleB);
+
+        int subtitleL, subtitleT, subtitleR, subtitleB;
+        subtitleL = width/2 - mSubtitle.getMeasuredWidth()/2;
+        subtitleT = titleT + (int)((float)mTitle.getMeasuredHeight()*headerScale) + (int)(0.02*(float)height);
+        subtitleR = subtitleL + mSubtitle.getMeasuredWidth();
+        subtitleB = subtitleT + mSubtitle.getMeasuredHeight();
+        mSubtitle.setPivotX(mSubtitle.getMeasuredWidth()/2);
+        mSubtitle.setPivotY(0);
+        mSubtitle.setScaleX(headerScale);
+        mSubtitle.setScaleY(headerScale);
+        mSubtitle.layout(subtitleL, subtitleT, subtitleR, subtitleB);
+
+        int usernameL, usernameT, usernameR, usernameB;
+        LayoutParams usernameParams = (LayoutParams) siViews.username.getLayoutParams();
+        usernameL = usernameParams.getMarginStart();
+        usernameT = subtitleT + (int)((float)mSubtitle.getMeasuredHeight()*headerScale) + fourPctPix;
+        usernameR = width - usernameParams.getMarginEnd();
+        usernameB = usernameT + siViews.username.getMeasuredHeight();
+        siViews.username.layout(usernameL, usernameT, usernameR, usernameB);
+
+        int passwordL, passwordT, passwordR, passwordB;
+        LayoutParams passwordParams = (LayoutParams) siViews.password.getLayoutParams();
+        passwordL = passwordParams.getMarginStart();
+        passwordT = usernameB + passwordParams.topMargin;
+        passwordR = width - passwordParams.getMarginEnd();
+        passwordB = passwordT + siViews.password.getMeasuredHeight();
+        siViews.password.layout(passwordL, passwordT, passwordR, passwordB);
+
+        int siL, siT, siR, siB;
+        LayoutParams siParams = (LayoutParams) siViews.button.getLayoutParams();
+        siL = width - siParams.getMarginEnd() - siViews.button.getMeasuredWidth();
+        siT = height - siParams.bottomMargin - siViews.button.getMeasuredHeight();
+        siR = siL + siViews.button.getMeasuredWidth();
+        siB = siT + siViews.button.getMeasuredHeight();
+        siViews.button.layout(siL, siT, siR, siB);
+
+        // move the globe out of view
+        mGlobe.setTranslationY(mGlobe.getMeasuredHeight());
+
+        // move the buttons to the left of the screen
+        mShowRegister.setTranslationX(-mShowRegister.getRight());
+        mShowSignIn.setTranslationX(-mShowSignIn.getRight());
+
+        layoutClouds(width);
+    }
+
+    @UiThread
+    private void layoutClouds(int width) {
         // CLOUD 1
         int cl1L, cl1T, cl1R, cl1B;
         LayoutParams cl1Params = (LayoutParams) mCloud1.getLayoutParams();
@@ -389,6 +442,8 @@ public class WelcomeLayout extends ViewGroup {
 
     @Override
     protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
+        // When the keyboard is shown, we don't want our size to be smaller, so we store the largest
+        // size we've encountered and always use that for our layout.
         if (mOriginalHeight == null || MeasureSpec.getSize(heightMeasureSpec) > mOriginalHeight) {
             mOriginalHeight = MeasureSpec.getSize(heightMeasureSpec);
         }
@@ -415,6 +470,7 @@ public class WelcomeLayout extends ViewGroup {
         }
     }
 
+    @SuppressLint("SwitchIntDef")
     @SuppressWarnings("unused")
     @UiThread
     public void transitionTo(@State int state) {
@@ -432,24 +488,29 @@ public class WelcomeLayout extends ViewGroup {
             case STATE_REGISTER:
                 transitionToRegistration();
                 break;
+            case STATE_SIGN_IN:
+                transitionToSignIn();
+                break;
         }
 
         mState = state;
     }
 
-    @UiThread
-    private void transitionToRegistration() {
-        int width = getWidth();
-
+    private void transitionToInputsCommon(@State int state) {
         // get the existing top of the header views
         int logoT = mLogo.getTop();
         int titleT = mTitle.getTop();
         int subtitleT = mSubtitle.getTop();
 
-        layoutRegistration(width, getHeight());
+        if (state == STATE_SIGN_IN) {
+            layoutSignIn(getWidth(), getHeight());
+        } else if (state == STATE_REGISTER) {
+            layoutRegistration(getWidth(), getHeight());
+        } else {
+            throw new RuntimeException("This method is only useful for transitioning to sign in or registration");
+        }
 
         float finalScale = mLogo.getScaleX();
-        // put the header views back in their position before layoutRegistration was called
 
         // animate the logo up
         mLogo.setScaleX(1);
@@ -500,6 +561,26 @@ public class WelcomeLayout extends ViewGroup {
         float showSignInTrx = mShowSignIn.getTranslationX();
         mShowSignIn.setTranslationX(0);
         mShowSignIn.animate().setStartDelay(100).translationX(showSignInTrx).setDuration(1000).setInterpolator(new BezierLinearInterpolator());
+    }
+
+    @UiThread
+    private void transitionToSignIn() {
+        transitionToInputsCommon(STATE_SIGN_IN);
+        int width = getWidth();
+        siViews.username.setTranslationX(width - siViews.username.getLeft());
+        siViews.username.animate().translationX(0).setStartDelay(750).setDuration(500).setInterpolator(new LinearBezierInterpolator());
+
+        siViews.password.setTranslationX(width - siViews.password.getLeft());
+        siViews.password.animate().translationX(0).setStartDelay(850).setDuration(500).setInterpolator(new LinearBezierInterpolator());
+
+        siViews.button.setTranslationX(width - siViews.button.getLeft());
+        siViews.button.animate().translationX(0).setStartDelay(1000).setDuration(500).setInterpolator(new LinearBezierInterpolator());
+    }
+
+    @UiThread
+    private void transitionToRegistration() {
+        transitionToInputsCommon(STATE_REGISTER);
+        int width = getWidth();
 
         // move the input fields off screen, so we can animate them in
         regViews.username.setTranslationX(width - regViews.username.getLeft());
@@ -511,10 +592,11 @@ public class WelcomeLayout extends ViewGroup {
         regViews.email.setTranslationX(width - regViews.email.getLeft());
         regViews.email.animate().translationX(0).setStartDelay(950).setDuration(500).setInterpolator(new LinearBezierInterpolator());
 
-        regViews.button.setTranslationX(width - regViews.username.getLeft());
+        regViews.button.setTranslationX(width - regViews.button.getLeft());
         regViews.button.animate().translationX(0).setStartDelay(1100).setDuration(500).setInterpolator(new LinearBezierInterpolator());
     }
 
+    @SuppressLint("SwitchIntDef")
     @UiThread
     private void transitionToSplash() {
         // The animations differ based on the current screen
@@ -531,14 +613,7 @@ public class WelcomeLayout extends ViewGroup {
         }
     }
 
-    private void transitionToSplashFromSignIn() {
-        layoutSplash(getWidth(), getHeight());
-    }
-
-    private void transitionToSplashFromRegister() {
-        int height = getHeight();
-        int width = getWidth();
-
+    private void transitionToSplashFromInputsCommon(@State int state) {
         // get the existing tops of the logo, title and subtitle
         int logoT = mLogo.getTop();
         int titleT = mTitle.getTop();
@@ -546,7 +621,16 @@ public class WelcomeLayout extends ViewGroup {
         // get the existing scale as well
         float currScale = mLogo.getScaleX();
 
-        layoutSplash(width, height);
+        layoutSplash(getWidth(), getHeight());
+
+        long initialDelay;
+        if (state == STATE_SIGN_IN) {
+            initialDelay = 650;
+        } else if (state == STATE_REGISTER) {
+            initialDelay = 750;
+        } else {
+            throw new RuntimeException("Must be called with sign in or register");
+        }
 
         /*
         Not that the logo, title and subtitle have been moved to their final
@@ -559,7 +643,7 @@ public class WelcomeLayout extends ViewGroup {
         mLogo.animate().
                 translationY(0).
                 setDuration(750).
-                setStartDelay(750).
+                setStartDelay(initialDelay).
                 scaleX(1).
                 scaleY(1).
                 setInterpolator(new Bezier65Interpolator());
@@ -570,7 +654,7 @@ public class WelcomeLayout extends ViewGroup {
         mTitle.animate().
                 translationY(0).
                 setDuration(750).
-                setStartDelay(750).
+                setStartDelay(initialDelay).
                 scaleX(1).
                 scaleY(1).
                 setInterpolator(new Bezier65Interpolator());
@@ -581,11 +665,64 @@ public class WelcomeLayout extends ViewGroup {
         mSubtitle.animate().
                 translationY(0).
                 setDuration(750).
-                setStartDelay(750).
+                setStartDelay(initialDelay).
                 scaleX(1).
                 scaleY(1).
                 setInterpolator(new Bezier65Interpolator());
 
+        // bring the hill back up
+        mGlobe.animate().
+                translationY(0).
+                setStartDelay(initialDelay).
+                setDuration(750).
+                setInterpolator(new LinearBezierInterpolator());
+
+        mShowSignIn.animate().
+                translationX(0).
+                setStartDelay(initialDelay).
+                setInterpolator(new LinearBezierInterpolator()).
+                setDuration(750);
+
+        mShowRegister.animate().
+                translationX(0).
+                setStartDelay(initialDelay+100).
+                setInterpolator(new LinearBezierInterpolator()).
+                setDuration(750);
+    }
+
+    private void transitionToSplashFromSignIn() {
+        siViews.username.clearFocus();
+        siViews.password.clearFocus();
+
+        transitionToSplashFromInputsCommon(STATE_SIGN_IN);
+
+        int width = getWidth();
+        siViews.button.animate().
+                translationX(width - siViews.button.getLeft()).
+                setStartDelay(0).
+                setDuration(500).
+                setInterpolator(new BezierLinearInterpolator());
+        siViews.password.animate().
+                translationX(width - siViews.password.getLeft()).
+                setStartDelay(150).
+                setDuration(500).
+                setInterpolator(new BezierLinearInterpolator());
+        siViews.username.animate().
+                translationX(width - siViews.username.getLeft()).
+                setStartDelay(250).
+                setDuration(500).
+                setInterpolator(new BezierLinearInterpolator());
+    }
+
+    private void transitionToSplashFromRegister() {
+        // dismiss the keyboard
+        regViews.username.clearFocus();
+        regViews.password.clearFocus();
+        regViews.email.clearFocus();
+
+        transitionToSplashFromInputsCommon(STATE_REGISTER);
+
+        int width = getWidth();
         regViews.button.animate().
                 translationX(width - regViews.button.getLeft()).
                 setStartDelay(0).
@@ -606,25 +743,6 @@ public class WelcomeLayout extends ViewGroup {
                 setStartDelay(350).
                 setDuration(500).
                 setInterpolator(new BezierLinearInterpolator());
-
-        // bring the hill back up
-        mGlobe.animate().
-                translationY(0).
-                setStartDelay(750).
-                setDuration(750).
-                setInterpolator(new LinearBezierInterpolator());
-
-        mShowSignIn.animate().
-                translationX(0).
-                setStartDelay(750).
-                setInterpolator(new LinearBezierInterpolator()).
-                setDuration(750);
-
-        mShowRegister.animate().
-                translationX(0).
-                setStartDelay(850).
-                setInterpolator(new LinearBezierInterpolator()).
-                setDuration(750);
     }
 
     private void transitionToSplashFromLogo() {
@@ -707,13 +825,11 @@ public class WelcomeLayout extends ViewGroup {
         if (!mCloudsMoving) {
             return;
         }
-        Thread.dumpStack();
         int width = getWidth();
         if (cloud.getX() >= width) {
             cloud.setTranslationX(-cloud.getRight());
         }
-        // xBy = 45 * t
-        float xBy = getWidth() - cloud.getX();
+        float xBy = width - cloud.getX();
         // speed is in DIPs per second
         int speedPx = pix(speed);
         cloud.animate().
@@ -725,7 +841,7 @@ public class WelcomeLayout extends ViewGroup {
                     public void run() {
                         scheduleCloudMovement(cloud, speed);
                     }
-                });
+                }).start();
     }
 
     @Override

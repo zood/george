@@ -37,8 +37,6 @@ public class WelcomeActivity extends AppCompatActivity implements View.OnLayoutC
         return new Intent(ctx, WelcomeActivity.class);
     }
 
-    private int mCurrentTask = WelcomeLayout.TASK_SPLASH;
-
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -103,6 +101,11 @@ public class WelcomeActivity extends AppCompatActivity implements View.OnLayoutC
     public void onShowRegistration(View v) {
         WelcomeLayout root = (WelcomeLayout) findViewById(R.id.root);
         root.transitionTo(WelcomeLayout.STATE_REGISTER);
+    }
+
+    public void onShowSignIn(View v) {
+        WelcomeLayout root = (WelcomeLayout) findViewById(R.id.root);
+        root.transitionTo(WelcomeLayout.STATE_SIGN_IN);
     }
 
     @UiThread
