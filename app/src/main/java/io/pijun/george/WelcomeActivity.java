@@ -1,5 +1,6 @@
 package io.pijun.george;
 
+import android.animation.ValueAnimator;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
@@ -11,11 +12,13 @@ import android.text.TextUtils;
 import android.view.View;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
+import android.widget.ScrollView;
 
 import com.google.firebase.crash.FirebaseCrash;
 
 import java.io.IOException;
 import java.security.SecureRandom;
+import java.util.Locale;
 
 import io.pijun.george.api.AuthenticationChallenge;
 import io.pijun.george.api.CreateUserResponse;
@@ -28,10 +31,11 @@ import io.pijun.george.api.ServerPublicKeyResponse;
 import io.pijun.george.api.User;
 import io.pijun.george.crypto.EncryptedData;
 import io.pijun.george.crypto.KeyPair;
+import io.pijun.george.interpolator.Bezier65Interpolator;
 import io.pijun.george.models.Snapshot;
 import retrofit2.Response;
 
-public class WelcomeActivity extends AppCompatActivity implements View.OnLayoutChangeListener {
+public class WelcomeActivity extends AppCompatActivity implements WelcomeLayout.FocusListener {
 
     public static Intent newIntent(Context ctx) {
         return new Intent(ctx, WelcomeActivity.class);
@@ -43,7 +47,6 @@ public class WelcomeActivity extends AppCompatActivity implements View.OnLayoutC
 
         setContentView(R.layout.activity_welcome);
         final WelcomeLayout root = (WelcomeLayout) findViewById(R.id.root);
-//        root.addOnLayoutChangeListener(this);
 
         App.runOnUiThread(new UiRunnable() {
             @Override
@@ -60,6 +63,7 @@ public class WelcomeActivity extends AppCompatActivity implements View.OnLayoutC
         final WelcomeLayout root = (WelcomeLayout) findViewById(R.id.root);
         if (root != null) {
             root.setCloudMovementEnabled(true);
+            root.setFocusListener(this);
         }
     }
 
@@ -411,8 +415,56 @@ public class WelcomeActivity extends AppCompatActivity implements View.OnLayoutC
     }
 
     @Override
-    public void onLayoutChange(View v, int left, int top, int right, int bottom, int oldLeft, int oldTop, int oldRight, int oldBottom) {
-        WelcomeLayout root = (WelcomeLayout) v;
-        root.setCloudMovementEnabled(true);
+    public void onWelcomeLayoutFocused(final View view) {
+        handleFocusChange(view, (ScrollView) findViewById(R.id.scrollview), (WelcomeLayout) findViewById(R.id.root));
+    }
+
+    private void handleFocusChange(final View view, final ScrollView sv, final WelcomeLayout root) {
+        if (sv.getBottom() == root.getBottom()) {
+            // we need to give the window more time to present the keyboard and resize the scrollview
+            App.runOnUiThread(new UiRunnable() {
+                @Override
+                public void run() {
+                    handleFocusChange(view, sv, root);
+                }
+            }, 34);
+            return;
+        }
+        int id = view.getId();
+
+        View container;
+        switch (id) {
+            case R.id.reg_username:
+                container = root.findViewById(R.id.reg_username_container);
+                break;
+            case R.id.reg_password:
+                container = root.findViewById(R.id.reg_password_container);
+                break;
+            case R.id.reg_email:
+                container = root.findViewById(R.id.reg_email_container);
+                break;
+            case R.id.si_username:
+                container = root.findViewById(R.id.si_username_container);
+                break;
+            case R.id.si_password:
+                container = root.findViewById(R.id.si_password_container);
+                break;
+            default:
+                return;
+        }
+
+        int topMargin = (sv.getBottom() - container.getHeight()) / 2;
+        // The ScrollView's smoothScrollTo method is too fast and jerky, so we use a custom
+        // ValueAnimator to make the scroll prettier.
+        ValueAnimator animator = ValueAnimator.ofInt(sv.getScrollY(), container.getTop() - topMargin);
+        animator.setInterpolator(new Bezier65Interpolator());
+        animator.setDuration(500);
+        animator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
+            @Override
+            public void onAnimationUpdate(ValueAnimator animation) {
+                sv.scrollTo(0, (int) animation.getAnimatedValue());
+            }
+        });
+        animator.start();
     }
 }

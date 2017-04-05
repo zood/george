@@ -31,4 +31,23 @@
         <!--<item name="android:titleTextColor">@android:color/white</item>-->
     </style>
 
+    <style name="WelcomeEditText" parent="Widget.Design.TextInputLayout">
+        <item name="android:drawablePadding">6dp</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:maxLines">1</item>
+        <item name="android:textSize">16sp</item>
+        <item name="android:drawableTint">@color/common_gray</item>
+        <!--<item name="android:textColorHint">@color/common_gray</item>-->
+        <item name="android:textColorHint">@color/welcome_edittext_hint</item>
+        <item name="android:imeOptions">actionNext</item>
+        <item name="android:fontFamily">sans-serif</item>
+        <item name="android:textColor">@color/common_gray</item>
+    </style>
+
+    <style name="WelcomeTheme.EditText">
+        <item name="android:colorControlNormal">@color/common_gray</item>
+        <item name="android:colorControlActivated">@color/common_gray</item>
+        <item name="android:colorControlHighlight">@color/common_gray</item>
+    </style>
+
 </resources>

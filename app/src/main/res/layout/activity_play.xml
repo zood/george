@@ -1,0 +1,115 @@
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_height="match_parent"
+    android:layout_width="match_parent"
+    android:orientation="vertical"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools">
+    <!--<ScrollView-->
+        <!--android:fitsSystemWindows="true"-->
+        <!--android:layout_width="match_parent"-->
+        <!--android:layout_height="match_parent"-->
+        <!--tools:context=".WelcomeActivity">-->
+    <ImageView
+        android:id="@+id/logo"
+        android:src="@drawable/pijun_symbol"
+        app:layout_marginTopPercent="11%"
+        android:layout_marginTop="72dp"
+        android:layout_width="96dp"
+        android:layout_height="113dp" />
+
+    <ImageView
+        android:id="@+id/screen_title"
+        android:src="@drawable/ic_pijun_text"
+        android:layout_marginTop="32dp"
+        android:layout_centerHorizontal="true"
+        android:layout_below="@id/logo"
+        android:layout_width="85dp"
+        android:layout_height="38dp" />
+
+    <TextView
+        android:id="@+id/screen_subtitle"
+        android:text="@string/share_wisely"
+        android:textSize="15sp"
+        android:layout_centerHorizontal="true"
+        android:layout_below="@id/screen_title"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="4dp" />
+
+        <android.support.design.widget.TextInputLayout
+            android:id="@+id/si_username_container"
+            app:hintEnabled="false"
+            android:layout_marginStart="64dp"
+            android:layout_marginEnd="96dp"
+            android:layout_marginTop="32dp"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+            <android.support.design.widget.TextInputEditText
+                android:id="@+id/si_username"
+                style="@style/WelcomeEditText"
+                android:theme="@style/WelcomeTheme.EditText"
+                tools:text="foo"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:drawableStart="@drawable/ic_user"
+                android:hint="@string/username"
+                android:inputType="text|textNoSuggestions"
+                android:privateImeOptions="nm" />
+        </android.support.design.widget.TextInputLayout>
+        <android.support.design.widget.TextInputLayout
+            android:id="@+id/si_password_container"
+            app:hintEnabled="false"
+            android:layout_marginStart="64dp"
+            android:layout_marginEnd="96dp"
+            android:layout_marginTop="16dp"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:passwordToggleEnabled="true"
+            app:passwordToggleTint="@color/common_gray">
+            <android.support.design.widget.TextInputEditText
+                android:id="@+id/si_password"
+                style="@style/WelcomeEditText"
+                android:theme="@style/WelcomeTheme.EditText"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:drawableStart="@drawable/ic_padlock"
+                android:hint="@string/password"
+                android:inputType="textPassword" />
+        </android.support.design.widget.TextInputLayout>
+    <android.support.design.widget.TextInputLayout
+        android:id="@+id/testcontainer"
+        app:passwordToggleEnabled="true"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+        <android.support.design.widget.TextInputEditText
+            android:id="@+id/testfield"
+            android:drawableStart="@drawable/ic_padlock"
+            android:text="@string/add_friend"
+            android:textColor="@color/mapbox_blue"
+            android:hint="@string/pijun"
+            android:inputType="textPassword"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content" />
+    </android.support.design.widget.TextInputLayout>
+    <!--<android.support.design.widget.TextInputLayout-->
+        <!--android:id="@+id/si_password_container"-->
+        <!--app:hintEnabled="false"-->
+        <!--android:layout_marginTop="16dp"-->
+        <!--android:layout_marginStart="64dp"-->
+        <!--android:layout_marginEnd="96dp"-->
+        <!--app:passwordToggleEnabled="true"-->
+        <!--app:passwordToggleTint="@color/common_gray"-->
+        <!--android:layout_width="match_parent"-->
+        <!--android:layout_height="wrap_content">-->
+        <!--<android.support.design.widget.TextInputEditText-->
+            <!--android:id="@+id/si_password"-->
+            <!--android:hint="@string/password"-->
+            <!--style="@style/WelcomeEditText"-->
+            <!--android:theme="@style/WelcomeTheme.EditText"-->
+            <!--android:drawableStart="@drawable/ic_padlock"-->
+            <!--android:inputType="textPassword"-->
+            <!--android:layout_width="match_parent"-->
+            <!--android:layout_height="wrap_content" />-->
+    <!--</android.support.design.widget.TextInputLayout>-->
+    <!--</ScrollView>-->
+</LinearLayout>

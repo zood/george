@@ -6,6 +6,7 @@ import android.support.annotation.IntDef;
 import android.support.annotation.NonNull;
 import android.support.annotation.Px;
 import android.support.annotation.UiThread;
+import android.support.design.widget.TextInputEditText;
 import android.support.design.widget.TextInputLayout;
 import android.support.percent.PercentRelativeLayout;
 import android.util.AttributeSet;
@@ -24,13 +25,14 @@ import io.pijun.george.interpolator.Bezier65Interpolator;
 import io.pijun.george.interpolator.BezierLinearInterpolator;
 import io.pijun.george.interpolator.LinearBezierInterpolator;
 
-public class WelcomeLayout extends ViewGroup {
+public class WelcomeLayout extends ViewGroup implements View.OnFocusChangeListener {
 
     public static final int STATE_ANIMATED_INTRO = 0;
     public static final int STATE_LOGO_AND_TITLES = 1;
     public static final int STATE_SPLASH = 2;
     public static final int STATE_REGISTER = 3;
     public static final int STATE_SIGN_IN = 4;
+
     @Retention(RetentionPolicy.SOURCE)
     @IntDef({STATE_ANIMATED_INTRO, STATE_LOGO_AND_TITLES, STATE_SPLASH, STATE_REGISTER, STATE_SIGN_IN})
     @interface State {}
@@ -38,11 +40,11 @@ public class WelcomeLayout extends ViewGroup {
     private boolean mHasInited = false;
     private Integer mOriginalHeight = null;
     private float mDensity = 0;
-    @State private int mState = 0;//STATE_SIGN_IN;
+    @State private int mState = 0;
     private boolean mCloudsMoving = true;
     private View mLogo;
     private View mGlobe;
-    private TextView mTitle;
+    private ImageView mTitle;
     private TextView mSubtitle;
     private Button mShowSignIn;
     private Button mShowRegister;
@@ -50,6 +52,8 @@ public class WelcomeLayout extends ViewGroup {
     private ImageView mCloud2;
     private SignInElements siViews = new SignInElements();
     private RegistrationElements regViews = new RegistrationElements();
+
+    private FocusListener mFocusListener;
 
     public WelcomeLayout(Context context) {
         super(context);
@@ -82,7 +86,7 @@ public class WelcomeLayout extends ViewGroup {
                     mGlobe = child;
                     break;
                 case R.id.screen_title:
-                    mTitle = (TextView) child;
+                    mTitle = (ImageView) child;
                     break;
                 case R.id.screen_subtitle:
                     mSubtitle = (TextView) child;
@@ -100,22 +104,32 @@ public class WelcomeLayout extends ViewGroup {
                     mCloud2 = (ImageView) child;
                     break;
                 case R.id.reg_username_container:
-                    regViews.username = (TextInputLayout) child;
+                    regViews.usernameC = (TextInputLayout) child;
+                    regViews.username = (TextInputEditText) child.findViewById(R.id.reg_username);
+                    regViews.username.setOnFocusChangeListener(this);
                     break;
                 case R.id.reg_password_container:
-                    regViews.password = (TextInputLayout) child;
+                    regViews.passwordC = (TextInputLayout) child;
+                    regViews.password = (TextInputEditText) child.findViewById(R.id.reg_password);
+                    regViews.password.setOnFocusChangeListener(this);
                     break;
                 case R.id.reg_email_container:
-                    regViews.email = (TextInputLayout) child;
+                    regViews.emailC = (TextInputLayout) child;
+                    regViews.email = (TextInputEditText) child.findViewById(R.id.reg_email);
+                    regViews.email.setOnFocusChangeListener(this);
                     break;
                 case R.id.register_button:
                     regViews.button = (Button) child;
                     break;
                 case R.id.si_username_container:
-                    siViews.username = (TextInputLayout) child;
+                    siViews.usernameC = (TextInputLayout) child;
+                    siViews.username = (TextInputEditText) child.findViewById(R.id.si_username);
+                    siViews.username.setOnFocusChangeListener(this);
                     break;
                 case R.id.si_password_container:
-                    siViews.password = (TextInputLayout) child;
+                    siViews.passwordC = (TextInputLayout) child;
+                    siViews.password = (TextInputEditText) child.findViewById(R.id.si_password);
+                    siViews.password.setOnFocusChangeListener(this);
                     break;
                 case R.id.sign_in_button:
                     siViews.button = (Button) child;
@@ -200,7 +214,6 @@ public class WelcomeLayout extends ViewGroup {
 
     @UiThread
     private void layoutAnimatedIntro() {
-        L.i("layoutAnimatedIntro");
         // everything should be hidden while the animation is playing
         mLogo.layout(0, 0, 0, 0);
         mTitle.layout(0, 0, 0, 0);
@@ -248,6 +261,7 @@ public class WelcomeLayout extends ViewGroup {
          */
         // GLOBE
         int globeT = height - mGlobe.getMeasuredHeight();
+//        L.i("hill measuredwidth: " + mGlobe.getMeasuredWidth());
         mGlobe.layout(0, height-mGlobe.getMeasuredHeight(), width, height);
 
         // 'SHOW SIGN IN' BUTTON
@@ -307,28 +321,28 @@ public class WelcomeLayout extends ViewGroup {
         mSubtitle.layout(subtitleL, subtitleT, subtitleR, subtitleB);
 
         int usernameL, usernameT, usernameR, usernameB;
-        LayoutParams usernameParams = (LayoutParams) regViews.username.getLayoutParams();
+        LayoutParams usernameParams = (LayoutParams) regViews.usernameC.getLayoutParams();
         usernameL = usernameParams.getMarginStart();
-        usernameT = subtitleT + (int)((float)mSubtitle.getMeasuredHeight()*headerScale) + fourPctPix;
+        usernameT = subtitleT + (int)((float)mSubtitle.getMeasuredHeight()*headerScale) + fourPctPix*2;
         usernameR = width - usernameParams.getMarginEnd();
-        usernameB = usernameT + regViews.username.getMeasuredHeight();
-        regViews.username.layout(usernameL, usernameT, usernameR, usernameB);
+        usernameB = usernameT + regViews.usernameC.getMeasuredHeight();
+        regViews.usernameC.layout(usernameL, usernameT, usernameR, usernameB);
 
         int passwordL, passwordT, passwordR, passwordB;
-        LayoutParams passwordParams = (LayoutParams) regViews.password.getLayoutParams();
+        LayoutParams passwordParams = (LayoutParams) regViews.passwordC.getLayoutParams();
         passwordL = passwordParams.getMarginStart();
         passwordT = usernameB + passwordParams.topMargin;
         passwordR = width - passwordParams.getMarginEnd();
-        passwordB = passwordT + regViews.password.getMeasuredHeight();
-        regViews.password.layout(passwordL, passwordT, passwordR, passwordB);
+        passwordB = passwordT + regViews.passwordC.getMeasuredHeight();
+        regViews.passwordC.layout(passwordL, passwordT, passwordR, passwordB);
 
         int emailL, emailT, emailR, emailB;
-        LayoutParams emailParams = (LayoutParams) regViews.email.getLayoutParams();
+        LayoutParams emailParams = (LayoutParams) regViews.emailC.getLayoutParams();
         emailL = emailParams.getMarginStart();
         emailT = passwordB + emailParams.topMargin;
         emailR = width - emailParams.getMarginEnd();
-        emailB = emailT + regViews.email.getMeasuredHeight();
-        regViews.email.layout(emailL, emailT, emailR, emailB);
+        emailB = emailT + regViews.emailC.getMeasuredHeight();
+        regViews.emailC.layout(emailL, emailT, emailR, emailB);
 
         int regL, regT, regR, regB;
         LayoutParams regParams = (LayoutParams) regViews.button.getLayoutParams();
@@ -386,20 +400,21 @@ public class WelcomeLayout extends ViewGroup {
         mSubtitle.layout(subtitleL, subtitleT, subtitleR, subtitleB);
 
         int usernameL, usernameT, usernameR, usernameB;
-        LayoutParams usernameParams = (LayoutParams) siViews.username.getLayoutParams();
+        LayoutParams usernameParams = (LayoutParams) siViews.usernameC.getLayoutParams();
         usernameL = usernameParams.getMarginStart();
-        usernameT = subtitleT + (int)((float)mSubtitle.getMeasuredHeight()*headerScale) + fourPctPix;
+        usernameT = subtitleT + (int)((float)mSubtitle.getMeasuredHeight()*headerScale) + fourPctPix*2;
         usernameR = width - usernameParams.getMarginEnd();
-        usernameB = usernameT + siViews.username.getMeasuredHeight();
-        siViews.username.layout(usernameL, usernameT, usernameR, usernameB);
+        usernameB = usernameT + siViews.usernameC.getMeasuredHeight();
+        siViews.usernameC.layout(usernameL, usernameT, usernameR, usernameB);
 
         int passwordL, passwordT, passwordR, passwordB;
-        LayoutParams passwordParams = (LayoutParams) siViews.password.getLayoutParams();
+        LayoutParams passwordParams = (LayoutParams) siViews.passwordC.getLayoutParams();
         passwordL = passwordParams.getMarginStart();
         passwordT = usernameB + passwordParams.topMargin;
         passwordR = width - passwordParams.getMarginEnd();
-        passwordB = passwordT + siViews.password.getMeasuredHeight();
-        siViews.password.layout(passwordL, passwordT, passwordR, passwordB);
+        passwordB = passwordT + siViews.passwordC.getMeasuredHeight();
+        siViews.passwordC.layout(passwordL, passwordT, passwordR, passwordB);
+//        siViews.passwordC.layout(0, passwordT, width, passwordB);
 
         int siL, siT, siR, siB;
         LayoutParams siParams = (LayoutParams) siViews.button.getLayoutParams();
@@ -448,12 +463,22 @@ public class WelcomeLayout extends ViewGroup {
             mOriginalHeight = MeasureSpec.getSize(heightMeasureSpec);
         }
 
-        int wSpec = MeasureSpec.makeMeasureSpec(MeasureSpec.getSize(widthMeasureSpec), MeasureSpec.EXACTLY);
+        int width = MeasureSpec.getSize(widthMeasureSpec);
+        int wSpec = MeasureSpec.makeMeasureSpec(width, MeasureSpec.EXACTLY);
         int hSpec = MeasureSpec.makeMeasureSpec(mOriginalHeight, MeasureSpec.EXACTLY);
         int count = getChildCount();
         for (int i=0; i<count; i++) {
             View v = getChildAt(i);
-            measureChild(v, wSpec, hSpec);
+            WelcomeLayout.LayoutParams lp = (LayoutParams) v.getLayoutParams();
+            if (lp.width == LayoutParams.MATCH_PARENT) {
+                final int childWidth = Math.max(
+                        0,
+                        width - getPaddingLeft() - getPaddingRight() - lp.leftMargin - lp.rightMargin);
+                final int childWidthMeasureSpec = MeasureSpec.makeMeasureSpec(childWidth, MeasureSpec.EXACTLY);
+                measureChild(v, childWidthMeasureSpec, hSpec);
+            } else {
+                measureChild(v, wSpec, hSpec);
+            }
         }
 
         setMeasuredDimension(MeasureSpec.getSize(widthMeasureSpec), mOriginalHeight);
@@ -471,7 +496,6 @@ public class WelcomeLayout extends ViewGroup {
     }
 
     @SuppressLint("SwitchIntDef")
-    @SuppressWarnings("unused")
     @UiThread
     public void transitionTo(@State int state) {
         if (mState == state) {
@@ -567,11 +591,11 @@ public class WelcomeLayout extends ViewGroup {
     private void transitionToSignIn() {
         transitionToInputsCommon(STATE_SIGN_IN);
         int width = getWidth();
-        siViews.username.setTranslationX(width - siViews.username.getLeft());
-        siViews.username.animate().translationX(0).setStartDelay(750).setDuration(500).setInterpolator(new LinearBezierInterpolator());
+        siViews.usernameC.setTranslationX(width - siViews.usernameC.getLeft());
+        siViews.usernameC.animate().translationX(0).setStartDelay(750).setDuration(500).setInterpolator(new LinearBezierInterpolator());
 
-        siViews.password.setTranslationX(width - siViews.password.getLeft());
-        siViews.password.animate().translationX(0).setStartDelay(850).setDuration(500).setInterpolator(new LinearBezierInterpolator());
+        siViews.passwordC.setTranslationX(width - siViews.passwordC.getLeft());
+        siViews.passwordC.animate().translationX(0).setStartDelay(850).setDuration(500).setInterpolator(new LinearBezierInterpolator());
 
         siViews.button.setTranslationX(width - siViews.button.getLeft());
         siViews.button.animate().translationX(0).setStartDelay(1000).setDuration(500).setInterpolator(new LinearBezierInterpolator());
@@ -583,14 +607,14 @@ public class WelcomeLayout extends ViewGroup {
         int width = getWidth();
 
         // move the input fields off screen, so we can animate them in
-        regViews.username.setTranslationX(width - regViews.username.getLeft());
-        regViews.username.animate().translationX(0).setStartDelay(750).setDuration(500).setInterpolator(new LinearBezierInterpolator());
+        regViews.usernameC.setTranslationX(width - regViews.usernameC.getLeft());
+        regViews.usernameC.animate().translationX(0).setStartDelay(750).setDuration(500).setInterpolator(new LinearBezierInterpolator());
 
-        regViews.password.setTranslationX(width - regViews.password.getLeft());
-        regViews.password.animate().translationX(0).setStartDelay(850).setDuration(500).setInterpolator(new LinearBezierInterpolator());
+        regViews.passwordC.setTranslationX(width - regViews.passwordC.getLeft());
+        regViews.passwordC.animate().translationX(0).setStartDelay(850).setDuration(500).setInterpolator(new LinearBezierInterpolator());
 
-        regViews.email.setTranslationX(width - regViews.email.getLeft());
-        regViews.email.animate().translationX(0).setStartDelay(950).setDuration(500).setInterpolator(new LinearBezierInterpolator());
+        regViews.emailC.setTranslationX(width - regViews.emailC.getLeft());
+        regViews.emailC.animate().translationX(0).setStartDelay(950).setDuration(500).setInterpolator(new LinearBezierInterpolator());
 
         regViews.button.setTranslationX(width - regViews.button.getLeft());
         regViews.button.animate().translationX(0).setStartDelay(1100).setDuration(500).setInterpolator(new LinearBezierInterpolator());
@@ -691,8 +715,8 @@ public class WelcomeLayout extends ViewGroup {
     }
 
     private void transitionToSplashFromSignIn() {
-        siViews.username.clearFocus();
-        siViews.password.clearFocus();
+        siViews.usernameC.clearFocus();
+        siViews.passwordC.clearFocus();
 
         transitionToSplashFromInputsCommon(STATE_SIGN_IN);
 
@@ -702,13 +726,13 @@ public class WelcomeLayout extends ViewGroup {
                 setStartDelay(0).
                 setDuration(500).
                 setInterpolator(new BezierLinearInterpolator());
-        siViews.password.animate().
-                translationX(width - siViews.password.getLeft()).
+        siViews.passwordC.animate().
+                translationX(width - siViews.passwordC.getLeft()).
                 setStartDelay(150).
                 setDuration(500).
                 setInterpolator(new BezierLinearInterpolator());
-        siViews.username.animate().
-                translationX(width - siViews.username.getLeft()).
+        siViews.usernameC.animate().
+                translationX(width - siViews.usernameC.getLeft()).
                 setStartDelay(250).
                 setDuration(500).
                 setInterpolator(new BezierLinearInterpolator());
@@ -716,9 +740,9 @@ public class WelcomeLayout extends ViewGroup {
 
     private void transitionToSplashFromRegister() {
         // dismiss the keyboard
-        regViews.username.clearFocus();
-        regViews.password.clearFocus();
-        regViews.email.clearFocus();
+        regViews.usernameC.clearFocus();
+        regViews.passwordC.clearFocus();
+        regViews.emailC.clearFocus();
 
         transitionToSplashFromInputsCommon(STATE_REGISTER);
 
@@ -728,18 +752,18 @@ public class WelcomeLayout extends ViewGroup {
                 setStartDelay(0).
                 setDuration(500).
                 setInterpolator(new BezierLinearInterpolator());
-        regViews.email.animate().
-                translationX(width - regViews.email.getLeft()).
+        regViews.emailC.animate().
+                translationX(width - regViews.emailC.getLeft()).
                 setStartDelay(150).
                 setDuration(500).
                 setInterpolator(new BezierLinearInterpolator());
-        regViews.password.animate().
-                translationX(width - regViews.password.getLeft()).
+        regViews.passwordC.animate().
+                translationX(width - regViews.passwordC.getLeft()).
                 setStartDelay(250).
                 setDuration(500).
                 setInterpolator(new BezierLinearInterpolator());
-        regViews.username.animate().
-                translationX(width - regViews.username.getLeft()).
+        regViews.usernameC.animate().
+                translationX(width - regViews.usernameC.getLeft()).
                 setStartDelay(350).
                 setDuration(500).
                 setInterpolator(new BezierLinearInterpolator());
@@ -845,6 +869,48 @@ public class WelcomeLayout extends ViewGroup {
     }
 
     @Override
+    public void onFocusChange(View v, boolean hasFocus) {
+        if (mFocusListener != null && hasFocus) {
+            mFocusListener.onWelcomeLayoutFocused(v);
+        }
+
+        if (mState == STATE_REGISTER) {
+            if (!hasFocus) {
+                regViews.usernameC.animate().alpha(1).setStartDelay(0).setDuration(500).start();
+                regViews.passwordC.animate().alpha(1).setStartDelay(0).setDuration(500).start();
+                regViews.emailC.animate().alpha(1).setStartDelay(0).setDuration(500).start();
+            } else {
+                if (v == regViews.username) {
+                    regViews.passwordC.animate().alpha(0.5f).setStartDelay(0).setDuration(500).start();
+                    regViews.emailC.animate().alpha(0.5f).setStartDelay(0).setDuration(500).start();
+
+                } else if (v == regViews.password) {
+                    regViews.usernameC.animate().alpha(0.5f).setStartDelay(0).setDuration(500).start();
+                    regViews.emailC.animate().alpha(0.5f).setStartDelay(0).setDuration(500).start();
+                } else if (v == regViews.email) {
+                    regViews.usernameC.animate().alpha(0.5f).setStartDelay(0).setDuration(500).start();
+                    regViews.passwordC.animate().alpha(0.5f).setStartDelay(0).setDuration(500).start();
+                }
+            }
+        } else if (mState == STATE_SIGN_IN) {
+            if (!hasFocus) {
+                siViews.usernameC.animate().alpha(1).setStartDelay(0).setDuration(500).start();
+                siViews.passwordC.animate().alpha(1).setStartDelay(0).setDuration(500).start();
+            } else {
+                if (v == siViews.username) {
+                    siViews.passwordC.animate().alpha(0.5f).setStartDelay(0).setDuration(500).start();
+                } else if (v == siViews.password) {
+                    siViews.usernameC.animate().alpha(0.5f).setStartDelay(0).setDuration(500).start();
+                }
+            }
+        }
+    }
+
+    void setFocusListener(FocusListener l) {
+        mFocusListener = l;
+    }
+
+    @Override
     protected LayoutParams generateDefaultLayoutParams() {
         return new LayoutParams(0, 0);
     }
@@ -881,15 +947,24 @@ public class WelcomeLayout extends ViewGroup {
     }
 
     private static class SignInElements {
-        TextInputLayout username;
-        TextInputLayout password;
+        TextInputLayout usernameC;
+        TextInputEditText username;
+        TextInputLayout passwordC;
+        TextInputEditText password;
         Button button;
     }
 
     private static class RegistrationElements {
-        TextInputLayout username;
-        TextInputLayout password;
-        TextInputLayout email;
+        TextInputLayout usernameC;
+        TextInputEditText username;
+        TextInputLayout passwordC;
+        TextInputEditText password;
+        TextInputLayout emailC;
+        TextInputEditText email;
         Button button;
+    }
+
+    interface FocusListener {
+        void onWelcomeLayoutFocused(View view);
     }
 }
