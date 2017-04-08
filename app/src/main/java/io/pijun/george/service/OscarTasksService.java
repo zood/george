@@ -40,7 +40,7 @@ public class OscarTasksService extends IntentService {
     @Override
     @WorkerThread
     protected void onHandleIntent(Intent intent) {
-//        L.i("OscarTasksService.onHandleIntent");
+        L.i("OscarTasksService.onHandleIntent");
         PersistentQueue<OscarTask> queue = OscarClient.getQueue(this);
 
         // make sure we're still logged in
@@ -60,6 +60,7 @@ public class OscarTasksService extends IntentService {
             while ((task = queue.peek()) != null) {
                 OscarAPI api = OscarClient.newInstance(task.accessToken);
                 Call call;
+                L.i("\tOTS: " + task.apiMethod);
                 switch (task.apiMethod) {
                     case AddFcmTokenTask.NAME:
                         AddFcmTokenTask aftt = (AddFcmTokenTask) task;

@@ -36,18 +36,17 @@
         <item name="android:textStyle">bold</item>
         <item name="android:maxLines">1</item>
         <item name="android:textSize">16sp</item>
-        <item name="android:drawableTint">@color/common_gray</item>
-        <!--<item name="android:textColorHint">@color/common_gray</item>-->
+        <item name="android:drawableTint">@color/welcome_edittext_drawabletint</item>
         <item name="android:textColorHint">@color/welcome_edittext_hint</item>
         <item name="android:imeOptions">actionNext</item>
         <item name="android:fontFamily">sans-serif</item>
-        <item name="android:textColor">@color/common_gray</item>
+        <item name="android:textColor">@color/welcome_edittext_text</item>
     </style>
 
     <style name="WelcomeTheme.EditText">
-        <item name="android:colorControlNormal">@color/common_gray</item>
-        <item name="android:colorControlActivated">@color/common_gray</item>
-        <item name="android:colorControlHighlight">@color/common_gray</item>
+        <item name="android:colorControlNormal">@color/welcome_edittext_text</item>
+        <item name="android:colorControlActivated">@color/welcome_edittext_text</item>
+        <item name="android:colorControlHighlight">@color/welcome_edittext_text</item>
     </style>
 
 </resources>

@@ -40,7 +40,7 @@ public class WelcomeLayout extends ViewGroup implements View.OnFocusChangeListen
     private boolean mHasInited = false;
     private Integer mOriginalHeight = null;
     private float mDensity = 0;
-    @State private int mState = 0;
+    @State private int mState = 3;
     private boolean mCloudsMoving = true;
     private View mLogo;
     private View mGlobe;

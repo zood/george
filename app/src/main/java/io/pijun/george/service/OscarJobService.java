@@ -36,6 +36,7 @@ public class OscarJobService extends JobService {
 
     @Override
     public boolean onStopJob(JobParameters params) {
+        L.i("OscarJobService.onStopJob");
         return false;
     }
 

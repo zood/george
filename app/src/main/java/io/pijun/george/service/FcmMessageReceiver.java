@@ -19,6 +19,7 @@ public class FcmMessageReceiver extends FirebaseMessagingService {
 
     @Override
     public void onMessageReceived(RemoteMessage remoteMessage) {
+        L.i("FcmMessageReceiver.onMessageReceived");
         Map<String, String> data = remoteMessage.getData();
         if (data == null) {
             return;

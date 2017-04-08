@@ -12,6 +12,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import io.pijun.george.App;
+import io.pijun.george.L;
 import io.pijun.george.event.MovementsUpdated;
 import io.pijun.george.models.MovementType;
 
@@ -30,6 +31,7 @@ public class UserActivityReceiver extends IntentService {
 
     @Override
     protected void onHandleIntent(Intent intent) {
+        L.i("UAR.onHandleIntent");
         ActivityRecognitionResult result = ActivityRecognitionResult.extractResult(intent);
         List<DetectedActivity> probableActivities = result.getProbableActivities();
         ArrayList<MovementType> movements = new ArrayList<>();

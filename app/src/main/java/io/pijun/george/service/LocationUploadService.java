@@ -68,6 +68,7 @@ public class LocationUploadService extends Service {
     @Override
     @UiThread
     public void onCreate() {
+        L.i("LUS.onCreate");
         super.onCreate();
 
         JobScheduler scheduler = (JobScheduler) getSystemService(Context.JOB_SCHEDULER_SERVICE);
@@ -85,6 +86,7 @@ public class LocationUploadService extends Service {
     @Override
     @UiThread
     public void onDestroy() {
+        L.i("LUS.onDestroy");
         App.unregisterFromBus(this);
 
         super.onDestroy();
@@ -93,6 +95,7 @@ public class LocationUploadService extends Service {
     @Subscribe
     @Keep
     public void onLocationChanged(final Location l) {
+        L.i("LUS.onLocationChanged");
         sServiceHandler.post(new WorkerRunnable() {
             @Override
             public void run() {
@@ -125,7 +128,7 @@ public class LocationUploadService extends Service {
      */
     @WorkerThread
     private void flush() {
-        L.i("LocationUploadService.flush");
+        L.i("LUS.flush");
         // If we have no location to report, just get out of here.
         if (mLocations.isEmpty()) {
             L.i("  no location to flush");

@@ -84,6 +84,7 @@ public class MessageQueueService extends IntentService {
     }
 
     private void rescheduleService() {
+        L.i("MQS.rescheduleService");
         JobScheduler scheduler = (JobScheduler) getSystemService(Context.JOB_SCHEDULER_SERVICE);
         scheduler.schedule(MessageQueueJobService.getJobInfo(this));
     }

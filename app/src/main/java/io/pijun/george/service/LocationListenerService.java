@@ -97,6 +97,7 @@ public class LocationListenerService extends IntentService implements LocationLi
     }
 
     private void cleanUp() {
+        L.i("LLS.cleanUp");
         try {
             if (mGoogleClient != null && mGoogleClient.isConnected()) {
                 LocationServices.FusedLocationApi.removeLocationUpdates(mGoogleClient, this);
@@ -109,6 +110,7 @@ public class LocationListenerService extends IntentService implements LocationLi
 
     @Override
     public void onLocationChanged(Location location) {
+        L.i("LLS.onLocationChanged");
         try {
             if (location != null) {
                 App.postOnBus(location);

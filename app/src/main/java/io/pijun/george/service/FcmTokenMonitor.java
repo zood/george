@@ -10,6 +10,7 @@ public class FcmTokenMonitor extends FirebaseInstanceIdService {
 
     @Override
     public void onTokenRefresh() {
+        L.i("FcmTokenMonitor.onTokenRefresh");
         super.onTokenRefresh();
         String token = FirebaseInstanceId.getInstance().getToken();
         L.i("FirebaseToken refreshed: " + token);

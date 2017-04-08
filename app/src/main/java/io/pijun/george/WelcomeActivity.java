@@ -7,8 +7,12 @@ import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.annotation.UiThread;
 import android.support.annotation.WorkerThread;
+import android.support.design.widget.TextInputEditText;
+import android.support.design.widget.TextInputLayout;
 import android.support.v7.app.AppCompatActivity;
+import android.text.Editable;
 import android.text.TextUtils;
+import android.text.TextWatcher;
 import android.view.View;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
@@ -18,7 +22,6 @@ import com.google.firebase.crash.FirebaseCrash;
 
 import java.io.IOException;
 import java.security.SecureRandom;
-import java.util.Locale;
 
 import io.pijun.george.api.AuthenticationChallenge;
 import io.pijun.george.api.CreateUserResponse;
@@ -47,7 +50,11 @@ public class WelcomeActivity extends AppCompatActivity implements WelcomeLayout.
 
         setContentView(R.layout.activity_welcome);
         final WelcomeLayout root = (WelcomeLayout) findViewById(R.id.root);
-
+        TextInputEditText username = (TextInputEditText) root.findViewById(R.id.reg_username);
+        TextInputLayout usernameC = (TextInputLayout) root.findViewById(R.id.reg_username_container);
+        username.addTextChangedListener(new UsernameWatcher(usernameC, username));
+//        ((TextInputEditText)root.findViewById(R.id.reg_username)).
+//                addTextChangedListener(new UsernameWatcher((TextInputLayout) findViewById(R.id.reg_username_container)));
         App.runOnUiThread(new UiRunnable() {
             @Override
             public void run() {
@@ -91,15 +98,21 @@ public class WelcomeActivity extends AppCompatActivity implements WelcomeLayout.
 
     @UiThread
     public void onSignInAction(View v) {
-        // If we're already in sign in mode, then attempt to login
-//        if (mCurrentTask == WelcomeLayout.TASK_SIGN_IN) {
-//            onLoginAction();
-//            return;
-//        }
-//
-//        mCurrentTask = WelcomeLayout.TASK_SIGN_IN;
-//        WelcomeLayout root = (WelcomeLayout) findViewById(R.id.root);
-//        root.setTask(WelcomeLayout.TASK_SIGN_IN, true);
+        EditText usernameField = (EditText) findViewById(R.id.si_username);
+        final String username = usernameField.getText().toString();
+        if (TextUtils.isEmpty(username)) {
+            Utils.showAlert(this, 0, R.string.enter_username_msg);
+        }
+
+        EditText passwordField = (EditText) findViewById(R.id.si_password);
+        final String password = passwordField.getText().toString();
+
+        App.runInBackground(new WorkerRunnable() {
+            @Override
+            public void run() {
+                login(username, password);
+            }
+        });
     }
 
     public void onShowRegistration(View v) {
@@ -156,6 +169,7 @@ public class WelcomeActivity extends AppCompatActivity implements WelcomeLayout.
         });
     }
 
+    /*
     @UiThread
     public void onLoginAction() {
         EditText usernameField = (EditText) findViewById(R.id.si_username);
@@ -174,6 +188,7 @@ public class WelcomeActivity extends AppCompatActivity implements WelcomeLayout.
             }
         });
     }
+    */
 
     @WorkerThread
     public void login(final String username, final String password) {
@@ -466,5 +481,40 @@ public class WelcomeActivity extends AppCompatActivity implements WelcomeLayout.
             }
         });
         animator.start();
+    }
+
+    private class UsernameWatcher implements TextWatcher {
+
+        private TextInputLayout mLayout;
+        private TextInputEditText mEditText;
+
+        UsernameWatcher(TextInputLayout til, TextInputEditText tiet) {
+            mLayout = til;
+            mEditText = tiet;
+        }
+
+        @Override
+        public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+
+        }
+
+        @Override
+        public void onTextChanged(CharSequence s, int start, int before, int count) {
+
+        }
+
+        @Override
+        public void afterTextChanged(Editable s) {
+            if (s != null) {
+                if (s.length() >= 5) {
+                    L.i("got a valid username");
+                    mEditText.setSelected(true);
+                    return;
+                }
+            }
+
+            L.i("still not valid");
+            mEditText.setSelected(false);
+        }
     }
 }
