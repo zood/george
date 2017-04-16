@@ -4,6 +4,7 @@ import android.animation.TypeEvaluator;
 import android.content.Context;
 import android.os.Looper;
 import android.support.annotation.AnyThread;
+import android.support.annotation.Nullable;
 import android.support.annotation.StringRes;
 import android.support.annotation.UiThread;
 import android.support.v7.app.AlertDialog;
@@ -12,7 +13,9 @@ import com.mapbox.mapboxsdk.geometry.LatLng;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.regex.Pattern;
 
+@SuppressWarnings("WeakerAccess")
 public class Utils {
 
     public static Map<String, Object> map(Object... args) {
@@ -107,5 +110,58 @@ public class Utils {
     public static int dpsToPix(Context ctx, int dps) {
         float scale = ctx.getResources().getDisplayMetrics().density;
         return (int) (dps * scale + 0.5f);
+    }
+
+    private static final Pattern sUsernamePattern = Pattern.compile("^[a-z0-9]{5,}$");
+    @AnyThread
+    public static boolean isValidUsername(String username) {
+        if (username == null) {
+            return false;
+        }
+        return sUsernamePattern.matcher(username.toLowerCase()).matches();
+    }
+
+    @StringRes
+    public static int getInvalidUsernameReason(@Nullable String username) {
+        if (username == null) {
+            return R.string.username_missing;
+        }
+        // Check if it's valid, before making any other assumptions.
+        if (sUsernamePattern.matcher(username).matches()) {
+            return 0;
+        }
+
+        if (username.length() < 5) {
+            return R.string.too_short;
+        }
+
+        return R.string.invalid_characters_msg;
+    }
+
+    public static boolean isValidEmail(String email) {
+        String[] parts = email.split("@");
+        if (parts.length != 2) {
+            return false;
+        }
+
+        String local = parts[0];
+        if (local.length() == 0 || local.length() > 64) {
+            return false;
+        }
+
+        // check if we have the format of a domain
+        String domain = parts[1];
+        if (domain.length() == 0 || domain.length() > 255) {
+            return false;
+        }
+        String[] domainParts = domain.split("\\.");
+        if (domainParts.length < 2) {
+            return false;
+        }
+
+        if (domainParts[domainParts.length-1].length() < 2) {
+            return false;
+        }
+        return true;
     }
 }

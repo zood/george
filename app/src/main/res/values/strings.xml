@@ -43,4 +43,22 @@
     <string name="delete">Delete</string>
     <string name="pijun">Pijun</string>
     <string name="email_hint_msg">Email (optional)</string>
+    <string name="username_missing">Username missing</string>
+    <string name="too_short">Too short</string>
+    <string name="invalid_characters_msg">Invalid characters. Use a–z and 0–9</string>
+    <string name="invalid_address">Invalid address</string>
+    <string name="username_please_msg">Username, please</string>
+    <string name="password_missing_msg">And your password?</string>
+    <string name="unknown_username">Unknown username</string>
+    <string name="unexpected_error">Unexpected error</string>
+    <string name="null_password_hash_msg">We don\'t know why the login failed, but the bug has been reported. It may work if you just try again.</string>
+    <string name="server_key_retrieval_network_error_msg">There was a network problem. Make sure you\'re internet connection works then try again.</string>
+    <string name="server_key_retrieval_unknown_error_msg">There was an unknown error retrieving the server\'s public key.</string>
+    <string name="network_error">Network error</string>
+    <string name="login_failure_network_msg">Check your connection then try again.</string>
+    <string name="login_failed">Login failed</string>
+    <string name="symmetric_key_unwrap_failure_msg">We couldn\'t log you in (unable to unwrap symmetric key).</string>
+    <string name="network_failure_profile_restore_msg">Network error while trying to restore your profile. Check your connection then try again.</string>
+    <string name="unknown_failure_profile_restore_msg">An unknown error occurred while attempting to restore your profile.</string>
+    <string name="unknown_error_completing_challenge_response_msg">There was an unexpected error while trying to complete the login.</string>
 </resources>

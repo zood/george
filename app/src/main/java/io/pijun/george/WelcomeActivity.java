@@ -4,7 +4,10 @@ import android.animation.ValueAnimator;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
+import android.support.annotation.IdRes;
+import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
+import android.support.annotation.StringRes;
 import android.support.annotation.UiThread;
 import android.support.annotation.WorkerThread;
 import android.support.design.widget.TextInputEditText;
@@ -14,7 +17,6 @@ import android.text.Editable;
 import android.text.TextUtils;
 import android.text.TextWatcher;
 import android.view.View;
-import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
 import android.widget.ScrollView;
 
@@ -50,11 +52,27 @@ public class WelcomeActivity extends AppCompatActivity implements WelcomeLayout.
 
         setContentView(R.layout.activity_welcome);
         final WelcomeLayout root = (WelcomeLayout) findViewById(R.id.root);
-        TextInputEditText username = (TextInputEditText) root.findViewById(R.id.reg_username);
+
         TextInputLayout usernameC = (TextInputLayout) root.findViewById(R.id.reg_username_container);
+        TextInputEditText username = (TextInputEditText) usernameC.findViewById(R.id.reg_username);
         username.addTextChangedListener(new UsernameWatcher(usernameC, username));
-//        ((TextInputEditText)root.findViewById(R.id.reg_username)).
-//                addTextChangedListener(new UsernameWatcher((TextInputLayout) findViewById(R.id.reg_username_container)));
+
+        TextInputLayout passwordC = (TextInputLayout) root.findViewById(R.id.reg_password_container);
+        TextInputEditText password = (TextInputEditText) passwordC.findViewById(R.id.reg_password);
+        password.addTextChangedListener(new PasswordWatcher(passwordC, password));
+
+        TextInputLayout emailC = (TextInputLayout) root.findViewById(R.id.reg_email_container);
+        TextInputEditText email = (TextInputEditText) emailC.findViewById(R.id.reg_email);
+        email.addTextChangedListener(new EmailWatcher(emailC, email));
+
+        TextInputLayout siUsernameC = (TextInputLayout) root.findViewById(R.id.si_username_container);
+        TextInputEditText siUsername = (TextInputEditText) siUsernameC.findViewById(R.id.si_username);
+        siUsername.addTextChangedListener(new ErrorDisabler(siUsernameC));
+
+        TextInputLayout siPasswordC = (TextInputLayout) root.findViewById(R.id.si_password_container);
+        TextInputEditText siPassword = (TextInputEditText) root.findViewById(R.id.si_password);
+        siPassword.addTextChangedListener(new ErrorDisabler(siPasswordC));
+
         App.runOnUiThread(new UiRunnable() {
             @Override
             public void run() {
@@ -98,14 +116,27 @@ public class WelcomeActivity extends AppCompatActivity implements WelcomeLayout.
 
     @UiThread
     public void onSignInAction(View v) {
+        boolean foundError = false;
+
         EditText usernameField = (EditText) findViewById(R.id.si_username);
         final String username = usernameField.getText().toString();
         if (TextUtils.isEmpty(username)) {
-            Utils.showAlert(this, 0, R.string.enter_username_msg);
+            TextInputLayout til = (TextInputLayout) findViewById(R.id.si_username_container);
+            til.setError(getString(R.string.username_please_msg));
+            foundError = true;
         }
 
         EditText passwordField = (EditText) findViewById(R.id.si_password);
         final String password = passwordField.getText().toString();
+        if(TextUtils.isEmpty(password)) {
+            TextInputLayout til = (TextInputLayout) findViewById(R.id.si_password_container);
+            til.setError(getString(R.string.password_missing_msg));
+            foundError = true;
+        }
+
+        if (foundError) {
+            return;
+        }
 
         App.runInBackground(new WorkerRunnable() {
             @Override
@@ -127,32 +158,35 @@ public class WelcomeActivity extends AppCompatActivity implements WelcomeLayout.
 
     @UiThread
     public void onRegisterAction(View v) {
-        /*
-        // If we're already in register mode, then attempt to create an account
-        if (mCurrentTask == WelcomeLayout.TASK_REGISTER) {
-            onCreateAccountAction();
-            return;
-        }
-
-        mCurrentTask = WelcomeLayout.TASK_REGISTER;
-        WelcomeLayout root = (WelcomeLayout) findViewById(R.id.root);
-        root.setTask(WelcomeLayout.TASK_REGISTER, true);
-        */
-    }
-
-    @UiThread
-    public void onCreateAccountAction() {
-        EditText usernameField = (EditText) findViewById(R.id.si_username);
+        boolean foundError = false;
+        EditText usernameField = (EditText) findViewById(R.id.reg_username);
         final String username = usernameField.getText().toString();
-        if (TextUtils.isEmpty(username)) {
-            Utils.showAlert(this, 0, R.string.need_username_msg);
-            return;
+        int msgId = Utils.getInvalidUsernameReason(username);
+        if (msgId != 0) {
+            TextInputLayout til = (TextInputLayout) findViewById(R.id.reg_username_container);
+            til.setError(getString(msgId));
+            foundError = true;
         }
 
-        EditText passwordField = (EditText) findViewById(R.id.si_password);
+        EditText passwordField = (EditText) findViewById(R.id.reg_password);
         final String password = passwordField.getText().toString();
-        if (password.length() < 6) {
-            Utils.showAlert(this, 0, R.string.password_too_short_msg);
+        if (password.length() < Constants.PASSWORD_TEXT_MIN_LENGTH) {
+            TextInputLayout til = (TextInputLayout) findViewById(R.id.reg_password_container);
+            til.setError(getString(R.string.too_short));
+            foundError = true;
+        }
+
+        EditText emailField = (EditText) findViewById(R.id.reg_email);
+        final String email = emailField.getText().toString().trim();
+        if (!TextUtils.isEmpty(email)) {
+            if (!Utils.isValidEmail(email)) {
+                TextInputLayout til = (TextInputLayout) findViewById(R.id.reg_email_container);
+                til.setError(getString(R.string.invalid_address));
+                foundError = true;
+            }
+        }
+
+        if (foundError) {
             return;
         }
 
@@ -169,29 +203,16 @@ public class WelcomeActivity extends AppCompatActivity implements WelcomeLayout.
         });
     }
 
-    /*
-    @UiThread
-    public void onLoginAction() {
-        EditText usernameField = (EditText) findViewById(R.id.si_username);
-        final String username = usernameField.getText().toString();
-        if (TextUtils.isEmpty(username)) {
-            Utils.showAlert(this, 0, R.string.enter_username_msg);
+    void setLoginError(@IdRes int textInputLayout, @StringRes int msg) {
+        if (textInputLayout != R.id.si_password_container && textInputLayout != R.id.si_username_container) {
+            throw new IllegalArgumentException("Incorrect textinputlayout used for setLoginError");
         }
-
-        EditText passwordField = (EditText) findViewById(R.id.si_password);
-        final String password = passwordField.getText().toString();
-
-        App.runInBackground(new WorkerRunnable() {
-            @Override
-            public void run() {
-                login(username, password);
-            }
-        });
+        TextInputLayout layout = (TextInputLayout) findViewById(textInputLayout);
+        layout.setError(getString(msg));
     }
-    */
 
     @WorkerThread
-    public void login(final String username, final String password) {
+    private void login(final String username, final String password) {
         L.i("logging in");
         OscarAPI api = OscarClient.newInstance(null);
         Response<AuthenticationChallenge> startChallengeResp;
@@ -205,7 +226,7 @@ public class WelcomeActivity extends AppCompatActivity implements WelcomeLayout.
         if (!startChallengeResp.isSuccessful()) {
             OscarError err = OscarError.fromResponse(startChallengeResp);
             if (err != null && err.code == OscarError.ERROR_USER_NOT_FOUND) {
-                Utils.showStringAlert(WelcomeActivity.this, null, "Unknown user");
+                setLoginError(R.id.si_username_container, R.string.unknown_username);
             } else {
                 Utils.showStringAlert(WelcomeActivity.this, null, "Unknown error");
             }
@@ -219,15 +240,19 @@ public class WelcomeActivity extends AppCompatActivity implements WelcomeLayout.
                 authChallenge.user.passwordSalt,
                 authChallenge.user.passwordHashOperationsLimit,
                 authChallenge.user.passwordHashMemoryLimit);
+        if (passwordHash == null) {
+            FirebaseCrash.report(new RuntimeException("password has was null"));
+            Utils.showAlert(this, R.string.unexpected_error, R.string.null_password_hash_msg);
+            return;
+        }
 
         // now try to decrypt the private key
         final byte[] secretKey = Sodium.symmetricKeyDecrypt(
                 authChallenge.user.wrappedSecretKey,
                 authChallenge.user.wrappedSecretKeyNonce,
                 passwordHash);
-
         if (secretKey == null) {
-            Utils.showAlert(this, R.string.incorrect_password, 0);
+            setLoginError(R.id.si_password_container, R.string.incorrect_password);
             return;
         }
 
@@ -236,11 +261,11 @@ public class WelcomeActivity extends AppCompatActivity implements WelcomeLayout.
         try {
             pubKeyResp = api.getServerPublicKey().execute();
         } catch (IOException ex) {
-            Utils.showStringAlert(this, null, "Unable to retrieve server's public key (network error?)");
+            Utils.showAlert(this, 0, R.string.server_key_retrieval_network_error_msg);
             return;
         }
         if (!pubKeyResp.isSuccessful()) {
-            Utils.showStringAlert(this, null, "Unknown error retrieving server's public key");
+            Utils.showAlert(this, 0, R.string.server_key_retrieval_unknown_error_msg);
             return;
         }
         byte[] pubKey = pubKeyResp.body().publicKey;
@@ -253,11 +278,18 @@ public class WelcomeActivity extends AppCompatActivity implements WelcomeLayout.
         try {
             completeChallengeResp = api.completeAuthenticationChallenge(username, finishedChallenge).execute();
         } catch (IOException ex) {
-            Utils.showStringAlert(this, null, "Unable to complete authentication challenge");
+            Utils.showAlert(this, R.string.network_error, R.string.login_failure_network_msg);
             return;
         }
         if (!completeChallengeResp.isSuccessful()) {
-            Utils.showStringAlert(this, null, "Login failed: " + OscarError.fromResponse(completeChallengeResp));
+            OscarError err = OscarError.fromResponse(completeChallengeResp);
+            String errMsg;
+            if (err != null) {
+                errMsg = err.toString();
+            } else {
+                errMsg = getString(R.string.unknown_error_completing_challenge_response_msg);
+            }
+            Utils.showStringAlert(this, getString(R.string.login_failed), errMsg);
             return;
         }
 
@@ -266,7 +298,7 @@ public class WelcomeActivity extends AppCompatActivity implements WelcomeLayout.
                 loginResponse.wrappedSymmetricKeyNonce,
                 passwordHash);
         if (symmetricKey == null) {
-            Utils.showStringAlert(this, null, "Login failed. Unable to unwrap your symmetric key");
+            Utils.showAlert(this, R.string.login_failed, R.string.symmetric_key_unwrap_failure_msg);
             return;
         }
 
@@ -277,13 +309,13 @@ public class WelcomeActivity extends AppCompatActivity implements WelcomeLayout.
             dbResponse = api.getDatabaseBackup().execute();
 
         } catch (IOException ex) {
-            Utils.showStringAlert(this, null, "Unable to restore profile. Check your connection then try again.");
+            Utils.showAlert(this, R.string.login_failed, R.string.network_failure_profile_restore_msg);
             return;
         }
         if (!dbResponse.isSuccessful()) {
             OscarError err = OscarError.fromResponse(dbResponse);
             if (err == null || err.code != OscarError.ERROR_BACKUP_NOT_FOUND) {
-                Utils.showStringAlert(this, null, "Unknown error retrieving profile: " + dbResponse.code());
+                Utils.showAlert(this, R.string.login_failed, R.string.unknown_failure_profile_restore_msg);
                 return;
             }
             // If we get here, that means no backup was found. It's weird, but not strictly wrong.
@@ -335,6 +367,7 @@ public class WelcomeActivity extends AppCompatActivity implements WelcomeLayout.
     }
 
     @WorkerThread
+    @Nullable
     public User generateUser(String username, String password) {
         L.i("generateUser");
         User u = new User();
@@ -360,6 +393,9 @@ public class WelcomeActivity extends AppCompatActivity implements WelcomeLayout.
                 u.passwordSalt,
                 u.passwordHashOperationsLimit,
                 u.passwordHashMemoryLimit);
+        if (passwordHash == null) {
+            return null;
+        }
         prefs.setPasswordSalt(u.passwordSalt);
 
         byte[] symmetricKey = new byte[Sodium.getSymmetricKeyLength()];
@@ -374,6 +410,9 @@ public class WelcomeActivity extends AppCompatActivity implements WelcomeLayout.
         u.wrappedSymmetricKeyNonce = wrappedSymmetricKey.nonce;
 
         EncryptedData wrappedSecretKey = Sodium.symmetricKeyEncrypt(kp.secretKey, passwordHash);
+        if (wrappedSecretKey == null) {
+            return null;
+        }
         u.wrappedSecretKey = wrappedSecretKey.cipherText;
         u.wrappedSecretKeyNonce = wrappedSecretKey.nonce;
 
@@ -414,19 +453,6 @@ public class WelcomeActivity extends AppCompatActivity implements WelcomeLayout.
         Intent i = MapActivity.newIntent(this);
         startActivity(i);
         finish();
-    }
-
-    @UiThread
-    private void showKeyboard(EditText field) {
-        field.requestFocus();
-        InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
-        imm.showSoftInput(field, InputMethodManager.SHOW_IMPLICIT);
-    }
-
-    @UiThread
-    private void hideKeyboard() {
-        InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
-        imm.hideSoftInputFromWindow(findViewById(R.id.root).getWindowToken(), 0);
     }
 
     @Override
@@ -483,38 +509,92 @@ public class WelcomeActivity extends AppCompatActivity implements WelcomeLayout.
         animator.start();
     }
 
-    private class UsernameWatcher implements TextWatcher {
+    private abstract class StandardWatcher implements TextWatcher {
 
-        private TextInputLayout mLayout;
-        private TextInputEditText mEditText;
+        TextInputLayout mLayout;
+        TextInputEditText mEditText;
 
-        UsernameWatcher(TextInputLayout til, TextInputEditText tiet) {
-            mLayout = til;
-            mEditText = tiet;
+        StandardWatcher(@NonNull TextInputLayout layout, @NonNull TextInputEditText editText) {
+            mLayout = layout;
+            mEditText = editText;
         }
 
         @Override
-        public void beforeTextChanged(CharSequence s, int start, int count, int after) {
-
-        }
+        public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
 
         @Override
-        public void onTextChanged(CharSequence s, int start, int before, int count) {
+        public void onTextChanged(CharSequence s, int start, int before, int count) {}
+    }
 
+    private class UsernameWatcher extends StandardWatcher {
+        UsernameWatcher(@NonNull TextInputLayout layout, @NonNull TextInputEditText editText) {
+            super(layout, editText);
         }
 
         @Override
         public void afterTextChanged(Editable s) {
+            mLayout.setErrorEnabled(false);
             if (s != null) {
-                if (s.length() >= 5) {
-                    L.i("got a valid username");
+                if (Utils.isValidUsername(s.toString())) {
                     mEditText.setSelected(true);
                     return;
                 }
             }
-
-            L.i("still not valid");
             mEditText.setSelected(false);
+        }
+    }
+
+    private class PasswordWatcher extends StandardWatcher {
+        PasswordWatcher(@NonNull TextInputLayout layout, @NonNull TextInputEditText editText) {
+            super(layout, editText);
+        }
+
+        @Override
+        public void afterTextChanged(Editable s) {
+            mLayout.setErrorEnabled(false);
+            if (s != null) {
+                if (s.length() >= Constants.PASSWORD_TEXT_MIN_LENGTH) {
+                    mEditText.setSelected(true);
+                    return;
+                }
+            }
+            mEditText.setSelected(false);
+        }
+    }
+
+    private class EmailWatcher extends StandardWatcher {
+        EmailWatcher(@NonNull TextInputLayout layout, @NonNull TextInputEditText editText) {
+            super(layout, editText);
+        }
+
+        @Override
+        public void afterTextChanged(Editable s) {
+            mLayout.setErrorEnabled(false);
+            if (s != null) {
+                if (Utils.isValidEmail(s.toString())) {
+                    mEditText.setSelected(true);
+                    return;
+                }
+            }
+            mEditText.setSelected(false);
+        }
+    }
+
+    private class ErrorDisabler implements TextWatcher {
+        private TextInputLayout mLayout;
+        ErrorDisabler(@NonNull TextInputLayout layout) {
+            mLayout = layout;
+        }
+
+        @Override
+        public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+
+        @Override
+        public void onTextChanged(CharSequence s, int start, int before, int count) {}
+
+        @Override
+        public void afterTextChanged(Editable s) {
+            mLayout.setErrorEnabled(false);
         }
     }
 }

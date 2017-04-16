@@ -2,6 +2,9 @@ package io.pijun.george;
 
 import android.annotation.SuppressLint;
 import android.content.Context;
+import android.content.res.ColorStateList;
+import android.graphics.drawable.Drawable;
+import android.support.annotation.DrawableRes;
 import android.support.annotation.IntDef;
 import android.support.annotation.NonNull;
 import android.support.annotation.Px;
@@ -9,6 +12,7 @@ import android.support.annotation.UiThread;
 import android.support.design.widget.TextInputEditText;
 import android.support.design.widget.TextInputLayout;
 import android.support.percent.PercentRelativeLayout;
+import android.support.v4.content.ContextCompat;
 import android.util.AttributeSet;
 import android.view.View;
 import android.view.ViewGroup;
@@ -40,7 +44,7 @@ public class WelcomeLayout extends ViewGroup implements View.OnFocusChangeListen
     private boolean mHasInited = false;
     private Integer mOriginalHeight = null;
     private float mDensity = 0;
-    @State private int mState = 3;
+    @State private int mState = 0;
     private boolean mCloudsMoving = true;
     private View mLogo;
     private View mGlobe;
@@ -107,16 +111,19 @@ public class WelcomeLayout extends ViewGroup implements View.OnFocusChangeListen
                     regViews.usernameC = (TextInputLayout) child;
                     regViews.username = (TextInputEditText) child.findViewById(R.id.reg_username);
                     regViews.username.setOnFocusChangeListener(this);
+                    regViews.username.setCompoundDrawablesRelativeWithIntrinsicBounds(getTintedDrawable(R.drawable.ic_user), null, null, null);
                     break;
                 case R.id.reg_password_container:
                     regViews.passwordC = (TextInputLayout) child;
                     regViews.password = (TextInputEditText) child.findViewById(R.id.reg_password);
                     regViews.password.setOnFocusChangeListener(this);
+                    regViews.password.setCompoundDrawablesRelativeWithIntrinsicBounds(getTintedDrawable(R.drawable.ic_padlock), null, null, null);
                     break;
                 case R.id.reg_email_container:
                     regViews.emailC = (TextInputLayout) child;
                     regViews.email = (TextInputEditText) child.findViewById(R.id.reg_email);
                     regViews.email.setOnFocusChangeListener(this);
+                    regViews.email.setCompoundDrawablesRelativeWithIntrinsicBounds(getTintedDrawable(R.drawable.ic_email_black_22dp), null, null, null);
                     break;
                 case R.id.register_button:
                     regViews.button = (Button) child;
@@ -125,17 +132,32 @@ public class WelcomeLayout extends ViewGroup implements View.OnFocusChangeListen
                     siViews.usernameC = (TextInputLayout) child;
                     siViews.username = (TextInputEditText) child.findViewById(R.id.si_username);
                     siViews.username.setOnFocusChangeListener(this);
+                    siViews.username.setCompoundDrawablesRelativeWithIntrinsicBounds(getTintedDrawable(R.drawable.ic_user), null, null, null);
                     break;
                 case R.id.si_password_container:
                     siViews.passwordC = (TextInputLayout) child;
                     siViews.password = (TextInputEditText) child.findViewById(R.id.si_password);
                     siViews.password.setOnFocusChangeListener(this);
+                    siViews.password.setCompoundDrawablesRelativeWithIntrinsicBounds(getTintedDrawable(R.drawable.ic_padlock), null, null, null);
                     break;
                 case R.id.sign_in_button:
                     siViews.button = (Button) child;
                     break;
             }
         }
+    }
+
+    @NonNull
+    private Drawable getTintedDrawable(@DrawableRes int drawable) {
+        Context ctx = getContext();
+        Drawable d = ctx.getDrawable(drawable);
+        if (d == null) {
+            throw new IllegalArgumentException("must use a drawable");
+        }
+        d = d.mutate();
+        ColorStateList csl = ContextCompat.getColorStateList(ctx, R.color.welcome_edittext_drawabletint);
+        d.setTintList(csl);
+        return d;
     }
 
     @Override
