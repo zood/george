@@ -241,7 +241,7 @@ public class WelcomeActivity extends AppCompatActivity implements WelcomeLayout.
                 authChallenge.user.passwordHashOperationsLimit,
                 authChallenge.user.passwordHashMemoryLimit);
         if (passwordHash == null) {
-            FirebaseCrash.report(new RuntimeException("password has was null"));
+            FirebaseCrash.log("Password has was null");
             Utils.showAlert(this, R.string.unexpected_error, R.string.null_password_hash_msg);
             return;
         }

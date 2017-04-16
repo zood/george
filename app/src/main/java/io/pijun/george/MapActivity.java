@@ -43,6 +43,7 @@ import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.location.LocationSettingsRequest;
 import com.google.android.gms.location.LocationSettingsResult;
 import com.google.android.gms.location.LocationSettingsStatusCodes;
+import com.google.firebase.crash.FirebaseCrash;
 import com.mapbox.mapboxsdk.annotations.Icon;
 import com.mapbox.mapboxsdk.annotations.IconFactory;
 import com.mapbox.mapboxsdk.annotations.Marker;
@@ -104,8 +105,6 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
 
         // Is there a user account here? If not, send them to the login/sign up screen
         if (!Prefs.get(this).isLoggedIn()) {
-//            Intent testIntent = TestActivity.newIntent(this);
-//            startActivity(testIntent);
             Intent welcomeIntent = WelcomeActivity.newIntent(this);
             startActivity(welcomeIntent);
             finish();
@@ -310,6 +309,7 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
     public void onMapReady(MapboxMap mapboxMap ) {
         if (mapboxMap == null) {
             L.i("onMapReady has a null map arg");
+            return;
         }
         mMapboxMap = mapboxMap;
         CameraPosition pos = Prefs.get(this).getCameraPosition();
@@ -393,7 +393,7 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
             // This should never happen. Nobody should be calling this method before permission has been obtained.
             L.w("MapActivity.beginLocationUpdates was called before obtaining location permission");
-            // TODO: log the stack trace to a server for debugging
+            FirebaseCrash.report(new Exception("Location updates requested before acquiring permission"));
             return;
         }
         if (!mGoogleClient.isConnected()) {
