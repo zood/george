@@ -4,6 +4,8 @@ import android.animation.ValueAnimator;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
+import android.os.Looper;
+import android.support.annotation.AnyThread;
 import android.support.annotation.IdRes;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
@@ -17,6 +19,7 @@ import android.text.Editable;
 import android.text.TextUtils;
 import android.text.TextWatcher;
 import android.view.View;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
 import android.widget.ScrollView;
 
@@ -138,6 +141,7 @@ public class WelcomeActivity extends AppCompatActivity implements WelcomeLayout.
             return;
         }
 
+        setBusy(true);
         App.runInBackground(new WorkerRunnable() {
             @Override
             public void run() {
@@ -159,7 +163,7 @@ public class WelcomeActivity extends AppCompatActivity implements WelcomeLayout.
     @UiThread
     public void onRegisterAction(View v) {
         boolean foundError = false;
-        EditText usernameField = (EditText) findViewById(R.id.reg_username);
+        final EditText usernameField = (EditText) findViewById(R.id.reg_username);
         final String username = usernameField.getText().toString();
         int msgId = Utils.getInvalidUsernameReason(username);
         if (msgId != 0) {
@@ -168,7 +172,7 @@ public class WelcomeActivity extends AppCompatActivity implements WelcomeLayout.
             foundError = true;
         }
 
-        EditText passwordField = (EditText) findViewById(R.id.reg_password);
+        final EditText passwordField = (EditText) findViewById(R.id.reg_password);
         final String password = passwordField.getText().toString();
         if (password.length() < Constants.PASSWORD_TEXT_MIN_LENGTH) {
             TextInputLayout til = (TextInputLayout) findViewById(R.id.reg_password_container);
@@ -176,7 +180,7 @@ public class WelcomeActivity extends AppCompatActivity implements WelcomeLayout.
             foundError = true;
         }
 
-        EditText emailField = (EditText) findViewById(R.id.reg_email);
+        final EditText emailField = (EditText) findViewById(R.id.reg_email);
         final String email = emailField.getText().toString().trim();
         if (!TextUtils.isEmpty(email)) {
             if (!Utils.isValidEmail(email)) {
@@ -190,12 +194,24 @@ public class WelcomeActivity extends AppCompatActivity implements WelcomeLayout.
             return;
         }
 
+        setBusy(true);
         App.runInBackground(new WorkerRunnable() {
             @Override
             public void run() {
+                try {
+                    Thread.sleep(5000);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
                 final User user = generateUser(username, password);
                 if (user == null) {
                     Utils.showAlert(WelcomeActivity.this, 0, R.string.unknown_user_generation_error_msg);
+                    App.runOnUiThread(new UiRunnable() {
+                        @Override
+                        public void run() {
+                            setBusy(false);
+                        }
+                    });
                     return;
                 }
                 registerUser(user, password);
@@ -203,7 +219,23 @@ public class WelcomeActivity extends AppCompatActivity implements WelcomeLayout.
         });
     }
 
-    void setLoginError(@IdRes int textInputLayout, @StringRes int msg) {
+    @AnyThread
+    void setLoginError(@IdRes final int textInputLayout, @StringRes final int msg) {
+        if (Looper.myLooper() == Looper.getMainLooper()) {
+            //noinspection WrongThread
+            _setLoginError(textInputLayout, msg);
+        } else {
+            App.runOnUiThread(new UiRunnable() {
+                @Override
+                public void run() {
+                    _setLoginError(textInputLayout, msg);
+                }
+            });
+        }
+    }
+
+    @UiThread
+    void _setLoginError(@IdRes int textInputLayout, @StringRes int msg) {
         if (textInputLayout != R.id.si_password_container && textInputLayout != R.id.si_username_container) {
             throw new IllegalArgumentException("Incorrect textinputlayout used for setLoginError");
         }
@@ -219,11 +251,13 @@ public class WelcomeActivity extends AppCompatActivity implements WelcomeLayout.
         try {
             startChallengeResp = api.getAuthenticationChallenge(username).execute();
         } catch (IOException ex) {
+            setBusy(false);
             Utils.showStringAlert(this, null, "Unable to start log in process");
             return;
         }
 
         if (!startChallengeResp.isSuccessful()) {
+            setBusy(false);
             OscarError err = OscarError.fromResponse(startChallengeResp);
             if (err != null && err.code == OscarError.ERROR_USER_NOT_FOUND) {
                 setLoginError(R.id.si_username_container, R.string.unknown_username);
@@ -241,7 +275,8 @@ public class WelcomeActivity extends AppCompatActivity implements WelcomeLayout.
                 authChallenge.user.passwordHashOperationsLimit,
                 authChallenge.user.passwordHashMemoryLimit);
         if (passwordHash == null) {
-            FirebaseCrash.log("Password has was null");
+            setBusy(false);
+            FirebaseCrash.log("Password was null");
             Utils.showAlert(this, R.string.unexpected_error, R.string.null_password_hash_msg);
             return;
         }
@@ -252,6 +287,7 @@ public class WelcomeActivity extends AppCompatActivity implements WelcomeLayout.
                 authChallenge.user.wrappedSecretKeyNonce,
                 passwordHash);
         if (secretKey == null) {
+            setBusy(false);
             setLoginError(R.id.si_password_container, R.string.incorrect_password);
             return;
         }
@@ -261,10 +297,12 @@ public class WelcomeActivity extends AppCompatActivity implements WelcomeLayout.
         try {
             pubKeyResp = api.getServerPublicKey().execute();
         } catch (IOException ex) {
+            setBusy(false);
             Utils.showAlert(this, 0, R.string.server_key_retrieval_network_error_msg);
             return;
         }
         if (!pubKeyResp.isSuccessful()) {
+            setBusy(false);
             Utils.showAlert(this, 0, R.string.server_key_retrieval_unknown_error_msg);
             return;
         }
@@ -278,10 +316,12 @@ public class WelcomeActivity extends AppCompatActivity implements WelcomeLayout.
         try {
             completeChallengeResp = api.completeAuthenticationChallenge(username, finishedChallenge).execute();
         } catch (IOException ex) {
+            setBusy(false);
             Utils.showAlert(this, R.string.network_error, R.string.login_failure_network_msg);
             return;
         }
         if (!completeChallengeResp.isSuccessful()) {
+            setBusy(false);
             OscarError err = OscarError.fromResponse(completeChallengeResp);
             String errMsg;
             if (err != null) {
@@ -298,6 +338,7 @@ public class WelcomeActivity extends AppCompatActivity implements WelcomeLayout.
                 loginResponse.wrappedSymmetricKeyNonce,
                 passwordHash);
         if (symmetricKey == null) {
+            setBusy(false);
             Utils.showAlert(this, R.string.login_failed, R.string.symmetric_key_unwrap_failure_msg);
             return;
         }
@@ -307,14 +348,15 @@ public class WelcomeActivity extends AppCompatActivity implements WelcomeLayout.
         Response<EncryptedData> dbResponse;
         try {
             dbResponse = api.getDatabaseBackup().execute();
-
         } catch (IOException ex) {
+            setBusy(false);
             Utils.showAlert(this, R.string.login_failed, R.string.network_failure_profile_restore_msg);
             return;
         }
         if (!dbResponse.isSuccessful()) {
             OscarError err = OscarError.fromResponse(dbResponse);
             if (err == null || err.code != OscarError.ERROR_BACKUP_NOT_FOUND) {
+                setBusy(false);
                 Utils.showAlert(this, R.string.login_failed, R.string.unknown_failure_profile_restore_msg);
                 return;
             }
@@ -323,17 +365,20 @@ public class WelcomeActivity extends AppCompatActivity implements WelcomeLayout.
             EncryptedData encSnapshot = dbResponse.body();
             byte[] jsonDb = Sodium.symmetricKeyDecrypt(encSnapshot.cipherText, encSnapshot.nonce, symmetricKey);
             if (jsonDb == null) {
+                setBusy(false);
                 Utils.showStringAlert(this, null, "Unable to restore profile. Did your key change?");
                 return;
             }
             Snapshot snapshot = Snapshot.fromJson(jsonDb);
             // restore the database
             if (snapshot == null) {
+                setBusy(false);
                 Utils.showStringAlert(this, null, "Unable to decode your profile");
                 return;
             }
 
             if (snapshot.schemaVersion > DB.get(this).getSchemaVersion()) {
+                setBusy(false);
                 Utils.showStringAlert(this, null, "This version of Pijun is too old. Update to the latest version then try logging in again.");
                 return;
             }
@@ -341,6 +386,7 @@ public class WelcomeActivity extends AppCompatActivity implements WelcomeLayout.
             try {
                 DB.get(this).restoreDatabase(snapshot);
             } catch (DB.DBException ex) {
+                setBusy(false);
                 FirebaseCrash.report(ex);
                 Utils.showStringAlert(this, null, "Unable to rebuild your profile. This is a bug.");
                 return;
@@ -364,6 +410,7 @@ public class WelcomeActivity extends AppCompatActivity implements WelcomeLayout.
                 showMapActivity();
             }
         });
+        setBusy(false);
     }
 
     @WorkerThread
@@ -376,6 +423,7 @@ public class WelcomeActivity extends AppCompatActivity implements WelcomeLayout.
         int result = Sodium.generateKeyPair(kp);
         if (result != 0) {
             Utils.showAlert(this, 0, R.string.keypair_generation_error);
+            L.i("failed to generate key pair");
             return null;
         }
         Prefs prefs = Prefs.get(this);
@@ -394,6 +442,7 @@ public class WelcomeActivity extends AppCompatActivity implements WelcomeLayout.
                 u.passwordHashOperationsLimit,
                 u.passwordHashMemoryLimit);
         if (passwordHash == null) {
+            L.i("password has null when generating user");
             return null;
         }
         prefs.setPasswordSalt(u.passwordSalt);
@@ -404,6 +453,7 @@ public class WelcomeActivity extends AppCompatActivity implements WelcomeLayout.
 
         EncryptedData wrappedSymmetricKey = Sodium.symmetricKeyEncrypt(symmetricKey, passwordHash);
         if (wrappedSymmetricKey == null) {
+            L.i("wrapped sym key null when generating user");
             return null;
         }
         u.wrappedSymmetricKey = wrappedSymmetricKey.cipherText;
@@ -411,6 +461,7 @@ public class WelcomeActivity extends AppCompatActivity implements WelcomeLayout.
 
         EncryptedData wrappedSecretKey = Sodium.symmetricKeyEncrypt(kp.secretKey, passwordHash);
         if (wrappedSecretKey == null) {
+            L.i("wrapped sec key null when generating user");
             return null;
         }
         u.wrappedSecretKey = wrappedSecretKey.cipherText;
@@ -424,6 +475,7 @@ public class WelcomeActivity extends AppCompatActivity implements WelcomeLayout.
         OscarAPI api = OscarClient.newInstance(null);
         try {
             final Response<CreateUserResponse> response = api.createUser(user).execute();
+            setBusy(false);
             if (response.isSuccessful()) {
                 CreateUserResponse resp = response.body();
                 Prefs prefs = Prefs.get(this);
@@ -444,6 +496,7 @@ public class WelcomeActivity extends AppCompatActivity implements WelcomeLayout.
                 }
             }
         } catch (IOException e) {
+            setBusy(false);
             Utils.showStringAlert(this, null, "Serious error creating account: " + e.getLocalizedMessage());
         }
     }
@@ -507,6 +560,45 @@ public class WelcomeActivity extends AppCompatActivity implements WelcomeLayout.
             }
         });
         animator.start();
+    }
+
+    @UiThread
+    private void hideKeyboard() {
+        InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
+        imm.hideSoftInputFromWindow(findViewById(R.id.root).getWindowToken(), 0);
+    }
+
+    @AnyThread
+    private void setBusy(final boolean b) {
+        if (Looper.myLooper() == Looper.getMainLooper()) {
+            //noinspection WrongThread
+            _setBusy(b);
+        } else {
+            App.runOnUiThread(new UiRunnable() {
+                @Override
+                public void run() {
+                    _setBusy(b);
+                }
+            });
+        }
+    }
+
+    @UiThread
+    private void _setBusy(boolean b) {
+        WelcomeLayout root = (WelcomeLayout) findViewById(R.id.root);
+        root.requestFocus();
+        if (root.getState() == WelcomeLayout.STATE_REGISTER) {
+            root.setRegistrationSpinnerVisible(b);
+            root.findViewById(R.id.reg_password).setEnabled(!b);
+            root.findViewById(R.id.reg_username).setEnabled(!b);
+            root.findViewById(R.id.reg_email).setEnabled(!b);
+            hideKeyboard();
+        } else if (root.getState() == WelcomeLayout.STATE_SIGN_IN) {
+            root.setSignInSpinnerVisible(b);
+            root.findViewById(R.id.si_username).setEnabled(!b);
+            root.findViewById(R.id.si_password).setEnabled(!b);
+            hideKeyboard();
+        }
     }
 
     private abstract class StandardWatcher implements TextWatcher {

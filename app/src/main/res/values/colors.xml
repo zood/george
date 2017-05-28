@@ -11,4 +11,6 @@
     <color name="pijun_typographic">#4b5761</color>
     <color name="common_gray">#777777</color>
     <color name="cloud_outline">#4d34cc54</color>
+
+    <color name="ui_tint_gray">#aab9c8</color>
 </resources>

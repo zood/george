@@ -4,6 +4,8 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:id="@+id/scrollview"
     android:fitsSystemWindows="true"
+    android:focusable="true"
+    android:focusableInTouchMode="true"
     android:layout_height="match_parent"
     android:layout_width="match_parent"
     tools:context=".WelcomeActivity">
@@ -155,6 +157,11 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:onClick="onSignInAction" />
+        <ProgressBar
+            android:id="@+id/si_spinner"
+            android:visibility="invisible"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content" />
 
         <android.support.design.widget.TextInputLayout
             android:id="@+id/reg_username_container"
@@ -226,6 +233,11 @@
             android:minHeight="48dp"
             android:minWidth="112dp"
             android:onClick="onRegisterAction" />
+        <ProgressBar
+            android:id="@+id/reg_spinner"
+            android:visibility="invisible"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content" />
 
     </io.pijun.george.WelcomeLayout>
 </ScrollView>

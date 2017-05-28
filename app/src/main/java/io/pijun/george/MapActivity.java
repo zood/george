@@ -1,6 +1,7 @@
 package io.pijun.george;
 
 import android.Manifest;
+import android.animation.FloatEvaluator;
 import android.animation.ObjectAnimator;
 import android.animation.ValueAnimator;
 import android.app.job.JobScheduler;
@@ -11,6 +12,7 @@ import android.content.IntentSender;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.Color;
+import android.graphics.PointF;
 import android.location.Location;
 import android.os.Bundle;
 import android.support.annotation.AnyThread;
@@ -28,6 +30,7 @@ import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.text.format.DateUtils;
 import android.view.MenuItem;
+import android.view.MotionEvent;
 import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
@@ -48,7 +51,10 @@ import com.mapbox.mapboxsdk.annotations.Icon;
 import com.mapbox.mapboxsdk.annotations.IconFactory;
 import com.mapbox.mapboxsdk.annotations.Marker;
 import com.mapbox.mapboxsdk.annotations.MarkerOptions;
+import com.mapbox.mapboxsdk.annotations.MarkerView;
+import com.mapbox.mapboxsdk.annotations.MarkerViewOptions;
 import com.mapbox.mapboxsdk.camera.CameraPosition;
+import com.mapbox.mapboxsdk.camera.CameraUpdate;
 import com.mapbox.mapboxsdk.camera.CameraUpdateFactory;
 import com.mapbox.mapboxsdk.geometry.LatLng;
 import com.mapbox.mapboxsdk.maps.MapView;
@@ -74,7 +80,6 @@ import io.pijun.george.event.LocationSharingRequested;
 import io.pijun.george.models.FriendLocation;
 import io.pijun.george.models.FriendRecord;
 import io.pijun.george.models.MovementType;
-import io.pijun.george.service.ActivityMonitor;
 import io.pijun.george.service.FcmTokenRegistrar;
 import io.pijun.george.service.LocationUploadService;
 import io.pijun.george.service.MessageQueueService;
@@ -82,7 +87,7 @@ import io.pijun.george.view.MyLocationView;
 import retrofit2.Call;
 import retrofit2.Response;
 
-public class MapActivity extends AppCompatActivity implements OnMapReadyCallback, MapboxMap.OnMarkerClickListener, MapboxMap.OnMyLocationChangeListener, GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener, LocationListener {
+public class MapActivity extends AppCompatActivity implements OnMapReadyCallback, MapboxMap.OnMarkerClickListener, GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener, LocationListener {
 
     private static final int REQUEST_LOCATION_PERMISSION = 18;
     private static final int REQUEST_LOCATION_SETTINGS = 20;
@@ -92,7 +97,9 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
     private volatile PackageWatcher mPkgWatcher;
     private MarkerTracker mMarkerTracker = new MarkerTracker();
     private GoogleApiClient mGoogleClient;
-    private Marker mMeMarker;
+    private MarkerView mMeMarker;
+    private boolean mCameraTracksMyLocation = false;
+    private float mLastMapControlUpX = -1;
 
     public static Intent newIntent(Context ctx) {
         return new Intent(ctx, MapActivity.class);
@@ -130,6 +137,33 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
             }
         });
 
+        findViewById(R.id.map_control_bar).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                L.i("last action up x: "+ mLastMapControlUpX);
+            }
+        });
+
+        findViewById(R.id.map_control_bar).setOnTouchListener(new View.OnTouchListener() {
+            @Override
+            public boolean onTouch(View v, MotionEvent event) {
+                if (event.getAction() == MotionEvent.ACTION_UP) {
+                    mLastMapControlUpX = event.getX();
+                }
+                return false;
+            }
+        });
+
+        final View myLocFab = findViewById(R.id.my_location_fab);
+        myLocFab.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                myLocFab.setSelected(true);
+                mCameraTracksMyLocation = true;
+                flyCameraToMyLocation();
+            }
+        });
+
         NavigationView navView = (NavigationView) findViewById(R.id.navigation);
         navView.setNavigationItemSelectedListener(navItemListener);
 
@@ -140,7 +174,7 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
                 .build();
 
         startService(FcmTokenRegistrar.newIntent(this));
-        startService(ActivityMonitor.newIntent(this));
+//        startService(ActivityMonitor.newIntent(this));
     }
 
     @Override
@@ -304,11 +338,28 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
         mMapView.onLowMemory();
     }
 
+    private void flyCameraToMyLocation() {
+        if (mMapboxMap == null) {
+            return;
+        }
+        if (mMeMarker == null) {
+            return;
+        }
+        CameraPosition cp = new CameraPosition.Builder()
+                .target(mMeMarker.getPosition())
+                .zoom(13)
+                .bearing(0)
+                .tilt(0).build();
+        CameraUpdate cu = CameraUpdateFactory.newCameraPosition(cp);
+        mMapboxMap.animateCamera(cu, 1000);
+    }
+
     @Override
     @UiThread
     public void onMapReady(MapboxMap mapboxMap ) {
         if (mapboxMap == null) {
             L.i("onMapReady has a null map arg");
+            FirebaseCrash.report(new Exception("MapboxMap is null"));
             return;
         }
         mMapboxMap = mapboxMap;
@@ -316,8 +367,14 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
         if (pos != null) {
             mMapboxMap.moveCamera(CameraUpdateFactory.newCameraPosition(pos));
         }
-        mMapboxMap.setOnMyLocationChangeListener(this);
         mMapboxMap.setOnMarkerClickListener(this);
+        mMapboxMap.setOnScrollListener(new MapboxMap.OnScrollListener() {
+            @Override
+            public void onScroll() {
+                mCameraTracksMyLocation = false;
+                findViewById(R.id.my_location_fab).setSelected(false);
+            }
+        });
 
         // add markers for all friends
         App.runInBackground(new WorkerRunnable() {
@@ -415,14 +472,31 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
         if (mMeMarker == null) {
             addMyLocation(location);
         } else {
-            ValueAnimator animator = ObjectAnimator.ofObject(
+            ValueAnimator posAnimator = ObjectAnimator.ofObject(
                     mMeMarker,
                     "position",
                     new Utils.LatLngEvaluator(),
                     mMeMarker.getPosition(),
                     new LatLng(location.getLatitude(), location.getLongitude()));
-            animator.setDuration(300);
-            animator.start();
+            posAnimator.setDuration(300);
+
+            ValueAnimator rotAnimator = ObjectAnimator.ofObject(
+                    mMeMarker,
+                    "rotation",
+                    new FloatEvaluator(),
+                    mMeMarker.getRotation(),
+                    location.getBearing());
+            rotAnimator.setDuration(300);
+
+            posAnimator.start();
+            rotAnimator.start();
+        }
+
+        if (mCameraTracksMyLocation) {
+            if (mMapboxMap != null) {
+                CameraUpdate update = CameraUpdateFactory.newLatLng(new LatLng(location.getLatitude(), location.getLongitude()));
+                mMapboxMap.animateCamera(update, 300);
+            }
         }
         App.postOnBus(location);
     }
@@ -433,8 +507,9 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
         MyLocationView.draw(bitmap);
 
         Icon descriptor = IconFactory.getInstance(this).fromBitmap(bitmap);
-        MarkerOptions opts = new MarkerOptions()
+        MarkerViewOptions opts = new MarkerViewOptions()
                 .position(new LatLng(location.getLatitude(), location.getLongitude()))
+                .rotation(location.getBearing())
                 .icon(descriptor);
         mMeMarker = mMapboxMap.addMarker(opts);
     }
@@ -724,8 +799,18 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
         return false;
     }
 
-    @Override
-    public void onMyLocationChange(@Nullable Location location) {
-        App.postOnBus(location);
+    public void onTapGestureRecognized(View v, PointF point) {
+        double btnWidth = v.getWidth()/3.0;
+        if (point.x < btnWidth) {
+            // button 1
+            L.i("announcements?");
+        } else if (point.x < btnWidth*2.0) {
+            // button 2
+            L.i("friends");
+        } else {
+            // button 3
+            L.i("settings");
+            onShowDrawerAction(v);
+        }
     }
 }

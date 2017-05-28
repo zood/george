@@ -19,6 +19,7 @@ import android.view.ViewGroup;
 import android.view.animation.LinearInterpolator;
 import android.widget.Button;
 import android.widget.ImageView;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 
 import java.lang.annotation.Retention;
@@ -44,7 +45,7 @@ public class WelcomeLayout extends ViewGroup implements View.OnFocusChangeListen
     private boolean mHasInited = false;
     private Integer mOriginalHeight = null;
     private float mDensity = 0;
-    @State private int mState = 0;
+    @State private int mState = STATE_ANIMATED_INTRO;
     private boolean mCloudsMoving = true;
     private View mLogo;
     private View mGlobe;
@@ -143,6 +144,12 @@ public class WelcomeLayout extends ViewGroup implements View.OnFocusChangeListen
                 case R.id.sign_in_button:
                     siViews.button = (Button) child;
                     break;
+                case R.id.reg_spinner:
+                    regViews.spinner = (ProgressBar) child;
+                    break;
+                case R.id.si_spinner:
+                    siViews.spinner = (ProgressBar) child;
+                    break;
             }
         }
     }
@@ -195,8 +202,6 @@ public class WelcomeLayout extends ViewGroup implements View.OnFocusChangeListen
             default:
                 throw new RuntimeException("Unhandled layout state: " + mState);
         }
-
-//        layoutChildren(r-l, b-t, animate, duration);
     }
 
     @UiThread
@@ -283,7 +288,6 @@ public class WelcomeLayout extends ViewGroup implements View.OnFocusChangeListen
          */
         // GLOBE
         int globeT = height - mGlobe.getMeasuredHeight();
-//        L.i("hill measuredwidth: " + mGlobe.getMeasuredWidth());
         mGlobe.layout(0, height-mGlobe.getMeasuredHeight(), width, height);
 
         // 'SHOW SIGN IN' BUTTON
@@ -374,6 +378,13 @@ public class WelcomeLayout extends ViewGroup implements View.OnFocusChangeListen
         regB = regT + regViews.button.getMeasuredHeight();
         regViews.button.layout(regL, regT, regR, regB);
 
+        int spinnerL, spinnerT, spinnerR, spinnerB;
+        spinnerL = regL + (regR - regL)/2 - regViews.spinner.getMeasuredWidth()/2;
+        spinnerT = (regB - regT)/2 + regT - regViews.spinner.getMeasuredHeight()/2;
+        spinnerR = spinnerL + regViews.spinner.getMeasuredWidth();
+        spinnerB = spinnerT + regViews.spinner.getMeasuredHeight();
+        regViews.spinner.layout(spinnerL, spinnerT, spinnerR, spinnerB);
+
         // move the globe out of view
         mGlobe.setTranslationY(mGlobe.getMeasuredHeight());
 
@@ -436,7 +447,6 @@ public class WelcomeLayout extends ViewGroup implements View.OnFocusChangeListen
         passwordR = width - passwordParams.getMarginEnd();
         passwordB = passwordT + siViews.passwordC.getMeasuredHeight();
         siViews.passwordC.layout(passwordL, passwordT, passwordR, passwordB);
-//        siViews.passwordC.layout(0, passwordT, width, passwordB);
 
         int siL, siT, siR, siB;
         LayoutParams siParams = (LayoutParams) siViews.button.getLayoutParams();
@@ -445,6 +455,13 @@ public class WelcomeLayout extends ViewGroup implements View.OnFocusChangeListen
         siR = siL + siViews.button.getMeasuredWidth();
         siB = siT + siViews.button.getMeasuredHeight();
         siViews.button.layout(siL, siT, siR, siB);
+
+        int spinnerL, spinnerT, spinnerR, spinnerB;
+        spinnerL = siL + (siR - siL)/2 - siViews.spinner.getMeasuredWidth()/2;
+        spinnerT = (siB - siT)/2 + siT - siViews.spinner.getMeasuredHeight()/2;
+        spinnerR = spinnerL + siViews.spinner.getMeasuredWidth();
+        spinnerB = spinnerT + siViews.spinner.getMeasuredHeight();
+        siViews.spinner.layout(spinnerL, spinnerT, spinnerR, spinnerB);
 
         // move the globe out of view
         mGlobe.setTranslationY(mGlobe.getMeasuredHeight());
@@ -890,6 +907,54 @@ public class WelcomeLayout extends ViewGroup implements View.OnFocusChangeListen
                 }).start();
     }
 
+    @UiThread
+    void setRegistrationSpinnerVisible(boolean visible) {
+        if (visible) {
+            regViews.spinner.setAlpha(0);
+            regViews.spinner.animate().alpha(1).setDuration(200);
+            regViews.spinner.setVisibility(View.VISIBLE);
+            regViews.button.animate().alpha(0).withEndAction(new UiRunnable() {
+                @Override
+                public void run() {
+                    regViews.button.setVisibility(View.INVISIBLE);
+                }
+            }).setDuration(200).setInterpolator(new LinearInterpolator()).setStartDelay(0);
+        } else {
+            regViews.spinner.animate().alpha(0).withEndAction(new UiRunnable() {
+                @Override
+                public void run() {
+                    regViews.spinner.setVisibility(View.GONE);
+                }
+            }).setDuration(200).setInterpolator(new LinearInterpolator());
+            regViews.button.setVisibility(View.VISIBLE);
+            regViews.button.animate().setDuration(200).alpha(1).setInterpolator(new LinearInterpolator()).setStartDelay(0);
+        }
+    }
+
+    @UiThread
+    void setSignInSpinnerVisible(boolean visible) {
+        if (visible) {
+            siViews.spinner.setAlpha(0);
+            siViews.spinner.animate().alpha(1).setDuration(200);
+            siViews.spinner.setVisibility(View.VISIBLE);
+            siViews.button.animate().alpha(0).withEndAction(new UiRunnable() {
+                @Override
+                public void run() {
+                    siViews.button.setVisibility(View.INVISIBLE);
+                }
+            }).setDuration(200).setInterpolator(new LinearInterpolator()).setStartDelay(0);
+        } else {
+            siViews.spinner.animate().alpha(0).withEndAction(new UiRunnable() {
+                @Override
+                public void run() {
+                    siViews.spinner.setVisibility(View.GONE);
+                }
+            }).setDuration(200).setInterpolator(new LinearInterpolator());
+            siViews.button.setVisibility(View.VISIBLE);
+            siViews.button.animate().setDuration(200).alpha(1).setInterpolator(new LinearInterpolator()).setStartDelay(0);
+        }
+    }
+
     @Override
     public void onFocusChange(View v, boolean hasFocus) {
         if (mFocusListener != null && hasFocus) {
@@ -974,6 +1039,7 @@ public class WelcomeLayout extends ViewGroup implements View.OnFocusChangeListen
         TextInputLayout passwordC;
         TextInputEditText password;
         Button button;
+        ProgressBar spinner;
     }
 
     private static class RegistrationElements {
@@ -984,6 +1050,7 @@ public class WelcomeLayout extends ViewGroup implements View.OnFocusChangeListen
         TextInputLayout emailC;
         TextInputEditText email;
         Button button;
+        ProgressBar spinner;
     }
 
     interface FocusListener {

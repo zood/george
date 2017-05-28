@@ -12,6 +12,7 @@ import android.support.v7.app.AlertDialog;
 import com.mapbox.mapboxsdk.geometry.LatLng;
 
 import java.util.HashMap;
+import java.util.Locale;
 import java.util.Map;
 import java.util.regex.Pattern;
 
@@ -126,12 +127,13 @@ public class Utils {
         if (username == null) {
             return R.string.username_missing;
         }
+        String lc = username.toLowerCase(Locale.US);
         // Check if it's valid, before making any other assumptions.
-        if (sUsernamePattern.matcher(username).matches()) {
+        if (sUsernamePattern.matcher(lc).matches()) {
             return 0;
         }
 
-        if (username.length() < 5) {
+        if (lc.length() < 5) {
             return R.string.too_short;
         }
 
