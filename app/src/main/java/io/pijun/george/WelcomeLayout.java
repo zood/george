@@ -581,7 +581,7 @@ public class WelcomeLayout extends ViewGroup implements View.OnFocusChangeListen
         mLogo.setTranslationY(logoT - mLogo.getTop());
         mLogo.animate().
                 translationY(0).
-                setDuration(750).
+                setDuration(562).
                 setStartDelay(0).
                 scaleX(finalScale).
                 scaleY(finalScale).
@@ -593,7 +593,7 @@ public class WelcomeLayout extends ViewGroup implements View.OnFocusChangeListen
         mTitle.setTranslationY(titleT - mTitle.getTop());
         mTitle.animate().
                 translationY(0).
-                setDuration(750).
+                setDuration(562).
                 setStartDelay(0).
                 scaleX(finalScale).
                 scaleY(finalScale).
@@ -605,7 +605,7 @@ public class WelcomeLayout extends ViewGroup implements View.OnFocusChangeListen
         mSubtitle.setTranslationY(subtitleT - mSubtitle.getTop());
         mSubtitle.animate().
                 translationY(0).
-                setDuration(750).
+                setDuration(562).
                 setStartDelay(0).
                 scaleX(finalScale).
                 scaleY(finalScale).
@@ -614,16 +614,16 @@ public class WelcomeLayout extends ViewGroup implements View.OnFocusChangeListen
         // hide the globe
         float globeTrY = mGlobe.getTranslationY();
         mGlobe.setTranslationY(0);
-        mGlobe.animate().setStartDelay(0).setDuration(750).translationY(globeTrY).setInterpolator(new LinearBezierInterpolator());
+        mGlobe.animate().setStartDelay(0).setDuration(562).translationY(globeTrY).setInterpolator(new LinearBezierInterpolator());
 
         // animate the buttons off
         float showRegTrX = mShowRegister.getTranslationX();
         mShowRegister.setTranslationX(0);
-        mShowRegister.animate().setStartDelay(0).translationX(showRegTrX).setDuration(750).setInterpolator(new BezierLinearInterpolator());
+        mShowRegister.animate().setStartDelay(0).translationX(showRegTrX).setDuration(562).setInterpolator(new BezierLinearInterpolator());
 
         float showSignInTrx = mShowSignIn.getTranslationX();
         mShowSignIn.setTranslationX(0);
-        mShowSignIn.animate().setStartDelay(100).translationX(showSignInTrx).setDuration(1000).setInterpolator(new BezierLinearInterpolator());
+        mShowSignIn.animate().setStartDelay(100).translationX(showSignInTrx).setDuration(750).setInterpolator(new BezierLinearInterpolator());
     }
 
     @UiThread
@@ -631,13 +631,13 @@ public class WelcomeLayout extends ViewGroup implements View.OnFocusChangeListen
         transitionToInputsCommon(STATE_SIGN_IN);
         int width = getWidth();
         siViews.usernameC.setTranslationX(width - siViews.usernameC.getLeft());
-        siViews.usernameC.animate().translationX(0).setStartDelay(750).setDuration(500).setInterpolator(new LinearBezierInterpolator());
+        siViews.usernameC.animate().translationX(0).setStartDelay(750).setDuration(375).setInterpolator(new LinearBezierInterpolator());
 
         siViews.passwordC.setTranslationX(width - siViews.passwordC.getLeft());
-        siViews.passwordC.animate().translationX(0).setStartDelay(850).setDuration(500).setInterpolator(new LinearBezierInterpolator());
+        siViews.passwordC.animate().translationX(0).setStartDelay(850).setDuration(375).setInterpolator(new LinearBezierInterpolator());
 
         siViews.button.setTranslationX(width - siViews.button.getLeft());
-        siViews.button.animate().translationX(0).setStartDelay(1000).setDuration(500).setInterpolator(new LinearBezierInterpolator());
+        siViews.button.animate().translationX(0).setStartDelay(1000).setDuration(375).setInterpolator(new LinearBezierInterpolator());
     }
 
     @UiThread
@@ -647,16 +647,16 @@ public class WelcomeLayout extends ViewGroup implements View.OnFocusChangeListen
 
         // move the input fields off screen, so we can animate them in
         regViews.usernameC.setTranslationX(width - regViews.usernameC.getLeft());
-        regViews.usernameC.animate().translationX(0).setStartDelay(750).setDuration(500).setInterpolator(new LinearBezierInterpolator());
+        regViews.usernameC.animate().translationX(0).setStartDelay(750).setDuration(375).setInterpolator(new LinearBezierInterpolator());
 
         regViews.passwordC.setTranslationX(width - regViews.passwordC.getLeft());
-        regViews.passwordC.animate().translationX(0).setStartDelay(850).setDuration(500).setInterpolator(new LinearBezierInterpolator());
+        regViews.passwordC.animate().translationX(0).setStartDelay(850).setDuration(375).setInterpolator(new LinearBezierInterpolator());
 
         regViews.emailC.setTranslationX(width - regViews.emailC.getLeft());
-        regViews.emailC.animate().translationX(0).setStartDelay(950).setDuration(500).setInterpolator(new LinearBezierInterpolator());
+        regViews.emailC.animate().translationX(0).setStartDelay(950).setDuration(375).setInterpolator(new LinearBezierInterpolator());
 
         regViews.button.setTranslationX(width - regViews.button.getLeft());
-        regViews.button.animate().translationX(0).setStartDelay(1100).setDuration(500).setInterpolator(new LinearBezierInterpolator());
+        regViews.button.animate().translationX(0).setStartDelay(1100).setDuration(375).setInterpolator(new LinearBezierInterpolator());
     }
 
     @SuppressLint("SwitchIntDef")
@@ -688,15 +688,15 @@ public class WelcomeLayout extends ViewGroup implements View.OnFocusChangeListen
 
         long initialDelay;
         if (state == STATE_SIGN_IN) {
-            initialDelay = 650;
+            initialDelay = 462;
         } else if (state == STATE_REGISTER) {
-            initialDelay = 750;
+            initialDelay = 562;
         } else {
             throw new RuntimeException("Must be called with sign in or register");
         }
 
         /*
-        Not that the logo, title and subtitle have been moved to their final
+        Now that the logo, title and subtitle have been moved to their final
         positions, move each one back to its previous position, and animate
         it into its final positions.
          */
@@ -705,7 +705,7 @@ public class WelcomeLayout extends ViewGroup implements View.OnFocusChangeListen
         mLogo.setTranslationY(logoT - mLogo.getTop());
         mLogo.animate().
                 translationY(0).
-                setDuration(750).
+                setDuration(562).
                 setStartDelay(initialDelay).
                 scaleX(1).
                 scaleY(1).
@@ -716,7 +716,7 @@ public class WelcomeLayout extends ViewGroup implements View.OnFocusChangeListen
         mTitle.setTranslationY(titleT - mTitle.getTop());
         mTitle.animate().
                 translationY(0).
-                setDuration(750).
+                setDuration(562).
                 setStartDelay(initialDelay).
                 scaleX(1).
                 scaleY(1).
@@ -727,7 +727,7 @@ public class WelcomeLayout extends ViewGroup implements View.OnFocusChangeListen
         mSubtitle.setTranslationY(subtitleT - mSubtitle.getTop());
         mSubtitle.animate().
                 translationY(0).
-                setDuration(750).
+                setDuration(562).
                 setStartDelay(initialDelay).
                 scaleX(1).
                 scaleY(1).
@@ -737,20 +737,20 @@ public class WelcomeLayout extends ViewGroup implements View.OnFocusChangeListen
         mGlobe.animate().
                 translationY(0).
                 setStartDelay(initialDelay).
-                setDuration(750).
+                setDuration(562).
                 setInterpolator(new LinearBezierInterpolator());
 
         mShowSignIn.animate().
                 translationX(0).
                 setStartDelay(initialDelay).
                 setInterpolator(new LinearBezierInterpolator()).
-                setDuration(750);
+                setDuration(562);
 
         mShowRegister.animate().
                 translationX(0).
                 setStartDelay(initialDelay+100).
                 setInterpolator(new LinearBezierInterpolator()).
-                setDuration(750);
+                setDuration(562);
     }
 
     private void transitionToSplashFromSignIn() {
@@ -763,17 +763,17 @@ public class WelcomeLayout extends ViewGroup implements View.OnFocusChangeListen
         siViews.button.animate().
                 translationX(width - siViews.button.getLeft()).
                 setStartDelay(0).
-                setDuration(500).
+                setDuration(375).
                 setInterpolator(new BezierLinearInterpolator());
         siViews.passwordC.animate().
                 translationX(width - siViews.passwordC.getLeft()).
                 setStartDelay(150).
-                setDuration(500).
+                setDuration(375).
                 setInterpolator(new BezierLinearInterpolator());
         siViews.usernameC.animate().
                 translationX(width - siViews.usernameC.getLeft()).
                 setStartDelay(250).
-                setDuration(500).
+                setDuration(375).
                 setInterpolator(new BezierLinearInterpolator());
     }
 
@@ -789,22 +789,22 @@ public class WelcomeLayout extends ViewGroup implements View.OnFocusChangeListen
         regViews.button.animate().
                 translationX(width - regViews.button.getLeft()).
                 setStartDelay(0).
-                setDuration(500).
+                setDuration(375).
                 setInterpolator(new BezierLinearInterpolator());
         regViews.emailC.animate().
                 translationX(width - regViews.emailC.getLeft()).
                 setStartDelay(150).
-                setDuration(500).
+                setDuration(375).
                 setInterpolator(new BezierLinearInterpolator());
         regViews.passwordC.animate().
                 translationX(width - regViews.passwordC.getLeft()).
                 setStartDelay(250).
-                setDuration(500).
+                setDuration(375).
                 setInterpolator(new BezierLinearInterpolator());
         regViews.usernameC.animate().
                 translationX(width - regViews.usernameC.getLeft()).
                 setStartDelay(350).
-                setDuration(500).
+                setDuration(375).
                 setInterpolator(new BezierLinearInterpolator());
     }
 
@@ -818,23 +818,23 @@ public class WelcomeLayout extends ViewGroup implements View.OnFocusChangeListen
         mLogo.setTranslationY(group1TrY);
         mTitle.setTranslationY(group1TrY);
         mSubtitle.setTranslationY(group1TrY);
-        mLogo.animate().translationY(0).setDuration(1500).setInterpolator(new Bezier65Interpolator());
-        mTitle.animate().translationY(0).setDuration(1500).setInterpolator(new Bezier65Interpolator());
-        mSubtitle.animate().translationY(0).setDuration(1500).setInterpolator(new Bezier65Interpolator());
+        mLogo.animate().translationY(0).setDuration(1125).setInterpolator(new Bezier65Interpolator());
+        mTitle.animate().translationY(0).setDuration(1125).setInterpolator(new Bezier65Interpolator());
+        mSubtitle.animate().translationY(0).setDuration(1125).setInterpolator(new Bezier65Interpolator());
 
         mShowRegister.setTranslationY(height - mShowRegister.getTop());
-        mShowRegister.animate().translationY(0).setDuration(750).setStartDelay(900).setInterpolator(new LinearBezierInterpolator());
+        mShowRegister.animate().translationY(0).setDuration(562).setStartDelay(675).setInterpolator(new LinearBezierInterpolator());
         mShowSignIn.setTranslationY(height - mShowSignIn.getTop());
-        mShowSignIn.animate().translationY(0).setDuration(750).setStartDelay(1060).setInterpolator(new LinearBezierInterpolator());
+        mShowSignIn.animate().translationY(0).setDuration(562).setStartDelay(775).setInterpolator(new LinearBezierInterpolator());
 
         mGlobe.setTranslationY(height - mGlobe.getTop());
-        mGlobe.animate().translationY(0).setDuration(290).setStartDelay(1060).setInterpolator(new LinearBezierInterpolator());
+        mGlobe.animate().translationY(0).setDuration(217).setStartDelay(775).setInterpolator(new LinearBezierInterpolator());
 
         int cloudsTrY = height - mCloud1.getTop();
         mCloud1.setTranslationY(cloudsTrY);
-        mCloud1.animate().translationY(0).translationX(100).setDuration(920).setStartDelay(580).setInterpolator(new LinearBezierInterpolator());
+        mCloud1.animate().translationY(0).translationX(100).setDuration(690).setStartDelay(375).setInterpolator(new LinearBezierInterpolator());
         mCloud2.setTranslationY(cloudsTrY);
-        mCloud2.animate().translationY(0).translationX(100).setDuration(920).setStartDelay(580).setInterpolator(new LinearBezierInterpolator());
+        mCloud2.animate().translationY(0).translationX(100).setDuration(690).setStartDelay(375).setInterpolator(new LinearBezierInterpolator());
         App.runOnUiThread(new UiRunnable() {
             @Override
             public void run() {
@@ -849,7 +849,7 @@ public class WelcomeLayout extends ViewGroup implements View.OnFocusChangeListen
         layoutLogoAndTitles(getWidth(), getHeight());
 
         mSubtitle.setAlpha(0);
-        mSubtitle.animate().alpha(1).setDuration(500).setInterpolator(new LinearInterpolator());
+        mSubtitle.animate().alpha(1).setDuration(375).setInterpolator(new LinearInterpolator());
 
         App.runOnUiThread(new UiRunnable() {
             @Override
