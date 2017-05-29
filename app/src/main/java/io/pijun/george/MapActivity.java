@@ -28,6 +28,9 @@ import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.LinearLayoutCompat;
+import android.support.v7.widget.LinearLayoutManager;
+import android.support.v7.widget.RecyclerView;
 import android.text.format.DateUtils;
 import android.view.MenuItem;
 import android.view.MotionEvent;
@@ -125,6 +128,12 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
         final Button button = (Button) findViewById(R.id.drawer_button);
         final ConstraintLayout.LayoutParams params = (ConstraintLayout.LayoutParams) button.getLayoutParams();
         params.topMargin = getStatusBarHeight();
+
+        RecyclerView avatarsView = (RecyclerView) findViewById(R.id.avatars);
+        LinearLayoutManager llm = new LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false);
+        avatarsView.setLayoutManager(llm);
+        AvatarsAdapter adapter = new AvatarsAdapter();
+        avatarsView.setAdapter(adapter);
 
         mMapView = (MapView) findViewById(R.id.map);
         mMapView.onCreate(savedInstanceState);
