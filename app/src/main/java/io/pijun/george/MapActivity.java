@@ -12,14 +12,12 @@ import android.content.IntentSender;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.Color;
-import android.graphics.PointF;
 import android.location.Location;
 import android.os.Bundle;
 import android.support.annotation.AnyThread;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.annotation.UiThread;
-import android.support.annotation.WorkerThread;
 import android.support.constraint.ConstraintLayout;
 import android.support.design.widget.NavigationView;
 import android.support.v4.app.ActivityCompat;
@@ -28,15 +26,12 @@ import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
-import android.support.v7.widget.LinearLayoutCompat;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.text.format.DateUtils;
 import android.view.MenuItem;
-import android.view.MotionEvent;
 import android.view.View;
 import android.widget.Button;
-import android.widget.TextView;
 
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
@@ -79,7 +74,6 @@ import io.pijun.george.api.UserComm;
 import io.pijun.george.crypto.EncryptedData;
 import io.pijun.george.crypto.KeyPair;
 import io.pijun.george.event.LocationSharingGranted;
-import io.pijun.george.event.LocationSharingRequested;
 import io.pijun.george.models.FriendLocation;
 import io.pijun.george.models.FriendRecord;
 import io.pijun.george.models.MovementType;
@@ -90,7 +84,7 @@ import io.pijun.george.view.MyLocationView;
 import retrofit2.Call;
 import retrofit2.Response;
 
-public class MapActivity extends AppCompatActivity implements OnMapReadyCallback, MapboxMap.OnMarkerClickListener, GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener, LocationListener {
+public class MapActivity extends AppCompatActivity implements OnMapReadyCallback, MapboxMap.OnMarkerClickListener, GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener, LocationListener, AvatarsAdapter.AvatarsAdapterListener {
 
     private static final int REQUEST_LOCATION_PERMISSION = 18;
     private static final int REQUEST_LOCATION_SETTINGS = 20;
@@ -102,7 +96,7 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
     private GoogleApiClient mGoogleClient;
     private MarkerView mMeMarker;
     private boolean mCameraTracksMyLocation = false;
-    private float mLastMapControlUpX = -1;
+    private AvatarsAdapter mAvatarsAdapter = new AvatarsAdapter();
 
     public static Intent newIntent(Context ctx) {
         return new Intent(ctx, MapActivity.class);
@@ -132,36 +126,20 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
         RecyclerView avatarsView = (RecyclerView) findViewById(R.id.avatars);
         LinearLayoutManager llm = new LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false);
         avatarsView.setLayoutManager(llm);
-        AvatarsAdapter adapter = new AvatarsAdapter();
-        avatarsView.setAdapter(adapter);
+        mAvatarsAdapter.setListener(this);
+        avatarsView.setAdapter(mAvatarsAdapter);
+
+        App.runInBackground(new WorkerRunnable() {
+            @Override
+            public void run() {
+                ArrayList<FriendRecord> friends = DB.get(MapActivity.this).getFriends();
+                mAvatarsAdapter.setFriends(friends);
+            }
+        });
 
         mMapView = (MapView) findViewById(R.id.map);
         mMapView.onCreate(savedInstanceState);
         mMapView.getMapAsync(this);
-
-        findViewById(R.id.bottom_textview).setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                onShowFriends();
-            }
-        });
-
-        findViewById(R.id.map_control_bar).setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                L.i("last action up x: "+ mLastMapControlUpX);
-            }
-        });
-
-        findViewById(R.id.map_control_bar).setOnTouchListener(new View.OnTouchListener() {
-            @Override
-            public boolean onTouch(View v, MotionEvent event) {
-                if (event.getAction() == MotionEvent.ACTION_UP) {
-                    mLastMapControlUpX = event.getX();
-                }
-                return false;
-            }
-        });
 
         final View myLocFab = findViewById(R.id.my_location_fab);
         myLocFab.setOnClickListener(new View.OnClickListener() {
@@ -199,8 +177,6 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
         App.runInBackground(new WorkerRunnable() {
             @Override
             public void run() {
-                loadFriendRequests();
-
                 Prefs prefs = Prefs.get(MapActivity.this);
                 String token = prefs.getAccessToken();
                 if (token == null) {
@@ -528,7 +504,7 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
         if (mMapboxMap == null) {
             return;
         }
-        int fortyEight = getResources().getDimensionPixelSize(R.dimen.fortyEight);
+        int fortyEight = getResources().getDimensionPixelSize(R.dimen.thirtyTwo);
         Bitmap bitmap = Bitmap.createBitmap(fortyEight, fortyEight, Bitmap.Config.ARGB_8888);
         Identicon.draw(bitmap, friend.user.username);
 
@@ -605,26 +581,6 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
         return result;
     }
 
-    @WorkerThread
-    private void loadFriendRequests() {
-        final int count = DB.get(this).getFriendRequestsCount();
-        App.runOnUiThread(new UiRunnable() {
-            @Override
-            public void run() {
-                TextView tv = (TextView) findViewById(R.id.bottom_textview);
-                if (tv == null) {
-                    return;
-                }
-
-                int drawable = 0;
-                if (count > 0) {
-                    drawable = R.drawable.common_google_signin_btn_icon_dark;
-                }
-                tv.setCompoundDrawablesRelativeWithIntrinsicBounds(0, 0, drawable, 0);
-            }
-        });
-    }
-
     @Subscribe
     @UiThread
     public void onLocationSharingGranted(final LocationSharingGranted grant) {
@@ -643,17 +599,6 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
                 }
                 L.i("onLocationSharingGranted: friend found. will watch");
                 mPkgWatcher.watch(friend.receivingBoxId);
-            }
-        });
-    }
-
-    @Subscribe
-    @UiThread
-    public void onLocationSharingRequested(LocationSharingRequested req) {
-        App.runInBackground(new WorkerRunnable() {
-            @Override
-            public void run() {
-                loadFriendRequests();
             }
         });
     }
@@ -689,12 +634,6 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
     public void onShowDrawerAction(View v) {
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
         drawer.openDrawer(GravityCompat.START, true);
-    }
-
-    @UiThread
-    private void onShowFriends() {
-        Intent i = FriendsActivity.newIntent(this);
-        startActivity(i);
     }
 
     @UiThread
@@ -735,7 +674,6 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
             drawer.closeDrawers();
 
             if (item.getItemId() == R.id.your_friends) {
-                onShowFriends();
             } else if (item.getItemId() == R.id.log_out) {
                 onLogOutAction();
             } else if (item.getItemId() == R.id.view_logs) {
@@ -808,18 +746,20 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
         return false;
     }
 
-    public void onTapGestureRecognized(View v, PointF point) {
-        double btnWidth = v.getWidth()/3.0;
-        if (point.x < btnWidth) {
-            // button 1
-            L.i("announcements?");
-        } else if (point.x < btnWidth*2.0) {
-            // button 2
-            L.i("friends");
-        } else {
-            // button 3
-            L.i("settings");
-            onShowDrawerAction(v);
+    @Override
+    public void onAvatarSelected(FriendRecord fr) {
+        L.i("selected: " + fr.user.username);
+        Marker marker = mMarkerTracker.getById(fr.id);
+        if (marker == null) {
+            return;
         }
+
+        CameraPosition cp = new CameraPosition.Builder()
+                .target(marker.getPosition())
+                .zoom(13)
+                .bearing(0)
+                .tilt(0).build();
+        CameraUpdate cu = CameraUpdateFactory.newCameraPosition(cp);
+        mMapboxMap.animateCamera(cu, 1000);
     }
 }

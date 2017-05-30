@@ -22,10 +22,8 @@ import io.pijun.george.api.UserComm;
 import io.pijun.george.crypto.EncryptedData;
 import io.pijun.george.crypto.KeyPair;
 import io.pijun.george.event.LocationSharingGranted;
-import io.pijun.george.event.LocationSharingRequested;
 import io.pijun.george.models.FriendLocation;
 import io.pijun.george.models.FriendRecord;
-import io.pijun.george.models.RequestRecord;
 import io.pijun.george.models.UserRecord;
 import io.pijun.george.service.LocationListenerService;
 import retrofit2.Response;
@@ -184,34 +182,6 @@ public class MessageUtils {
                     return ERROR_DATABASE_EXCEPTION;
                 }
                 App.postOnBus(new LocationSharingGranted(userRecord.id));
-                break;
-            case LocationSharingRequest:
-                // If we're already sharing location with this person, just send them the drop box address
-                FriendRecord friend = db.getFriendByUserId(userRecord.id);
-                if (friend != null) {
-                    // We already have them as a friend. Are we sharing our location with them?
-                    if (friend.sendingBoxId != null) {
-                        return approveFriendRequest(context, friend.userId, friend.sendingBoxId);
-                    }
-                }
-                // We're not sharing with them, but let's see if we already have a request from them
-                RequestRecord request = db.getIncomingRequestByUserId(userRecord.id);
-                // TODO: If the request was rejected, resend the rejection message
-                if (request != null) {
-                    L.i("MessageUtils found a duplicate location request");
-                    return ERROR_NONE;
-                }
-                try {
-                    db.addIncomingRequest(userRecord.id, System.currentTimeMillis());
-                } catch (DB.DBException ex) {
-                    L.w("error recording sharing request", ex);
-                    FirebaseCrash.report(ex);
-                    return ERROR_DATABASE_EXCEPTION;
-                }
-                App.postOnBus(new LocationSharingRequested());
-                break;
-            case LocationSharingRejection:
-                // TODO:
                 break;
             case LocationInfo:
                 FriendRecord fr = db.getFriendByUserId(userRecord.id);

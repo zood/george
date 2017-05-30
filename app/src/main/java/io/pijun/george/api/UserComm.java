@@ -26,24 +26,10 @@ public class UserComm {
     public String movements;
 
     @NonNull
-    public static UserComm newLocationSharingRequest() {
-        UserComm c = new UserComm();
-        c.type = CommType.LocationSharingRequest;
-        return c;
-    }
-
-    @NonNull
     public static UserComm newLocationSharingGrant(@NonNull byte[] boxId) {
         UserComm c = new UserComm();
         c.type = CommType.LocationSharingGrant;
         c.dropBox = boxId;
-        return c;
-    }
-
-    @NonNull
-    public static UserComm newLocationSharingRejection() {
-        UserComm c = new UserComm();
-        c.type = CommType.LocationSharingRejection;
         return c;
     }
 
@@ -81,8 +67,6 @@ public class UserComm {
                 if (dropBox == null || dropBox.length != Constants.DROP_BOX_ID_LENGTH) {
                     return false;
                 }
-                return true;
-            case LocationSharingRequest:
                 return true;
             case LocationInfo:
                 if (latitude < -90 || latitude > 90) {

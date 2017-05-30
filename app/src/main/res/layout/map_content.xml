@@ -20,7 +20,7 @@
         app:layout_constraintRight_toRightOf="parent"
         app:layout_constraintHorizontal_bias="1.0"
         android:layout_height="0dp"
-        app:layout_constraintBottom_toTopOf="@+id/bottom_textview" />
+        app:layout_constraintBottom_toBottomOf="parent" />
 
     <Button
         android:text="Drawer"
@@ -46,60 +46,5 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         tools:layout_editor_absoluteX="280dp" />
-
-    <RelativeLayout
-        android:id="@+id/map_control_bar"
-        android:background="@drawable/control_bar_background"
-        android:elevation="5dp"
-        android:clickable="true"
-        android:visibility="gone"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        android:layout_width="0dp"
-        android:layout_height="0dp"
-        tools:layout_editor_absoluteX="180dp">
-
-        <ImageView
-            android:src="@drawable/ic_cake_black_24dp"
-            android:tint="@color/control_bar_button_tint"
-            android:padding="16dp"
-            android:layout_centerVertical="true"
-            android:layout_alignParentStart="true"
-            android:layout_marginStart="42dp"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content" />
-
-        <ImageView
-            android:src="@drawable/ic_person_black_24px"
-            android:tint="@color/control_bar_button_tint"
-            android:padding="16dp"
-            android:layout_centerInParent="true"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content" />
-
-        <ImageView
-            android:src="@drawable/ic_settings_black_24dp"
-            android:tint="@color/control_bar_button_tint"
-            android:padding="16dp"
-            android:layout_centerVertical="true"
-            android:layout_alignParentEnd="true"
-            android:layout_marginEnd="42dp"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content" />
-    </RelativeLayout>
-
-    <TextView
-        android:id="@+id/bottom_textview"
-        android:visibility="gone"
-        android:text="@string/your_friends"
-        android:elevation="12dp"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintLeft_toLeftOf="parent"
-        android:padding="16dp"
-        android:background="@android:color/white"
-        app:layout_constraintRight_toRightOf="parent" />
 
 </android.support.constraint.ConstraintLayout>

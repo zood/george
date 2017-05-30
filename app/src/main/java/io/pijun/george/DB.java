@@ -25,8 +25,6 @@ import io.pijun.george.models.FriendLocation;
 import io.pijun.george.models.FriendRecord;
 import io.pijun.george.models.LimitedShare;
 import io.pijun.george.models.MovementType;
-import io.pijun.george.models.RequestRecord;
-import io.pijun.george.models.RequestResponse;
 import io.pijun.george.models.Snapshot;
 import io.pijun.george.models.UserRecord;
 import io.pijun.george.service.BackupDatabaseJob;
@@ -74,30 +72,6 @@ public class DB {
             LOCATIONS_COL_SPEED,
             LOCATIONS_COL_BEARING,
             LOCATIONS_COL_MOVEMENTS,
-    };
-
-    private static final String OUTGOING_REQUESTS_TABLE = "outgoing_requests";
-    private static final String OUTGOING_REQUESTS_COL_ID = "id";
-    private static final String OUTGOING_REQUESTS_COL_USER_ID = "user_id";
-    private static final String OUTGOING_REQUESTS_COL_SENT_DATE = "sent_date";
-    private static final String OUTGOING_REQUESTS_COL_RESPONSE = "response";
-    private static final String[] OUTGOING_REQUESTS_COLUMNS = new String[]{
-            OUTGOING_REQUESTS_COL_ID,
-            OUTGOING_REQUESTS_COL_USER_ID,
-            OUTGOING_REQUESTS_COL_SENT_DATE,
-            OUTGOING_REQUESTS_COL_RESPONSE
-    };
-
-    private static final String INCOMING_REQUESTS_TABLE = "incoming_requests";
-    private static final String INCOMING_REQUESTS_COL_ID = "id";
-    private static final String INCOMING_REQUESTS_COL_USER_ID = "user_id";
-    private static final String INCOMING_REQUESTS_COL_SENT_DATE = "sent_date";
-    private static final String INCOMING_REQUESTS_COL_RESPONSE = "response";
-    private static final String[] INCOMING_REQUESTS_COLUMNS = new String[]{
-            INCOMING_REQUESTS_COL_ID,
-            INCOMING_REQUESTS_COL_USER_ID,
-            INCOMING_REQUESTS_COL_SENT_DATE,
-            INCOMING_REQUESTS_COL_RESPONSE
     };
 
     private static final String USERS_TABLE = "users";
@@ -177,23 +151,6 @@ public class DB {
     }
 
     @WorkerThread
-    public long addIncomingRequest(long userId, long sentDate) throws DBException {
-        SQLiteDatabase db = mDbHelper.getWritableDatabase();
-        ContentValues cv = new ContentValues();
-        cv.put(INCOMING_REQUESTS_COL_USER_ID, userId);
-        cv.put(INCOMING_REQUESTS_COL_SENT_DATE, sentDate);
-        long result;
-        try {
-            result = db.insertOrThrow(INCOMING_REQUESTS_TABLE, null, cv);
-        } catch (SQLException ex) {
-            throw new DBException("Error creating incoming request - userId:" + userId + ", sentDate: " + sentDate, ex);
-        }
-
-        scheduleBackup();
-        return result;
-    }
-
-    @WorkerThread
     public long addLimitedShare(@NonNull @Size(Constants.PUBLIC_KEY_LENGTH) byte[] publicKey, @NonNull @Size(Constants.DROP_BOX_ID_LENGTH) byte[] sendingBoxId) throws DBException {
         // to make sure we always have just one at a time, wipe the database before proceeding
         deleteLimitedShares();
@@ -211,22 +168,6 @@ public class DB {
 
         // NOTE: We don't bother scheduling a backup here because this data is (purposely) not
         // included in a snapshot.
-        return result;
-    }
-
-    public long addOutgoingRequest(long userId, long sentDate) throws DBException {
-        SQLiteDatabase db = mDbHelper.getWritableDatabase();
-        ContentValues cv = new ContentValues();
-        cv.put(OUTGOING_REQUESTS_COL_USER_ID, userId);
-        cv.put(OUTGOING_REQUESTS_COL_SENT_DATE, sentDate);
-        long result;
-        try {
-            result = db.insertOrThrow(OUTGOING_REQUESTS_TABLE, null, cv);
-        } catch (SQLException ex) {
-            throw new DBException("Error creating outgoing requests - userId: " + userId + ", sentDate: " + sentDate, ex);
-        }
-
-        scheduleBackup();
         return result;
     }
 
@@ -279,9 +220,7 @@ public class DB {
     public void deleteUserData() {
         SQLiteDatabase db = mDbHelper.getWritableDatabase();
         db.delete(FRIENDS_TABLE, null, null);
-        db.delete(INCOMING_REQUESTS_TABLE, null, null);
         db.delete(LOCATIONS_TABLE, null, null);
-        db.delete(OUTGOING_REQUESTS_TABLE, null, null);
         db.delete(USERS_TABLE, null, null);
         db.delete(LIMITED_SHARES_TABLE, null, null);
     }
@@ -394,20 +333,6 @@ public class DB {
     }
 
     @WorkerThread
-    public int getFriendRequestsCount() {
-        int count = 0;
-        SQLiteDatabase db = mDbHelper.getReadableDatabase();
-        String sql = "SELECT COUNT(*) FROM " + INCOMING_REQUESTS_TABLE + " WHERE " + INCOMING_REQUESTS_COL_RESPONSE + " ISNULL";
-        try (Cursor cursor = db.rawQuery(sql, null)) {
-            if (cursor.moveToNext()) {
-                count = cursor.getInt(0);
-            }
-        }
-
-        return count;
-    }
-
-    @WorkerThread
     @NonNull
     public ArrayList<FriendRecord> getFriends() {
         ArrayList<FriendRecord> records = new ArrayList<>();
@@ -442,40 +367,6 @@ public class DB {
 
     @WorkerThread
     @Nullable
-    public RequestRecord getIncomingRequestByUserId(long userId) {
-        SQLiteDatabase db = mDbHelper.getReadableDatabase();
-        String selection = INCOMING_REQUESTS_COL_USER_ID + "=?";
-        String[] args = new String[]{String.valueOf(userId)};
-        try (Cursor c = db.query(INCOMING_REQUESTS_TABLE, INCOMING_REQUESTS_COLUMNS, selection, args, null, null, null)) {
-            if (c.moveToNext()) {
-                return readRequest(c);
-            }
-        }
-
-        return null;
-    }
-
-    @WorkerThread
-    @NonNull
-    public ArrayList<RequestRecord> getIncomingRequests(boolean notRespondedOnly) {
-        ArrayList<RequestRecord> requests = new ArrayList<>();
-        SQLiteDatabase db = mDbHelper.getReadableDatabase();
-        String selection = null;
-        if (notRespondedOnly) {
-            selection = INCOMING_REQUESTS_COL_RESPONSE + " ISNULL";
-        }
-        try (Cursor c = db.query(INCOMING_REQUESTS_TABLE, INCOMING_REQUESTS_COLUMNS, selection, null, null, null, null)) {
-            while (c.moveToNext()) {
-                RequestRecord rr = readRequest(c);
-                requests.add(rr);
-            }
-        }
-
-        return requests;
-    }
-
-    @WorkerThread
-    @Nullable
     public LimitedShare getLimitedShare() {
         SQLiteDatabase db = mDbHelper.getReadableDatabase();
         try (Cursor c = db.query(LIMITED_SHARES_TABLE, LIMITED_SHARES_COLUMNS, null, null, null, null, null)) {
@@ -485,21 +376,6 @@ public class DB {
         }
 
         return null;
-    }
-
-    @WorkerThread
-    @NonNull
-    public ArrayList<RequestRecord> getOutgoingRequests() {
-        ArrayList<RequestRecord> requests = new ArrayList<>();
-        SQLiteDatabase db = mDbHelper.getReadableDatabase();
-        try (Cursor c = db.query(OUTGOING_REQUESTS_TABLE, OUTGOING_REQUESTS_COLUMNS, null, null, null, null, null)) {
-            while (c.moveToNext()) {
-                RequestRecord rr = readRequest(c);
-                requests.add(rr);
-            }
-        }
-
-        return requests;
     }
 
     @WorkerThread
@@ -539,26 +415,6 @@ public class DB {
                     f.sendingBoxId = friendRecord.sendingBoxId;
                     f.receivingBoxId = friendRecord.receivingBoxId;
                     snapshot.friends.add(f);
-                }
-            }
-            try (Cursor c = db.query(INCOMING_REQUESTS_TABLE, INCOMING_REQUESTS_COLUMNS, null, null, null, null, null)) {
-                while (c.moveToNext()) {
-                    RequestRecord requestRecord = readRequest(c);
-                    Snapshot.Request r = new Snapshot.Request();
-                    r.userId = localToGlobalId.get(requestRecord.id);
-                    r.sentDate = requestRecord.sentDate;
-                    r.response = requestRecord.response.val;
-                    snapshot.incomingRequests.add(r);
-                }
-            }
-            try (Cursor c = db.query(OUTGOING_REQUESTS_TABLE, OUTGOING_REQUESTS_COLUMNS, null, null, null, null, null)) {
-                while (c.moveToNext()) {
-                    RequestRecord requestRecord = readRequest(c);
-                    Snapshot.Request r = new Snapshot.Request();
-                    r.userId = localToGlobalId.get(requestRecord.id);
-                    r.sentDate = requestRecord.sentDate;
-                    r.response = requestRecord.response.val;
-                    snapshot.outgoingRequests.add(r);
                 }
             }
             snapshot.schemaVersion = db.getVersion();
@@ -654,15 +510,6 @@ public class DB {
                 throw new DBException("Num affected rows was " + result + " for username '" + user.username + "'");
             }
         }
-
-        // try to update the incoming request table, in case this was a response to a request
-        SQLiteDatabase db = mDbHelper.getWritableDatabase();
-        ContentValues cv = new ContentValues();
-        cv.put(INCOMING_REQUESTS_COL_RESPONSE, RequestResponse.Granted.val);
-        String selection = INCOMING_REQUESTS_COL_USER_ID + "=?";
-        String[] args = new String[]{String.valueOf(user.id)};
-        db.update(INCOMING_REQUESTS_TABLE, cv, selection, args);
-
         scheduleBackup();
     }
 
@@ -691,22 +538,6 @@ public class DB {
 
     @WorkerThread
     @NonNull
-    private static RequestRecord readRequest(Cursor c) {
-        RequestRecord rr = new RequestRecord();
-        rr.id = c.getLong(c.getColumnIndexOrThrow(INCOMING_REQUESTS_COL_ID));
-        rr.userId = c.getLong(c.getColumnIndexOrThrow(INCOMING_REQUESTS_COL_USER_ID));
-        rr.sentDate = c.getLong(c.getColumnIndexOrThrow(INCOMING_REQUESTS_COL_SENT_DATE));
-        int respColIdx = c.getColumnIndexOrThrow(INCOMING_REQUESTS_COL_RESPONSE);
-        if (c.isNull(respColIdx)) {
-            rr.response = RequestResponse.NoResponse;
-        } else {
-            rr.response = RequestResponse.get(c.getString(respColIdx));
-        }
-        return rr;
-    }
-
-    @WorkerThread
-    @NonNull
     private static UserRecord readUser(Cursor c) {
         UserRecord ur = new UserRecord();
         ur.id = c.getLong(c.getColumnIndexOrThrow(USERS_COL_ID));
@@ -714,22 +545,6 @@ public class DB {
         ur.userId = c.getBlob(c.getColumnIndexOrThrow(USERS_COL_USER_ID));
         ur.username = c.getString(c.getColumnIndexOrThrow(USERS_COL_USERNAME));
         return ur;
-    }
-
-    @WorkerThread
-    public void rejectRequest(@NonNull UserRecord user) throws DBException {
-        // mark the incoming request as rejected
-        SQLiteDatabase db = mDbHelper.getWritableDatabase();
-        ContentValues cv = new ContentValues();
-        cv.put(INCOMING_REQUESTS_TABLE, RequestResponse.Rejected.val);
-        String selection = INCOMING_REQUESTS_COL_USER_ID + "=?";
-        String[] args = new String[]{String.valueOf(user.id)};
-        long result = db.update(INCOMING_REQUESTS_TABLE, cv, selection, args);
-        if (result != 1) {
-            throw new DBException("Num affected rows was " + result + " for username '" + user.username + "'");
-        }
-
-        scheduleBackup();
     }
 
     @WorkerThread
@@ -753,40 +568,6 @@ public class DB {
                     throw new DBException("Found friend without corresponding user");
                 }
                 addFriend(user.id, f.sendingBoxId, f.receivingBoxId, false);
-            }
-            for (Snapshot.Request r : snapshot.incomingRequests) {
-                UserRecord user = getUser(r.userId);
-                if (user == null) {
-                    throw new DBException("Found incoming request without corresponding user");
-                }
-                ContentValues cv = new ContentValues();
-                cv.put(INCOMING_REQUESTS_COL_USER_ID, user.id);
-                cv.put(INCOMING_REQUESTS_COL_SENT_DATE, r.sentDate);
-                if (r.response != null && !r.response.equals(RequestResponse.NoResponse.val)) {
-                    cv.put(INCOMING_REQUESTS_COL_RESPONSE, r.response);
-                }
-                try {
-                    db.insertOrThrow(INCOMING_REQUESTS_TABLE, null, cv);
-                } catch (SQLException ex) {
-                    throw new DBException("Error creating incoming request: " + r);
-                }
-            }
-            for (Snapshot.Request r : snapshot.outgoingRequests) {
-                UserRecord user = getUser(r.userId);
-                if (user == null) {
-                    throw new DBException("Found outgoing request without corresponding user");
-                }
-                ContentValues cv = new ContentValues();
-                cv.put(OUTGOING_REQUESTS_COL_USER_ID, user.id);
-                cv.put(OUTGOING_REQUESTS_COL_SENT_DATE, r.sentDate);
-                if (r.response != null && !r.response.equals(RequestResponse.NoResponse.val)) {
-                    cv.put(OUTGOING_REQUESTS_COL_RESPONSE, r.response);
-                }
-                try {
-                    db.insertOrThrow(OUTGOING_REQUESTS_TABLE, null, cv);
-                } catch (SQLException ex) {
-                    throw new DBException("Error creating outgoing request: " + r);
-                }
             }
 
             db.setTransactionSuccessful();
@@ -848,27 +629,17 @@ public class DB {
             }
         }
 
-        // did we have an outstanding request for sharing from this user? If so, set the response on it
-        SQLiteDatabase db = mDbHelper.getWritableDatabase();
-        ContentValues cv = new ContentValues();
-        cv.put(OUTGOING_REQUESTS_COL_RESPONSE, RequestResponse.Granted.val);
-        String selection = OUTGOING_REQUESTS_COL_USER_ID + "=?";
-        String[] args = new String[]{String.valueOf(userRecord.id)};
-        db.update(OUTGOING_REQUESTS_TABLE, cv, selection, args);
-
         scheduleBackup();
     }
 
     private static class DBHelper extends SQLiteOpenHelper {
 
         private DBHelper(Context context) {
-            super(context, "thedata", null, 1);
+            super(context, "thedata2", null, 1);
         }
 
         @Override
         public void onCreate(SQLiteDatabase db) {
-//            L.i("DBHelper.onCreate");
-
             String createFriends = "CREATE TABLE "
                     + FRIENDS_TABLE + " ("
                     + FRIENDS_COL_ID + " INTEGER PRIMARY KEY, "
@@ -896,22 +667,6 @@ public class DB {
                     + USERS_COL_USERNAME + " TEXT NOT NULL, "
                     + USERS_COL_PUBLIC_KEY + " BLOB NOT NULL)";
             db.execSQL(createUsers);
-
-            String createOutgoingRequests = "CREATE TABLE "
-                    + OUTGOING_REQUESTS_TABLE + " ("
-                    + OUTGOING_REQUESTS_COL_ID + " INTEGER PRIMARY KEY, "
-                    + OUTGOING_REQUESTS_COL_USER_ID + " INTEGER UNIQUE NOT NULL, "
-                    + OUTGOING_REQUESTS_COL_SENT_DATE + " INTEGER NOT NULL, "
-                    + OUTGOING_REQUESTS_COL_RESPONSE + " TEXT)";
-            db.execSQL(createOutgoingRequests);
-
-            String createIncomingRequests = "CREATE TABLE "
-                    + INCOMING_REQUESTS_TABLE + " ("
-                    + INCOMING_REQUESTS_COL_ID + " INTEGER PRIMARY KEY, "
-                    + INCOMING_REQUESTS_COL_USER_ID + " INTEGER UNIQUE NOT NULL, "
-                    + INCOMING_REQUESTS_COL_SENT_DATE + " INTEGER NOT NULL, "
-                    + INCOMING_REQUESTS_COL_RESPONSE + " TEXT)";
-            db.execSQL(createIncomingRequests);
 
             String createLimitedShares = "CREATE TABLE "
                     + LIMITED_SHARES_TABLE + " ("
