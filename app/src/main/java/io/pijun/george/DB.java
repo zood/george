@@ -127,7 +127,7 @@ public class DB {
     }
 
     @WorkerThread
-    public long addFriend(long userId,
+    private long addFriend(long userId,
                           @Nullable @Size(Constants.DROP_BOX_ID_LENGTH) byte[] sendingBoxId,
                           @Nullable @Size(Constants.DROP_BOX_ID_LENGTH) byte[] receivingBoxId,
                           boolean triggerBackup) throws DBException {

@@ -6,10 +6,12 @@
 
     <color name="colorPrimary">#34cc54</color> <!-- teal -->
     <color name="colorPrimaryDark">#2ebd46</color>
-    <color name="colorAccent">#32b6f4</color>
+    <color name="colorAccent">#32b6f4</color>#555555
 
     <color name="pijun_typographic">#4b5761</color>
     <color name="common_gray">#777777</color>
+    <color name="friend_item_black">#555555</color>
+    <color name="friend_item_gray">#AAAAAA</color>
     <color name="cloud_outline">#4d34cc54</color>
 
     <color name="ui_tint_gray">#aab9c8</color>

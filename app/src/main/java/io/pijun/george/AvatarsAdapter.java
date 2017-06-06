@@ -3,6 +3,7 @@ package io.pijun.george;
 import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.support.annotation.AnyThread;
+import android.support.annotation.UiThread;
 import android.support.v4.graphics.drawable.RoundedBitmapDrawable;
 import android.support.v4.graphics.drawable.RoundedBitmapDrawableFactory;
 import android.support.v7.widget.RecyclerView;
@@ -19,6 +20,16 @@ class AvatarsAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
 
     private ArrayList<FriendRecord> mFriends = new ArrayList<>();
     private AvatarsAdapterListener mListener;
+
+    @UiThread
+    void addFriend(FriendRecord friend) {
+        // check if the friend is already in the list
+        if (mFriends.contains(friend)) {
+            return;
+        }
+        mFriends.add(friend);
+        notifyItemInserted(mFriends.size()-1);
+    }
 
     @Override
     public int getItemCount() {
@@ -76,9 +87,12 @@ class AvatarsAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
         throw new IllegalArgumentException("Unknown view type");
     }
 
-    @AnyThread
+    @UiThread
     void setFriends(ArrayList<FriendRecord> friends) {
         this.mFriends = friends;
+        for (FriendRecord f : friends) {
+            L.i("setting: " + f.user.username);
+        }
         notifyDataSetChanged();
     }
 

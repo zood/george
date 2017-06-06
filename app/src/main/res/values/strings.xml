@@ -61,4 +61,9 @@
     <string name="network_failure_profile_restore_msg">Network error while trying to restore your profile. Check your connection then try again.</string>
     <string name="unknown_failure_profile_restore_msg">An unknown error occurred while attempting to restore your profile.</string>
     <string name="unknown_error_completing_challenge_response_msg">There was an unexpected error while trying to complete the login.</string>
+    <string name="not_sharing">Not sharing</string>
+    <string name="sharing">Sharing</string>
+    <string name="unknown">Unknown</string>
+    <string name="loading_ellipsis">Loading…</string>
+    <string name="not_sharing_location">Not sharing location</string>
 </resources>

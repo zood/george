@@ -18,6 +18,7 @@ import android.support.annotation.AnyThread;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.annotation.UiThread;
+import android.support.annotation.WorkerThread;
 import android.support.constraint.ConstraintLayout;
 import android.support.design.widget.NavigationView;
 import android.support.v4.app.ActivityCompat;
@@ -28,10 +29,12 @@ import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.text.TextUtils;
 import android.text.format.DateUtils;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
+import android.widget.EditText;
 
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
@@ -61,6 +64,7 @@ import com.mapbox.mapboxsdk.maps.OnMapReadyCallback;
 import com.squareup.otto.Subscribe;
 
 import java.io.IOException;
+import java.security.SecureRandom;
 import java.util.ArrayList;
 
 import io.pijun.george.api.LocationIQClient;
@@ -70,6 +74,7 @@ import io.pijun.george.api.OscarClient;
 import io.pijun.george.api.OscarError;
 import io.pijun.george.api.PackageWatcher;
 import io.pijun.george.api.RevGeocoding;
+import io.pijun.george.api.User;
 import io.pijun.george.api.UserComm;
 import io.pijun.george.crypto.EncryptedData;
 import io.pijun.george.crypto.KeyPair;
@@ -77,7 +82,9 @@ import io.pijun.george.event.LocationSharingGranted;
 import io.pijun.george.models.FriendLocation;
 import io.pijun.george.models.FriendRecord;
 import io.pijun.george.models.MovementType;
+import io.pijun.george.models.UserRecord;
 import io.pijun.george.service.FcmTokenRegistrar;
+import io.pijun.george.service.LimitedShareService;
 import io.pijun.george.service.LocationUploadService;
 import io.pijun.george.service.MessageQueueService;
 import io.pijun.george.view.MyLocationView;
@@ -97,6 +104,8 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
     private MarkerView mMeMarker;
     private boolean mCameraTracksMyLocation = false;
     private AvatarsAdapter mAvatarsAdapter = new AvatarsAdapter();
+    private FriendItemsAdapter mFriendItemsAdapter = new FriendItemsAdapter();
+    private EditText mUsernameField;
 
     public static Intent newIntent(Context ctx) {
         return new Intent(ctx, MapActivity.class);
@@ -129,11 +138,27 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
         mAvatarsAdapter.setListener(this);
         avatarsView.setAdapter(mAvatarsAdapter);
 
+        RecyclerView friendsList = (RecyclerView) findViewById(R.id.friend_items);
+        friendsList.setAdapter(mFriendItemsAdapter);
+
         App.runInBackground(new WorkerRunnable() {
             @Override
             public void run() {
-                ArrayList<FriendRecord> friends = DB.get(MapActivity.this).getFriends();
-                mAvatarsAdapter.setFriends(friends);
+                DB db = DB.get(MapActivity.this);
+                final ArrayList<FriendRecord> friends = db.getFriends();
+                App.runOnUiThread(new UiRunnable() {
+                    @Override
+                    public void run() {
+                        mAvatarsAdapter.setFriends(friends);
+                        mFriendItemsAdapter.setFriends(friends);
+                    }
+                });
+                for (FriendRecord friend : friends) {
+                    FriendLocation loc = db.getFriendLocation(friend.id);
+                    if (loc != null) {
+                        mFriendItemsAdapter.setFriendLocation(MapActivity.this, loc);
+                    }
+                }
             }
         });
 
@@ -592,13 +617,19 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
         App.runInBackground(new WorkerRunnable() {
             @Override
             public void run() {
-                FriendRecord friend = DB.get(MapActivity.this).getFriendByUserId(grant.userId);
+                final FriendRecord friend = DB.get(MapActivity.this).getFriendByUserId(grant.userId);
                 if (friend == null) {
                     L.w("MapActivity.onLocationSharingGranted didn't find friend record");
                     return;
                 }
                 L.i("onLocationSharingGranted: friend found. will watch");
                 mPkgWatcher.watch(friend.receivingBoxId);
+                App.runOnUiThread(new UiRunnable() {
+                    @Override
+                    public void run() {
+                        mAvatarsAdapter.addFriend(friend);
+                    }
+                });
             }
         });
     }
@@ -607,6 +638,7 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
     @UiThread
     public void onFriendLocationUpdated(final FriendLocation loc) {
         // check if we already have a marker for this friend
+        mFriendItemsAdapter.setFriendLocation(this, loc);
         Marker marker = mMarkerTracker.getById(loc.friendId);
         if (marker == null) {
             App.runInBackground(new WorkerRunnable() {
@@ -761,5 +793,117 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
                 .tilt(0).build();
         CameraUpdate cu = CameraUpdateFactory.newCameraPosition(cp);
         mMapboxMap.animateCamera(cu, 1000);
+    }
+
+    public void onAddFriendAction(View v) {
+        L.i("onAddFriendAction");
+        AlertDialog.Builder builder = new AlertDialog.Builder(this, R.style.AlertDialogTheme);
+        builder.setPositiveButton("Add friend", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                showAddFriendDialog();
+            }
+        }).setNeutralButton("Limited Share", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                startService(LimitedShareService.newIntent(MapActivity.this, LimitedShareService.ACTION_START));
+            }
+        }).setNegativeButton("Cancel", null)
+        .setCancelable(true).setMessage("Add friend?").show();
+    }
+
+    private void showAddFriendDialog() {
+        AlertDialog.Builder builder = new AlertDialog.Builder(this, R.style.AlertDialogTheme);
+        builder.setTitle(R.string.add_friend);
+        builder.setView(R.layout.friend_request_form);
+        builder.setPositiveButton(R.string.send, new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                final String username = mUsernameField.getText().toString();
+                App.runInBackground(new WorkerRunnable() {
+                    @Override
+                    public void run() {
+                        attemptLocationGrant(username);
+                    }
+                });
+            }
+        });
+        builder.setNegativeButton(R.string.cancel, null);
+        builder.setCancelable(true);
+        AlertDialog dialog = builder.create();
+        dialog.show();
+
+        mUsernameField = (EditText) dialog.findViewById(R.id.username);
+    }
+
+    @WorkerThread
+    private void attemptLocationGrant(String username) {
+        Prefs prefs = Prefs.get(this);
+        String accessToken = prefs.getAccessToken();
+        if (TextUtils.isEmpty(accessToken)) {
+            Utils.showStringAlert(this, null, "How are you not logged in right now? (missing access token)");
+            return;
+        }
+        KeyPair keyPair = prefs.getKeyPair();
+        if (keyPair == null) {
+            Utils.showStringAlert(this, null, "How are you not logged in right now? (missing key pair)");
+            return;
+        }
+        OscarAPI api = OscarClient.newInstance(accessToken);
+        try {
+            DB db = DB.get(this);
+            UserRecord userRecord = db.getUser(username);
+            if (userRecord == null) {
+                Response<User> searchResponse = api.searchForUser(username).execute();
+                if (!searchResponse.isSuccessful()) {
+                    OscarError err = OscarError.fromResponse(searchResponse);
+                    Utils.showStringAlert(this, null, "Unable to find username: " + err);
+                    return;
+                }
+                User userToRequest = searchResponse.body();
+                userRecord = db.addUser(userToRequest.id, userToRequest.username, userToRequest.publicKey);
+            }
+
+            // check if we already have this user as a friend, and if we're already sharing with them
+            final FriendRecord friend = db.getFriendByUserId(userRecord.id);
+            if (friend != null) {
+                if (friend.sendingBoxId != null) {
+                    // send the sending box id to this person one more time, just in case
+                    UserComm comm = UserComm.newLocationSharingGrant(friend.sendingBoxId);
+                    EncryptedData msg = Sodium.publicKeyEncrypt(comm.toJSON(), userRecord.publicKey, keyPair.secretKey);
+                    if (msg != null) {
+                        OscarClient.queueSendMessage(this, accessToken, userRecord.userId, msg, false);
+                    }
+                    Utils.showStringAlert(this, null, "You're already sharing your location with " + username);
+                    return;
+                }
+            }
+
+            byte[] sendingBoxId = new byte[Constants.DROP_BOX_ID_LENGTH];
+            new SecureRandom().nextBytes(sendingBoxId);
+            UserComm comm = UserComm.newLocationSharingGrant(sendingBoxId);
+            EncryptedData msg = Sodium.publicKeyEncrypt(comm.toJSON(), userRecord.publicKey, keyPair.secretKey);
+            if (msg == null) {
+                Utils.showStringAlert(this, null, "Unable to create sharing grant");
+                return;
+            }
+            OscarClient.queueSendMessage(this, accessToken, userRecord.userId, msg, false);
+
+            db.grantSharingTo(userRecord.userId, sendingBoxId);
+            final FriendRecord completeFriend = db.getFriendByUserId(userRecord.id);
+            App.runOnUiThread(new UiRunnable() {
+                @Override
+                public void run() {
+                    mAvatarsAdapter.addFriend(completeFriend);
+                }
+            });
+
+            Utils.showStringAlert(this, null, "You're now sharing with " + username);
+        } catch (IOException ex) {
+            Utils.showStringAlert(this, null, "Network problem trying to share your location. Check your connection thent ry again.");
+        } catch (DB.DBException dbe) {
+            Utils.showStringAlert(this, null, "Error adding friend into database");
+            FirebaseCrash.report(dbe);
+        }
     }
 }
