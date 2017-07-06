@@ -13,6 +13,7 @@ import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.location.Location;
 import android.os.Bundle;
+import android.os.Looper;
 import android.support.annotation.AnyThread;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
@@ -31,17 +32,18 @@ import android.text.format.DateUtils;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.Toast;
 
-import com.google.android.gms.common.ConnectionResult;
-import com.google.android.gms.common.api.GoogleApiClient;
-import com.google.android.gms.common.api.PendingResult;
-import com.google.android.gms.common.api.Status;
-import com.google.android.gms.location.LocationListener;
+import com.google.android.gms.common.api.ApiException;
+import com.google.android.gms.common.api.ResolvableApiException;
+import com.google.android.gms.location.FusedLocationProviderClient;
+import com.google.android.gms.location.LocationCallback;
 import com.google.android.gms.location.LocationRequest;
+import com.google.android.gms.location.LocationResult;
 import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.location.LocationSettingsRequest;
-import com.google.android.gms.location.LocationSettingsResult;
 import com.google.android.gms.location.LocationSettingsStatusCodes;
+import com.google.android.gms.location.SettingsClient;
 import com.google.firebase.crash.FirebaseCrash;
 import com.mapbox.mapboxsdk.annotations.Icon;
 import com.mapbox.mapboxsdk.annotations.IconFactory;
@@ -86,7 +88,7 @@ import io.pijun.george.view.MyLocationView;
 import retrofit2.Call;
 import retrofit2.Response;
 
-public class MapActivity extends AppCompatActivity implements OnMapReadyCallback, MapboxMap.OnMarkerClickListener, GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener, LocationListener, AvatarsAdapter.AvatarsAdapterListener {
+public class MapActivity extends AppCompatActivity implements OnMapReadyCallback, MapboxMap.OnMarkerClickListener, AvatarsAdapter.AvatarsAdapterListener {
 
     private static final int REQUEST_LOCATION_PERMISSION = 18;
     private static final int REQUEST_LOCATION_SETTINGS = 20;
@@ -95,7 +97,10 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
     private MapboxMap mMapboxMap;
     private volatile PackageWatcher mPkgWatcher;
     private MarkerTracker mMarkerTracker = new MarkerTracker();
-    private GoogleApiClient mGoogleClient;
+    private FusedLocationProviderClient mLocationProviderClient;
+    private SettingsClient mSettingsClient;
+    private LocationRequest mLocationRequest;
+    private LocationSettingsRequest mLocationSettingsRequest;
     private MarkerView mMeMarker;
     private boolean mCameraTracksMyLocation = false;
     private EditText mUsernameField;
@@ -139,11 +144,14 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
         NavigationView navView = (NavigationView) findViewById(R.id.navigation);
         navView.setNavigationItemSelectedListener(navItemListener);
 
-        mGoogleClient = new GoogleApiClient.Builder(this)
-                .addConnectionCallbacks(this)
-                .addOnConnectionFailedListener(this)
-                .addApi(LocationServices.API)
-                .build();
+        mLocationProviderClient = LocationServices.getFusedLocationProviderClient(this);
+        mSettingsClient = LocationServices.getSettingsClient(this);
+        mLocationRequest = new LocationRequest();
+        mLocationRequest.setInterval(5 * DateUtils.SECOND_IN_MILLIS);
+        mLocationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
+        LocationSettingsRequest.Builder builder = new LocationSettingsRequest.Builder();
+        builder.addLocationRequest(mLocationRequest);
+        mLocationSettingsRequest = builder.build();
 
         startService(FcmTokenRegistrar.newIntent(this));
 //        startService(ActivityMonitor.newIntent(this));
@@ -157,7 +165,6 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
         App.isInForeground = true;
         checkForLocationPermission();
         App.registerOnBus(this);
-        mGoogleClient.connect();
 
         App.runInBackground(() -> {
             Prefs prefs = Prefs.get(MapActivity.this);
@@ -257,10 +264,8 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
             }
         }
 
-        if (mGoogleClient.isConnected()) {
-            LocationServices.FusedLocationApi.removeLocationUpdates(mGoogleClient, this);
-        }
-        mGoogleClient.disconnect();
+        // stop receiving location updates
+        mLocationProviderClient.removeLocationUpdates(mLocationCallbackHelper);
 
         App.unregisterFromBus(this);
         App.runInBackground(() -> {
@@ -352,49 +357,6 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
         });
     }
 
-    @Override
-    public void onConnected(@Nullable Bundle bundle) {
-        if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-            L.i("  failed permission check");
-            return;
-        }
-        Location lastLocation = LocationServices.FusedLocationApi.getLastLocation(mGoogleClient);
-        if (lastLocation != null) {
-            App.postOnBus(lastLocation);
-        }
-
-        // these are the location settings we want
-        LocationRequest req = LocationRequest.create();
-        req.setInterval(5 * DateUtils.SECOND_IN_MILLIS);
-        req.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
-        // check whether the location settings can currently be met by the hardware
-        LocationSettingsRequest.Builder builder = new LocationSettingsRequest.Builder()
-                .addLocationRequest(req);
-        PendingResult<LocationSettingsResult> result =
-                LocationServices.SettingsApi.checkLocationSettings(mGoogleClient, builder.build());
-        result.setResultCallback(result1 -> {
-            Status status = result1.getStatus();
-            if (status.getStatusCode() != LocationSettingsStatusCodes.RESOLUTION_REQUIRED) {
-                beginLocationUpdates();
-                return;
-            }
-
-            try {
-                status.startResolutionForResult(MapActivity.this, REQUEST_LOCATION_SETTINGS);
-            } catch (IntentSender.SendIntentException ignore) {}
-        });
-    }
-
-    @Override
-    public void onConnectionSuspended(int i) {
-        L.w("onConnectionSuspended: " + i);
-    }
-
-    @Override
-    public void onConnectionFailed(@NonNull ConnectionResult connectionResult) {
-        L.w("onConnectionFailed: " + connectionResult);
-    }
-
     @AnyThread
     private void beginLocationUpdates() {
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
@@ -403,49 +365,8 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
             FirebaseCrash.report(new Exception("Location updates requested before acquiring permission"));
             return;
         }
-        if (!mGoogleClient.isConnected()) {
-            return;
-        }
-        LocationRequest req = LocationRequest.create();
-        req.setInterval(5 * DateUtils.SECOND_IN_MILLIS);
-        req.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
-        PendingResult<Status> pendingResult = LocationServices.FusedLocationApi.requestLocationUpdates(mGoogleClient, req, this);
-        pendingResult.setResultCallback(status -> {
-        });
-    }
 
-    @Override
-    public void onLocationChanged(Location location) {
-        if (mMeMarker == null) {
-            addMyLocation(location);
-        } else {
-            ValueAnimator posAnimator = ObjectAnimator.ofObject(
-                    mMeMarker,
-                    "position",
-                    new Utils.LatLngEvaluator(),
-                    mMeMarker.getPosition(),
-                    new LatLng(location.getLatitude(), location.getLongitude()));
-            posAnimator.setDuration(300);
-
-            ValueAnimator rotAnimator = ObjectAnimator.ofObject(
-                    mMeMarker,
-                    "rotation",
-                    new FloatEvaluator(),
-                    mMeMarker.getRotation(),
-                    location.getBearing());
-            rotAnimator.setDuration(300);
-
-            posAnimator.start();
-            rotAnimator.start();
-        }
-
-        if (mCameraTracksMyLocation) {
-            if (mMapboxMap != null) {
-                CameraUpdate update = CameraUpdateFactory.newLatLng(new LatLng(location.getLatitude(), location.getLongitude()));
-                mMapboxMap.animateCamera(update, 300);
-            }
-        }
-        App.postOnBus(location);
+        mLocationProviderClient.requestLocationUpdates(mLocationRequest, mLocationCallbackHelper, Looper.getMainLooper());
     }
 
     private void addMyLocation(Location location) {
@@ -519,10 +440,29 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
         }
     }
 
-    @SuppressWarnings("MissingPermission")
     @UiThread
     private void locationPermissionVerified() {
         startService(LocationUploadService.newIntent(this));
+
+        mSettingsClient.checkLocationSettings(mLocationSettingsRequest)
+                .addOnFailureListener(this, e -> {
+                    int statusCode = ((ApiException) e).getStatusCode();
+                    switch (statusCode) {
+                        case LocationSettingsStatusCodes.RESOLUTION_REQUIRED:
+                            try {
+                                ResolvableApiException rae = (ResolvableApiException) e;
+                                rae.startResolutionForResult(this, REQUEST_LOCATION_SETTINGS);
+                            } catch (IntentSender.SendIntentException sie) {
+                                L.w("Unable to start settings resolution", sie);
+                            }
+                            break;
+                        case LocationSettingsStatusCodes.SETTINGS_CHANGE_UNAVAILABLE:
+                            String errMsg = "Location settings are inadequate, and cannot be fixed here. Fix in Settings.";
+                            Toast.makeText(this, errMsg, Toast.LENGTH_LONG).show();
+                            break;
+                    }
+
+                });
 
         beginLocationUpdates();
     }
@@ -561,7 +501,6 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
     @UiThread
     public void onFriendLocationUpdated(final FriendLocation loc) {
         // check if we already have a marker for this friend
-//        mFriendItemsAdapter.setFriendLocation(this, loc);
         Marker marker = mMarkerTracker.getById(loc.friendId);
         if (marker == null) {
             App.runInBackground(() -> {
@@ -786,4 +725,43 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
             FirebaseCrash.report(dbe);
         }
     }
+
+    private LocationCallback mLocationCallbackHelper = new LocationCallback() {
+        @Override
+        @UiThread
+        public void onLocationResult(LocationResult result) {
+            L.i("onLocationResult");
+            Location location = result.getLastLocation();
+            if (mMeMarker == null) {
+                addMyLocation(location);
+            } else {
+                ValueAnimator posAnimator = ObjectAnimator.ofObject(
+                        mMeMarker,
+                        "position",
+                        new Utils.LatLngEvaluator(),
+                        mMeMarker.getPosition(),
+                        new LatLng(location.getLatitude(), location.getLongitude()));
+                posAnimator.setDuration(300);
+
+                ValueAnimator rotAnimator = ObjectAnimator.ofObject(
+                        mMeMarker,
+                        "rotation",
+                        new FloatEvaluator(),
+                        mMeMarker.getRotation(),
+                        location.getBearing());
+                rotAnimator.setDuration(300);
+
+                posAnimator.start();
+                rotAnimator.start();
+            }
+
+            if (mCameraTracksMyLocation) {
+                if (mMapboxMap != null) {
+                    CameraUpdate update = CameraUpdateFactory.newLatLng(new LatLng(location.getLatitude(), location.getLongitude()));
+                    mMapboxMap.animateCamera(update, 300);
+                }
+            }
+            App.postOnBus(location);
+        }
+    };
 }
