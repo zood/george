@@ -1,7 +1,9 @@
 package io.pijun.george;
 
+import android.annotation.SuppressLint;
 import android.content.res.Resources;
 import android.graphics.Bitmap;
+import android.os.Looper;
 import android.support.annotation.AnyThread;
 import android.support.annotation.UiThread;
 import android.support.v4.graphics.drawable.RoundedBitmapDrawable;
@@ -21,8 +23,18 @@ class AvatarsAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
     private ArrayList<FriendRecord> mFriends = new ArrayList<>();
     private AvatarsAdapterListener mListener;
 
+    @SuppressLint("WrongThread")
+    @AnyThread
+    void addFriend(final FriendRecord friend) {
+        if (Looper.myLooper() == Looper.getMainLooper()) {
+            _addFriend(friend);
+        } else {
+            App.runOnUiThread(() -> _addFriend(friend));
+        }
+    }
+
     @UiThread
-    void addFriend(FriendRecord friend) {
+    private void _addFriend(FriendRecord friend) {
         // check if the friend is already in the list
         if (mFriends.contains(friend)) {
             return;
@@ -75,20 +87,25 @@ class AvatarsAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
         } else if (viewType == R.layout.avatar_preview) {
             View view = inflater.inflate(R.layout.avatar_preview, parent, false);
             final AvatarViewHolder h = new AvatarViewHolder(view);
-            h.button.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    onAvatarClicked(h.getAdapterPosition()-1);
-                }
-            });
+            h.button.setOnClickListener(v -> onAvatarClicked(h.getAdapterPosition()-1));
             return h;
         }
 
         throw new IllegalArgumentException("Unknown view type");
     }
 
+    @SuppressLint("WrongThread")
+    @AnyThread
+    void setFriends(final ArrayList<FriendRecord> friends) {
+        if (Looper.myLooper() == Looper.getMainLooper()) {
+            _setFriends(friends);
+        } else {
+            App.runOnUiThread(() -> _setFriends(friends));
+        }
+    }
+
     @UiThread
-    void setFriends(ArrayList<FriendRecord> friends) {
+    private void _setFriends(ArrayList<FriendRecord> friends) {
         this.mFriends = friends;
         for (FriendRecord f : friends) {
             L.i("setting: " + f.user.username);

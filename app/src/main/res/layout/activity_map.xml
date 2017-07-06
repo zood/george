@@ -17,66 +17,14 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent" />
 
-        <LinearLayout
+        <fragment
             android:id="@+id/friends_sheet"
-            android:orientation="vertical"
+            android:name="io.pijun.george.FriendsSheetFragment"
             app:layout_behavior="android.support.design.widget.BottomSheetBehavior"
             app:behavior_peekHeight="56dp"
             app:behavior_hideable="false"
-            android:background="@android:color/white"
             android:layout_width="match_parent"
-            android:layout_height="match_parent">
-            <android.support.v7.widget.RecyclerView
-                android:id="@+id/avatars"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"/>
-            <android.support.v7.widget.RecyclerView
-                android:id="@+id/friend_items"
-                app:layoutManager="android.support.v7.widget.LinearLayoutManager"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent" />
-            <!--<android.support.v4.widget.NestedScrollView-->
-                <!--android:id="@+id/friends_scrollview"-->
-                <!--android:visibility="invisible"-->
-                <!--android:layout_width="match_parent"-->
-                <!--android:layout_height="wrap_content">-->
-                <!--<LinearLayout-->
-                    <!--android:id="@+id/friends_container"-->
-                    <!--android:orientation="vertical"-->
-                    <!--android:layout_width="match_parent"-->
-                    <!--android:layout_height="wrap_content">-->
-                    <!--<include layout="@layout/friend_item" />-->
-                    <!--<ImageView-->
-                        <!--android:src="@drawable/ic_pijun_text"-->
-                        <!--android:layout_width="wrap_content"-->
-                        <!--android:layout_height="wrap_content" />-->
-                    <!--<ImageView-->
-                        <!--android:src="@drawable/ic_pijun_text"-->
-                        <!--android:layout_width="wrap_content"-->
-                        <!--android:layout_height="wrap_content" />-->
-                    <!--<ImageView-->
-                        <!--android:src="@drawable/ic_pijun_text"-->
-                        <!--android:layout_width="wrap_content"-->
-                        <!--android:layout_height="wrap_content" />-->
-                    <!--<ImageView-->
-                        <!--android:src="@drawable/ic_pijun_text"-->
-                        <!--android:layout_width="wrap_content"-->
-                        <!--android:layout_height="wrap_content" />-->
-                    <!--<ImageView-->
-                        <!--android:src="@drawable/ic_pijun_text"-->
-                        <!--android:layout_width="wrap_content"-->
-                        <!--android:layout_height="wrap_content" />-->
-                    <!--<ImageView-->
-                        <!--android:src="@drawable/ic_pijun_text"-->
-                        <!--android:layout_width="wrap_content"-->
-                        <!--android:layout_height="wrap_content" />-->
-                    <!--<ImageView-->
-                        <!--android:src="@drawable/ic_pijun_text"-->
-                        <!--android:layout_width="wrap_content"-->
-                        <!--android:layout_height="wrap_content" />-->
-                <!--</LinearLayout>-->
-            <!--</android.support.v4.widget.NestedScrollView>-->
-        </LinearLayout>
+            android:layout_height="match_parent" />
 
         <android.support.design.widget.FloatingActionButton
             android:id="@+id/add_friend_fab"
@@ -86,7 +34,7 @@
             android:tint="@color/ui_tint_gray"
             android:backgroundTint="@color/my_location_fab_background"
             android:onClick="onAddFriendAction"
-            app:layout_anchor="@id/friends_sheet"
+            app:layout_anchor="@+id/friends_sheet"
             app:layout_anchorGravity="top|end"
             app:layout_insetEdge="bottom"
             android:layout_marginEnd="24dp"

@@ -6,7 +6,6 @@ import android.animation.ObjectAnimator;
 import android.animation.ValueAnimator;
 import android.app.job.JobScheduler;
 import android.content.Context;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentSender;
 import android.content.pm.PackageManager;
@@ -27,11 +26,8 @@ import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
-import android.support.v7.widget.LinearLayoutManager;
-import android.support.v7.widget.RecyclerView;
 import android.text.TextUtils;
 import android.text.format.DateUtils;
-import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
@@ -39,7 +35,6 @@ import android.widget.EditText;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.common.api.PendingResult;
-import com.google.android.gms.common.api.ResultCallback;
 import com.google.android.gms.common.api.Status;
 import com.google.android.gms.location.LocationListener;
 import com.google.android.gms.location.LocationRequest;
@@ -103,8 +98,6 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
     private GoogleApiClient mGoogleClient;
     private MarkerView mMeMarker;
     private boolean mCameraTracksMyLocation = false;
-    private AvatarsAdapter mAvatarsAdapter = new AvatarsAdapter();
-    private FriendItemsAdapter mFriendItemsAdapter = new FriendItemsAdapter();
     private EditText mUsernameField;
 
     public static Intent newIntent(Context ctx) {
@@ -132,48 +125,15 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
         final ConstraintLayout.LayoutParams params = (ConstraintLayout.LayoutParams) button.getLayoutParams();
         params.topMargin = getStatusBarHeight();
 
-        RecyclerView avatarsView = (RecyclerView) findViewById(R.id.avatars);
-        LinearLayoutManager llm = new LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false);
-        avatarsView.setLayoutManager(llm);
-        mAvatarsAdapter.setListener(this);
-        avatarsView.setAdapter(mAvatarsAdapter);
-
-        RecyclerView friendsList = (RecyclerView) findViewById(R.id.friend_items);
-        friendsList.setAdapter(mFriendItemsAdapter);
-
-        App.runInBackground(new WorkerRunnable() {
-            @Override
-            public void run() {
-                DB db = DB.get(MapActivity.this);
-                final ArrayList<FriendRecord> friends = db.getFriends();
-                App.runOnUiThread(new UiRunnable() {
-                    @Override
-                    public void run() {
-                        mAvatarsAdapter.setFriends(friends);
-                        mFriendItemsAdapter.setFriends(friends);
-                    }
-                });
-                for (FriendRecord friend : friends) {
-                    FriendLocation loc = db.getFriendLocation(friend.id);
-                    if (loc != null) {
-                        mFriendItemsAdapter.setFriendLocation(MapActivity.this, loc);
-                    }
-                }
-            }
-        });
-
         mMapView = (MapView) findViewById(R.id.map);
         mMapView.onCreate(savedInstanceState);
         mMapView.getMapAsync(this);
 
         final View myLocFab = findViewById(R.id.my_location_fab);
-        myLocFab.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                myLocFab.setSelected(true);
-                mCameraTracksMyLocation = true;
-                flyCameraToMyLocation();
-            }
+        myLocFab.setOnClickListener(v -> {
+            myLocFab.setSelected(true);
+            mCameraTracksMyLocation = true;
+            flyCameraToMyLocation();
         });
 
         NavigationView navView = (NavigationView) findViewById(R.id.navigation);
@@ -199,69 +159,66 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
         App.registerOnBus(this);
         mGoogleClient.connect();
 
-        App.runInBackground(new WorkerRunnable() {
-            @Override
-            public void run() {
-                Prefs prefs = Prefs.get(MapActivity.this);
-                String token = prefs.getAccessToken();
-                if (token == null) {
-                    return;
-                }
-                mPkgWatcher = PackageWatcher.createWatcher(MapActivity.this, token);
-                if (mPkgWatcher == null) {
-                    L.w("unable to create package watcher");
-                    return;
-                }
+        App.runInBackground(() -> {
+            Prefs prefs = Prefs.get(MapActivity.this);
+            String token = prefs.getAccessToken();
+            if (token == null) {
+                return;
+            }
+            mPkgWatcher = PackageWatcher.createWatcher(MapActivity.this, token);
+            if (mPkgWatcher == null) {
+                L.w("unable to create package watcher");
+                return;
+            }
 
-                ArrayList<FriendRecord> friends = DB.get(MapActivity.this).getFriends();
-                for (FriendRecord fr: friends) {
-                    if (fr.receivingBoxId != null) {
-                        mPkgWatcher.watch(fr.receivingBoxId);
-                    }
+            ArrayList<FriendRecord> friends = DB.get(MapActivity.this).getFriends();
+            for (FriendRecord fr: friends) {
+                if (fr.receivingBoxId != null) {
+                    mPkgWatcher.watch(fr.receivingBoxId);
                 }
+            }
 
-                // Request a location update from any friend that hasn't given us an update for
-                // 3 minutes
-                long now = System.currentTimeMillis();
-                KeyPair keypair = prefs.getKeyPair();
-                for (FriendRecord fr : friends) {
-                    // check if this friend shares location with us
-                    if (fr.receivingBoxId == null) {
-                        continue;
-                    }
-                    FriendLocation loc = DB.get(MapActivity.this).getFriendLocation(fr.id);
-                    if (loc == null || (now-loc.time) > 180 * DateUtils.SECOND_IN_MILLIS) {
-                        if (keypair != null) {
-                            UserComm comm = UserComm.newLocationUpdateRequest();
-                            byte[] msgBytes = comm.toJSON();
-                            EncryptedData encMsg = Sodium.publicKeyEncrypt(msgBytes, fr.user.publicKey, keypair.secretKey);
-                            if (encMsg != null) {
-                                OscarClient.queueSendMessage(MapActivity.this, token, fr.user.userId, encMsg, true);
-                            } else {
-                                L.w("Failed to encrypt a location update request message to " + fr.user.username);
-                            }
+            // Request a location update from any friend that hasn't given us an update for
+            // 3 minutes
+            long now = System.currentTimeMillis();
+            KeyPair keypair = prefs.getKeyPair();
+            for (FriendRecord fr : friends) {
+                // check if this friend shares location with us
+                if (fr.receivingBoxId == null) {
+                    continue;
+                }
+                FriendLocation loc = DB.get(MapActivity.this).getFriendLocation(fr.id);
+                if (loc == null || (now-loc.time) > 180 * DateUtils.SECOND_IN_MILLIS) {
+                    if (keypair != null) {
+                        UserComm comm = UserComm.newLocationUpdateRequest();
+                        byte[] msgBytes = comm.toJSON();
+                        EncryptedData encMsg = Sodium.publicKeyEncrypt(msgBytes, fr.user.publicKey, keypair.secretKey);
+                        if (encMsg != null) {
+                            OscarClient.queueSendMessage(MapActivity.this, token, fr.user.userId, encMsg, true);
+                        } else {
+                            L.w("Failed to encrypt a location update request message to " + fr.user.username);
                         }
                     }
                 }
+            }
 
-                OscarAPI api = OscarClient.newInstance(token);
-                try {
-                    Response<Message[]> response = api.getMessages().execute();
-                    if (!response.isSuccessful()) {
-                        OscarError err = OscarError.fromResponse(response);
-                        L.w("error checking for messages: " + err);
-                        return;
-                    }
-                    Message[] msgs = response.body();
-                    if (msgs == null) {
-                        return;
-                    }
-                    for (Message msg : msgs) {
-                        MessageQueueService.queueMessage(MapActivity.this, msg);
-                    }
-                } catch (IOException ignore) {
-                    // meh, we'll try again later
+            OscarAPI api = OscarClient.newInstance(token);
+            try {
+                Response<Message[]> response = api.getMessages().execute();
+                if (!response.isSuccessful()) {
+                    OscarError err = OscarError.fromResponse(response);
+                    L.w("error checking for messages: " + err);
+                    return;
                 }
+                Message[] msgs = response.body();
+                if (msgs == null) {
+                    return;
+                }
+                for (Message msg : msgs) {
+                    MessageQueueService.queueMessage(MapActivity.this, msg);
+                }
+            } catch (IOException ignore) {
+                // meh, we'll try again later
             }
         });
     }
@@ -306,13 +263,10 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
         mGoogleClient.disconnect();
 
         App.unregisterFromBus(this);
-        App.runInBackground(new WorkerRunnable() {
-            @Override
-            public void run() {
-                if (mPkgWatcher != null) {
-                    mPkgWatcher.disconnect();
-                    mPkgWatcher = null;
-                }
+        App.runInBackground(() -> {
+            if (mPkgWatcher != null) {
+                mPkgWatcher.disconnect();
+                mPkgWatcher = null;
             }
         });
 
@@ -378,33 +332,22 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
             mMapboxMap.moveCamera(CameraUpdateFactory.newCameraPosition(pos));
         }
         mMapboxMap.setOnMarkerClickListener(this);
-        mMapboxMap.setOnScrollListener(new MapboxMap.OnScrollListener() {
-            @Override
-            public void onScroll() {
-                mCameraTracksMyLocation = false;
-                findViewById(R.id.my_location_fab).setSelected(false);
-            }
+        mMapboxMap.setOnScrollListener(() -> {
+            mCameraTracksMyLocation = false;
+            findViewById(R.id.my_location_fab).setSelected(false);
         });
 
         // add markers for all friends
-        App.runInBackground(new WorkerRunnable() {
-            @Override
-            public void run() {
-                DB db = DB.get(MapActivity.this);
-                ArrayList<FriendRecord> friends = db.getFriends();
-                for (final FriendRecord f : friends) {
-                    final FriendLocation location = db.getFriendLocation(f.id);
-                    if (location == null) {
-                        continue;
-                    }
-
-                    App.runOnUiThread(new UiRunnable() {
-                        @Override
-                        public void run() {
-                            addMapMarker(f, location);
-                        }
-                    });
+        App.runInBackground(() -> {
+            DB db = DB.get(MapActivity.this);
+            ArrayList<FriendRecord> friends = db.getFriends();
+            for (final FriendRecord f : friends) {
+                final FriendLocation location = db.getFriendLocation(f.id);
+                if (location == null) {
+                    continue;
                 }
+
+                App.runOnUiThread(() -> addMapMarker(f, location));
             }
         });
     }
@@ -429,19 +372,16 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
                 .addLocationRequest(req);
         PendingResult<LocationSettingsResult> result =
                 LocationServices.SettingsApi.checkLocationSettings(mGoogleClient, builder.build());
-        result.setResultCallback(new ResultCallback<LocationSettingsResult>() {
-            @Override
-            public void onResult(@NonNull LocationSettingsResult result) {
-                Status status = result.getStatus();
-                if (status.getStatusCode() != LocationSettingsStatusCodes.RESOLUTION_REQUIRED) {
-                    beginLocationUpdates();
-                    return;
-                }
-
-                try {
-                    status.startResolutionForResult(MapActivity.this, REQUEST_LOCATION_SETTINGS);
-                } catch (IntentSender.SendIntentException ignore) {}
+        result.setResultCallback(result1 -> {
+            Status status = result1.getStatus();
+            if (status.getStatusCode() != LocationSettingsStatusCodes.RESOLUTION_REQUIRED) {
+                beginLocationUpdates();
+                return;
             }
+
+            try {
+                status.startResolutionForResult(MapActivity.this, REQUEST_LOCATION_SETTINGS);
+            } catch (IntentSender.SendIntentException ignore) {}
         });
     }
 
@@ -470,10 +410,7 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
         req.setInterval(5 * DateUtils.SECOND_IN_MILLIS);
         req.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
         PendingResult<Status> pendingResult = LocationServices.FusedLocationApi.requestLocationUpdates(mGoogleClient, req, this);
-        pendingResult.setResultCallback(new ResultCallback<Status>() {
-            @Override
-            public void onResult(@NonNull Status status) {
-            }
+        pendingResult.setResultCallback(status -> {
         });
     }
 
@@ -554,15 +491,10 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
             AlertDialog.Builder builder = new AlertDialog.Builder(this, R.style.AlertDialogTheme);
             builder.setTitle("Permission request");
             builder.setMessage("Pijun uses your location to show your position on the map, and to securely share it with friends that you've authorized. It's never used for any other purpose.");
-            builder.setPositiveButton(R.string.ok, new DialogInterface.OnClickListener() {
-                @Override
-                public void onClick(DialogInterface dialog, int which) {
-                    ActivityCompat.requestPermissions(
-                            MapActivity.this,
-                            new String[]{Manifest.permission.ACCESS_FINE_LOCATION},
-                            REQUEST_LOCATION_PERMISSION);
-                }
-            });
+            builder.setPositiveButton(R.string.ok, (dialog, which) -> ActivityCompat.requestPermissions(
+                    MapActivity.this,
+                    new String[]{Manifest.permission.ACCESS_FINE_LOCATION},
+                    REQUEST_LOCATION_PERMISSION));
             builder.show();
         } else {
             ActivityCompat.requestPermissions(
@@ -614,23 +546,14 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
             return;
         }
 
-        App.runInBackground(new WorkerRunnable() {
-            @Override
-            public void run() {
-                final FriendRecord friend = DB.get(MapActivity.this).getFriendByUserId(grant.userId);
-                if (friend == null) {
-                    L.w("MapActivity.onLocationSharingGranted didn't find friend record");
-                    return;
-                }
-                L.i("onLocationSharingGranted: friend found. will watch");
-                mPkgWatcher.watch(friend.receivingBoxId);
-                App.runOnUiThread(new UiRunnable() {
-                    @Override
-                    public void run() {
-                        mAvatarsAdapter.addFriend(friend);
-                    }
-                });
+        App.runInBackground(() -> {
+            final FriendRecord friend = DB.get(MapActivity.this).getFriendByUserId(grant.userId);
+            if (friend == null) {
+                L.w("MapActivity.onLocationSharingGranted didn't find friend record");
+                return;
             }
+            L.i("onLocationSharingGranted: friend found. will watch");
+            mPkgWatcher.watch(friend.receivingBoxId);
         });
     }
 
@@ -638,20 +561,12 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
     @UiThread
     public void onFriendLocationUpdated(final FriendLocation loc) {
         // check if we already have a marker for this friend
-        mFriendItemsAdapter.setFriendLocation(this, loc);
+//        mFriendItemsAdapter.setFriendLocation(this, loc);
         Marker marker = mMarkerTracker.getById(loc.friendId);
         if (marker == null) {
-            App.runInBackground(new WorkerRunnable() {
-                @Override
-                public void run() {
-                    final FriendRecord friend = DB.get(MapActivity.this).getFriendById(loc.friendId);
-                    App.runOnUiThread(new UiRunnable() {
-                        @Override
-                        public void run() {
-                            addMapMarker(friend, loc);
-                        }
-                    });
-                }
+            App.runInBackground(() -> {
+                final FriendRecord friend = DB.get(MapActivity.this).getFriendById(loc.friendId);
+                App.runOnUiThread(() -> addMapMarker(friend, loc));
             });
         } else {
             if (marker.isInfoWindowShown()) {
@@ -677,19 +592,11 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
         builder.setMessage(R.string.confirm_log_out_msg);
         builder.setCancelable(true);
         builder.setNegativeButton(R.string.no, null);
-        builder.setPositiveButton(R.string.log_out, new DialogInterface.OnClickListener() {
-            @Override
-            public void onClick(DialogInterface dialog, int which) {
-                Prefs.get(MapActivity.this).logOut(MapActivity.this, new UiRunnable() {
-                    @Override
-                    public void run() {
-                        Intent welcomeIntent = WelcomeActivity.newIntent(MapActivity.this);
-                        startActivity(welcomeIntent);
-                        finish();
-                    }
-                });
-            }
-        });
+        builder.setPositiveButton(R.string.log_out, (dialog, which) -> Prefs.get(MapActivity.this).logOut(MapActivity.this, () -> {
+            Intent welcomeIntent = WelcomeActivity.newIntent(MapActivity.this);
+            startActivity(welcomeIntent);
+            finish();
+        }));
         builder.show();
     }
 
@@ -699,21 +606,18 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
         startActivity(i);
     }
 
-    private NavigationView.OnNavigationItemSelectedListener navItemListener = new NavigationView.OnNavigationItemSelectedListener() {
-        @Override
-        public boolean onNavigationItemSelected(@NonNull MenuItem item) {
-            DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
-            drawer.closeDrawers();
+    private NavigationView.OnNavigationItemSelectedListener navItemListener = item -> {
+        DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
+        drawer.closeDrawers();
 
-            if (item.getItemId() == R.id.your_friends) {
-            } else if (item.getItemId() == R.id.log_out) {
-                onLogOutAction();
-            } else if (item.getItemId() == R.id.view_logs) {
-                onShowLogs();
-            }
-
-            return false;
+        if (item.getItemId() == R.id.your_friends) {
+        } else if (item.getItemId() == R.id.log_out) {
+            onLogOutAction();
+        } else if (item.getItemId() == R.id.view_logs) {
+            onShowLogs();
         }
+
+        return false;
     };
 
     @Override
@@ -753,26 +657,21 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
 
         marker.setSnippet(snippet);
 
-        App.runInBackground(new WorkerRunnable() {
-            @Override
-            public void run() {
-                try {
-                    Call<RevGeocoding> call = LocationIQClient.get(MapActivity.this).getReverseGeocoding("" + loc.latitude, "" + loc.longitude);
-                    Response<RevGeocoding> response = call.execute();
-                    if (response.isSuccessful()) {
-                        final RevGeocoding revGeocoding = response.body();
-                        App.runOnUiThread(new UiRunnable() {
-                            @Override
-                            public void run() {
-                                marker.setSnippet(snippet + revGeocoding.getArea());
-                            }
-                        });
-                    } else {
-                        L.w("error calling locationiq");
+        App.runInBackground(() -> {
+            try {
+                Call<RevGeocoding> call = LocationIQClient.get(MapActivity.this).getReverseGeocoding("" + loc.latitude, "" + loc.longitude);
+                Response<RevGeocoding> response = call.execute();
+                if (response.isSuccessful()) {
+                    final RevGeocoding revGeocoding = response.body();
+                    if (revGeocoding == null) {
+                        return;
                     }
-                } catch (Exception ex) {
-                    L.w("network error obtaining reverse geocoding", ex);
+                    App.runOnUiThread(() -> marker.setSnippet(snippet + revGeocoding.getArea()));
+                } else {
+                    L.w("error calling locationiq");
                 }
+            } catch (Exception ex) {
+                L.w("network error obtaining reverse geocoding", ex);
             }
         });
         return false;
@@ -798,35 +697,20 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
     public void onAddFriendAction(View v) {
         L.i("onAddFriendAction");
         AlertDialog.Builder builder = new AlertDialog.Builder(this, R.style.AlertDialogTheme);
-        builder.setPositiveButton("Add friend", new DialogInterface.OnClickListener() {
-            @Override
-            public void onClick(DialogInterface dialog, int which) {
-                showAddFriendDialog();
-            }
-        }).setNeutralButton("Limited Share", new DialogInterface.OnClickListener() {
-            @Override
-            public void onClick(DialogInterface dialog, int which) {
-                startService(LimitedShareService.newIntent(MapActivity.this, LimitedShareService.ACTION_START));
-            }
-        }).setNegativeButton("Cancel", null)
-        .setCancelable(true).setMessage("Add friend?").show();
+        builder.setPositiveButton("Add friend", (dialog, which) -> showAddFriendDialog())
+                .setNeutralButton("Limited Share",
+                        (dialog, which) -> startService(LimitedShareService.newIntent(MapActivity.this, LimitedShareService.ACTION_START)))
+                .setNegativeButton("Cancel", null)
+                .setCancelable(true).setMessage("Add friend?").show();
     }
 
     private void showAddFriendDialog() {
         AlertDialog.Builder builder = new AlertDialog.Builder(this, R.style.AlertDialogTheme);
         builder.setTitle(R.string.add_friend);
         builder.setView(R.layout.friend_request_form);
-        builder.setPositiveButton(R.string.send, new DialogInterface.OnClickListener() {
-            @Override
-            public void onClick(DialogInterface dialog, int which) {
-                final String username = mUsernameField.getText().toString();
-                App.runInBackground(new WorkerRunnable() {
-                    @Override
-                    public void run() {
-                        attemptLocationGrant(username);
-                    }
-                });
-            }
+        builder.setPositiveButton(R.string.send, (dialog, which) -> {
+            final String username = mUsernameField.getText().toString();
+            App.runInBackground(() -> attemptLocationGrant(username));
         });
         builder.setNegativeButton(R.string.cancel, null);
         builder.setCancelable(true);
@@ -861,6 +745,10 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
                     return;
                 }
                 User userToRequest = searchResponse.body();
+                if (userToRequest == null) {
+                    Utils.showStringAlert(this, null, "Unknown error while retrieving info about username");
+                    return;
+                }
                 userRecord = db.addUser(userToRequest.id, userToRequest.username, userToRequest.publicKey);
             }
 
@@ -890,14 +778,6 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
             OscarClient.queueSendMessage(this, accessToken, userRecord.userId, msg, false);
 
             db.grantSharingTo(userRecord.userId, sendingBoxId);
-            final FriendRecord completeFriend = db.getFriendByUserId(userRecord.id);
-            App.runOnUiThread(new UiRunnable() {
-                @Override
-                public void run() {
-                    mAvatarsAdapter.addFriend(completeFriend);
-                }
-            });
-
             Utils.showStringAlert(this, null, "You're now sharing with " + username);
         } catch (IOException ex) {
             Utils.showStringAlert(this, null, "Network problem trying to share your location. Check your connection thent ry again.");

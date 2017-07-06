@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/friends_sheet"
+    android:orientation="vertical"
+    android:background="@android:color/white"
+    app:layout_behavior="android.support.design.widget.BottomSheetBehavior"
+    app:behavior_peekHeight="56dp"
+    app:behavior_hideable="false"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+    <android.support.v7.widget.RecyclerView
+        android:id="@+id/avatars"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"/>
+    <android.support.v7.widget.RecyclerView
+        android:id="@+id/friend_items"
+        app:layoutManager="android.support.v7.widget.LinearLayoutManager"
+        tools:listItem="@layout/friend_item"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent" />
+</LinearLayout>

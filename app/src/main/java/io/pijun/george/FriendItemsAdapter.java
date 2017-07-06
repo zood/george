@@ -1,5 +1,6 @@
 package io.pijun.george;
 
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.res.Resources;
 import android.graphics.Bitmap;
@@ -19,7 +20,6 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewOutlineProvider;
-import android.widget.CompoundButton;
 import android.widget.ImageView;
 import android.widget.Switch;
 import android.widget.TextView;
@@ -33,6 +33,7 @@ class FriendItemsAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
 
     private ArrayList<FriendRecord> mFriends = new ArrayList<>();
     private LongSparseArray<FriendLocation> mFriendLocations = new LongSparseArray<>();
+    private FriendItemsListener mListener;
 
     FriendItemsAdapter() {
         setHasStableIds(true);
@@ -88,12 +89,7 @@ class FriendItemsAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
                 } else {
                     String area = AreaCache.getArea(loc.latitude, loc.longitude);
                     if (area == null) {
-                        AreaCache.fetchArea(h.location.getContext(), loc.latitude, loc.longitude, new AreaCache.ReverseGeocodingListener() {
-                            @Override
-                            public void onReverseGeocodingCompleted(@NonNull String area) {
-                                reloadFriend(friend.id);
-                            }
-                        });
+                        AreaCache.fetchArea(h.location.getContext(), loc.latitude, loc.longitude, area1 -> reloadFriend(friend.id));
                     }
                     if (area != null) {
                         h.location.setText(area);
@@ -116,12 +112,7 @@ class FriendItemsAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
             }
 
             // -- SHARE SWITCH + LABEL --
-            h.shareSwitch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
-                @Override
-                public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-                    L.i("on checked change: " + isChecked);
-                }
-            });
+            h.shareSwitch.setOnCheckedChangeListener((buttonView, isChecked) -> L.i("on checked change: " + isChecked));
             if (friend.sendingBoxId != null) {
                 h.shareSwitch.setChecked(true);
                 h.shareSwitchLabel.setText(R.string.sharing);
@@ -137,7 +128,7 @@ class FriendItemsAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
     public RecyclerView.ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
         LayoutInflater inflater = LayoutInflater.from(parent.getContext());
         View view = inflater.inflate(R.layout.friend_item, parent, false);
-        FriendItemViewHolder holder = new FriendItemViewHolder(view);
+        final FriendItemViewHolder holder = new FriendItemViewHolder(view);
         ViewOutlineProvider vop = new ViewOutlineProvider() {
             @Override
             public void getOutline(View view, Outline outline) {
@@ -146,7 +137,17 @@ class FriendItemsAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
         };
         holder.avatar.setOutlineProvider(vop);
         holder.avatar.setClipToOutline(true);
+
+        holder.shareSwitch.setOnCheckedChangeListener((buttonView, isChecked) -> onShareSwitchCheckedChange(holder.getAdapterPosition(), isChecked));
         return holder;
+    }
+
+    private void onShareSwitchCheckedChange(int position, boolean isChecked) {
+        if (mListener == null) {
+            return;
+        }
+        FriendRecord friend = mFriends.get(position);
+        mListener.onSharingStateChanged(friend.id, isChecked);
     }
 
     @UiThread
@@ -160,17 +161,12 @@ class FriendItemsAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
         }
     }
 
+    @SuppressLint("WrongThread")
     @AnyThread
     void setFriendLocation(@NonNull final Context ctx, @NonNull final FriendLocation loc) {
         if (Looper.myLooper() == Looper.getMainLooper()) {
-            App.runInBackground(new WorkerRunnable() {
-                @Override
-                public void run() {
-                    _setFriendLocation(ctx, loc);
-                }
-            });
+            App.runInBackground(() -> _setFriendLocation(ctx, loc));
         } else {
-            //noinspection WrongThread
             _setFriendLocation(ctx, loc);
         }
     }
@@ -179,20 +175,31 @@ class FriendItemsAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
     private void _setFriendLocation(Context ctx, final FriendLocation loc) {
         mFriendLocations.put(loc.friendId, loc);
         if (AreaCache.getArea(loc.latitude, loc.longitude) == null) {
-            AreaCache.fetchArea(ctx, loc.latitude, loc.longitude, new AreaCache.ReverseGeocodingListener() {
-                @Override
-                public void onReverseGeocodingCompleted(@NonNull String area) {
-                    L.i("_setFriendLocation onreverse complete");
-                    reloadFriend(loc.friendId);
-                }
+            AreaCache.fetchArea(ctx, loc.latitude, loc.longitude, area -> {
+                L.i("_setFriendLocation onreverse complete");
+                reloadFriend(loc.friendId);
             });
         }
     }
 
+    @SuppressLint("WrongThread")
+    @AnyThread
+    void setFriends(@NonNull final ArrayList<FriendRecord> friends) {
+        if (Looper.myLooper() == Looper.getMainLooper()) {
+            _setFriends(friends);
+        } else {
+            App.runOnUiThread(() -> _setFriends(friends));
+        }
+    }
+
     @UiThread
-    void setFriends(@NonNull ArrayList<FriendRecord> friends) {
+    private void _setFriends(@NonNull ArrayList<FriendRecord> friends) {
         this.mFriends = friends;
         notifyDataSetChanged();
+    }
+
+    void setListener(FriendItemsListener l) {
+        this.mListener = l;
     }
 
     interface FriendItemsListener {
