@@ -12,7 +12,6 @@ import com.squareup.otto.Bus;
 
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.FutureTask;
 
 public class App extends Application {
 
@@ -50,12 +49,7 @@ public class App extends Application {
         if (Looper.myLooper() == Looper.getMainLooper()) {
             sApp.mBus.post(passenger);
         } else {
-            runOnUiThread(new UiRunnable() {
-                @Override
-                public void run() {
-                    sApp.mBus.post(passenger);
-                }
-            });
+            runOnUiThread(() -> sApp.mBus.post(passenger));
         }
     }
 
@@ -64,12 +58,7 @@ public class App extends Application {
         if (Looper.myLooper() == Looper.getMainLooper()) {
             sApp.mBus.register(busStop);
         } else {
-            runOnUiThread(new UiRunnable() {
-                @Override
-                public void run() {
-                    sApp.mBus.register(busStop);
-                }
-            });
+            runOnUiThread(() -> sApp.mBus.register(busStop));
         }
     }
 
@@ -78,12 +67,7 @@ public class App extends Application {
         if (Looper.myLooper() == Looper.getMainLooper()) {
             App.sApp.mBus.unregister(busStop);
         } else {
-            runOnUiThread(new UiRunnable() {
-                @Override
-                public void run() {
-                    App.sApp.mBus.unregister(busStop);
-                }
-            });
+            runOnUiThread(() -> App.sApp.mBus.unregister(busStop));
         }
     }
 

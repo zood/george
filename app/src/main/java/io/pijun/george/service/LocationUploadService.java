@@ -96,23 +96,20 @@ public class LocationUploadService extends Service {
     @Keep
     public void onLocationChanged(final Location l) {
         L.i("LUS.onLocationChanged");
-        sServiceHandler.post(new WorkerRunnable() {
-            @Override
-            public void run() {
-                // check if this is a duplicate location
-                if (!mLocations.isEmpty() && mLocations.peek().getElapsedRealtimeNanos() == l.getElapsedRealtimeNanos()) {
-                    return;
-                }
+        sServiceHandler.post((WorkerRunnable) () -> {
+            // check if this is a duplicate location
+            if (!mLocations.isEmpty() && mLocations.peek().getElapsedRealtimeNanos() == l.getElapsedRealtimeNanos()) {
+                return;
+            }
 
-                mLocations.add(l);
+            mLocations.add(l);
 
-                // make sure we have an internet connection before attempting to send
-                ConnectivityManager cm = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
-                NetworkInfo activeNetwork = cm.getActiveNetworkInfo();
-                boolean isConnected = activeNetwork != null && activeNetwork.isConnectedOrConnecting();
-                if (isConnected) {
-                    flush();
-                }
+            // make sure we have an internet connection before attempting to send
+            ConnectivityManager cm = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
+            NetworkInfo activeNetwork = cm.getActiveNetworkInfo();
+            boolean isConnected = activeNetwork != null && activeNetwork.isConnectedOrConnecting();
+            if (isConnected) {
+                flush();
             }
         });
     }

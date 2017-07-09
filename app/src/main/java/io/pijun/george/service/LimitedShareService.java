@@ -24,10 +24,11 @@ import android.support.v7.app.NotificationCompat;
 import android.text.format.DateUtils;
 import android.widget.Toast;
 
-import com.google.android.gms.common.ConnectionResult;
-import com.google.android.gms.common.api.GoogleApiClient;
+import com.google.android.gms.location.FusedLocationProviderClient;
+import com.google.android.gms.location.LocationCallback;
 import com.google.android.gms.location.LocationListener;
 import com.google.android.gms.location.LocationRequest;
+import com.google.android.gms.location.LocationResult;
 import com.google.android.gms.location.LocationServices;
 import com.google.firebase.crash.FirebaseCrash;
 
@@ -63,7 +64,7 @@ public class LimitedShareService extends Service implements LocationListener {
     private boolean mIsStarted = false;
     private KeyPair mKeyPair;
     private byte[] mSendingBoxId;
-    private GoogleApiClient mGoogleClient;
+    private FusedLocationProviderClient mLocationProviderClient;
 
     private static Looper sServiceLooper;
     private static Handler sServiceHandler;
@@ -131,12 +132,7 @@ public class LimitedShareService extends Service implements LocationListener {
             case ACTION_START:
                 if (!mIsStarted) {
                     mIsStarted = true;
-                    sServiceHandler.post(new WorkerRunnable() {
-                        @Override
-                        public void run() {
-                            startLimitedShare();
-                        }
-                    });
+                    sServiceHandler.post((WorkerRunnable) this::startLimitedShare);
                 }
                 break;
             case ACTION_COPY_LINK:
@@ -209,6 +205,13 @@ public class LimitedShareService extends Service implements LocationListener {
 
     @WorkerThread
     private void startLimitedShare() {
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            // should never happen
+            Toast.makeText(this, "Need location permission", Toast.LENGTH_SHORT).show();
+            stopSelf();
+            return;
+        }
+
         showNotification();
         // create a user
         mKeyPair = new KeyPair();
@@ -233,26 +236,11 @@ public class LimitedShareService extends Service implements LocationListener {
 
         LimitedShareService.IsRunning = true;
 
-        // start the fused location provider
-        mGoogleClient = new GoogleApiClient.Builder(this)
-                .addApi(LocationServices.API)
-                .build();
-        ConnectionResult connectionResult = mGoogleClient.blockingConnect();
-        if (!connectionResult.isSuccess()) {
-            L.w("LSS was unable to connect to google api");
-            L.w("  has resolution? " + connectionResult.hasResolution());
-            // TODO: handle this
-            return;
-        }
-        LocationRequest req = LocationRequest.create();
-        req.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
-        req.setInterval(30 * DateUtils.SECOND_IN_MILLIS);
-        if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
-            LocationServices.FusedLocationApi.requestLocationUpdates(mGoogleClient, req, this, sServiceLooper);
-        } else {
-            // TODO: handle this
-            return;
-        }
+        mLocationProviderClient = LocationServices.getFusedLocationProviderClient(this);
+        LocationRequest request = new LocationRequest();
+        request.setInterval(30 * DateUtils.SECOND_IN_MILLIS);
+        request.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
+        mLocationProviderClient.requestLocationUpdates(request, mLocationCallbackHelper, sServiceLooper);
 
         // copy the link to the user's clipboard
         String url = getUrl();
@@ -268,15 +256,10 @@ public class LimitedShareService extends Service implements LocationListener {
     private void stopLimitedShare(boolean userStopped) {
         stopForeground(true);
 
-        if (mGoogleClient != null && mGoogleClient.isConnected()) {
-            LocationServices.FusedLocationApi.removeLocationUpdates(mGoogleClient, this);
-            mGoogleClient.disconnect();
-            mGoogleClient = null;
-        }
+        mLocationProviderClient.removeLocationUpdates(mLocationCallbackHelper);
 
         DB.get(this).deleteLimitedShares();
         LimitedShareService.IsRunning = false;
-
 
         if (userStopped) {
             stopSelf();
@@ -289,4 +272,16 @@ public class LimitedShareService extends Service implements LocationListener {
             App.postOnBus(location);
         }
     }
+
+    private LocationCallback mLocationCallbackHelper = new LocationCallback() {
+        @Override
+        @UiThread
+        public void onLocationResult(LocationResult result) {
+            L.i("LLS.onLocationChanged");
+            Location location = result.getLastLocation();
+            if (location != null) {
+                App.postOnBus(location);
+            }
+        }
+    };
 }
