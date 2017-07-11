@@ -27,7 +27,7 @@
         android:id="@+id/share_switch_label"
         tools:text="Not sharing"
         android:fontFamily="sans-serif-light"
-        android:textSize="12sp"
+        android:textSize="10sp"
         android:textStyle="bold"
         app:layout_constraintVertical_chainStyle="packed"
         app:layout_constraintEnd_toEndOf="parent"
@@ -55,7 +55,7 @@
         tools:text="MoonMeander"
         android:textColor="@color/friend_item_username"
         android:textStyle="bold"
-        android:textSize="15sp"
+        android:textSize="16sp"
         android:layout_marginStart="16dp"
         app:layout_constraintVertical_chainStyle="packed"
         app:layout_constraintStart_toEndOf="@id/avatar"
@@ -63,18 +63,19 @@
         android:layout_height="wrap_content"
         app:layout_constraintTop_toTopOf="parent"
         android:layout_marginTop="0dp"
-        android:layout_marginBottom="8dp"
+        android:layout_marginBottom="4dp"
         app:layout_constraintBottom_toTopOf="@+id/location"
         app:layout_constraintVertical_bias="1.0" />
     <TextView
         android:id="@+id/location"
+        android:gravity="center_vertical"
         tools:text="Sherman Oaks"
         android:textColor="@color/friend_item_black"
         android:textStyle="bold"
         android:textSize="12sp"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:drawableStart="@drawable/ic_cake_black_24dp"
+        android:drawableStart="@drawable/ic_location_on_black_24dp"
         android:drawableTint="@color/friend_item_black"
         app:layout_constraintWidth_default="wrap"
         app:layout_constraintVertical_chainStyle="packed"
@@ -83,6 +84,7 @@
     <TextView
         android:id="@+id/update_time"
         tools:text=" • 4 min ago"
+        android:gravity="center_vertical"
         android:maxLines="1"
         android:ellipsize="end"
         android:textSize="12sp"
@@ -90,10 +92,11 @@
         android:fontFamily="sans-serif-light"
         app:layout_constraintStart_toEndOf="@id/location"
         app:layout_constraintTop_toTopOf="@id/location"
+        app:layout_constraintBottom_toBottomOf="@id/location"
         app:layout_constraintEnd_toStartOf="@id/share_switch_label"
         app:layout_constraintWidth_default="wrap"
         app:layout_constraintHorizontal_bias="0"
         android:layout_width="0dp"
-        android:layout_height="wrap_content" />
+        android:layout_height="0dp" />
 
 </android.support.constraint.ConstraintLayout>

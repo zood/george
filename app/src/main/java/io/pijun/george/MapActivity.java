@@ -76,6 +76,7 @@ import io.pijun.george.api.UserComm;
 import io.pijun.george.crypto.EncryptedData;
 import io.pijun.george.crypto.KeyPair;
 import io.pijun.george.event.LocationSharingGranted;
+import io.pijun.george.event.LocationSharingRevoked;
 import io.pijun.george.models.FriendLocation;
 import io.pijun.george.models.FriendRecord;
 import io.pijun.george.models.MovementType;
@@ -499,6 +500,26 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
 
     @Subscribe
     @UiThread
+    public void onLocationSharingRevoked(final LocationSharingRevoked revoked) {
+        // remove the map marker, if there is one
+        App.runInBackground(() -> {
+            DB db = DB.get(this);
+            FriendRecord friend = db.getFriendByUserId(revoked.userId);
+            if (friend == null) {
+                return;
+            }
+            App.runOnUiThread(() -> {
+                Marker marker = mMarkerTracker.removeMarker(friend.id);
+                if (marker == null) {
+                    return;
+                }
+                mMapboxMap.removeMarker(marker);
+            });
+        });
+    }
+
+    @Subscribe
+    @UiThread
     public void onFriendLocationUpdated(final FriendLocation loc) {
         // check if we already have a marker for this friend
         Marker marker = mMarkerTracker.getById(loc.friendId);
@@ -624,6 +645,8 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
             return;
         }
 
+        mCameraTracksMyLocation = false;
+        findViewById(R.id.my_location_fab).setSelected(false);
         CameraPosition cp = new CameraPosition.Builder()
                 .target(marker.getPosition())
                 .zoom(13)
@@ -716,7 +739,7 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
             }
             OscarClient.queueSendMessage(this, accessToken, userRecord.userId, msg, false);
 
-            db.grantSharingTo(userRecord.userId, sendingBoxId);
+            db.startSharingWith(userRecord, sendingBoxId);
             Utils.showStringAlert(this, null, "You're now sharing with " + username);
         } catch (IOException ex) {
             Utils.showStringAlert(this, null, "Network problem trying to share your location. Check your connection thent ry again.");
@@ -730,7 +753,6 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
         @Override
         @UiThread
         public void onLocationResult(LocationResult result) {
-            L.i("onLocationResult");
             Location location = result.getLastLocation();
             if (mMeMarker == null) {
                 addMyLocation(location);

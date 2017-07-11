@@ -5,6 +5,7 @@ public enum CommType {
     LocationInfo("location_info"),
     LocationSharingGrant("location_sharing_grant"),
     LocationUpdateRequest("location_update_request"),
+    LocationSharingRevocation("location_sharing_revocation"),
     Unknown("unknown");
 
     public final String val;

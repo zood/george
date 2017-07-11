@@ -2,6 +2,7 @@ package io.pijun.george;
 
 import android.annotation.SuppressLint;
 import android.content.Context;
+import android.content.res.ColorStateList;
 import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.Outline;
@@ -112,7 +113,6 @@ class FriendItemsAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
             }
 
             // -- SHARE SWITCH + LABEL --
-            h.shareSwitch.setOnCheckedChangeListener((buttonView, isChecked) -> L.i("on checked change: " + isChecked));
             if (friend.sendingBoxId != null) {
                 h.shareSwitch.setChecked(true);
                 h.shareSwitchLabel.setText(R.string.sharing);
@@ -147,7 +147,7 @@ class FriendItemsAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
             return;
         }
         FriendRecord friend = mFriends.get(position);
-        mListener.onSharingStateChanged(friend.id, isChecked);
+        mListener.onSharingStateChanged(friend, isChecked);
     }
 
     @UiThread
@@ -159,6 +159,12 @@ class FriendItemsAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
                 break;
             }
         }
+    }
+
+    @UiThread
+    void removeFriendLocation(long friendId) {
+        mFriendLocations.remove(friendId);
+        reloadFriend(friendId);
     }
 
     @SuppressLint("WrongThread")
@@ -176,7 +182,6 @@ class FriendItemsAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
         mFriendLocations.put(loc.friendId, loc);
         if (AreaCache.getArea(loc.latitude, loc.longitude) == null) {
             AreaCache.fetchArea(ctx, loc.latitude, loc.longitude, area -> {
-                L.i("_setFriendLocation onreverse complete");
                 reloadFriend(loc.friendId);
             });
         }
@@ -203,7 +208,8 @@ class FriendItemsAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
     }
 
     interface FriendItemsListener {
-        void onSharingStateChanged(long friendId, boolean shouldShare);
+        @UiThread
+        void onSharingStateChanged(@NonNull FriendRecord friend, boolean shouldShare);
     }
 
     private static class FriendItemViewHolder extends RecyclerView.ViewHolder {

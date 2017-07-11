@@ -1,6 +1,7 @@
 package io.pijun.george;
 
 import android.animation.TypeEvaluator;
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.os.Looper;
 import android.support.annotation.AnyThread;
@@ -32,19 +33,14 @@ public class Utils {
         return map;
     }
 
+    @SuppressLint("WrongThread")
     @AnyThread
     public static void showAlert(final Context ctx, @StringRes final int titleId, @StringRes final int msgId) {
         if (Looper.myLooper() != Looper.getMainLooper()) {
-            App.runOnUiThread(new UiRunnable() {
-                @Override
-                public void run() {
-                    _showAlert(ctx, titleId, msgId);
-                }
-            });
+            App.runOnUiThread(() -> _showAlert(ctx, titleId, msgId));
             return;
         }
 
-        //noinspection WrongThread
         _showAlert(ctx, titleId, msgId);
     }
 
@@ -61,19 +57,14 @@ public class Utils {
         builder.show();
     }
 
+    @SuppressLint("WrongThread")
     @AnyThread
     public static void showStringAlert(final Context ctx, final CharSequence title, final CharSequence msg) {
         if (Looper.myLooper() != Looper.getMainLooper()) {
-            App.runOnUiThread(new UiRunnable() {
-                @Override
-                public void run() {
-                    _showStringAlert(ctx, title, msg);
-                }
-            });
+            App.runOnUiThread(() -> _showStringAlert(ctx, title, msg));
             return;
         }
 
-        //noinspection WrongThread
         _showStringAlert(ctx, title, msg);
     }
 

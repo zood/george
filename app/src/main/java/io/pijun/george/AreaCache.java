@@ -21,7 +21,6 @@ public class AreaCache {
 
     @AnyThread
     public static void fetchArea(@NonNull Context ctx, final double lat, final double lng, @Nullable final ReverseGeocodingListener l) {
-        L.i("AreaCache.fetchArea");
         final LatLng latLng = new LatLng(lat, lng);
         if (mOngoingRequests.get(latLng) != null) {
             return;
@@ -30,7 +29,6 @@ public class AreaCache {
         LocationIQClient.get(ctx).getReverseGeocoding("" + lat, "" + lng).enqueue(new Callback<RevGeocoding>() {
             @Override
             public void onResponse(Call<RevGeocoding> call, Response<RevGeocoding> response) {
-                L.i("locationiq response");
                 try {
                     if (!response.isSuccessful()) {
                         try {
@@ -43,7 +41,6 @@ public class AreaCache {
 
                     RevGeocoding rg = response.body();
                     String area = rg.getArea();
-                    L.i("iq area: " + area);
                     mCachedAreas.put(new LatLng(lat, lng), area);
                     if (l != null) {
                         l.onReverseGeocodingCompleted(area);

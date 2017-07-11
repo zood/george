@@ -134,6 +134,7 @@ class AvatarsAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
     }
 
     interface AvatarsAdapterListener {
+        @UiThread
         void onAvatarSelected(FriendRecord fr);
     }
 }

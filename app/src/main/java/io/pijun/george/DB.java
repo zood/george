@@ -101,12 +101,14 @@ public class DB {
     private final DBHelper mDbHelper;
     private final Context mContext;
 
+    @WorkerThread
     private DB(@NonNull Context context) {
         mContext = context.getApplicationContext();
         mDbHelper = new DBHelper(mContext);
     }
 
     @NonNull
+    @WorkerThread
     public static DB get(@NonNull Context context) {
         if (sDb == null) {
             synchronized (DB.class) {
@@ -438,12 +440,9 @@ public class DB {
             delim = ",";
         }
         sql.append(" FROM ").append(USERS_TABLE).append(" WHERE ").append(USERS_COL_USER_ID).append("=?");
-        SQLiteDatabase.CursorFactory factory = new SQLiteDatabase.CursorFactory() {
-            @Override
-            public Cursor newCursor(SQLiteDatabase sqLiteDatabase, SQLiteCursorDriver driver, String editTable, SQLiteQuery query) {
-                query.bindBlob(1, id);
-                return new SQLiteCursor(driver, editTable, query);
-            }
+        SQLiteDatabase.CursorFactory factory = (sqLiteDatabase, driver, editTable, query) -> {
+            query.bindBlob(1, id);
+            return new SQLiteCursor(driver, editTable, query);
         };
         UserRecord ur = null;
         SQLiteDatabase db = mDbHelper.getReadableDatabase();
@@ -486,31 +485,6 @@ public class DB {
         }
 
         return ur;
-    }
-
-    @WorkerThread
-    public void grantSharingTo(@NonNull byte[] userId, @NonNull byte[] sendingBoxId) throws DBException {
-        UserRecord user = getUser(userId);
-        if (user == null) {
-            throw new DBException("You can't grant a share to an unknown user");
-        }
-
-        FriendRecord fr = getFriendByUserId(user.id);
-        if (fr == null) {
-            addFriend(user.id, sendingBoxId, null);
-        } else {
-            // if we already have a friend record, just add the sending box id
-            SQLiteDatabase db = mDbHelper.getWritableDatabase();
-            ContentValues cv = new ContentValues();
-            cv.put(FRIENDS_COL_SENDING_BOX_ID, sendingBoxId);
-            String selection = FRIENDS_COL_USER_ID + "=?";
-            String[] args = new String[]{String.valueOf(user.id)};
-            long result = db.update(FRIENDS_TABLE, cv, selection, args);
-            if (result != 1) {
-                throw new DBException("Num affected rows was " + result + " for username '" + user.username + "'");
-            }
-        }
-        scheduleBackup();
     }
 
     @WorkerThread
@@ -607,28 +581,69 @@ public class DB {
     }
 
     @WorkerThread
-    public void sharingGrantedBy(@NonNull String username, @NonNull @Size(Constants.DROP_BOX_ID_LENGTH) byte[] boxId) throws DBException {
-        UserRecord userRecord = getUser(username);
-        if (userRecord == null) {
-            throw new DBException("You can't add a share from an unknown user");
-        }
-        FriendRecord friend = getFriendByUserId(userRecord.id);
+    public void sharingGrantedBy(@NonNull UserRecord user, @NonNull @Size(Constants.DROP_BOX_ID_LENGTH) byte[] boxId) throws DBException {
+        FriendRecord friend = getFriendByUserId(user.id);
         if (friend == null) {
             // add a friend record including the drop box id
-            addFriend(userRecord.id, null, boxId);
+            addFriend(user.id, null, boxId);
         } else {
             // add the drop box id to the existing friend record
             SQLiteDatabase db = mDbHelper.getWritableDatabase();
             ContentValues cv = new ContentValues();
             cv.put(FRIENDS_COL_RECEIVING_BOX_ID, boxId);
             String selection = FRIENDS_COL_USER_ID + "=?";
-            String[] args = new String[]{String.valueOf(userRecord.id)};
+            String[] args = new String[]{String.valueOf(user.id)};
             long result = db.update(FRIENDS_TABLE, cv, selection, args);
             if (result != 1) {
-                throw new DBException("Num affected rows was " + result + " for username '" + username + "'");
+                throw new DBException("Num affected rows was " + result + " for username '" + user.username + "'");
             }
         }
 
+        scheduleBackup();
+    }
+
+    @WorkerThread
+    public void sharingRevokedBy(@NonNull UserRecord user) {
+        SQLiteDatabase db = mDbHelper.getWritableDatabase();
+        ContentValues cv = new ContentValues();
+        cv.put(FRIENDS_COL_RECEIVING_BOX_ID, (byte[]) null);
+        String whereClause = FRIENDS_COL_USER_ID + "=?";
+        String[] args = new String[]{String.valueOf(user.id)};
+        db.update(FRIENDS_TABLE, cv, whereClause, args);
+        scheduleBackup();
+    }
+
+    @WorkerThread
+    public void startSharingWith(@NonNull UserRecord user, @NonNull byte[] sendingBoxId) throws DBException {
+        FriendRecord fr = getFriendByUserId(user.id);
+        if (fr == null) {
+            addFriend(user.id, sendingBoxId, null);
+        } else {
+            // if we already have a friend record, just add the sending box id
+            SQLiteDatabase db = mDbHelper.getWritableDatabase();
+            ContentValues cv = new ContentValues();
+            cv.put(FRIENDS_COL_SENDING_BOX_ID, sendingBoxId);
+            String selection = FRIENDS_COL_USER_ID + "=?";
+            String[] args = new String[]{String.valueOf(user.id)};
+            long result = db.update(FRIENDS_TABLE, cv, selection, args);
+            if (result != 1) {
+                throw new DBException("Num affected rows was " + result + " for username '" + user.username + "'");
+            }
+        }
+        scheduleBackup();
+    }
+
+    @WorkerThread
+    public void stopSharingWith(@NonNull UserRecord user) throws DBException {
+        SQLiteDatabase db = mDbHelper.getWritableDatabase();
+        ContentValues cv = new ContentValues();
+        cv.put(FRIENDS_COL_SENDING_BOX_ID, (byte[]) null);
+        String whereClause = FRIENDS_COL_USER_ID + "=?";
+        String[] args = new String[]{String.valueOf(user.id)};
+        long result = db.update(FRIENDS_TABLE, cv, whereClause, args);
+        if (result != 1) {
+            throw new DBException("Num affected rows was " + result + " for username '" + user.username + "'");
+        }
         scheduleBackup();
     }
 

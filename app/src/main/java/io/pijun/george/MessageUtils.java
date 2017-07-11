@@ -22,6 +22,7 @@ import io.pijun.george.api.UserComm;
 import io.pijun.george.crypto.EncryptedData;
 import io.pijun.george.crypto.KeyPair;
 import io.pijun.george.event.LocationSharingGranted;
+import io.pijun.george.event.LocationSharingRevoked;
 import io.pijun.george.models.FriendLocation;
 import io.pijun.george.models.FriendRecord;
 import io.pijun.george.models.UserRecord;
@@ -87,7 +88,7 @@ public class MessageUtils {
         OscarClient.queueSendMessage(context, accessToken, user.userId, encMsg, false);
 
         try {
-            DB.get(context).grantSharingTo(user.userId, boxId);
+            DB.get(context).startSharingWith(user, boxId);
         } catch (DB.DBException ex) {
             L.w("serious problem setting drop box id", ex);
             FirebaseCrash.report(ex);
@@ -149,8 +150,11 @@ public class MessageUtils {
                     }
                 }
                 User user = response.body();
+                if (user == null) {
+                    FirebaseCrash.report(new Exception("Unable to decode user " + Hex.toHexString(senderId) + " from response"));
+                    return ERROR_UNKNOWN;
+                }
                 // now that we've encountered a new user, add them to the database (because of TOFU)
-
                 userRecord = db.addUser(senderId, user.username, user.publicKey);
                 L.i("  added user: " + userRecord);
             } catch (IOException ioe) {
@@ -175,13 +179,18 @@ public class MessageUtils {
             case LocationSharingGrant:
                 L.i("LocationSharingGrant");
                 try {
-                    db.sharingGrantedBy(userRecord.username, comm.dropBox);
+                    db.sharingGrantedBy(userRecord, comm.dropBox);
                 } catch (DB.DBException ex) {
                     L.w("error recording location grant", ex);
                     FirebaseCrash.report(ex);
                     return ERROR_DATABASE_EXCEPTION;
                 }
                 App.postOnBus(new LocationSharingGranted(userRecord.id));
+                break;
+            case LocationSharingRevocation:
+                L.i("LocationSharingRevocation");
+                db.sharingRevokedBy(userRecord);
+                App.postOnBus(new LocationSharingRevoked(userRecord.id));
                 break;
             case LocationInfo:
                 FriendRecord fr = db.getFriendByUserId(userRecord.id);

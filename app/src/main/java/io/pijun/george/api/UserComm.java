@@ -33,6 +33,13 @@ public class UserComm {
         return c;
     }
 
+    @NonNull
+    public static UserComm newLocationSharingRevocation() {
+        UserComm c = new UserComm();
+        c.type = CommType.LocationSharingRevocation;
+        return c;
+    }
+
     public static UserComm newLocationUpdateRequest() {
         UserComm c = new UserComm();
         c.type = CommType.LocationUpdateRequest;
@@ -67,6 +74,8 @@ public class UserComm {
                 if (dropBox == null || dropBox.length != Constants.DROP_BOX_ID_LENGTH) {
                     return false;
                 }
+                return true;
+            case LocationSharingRevocation:
                 return true;
             case LocationInfo:
                 if (latitude < -90 || latitude > 90) {

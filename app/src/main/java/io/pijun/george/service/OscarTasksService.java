@@ -7,6 +7,7 @@ import android.content.Intent;
 import android.os.PowerManager;
 import android.support.annotation.WorkerThread;
 import android.text.TextUtils;
+import android.text.format.DateUtils;
 
 import java.io.IOException;
 import java.util.Map;
@@ -40,7 +41,6 @@ public class OscarTasksService extends IntentService {
     @Override
     @WorkerThread
     protected void onHandleIntent(Intent intent) {
-        L.i("OscarTasksService.onHandleIntent");
         PersistentQueue<OscarTask> queue = OscarClient.getQueue(this);
 
         // make sure we're still logged in
@@ -55,12 +55,11 @@ public class OscarTasksService extends IntentService {
         PowerManager pwrMgr = (PowerManager) getSystemService(POWER_SERVICE);
         PowerManager.WakeLock wakeLock = pwrMgr.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "OscarTasksLock");
         try {
-            wakeLock.acquire();
+            wakeLock.acquire(60 * DateUtils.SECOND_IN_MILLIS);
             OscarTask task;
             while ((task = queue.peek()) != null) {
                 OscarAPI api = OscarClient.newInstance(task.accessToken);
                 Call call;
-                L.i("\tOTS: " + task.apiMethod);
                 switch (task.apiMethod) {
                     case AddFcmTokenTask.NAME:
                         AddFcmTokenTask aftt = (AddFcmTokenTask) task;

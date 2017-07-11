@@ -95,7 +95,6 @@ public class LocationUploadService extends Service {
     @Subscribe
     @Keep
     public void onLocationChanged(final Location l) {
-        L.i("LUS.onLocationChanged");
         sServiceHandler.post((WorkerRunnable) () -> {
             // check if this is a duplicate location
             if (!mLocations.isEmpty() && mLocations.peek().getElapsedRealtimeNanos() == l.getElapsedRealtimeNanos()) {
@@ -125,7 +124,6 @@ public class LocationUploadService extends Service {
      */
     @WorkerThread
     private void flush() {
-        L.i("LUS.flush");
         // If we have no location to report, just get out of here.
         if (mLocations.isEmpty()) {
             L.i("  no location to flush");
