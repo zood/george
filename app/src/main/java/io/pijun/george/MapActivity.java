@@ -371,6 +371,10 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
     }
 
     private void addMyLocation(Location location) {
+        if (mMapboxMap == null) {
+            return;
+        }
+
         int sixteen = getResources().getDimensionPixelSize(R.dimen.sixteen);
         Bitmap bitmap = Bitmap.createBitmap(sixteen, sixteen, Bitmap.Config.ARGB_8888);
         MyLocationView.draw(bitmap);

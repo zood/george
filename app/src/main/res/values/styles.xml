@@ -47,5 +47,10 @@
         <item name="android:colorControlActivated">@color/welcome_edittext_text</item>
         <item name="android:colorControlHighlight">@color/welcome_edittext_text</item>
     </style>
+    
+    <style name="PijunSwitch">
+        <item name="android:colorControlActivated">@color/colorPrimaryDark</item>
+        <item name="android:thumbTint">@android:color/white</item>
+    </style>
 
 </resources>

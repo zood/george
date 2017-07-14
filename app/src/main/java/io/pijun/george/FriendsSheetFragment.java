@@ -66,6 +66,7 @@ public class FriendsSheetFragment extends Fragment implements FriendItemsAdapter
             FriendRecord friend = DB.get(getContext()).getFriendByUserId(grant.userId);
             if (friend != null) {
                 mAvatarsAdapter.addFriend(friend);
+                mFriendItemsAdapter.updateFriend(friend);
             }
         });
     }
@@ -73,7 +74,6 @@ public class FriendsSheetFragment extends Fragment implements FriendItemsAdapter
     @Subscribe
     @UiThread
     public void onLocationSharingRevoked(LocationSharingRevoked revoked) {
-        L.i("FSF.onLocationSharingRevoked");
         App.runInBackground(() -> {
             DB db = DB.get(getContext());
             // check if this is a known friend
@@ -90,7 +90,6 @@ public class FriendsSheetFragment extends Fragment implements FriendItemsAdapter
 
     @Override
     public void onSharingStateChanged(@NonNull FriendRecord friend, boolean shouldShare) {
-        L.i("FSF.onSharingStateChanged: " + shouldShare);
         App.runInBackground(() -> {
             if (shouldShare) {
                 startSharingWith(friend);

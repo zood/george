@@ -35,12 +35,15 @@ class AvatarsAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
 
     @UiThread
     private void _addFriend(FriendRecord friend) {
-        // check if the friend is already in the list
-        if (mFriends.contains(friend)) {
-            return;
+        // check if we're replacing or adding the friend
+        int idx = mFriends.indexOf(friend);
+        if (idx == -1) {
+            mFriends.add(friend);
+            notifyItemInserted(mFriends.size()-1);
+        } else {
+            mFriends.set(idx, friend);
+            notifyItemChanged(idx);
         }
-        mFriends.add(friend);
-        notifyItemInserted(mFriends.size()-1);
     }
 
     @Override

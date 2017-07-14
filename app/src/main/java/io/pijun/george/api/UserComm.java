@@ -16,6 +16,8 @@ public class UserComm {
     public CommType type;
     public byte[] dropBox;
 
+    public byte[] avatar;
+
     // location_info
     public double latitude;
     public double longitude;
@@ -24,6 +26,14 @@ public class UserComm {
     public Float speed;
     public Float bearing;
     public String movements;
+
+    @NonNull
+    public static UserComm newAvatarUpdate(@NonNull byte[] avatarData) {
+        UserComm c = new UserComm();
+        c.type = CommType.AvatarUpdate;
+        c.avatar = avatarData;
+        return c;
+    }
 
     @NonNull
     public static UserComm newLocationSharingGrant(@NonNull byte[] boxId) {

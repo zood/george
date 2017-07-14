@@ -29,7 +29,7 @@
             android:windowSoftInputMode="adjustResize|stateHidden"
             android:theme="@style/WelcomeTheme" />
         <activity
-            android:name=".FriendsActivity"
+            android:name=".AvatarPickerActivity"
             android:windowSoftInputMode="adjustResize"
             android:theme="@style/AppTheme" />
         <activity

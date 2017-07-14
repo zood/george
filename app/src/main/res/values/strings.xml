@@ -66,4 +66,7 @@
     <string name="unknown">Unknown</string>
     <string name="loading_ellipsis">Loading…</string>
     <string name="not_sharing_location">Not sharing location</string>
+    <string name="select_avatar_msg">Select an avatar or pick your own picture.</string>
+    <string name="select">Select</string>
+    <string name="avatar_preview">Avatar preview</string>
 </resources>

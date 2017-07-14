@@ -2,6 +2,7 @@ package io.pijun.george.api;
 
 public enum CommType {
 
+    AvatarUpdate("avatar_update"),
     LocationInfo("location_info"),
     LocationSharingGrant("location_sharing_grant"),
     LocationUpdateRequest("location_update_request"),

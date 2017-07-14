@@ -80,12 +80,15 @@ class FriendItemsAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
 
             // -- LOCATION AND UPDATE TIME --
             if (friend.receivingBoxId == null) {
-                h.location.setText(null);
+                if (friend.id == 1) {
+                    L.i("friends receivingboxid is null");
+                }
+                h.location.setText("");
                 h.updateTime.setText(R.string.not_sharing_location);
             } else {
                 FriendLocation loc = mFriendLocations.get(friend.id);
                 if (loc == null) {
-                    h.location.setText(null);
+                    h.location.setText("");
                     h.updateTime.setText(R.string.unknown);
                 } else {
                     String area = AreaCache.getArea(loc.latitude, loc.longitude);
@@ -121,6 +124,7 @@ class FriendItemsAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
                 h.shareSwitchLabel.setText(R.string.not_sharing);
             }
             h.shareSwitch.setChecked(friend.sendingBoxId != null);
+            h.itemView.requestLayout();
         }
     }
 
@@ -138,7 +142,14 @@ class FriendItemsAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
         holder.avatar.setOutlineProvider(vop);
         holder.avatar.setClipToOutline(true);
 
-        holder.shareSwitch.setOnCheckedChangeListener((buttonView, isChecked) -> onShareSwitchCheckedChange(holder.getAdapterPosition(), isChecked));
+        holder.shareSwitch.setOnCheckedChangeListener((buttonView, isChecked) -> {
+            onShareSwitchCheckedChange(holder.getAdapterPosition(), isChecked);
+            if (isChecked) {
+                holder.shareSwitchLabel.setText(R.string.sharing);
+            } else {
+                holder.shareSwitchLabel.setText(R.string.not_sharing);
+            }
+        });
         return holder;
     }
 
@@ -167,23 +178,25 @@ class FriendItemsAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
         reloadFriend(friendId);
     }
 
-    @SuppressLint("WrongThread")
-    @AnyThread
+    @UiThread
     void setFriendLocation(@NonNull final Context ctx, @NonNull final FriendLocation loc) {
-        if (Looper.myLooper() == Looper.getMainLooper()) {
-            App.runInBackground(() -> _setFriendLocation(ctx, loc));
+        mFriendLocations.put(loc.friendId, loc);
+        if (AreaCache.getArea(loc.latitude, loc.longitude) == null) {
+            AreaCache.fetchArea(ctx, loc.latitude, loc.longitude, area -> reloadFriend(loc.friendId));
         } else {
-            _setFriendLocation(ctx, loc);
+            reloadFriend(loc.friendId);
         }
     }
 
-    @WorkerThread
-    private void _setFriendLocation(Context ctx, final FriendLocation loc) {
-        mFriendLocations.put(loc.friendId, loc);
-        if (AreaCache.getArea(loc.latitude, loc.longitude) == null) {
-            AreaCache.fetchArea(ctx, loc.latitude, loc.longitude, area -> {
-                reloadFriend(loc.friendId);
-            });
+    void updateFriend(FriendRecord friend) {
+        // check if we're replacing or adding the friend
+        int idx = mFriends.indexOf(friend);
+        if (idx == -1) {
+            mFriends.add(friend);
+            notifyItemInserted(mFriends.size()-1);
+        } else {
+            mFriends.set(idx, friend);
+            notifyItemChanged(idx);
         }
     }
 
