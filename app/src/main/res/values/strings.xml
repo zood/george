@@ -69,4 +69,5 @@
     <string name="select_avatar_msg">Select an avatar or pick your own picture.</string>
     <string name="select">Select</string>
     <string name="avatar_preview">Avatar preview</string>
+    <string name="friends">Friends</string>
 </resources>

@@ -1,23 +1,50 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools"
-    android:id="@+id/friends_sheet"
-    android:orientation="vertical"
-    android:background="@android:color/white"
-    app:layout_behavior="android.support.design.widget.BottomSheetBehavior"
-    app:behavior_peekHeight="56dp"
-    app:behavior_hideable="false"
-    android:layout_width="match_parent"
-    android:layout_height="match_parent">
-    <android.support.v7.widget.RecyclerView
-        android:id="@+id/avatars"
+<layout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+    <android.support.constraint.ConstraintLayout
+        android:id="@+id/friends_sheet"
+        android:background="@android:color/white"
+        app:behavior_peekHeight="72dp"
+        app:behavior_hideable="false"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"/>
-    <android.support.v7.widget.RecyclerView
-        android:id="@+id/friend_items"
-        app:layoutManager="android.support.v7.widget.LinearLayoutManager"
-        tools:listItem="@layout/friend_item"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent" />
-</LinearLayout>
+        android:layout_height="match_parent">
+        <ImageButton
+            android:id="@+id/toggle"
+            android:background="?attr/selectableItemBackground"
+            android:src="@drawable/ic_expand_less_36dp"
+            android:tint="@color/ui_tint_gray"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintBottom_toBottomOf="@+id/avatars"
+            android:layout_width="72dp"
+            android:layout_height="40dp" />
+        <TextView
+            android:id="@+id/title"
+            android:text="@string/friends"
+            android:textSize="16sp"
+            android:textColor="@color/ui_tint_gray"
+            android:textStyle="bold"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="@+id/friend_items"
+            android:layout_marginStart="72dp"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content" />
+        <android.support.v7.widget.RecyclerView
+            android:id="@+id/avatars"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintStart_toEndOf="@id/toggle"
+            app:layout_constraintEnd_toEndOf="parent"
+            android:layout_width="0dp"
+            android:layout_height="72dp" />
+        <android.support.v7.widget.RecyclerView
+            android:id="@+id/friend_items"
+            app:layoutManager="android.support.v7.widget.LinearLayoutManager"
+            app:layout_constraintTop_toBottomOf="@id/avatars"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            android:layout_width="0dp"
+            android:layout_height="0dp" />
+    </android.support.constraint.ConstraintLayout>
+</layout>

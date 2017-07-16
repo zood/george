@@ -2,7 +2,6 @@ package io.pijun.george;
 
 import android.annotation.SuppressLint;
 import android.content.Context;
-import android.content.res.ColorStateList;
 import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.Outline;
@@ -11,7 +10,6 @@ import android.os.Looper;
 import android.support.annotation.AnyThread;
 import android.support.annotation.NonNull;
 import android.support.annotation.UiThread;
-import android.support.annotation.WorkerThread;
 import android.support.v4.graphics.drawable.RoundedBitmapDrawable;
 import android.support.v4.graphics.drawable.RoundedBitmapDrawableFactory;
 import android.support.v7.widget.RecyclerView;
@@ -188,6 +186,7 @@ class FriendItemsAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
         }
     }
 
+    @UiThread
     void updateFriend(FriendRecord friend) {
         // check if we're replacing or adding the friend
         int idx = mFriends.indexOf(friend);

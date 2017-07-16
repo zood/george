@@ -4,8 +4,8 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:paddingStart="16dp"
     android:paddingEnd="16dp"
-    android:paddingTop="4dp"
-    android:paddingBottom="4dp"
+    android:paddingTop="6dp"
+    android:paddingBottom="6dp"
     android:clipToPadding="false"
     android:layout_width="match_parent"
     android:layout_height="wrap_content">
@@ -74,7 +74,6 @@
         android:layout_height="wrap_content"
         android:drawableStart="@drawable/ic_location_on_black_24dp"
         android:drawableTint="@color/friend_item_black"
-
         app:layout_constraintVertical_chainStyle="packed"
         app:layout_constraintStart_toStartOf="@id/username"
         app:layout_constraintTop_toBottomOf="@id/username" />

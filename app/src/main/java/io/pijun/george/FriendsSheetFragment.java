@@ -1,13 +1,14 @@
 package io.pijun.george;
 
+import android.databinding.DataBindingUtil;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.annotation.UiThread;
 import android.support.annotation.WorkerThread;
+import android.support.design.widget.BottomSheetBehavior;
 import android.support.v4.app.Fragment;
 import android.support.v7.widget.LinearLayoutManager;
-import android.support.v7.widget.RecyclerView;
 import android.text.TextUtils;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -23,6 +24,7 @@ import io.pijun.george.api.OscarClient;
 import io.pijun.george.api.UserComm;
 import io.pijun.george.crypto.EncryptedData;
 import io.pijun.george.crypto.KeyPair;
+import io.pijun.george.databinding.FragmentFriendsSheetBinding;
 import io.pijun.george.event.LocationSharingGranted;
 import io.pijun.george.event.LocationSharingRevoked;
 import io.pijun.george.models.FriendLocation;
@@ -32,27 +34,41 @@ public class FriendsSheetFragment extends Fragment implements FriendItemsAdapter
 
     private AvatarsAdapter mAvatarsAdapter = new AvatarsAdapter();
     private FriendItemsAdapter mFriendItemsAdapter = new FriendItemsAdapter();
+    private BottomSheetBehavior mBehavior;
+    private FragmentFriendsSheetBinding mBinding;
+    private int mTenDips;
+    private int mTwentyFourDips;
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
         mFriendItemsAdapter.setListener(this);
+        mTenDips = Utils.dpsToPix(getContext(), 10);
+        mTwentyFourDips = Utils.dpsToPix(getContext(), 24);
     }
 
     @Nullable
     @Override
     public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
-        View root = inflater.inflate(R.layout.fragment_friends_sheet, container, false);
-        RecyclerView avatarsView = (RecyclerView) root.findViewById(R.id.avatars);
+        mBinding = DataBindingUtil.inflate(inflater, R.layout.fragment_friends_sheet, container, false);
         LinearLayoutManager llm = new LinearLayoutManager(getContext(), LinearLayoutManager.HORIZONTAL, false);
-        avatarsView.setLayoutManager(llm);
-        avatarsView.setAdapter(mAvatarsAdapter);
+        mBinding.avatars.setLayoutManager(llm);
+        mBinding.avatars.setAdapter(mAvatarsAdapter);
 
-        RecyclerView friendsList = (RecyclerView) root.findViewById(R.id.friend_items);
-        friendsList.setAdapter(mFriendItemsAdapter);
+        mBinding.friendItems.setAdapter(mFriendItemsAdapter);
 
-        return root;
+        mBinding.toggle.setOnClickListener(v -> toggleFriendsSheet());
+
+        return mBinding.getRoot();
+    }
+
+    @Override
+    public void onDestroyView() {
+        mBinding = null;
+        mBehavior = null;
+
+        super.onDestroyView();
     }
 
     @Subscribe
@@ -61,12 +77,13 @@ public class FriendsSheetFragment extends Fragment implements FriendItemsAdapter
     }
 
     @Subscribe
+    @UiThread
     public void onLocationSharingGranted(LocationSharingGranted grant) {
         App.runInBackground(() -> {
             FriendRecord friend = DB.get(getContext()).getFriendByUserId(grant.userId);
             if (friend != null) {
                 mAvatarsAdapter.addFriend(friend);
-                mFriendItemsAdapter.updateFriend(friend);
+                App.runOnUiThread(() -> mFriendItemsAdapter.updateFriend(friend));
             }
         });
     }
@@ -103,6 +120,9 @@ public class FriendsSheetFragment extends Fragment implements FriendItemsAdapter
     public void onStart() {
         super.onStart();
 
+        mBehavior = BottomSheetBehavior.from(mBinding.getRoot());
+        mBehavior.setBottomSheetCallback(mBottomSheetCallback);
+
         App.registerOnBus(this);
         final DB db = DB.get(getContext());
         App.runInBackground(() -> {
@@ -112,7 +132,7 @@ public class FriendsSheetFragment extends Fragment implements FriendItemsAdapter
             for (FriendRecord record : friends) {
                 FriendLocation loc = db.getFriendLocation(record.id);
                 if (loc != null) {
-                    mFriendItemsAdapter.setFriendLocation(getContext(), loc);
+                    App.runOnUiThread(() -> mFriendItemsAdapter.setFriendLocation(getContext(), loc));
                 }
             }
         });
@@ -125,6 +145,7 @@ public class FriendsSheetFragment extends Fragment implements FriendItemsAdapter
     @Override
     public void onStop() {
         App.unregisterFromBus(this);
+        mAvatarsAdapter.setListener(null);
 
         super.onStop();
     }
@@ -194,4 +215,53 @@ public class FriendsSheetFragment extends Fragment implements FriendItemsAdapter
             FirebaseCrash.report(new Exception("The message was null!"));
         }
     }
+
+    private void toggleFriendsSheet() {
+        if (mBehavior == null) {
+            L.w("How did toggleFriendsSheet get called when the behavior was null?");
+            return;
+        }
+
+        int state = mBehavior.getState();
+        if (state == BottomSheetBehavior.STATE_COLLAPSED) {
+            mBehavior.setState(BottomSheetBehavior.STATE_EXPANDED);
+        } else if (state == BottomSheetBehavior.STATE_EXPANDED) {
+            mBehavior.setState(BottomSheetBehavior.STATE_COLLAPSED);
+        }
+    }
+
+    private  BottomSheetBehavior.BottomSheetCallback mBottomSheetCallback = new BottomSheetBehavior.BottomSheetCallback() {
+        @Override
+        public void onStateChanged(@NonNull View bottomSheet, int newState) {}
+
+        @Override
+        @UiThread
+        public void onSlide(@NonNull View bottomSheet, float slideOffset) {
+//            L.i("BS.onSlide: " + slideOffset);
+            float height = mBinding.avatars.getHeight();
+            mBinding.avatars.setTranslationY(height*slideOffset*-3.0f);
+
+            float btnRot;
+            float btnTrY;
+            if (slideOffset >= 0.75) {
+                float progress = (slideOffset - 0.75f)*4.0f;
+                btnRot = 180.0f * progress;
+                btnTrY = progress * mTenDips;
+            } else {
+                btnRot = 0;
+                btnTrY = 0;
+            }
+            mBinding.toggle.setRotation(btnRot);
+            mBinding.toggle.setTranslationY(btnTrY);
+
+            // our goal is to line up the top of the title with the top of the toggle button's image
+            float maxTrY = mBinding.toggle.getTop(); // top right of the toggle button
+            maxTrY = maxTrY + mBinding.toggle.getHeight()/2.0f - mTwentyFourDips/2.0f;  // to calculate the top of the image on the button
+            maxTrY += mTenDips; // because at the end of the animation the toggle goes down 10dp
+            maxTrY -= mBinding.title.getTop();    // to calculate the actual difference
+//            float titleTrY = slideOffset * (mBinding.toggle.getY() + mBinding.toggle.getHeight()/2.0f - mBinding.title.getY() - mBinding.title.getHeight() - Utils.dpsToPix(getContext(), 24) + mTenDips);
+//            L.i("titleTrY: " + titleTrY);
+            mBinding.title.setTranslationY(maxTrY * slideOffset);
+        }
+    };
 }

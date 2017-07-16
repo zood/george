@@ -1,13 +1,22 @@
 <?xml version="1.0" encoding="utf-8"?>
-<ImageButton
+<FrameLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
-    android:layout_width="56dp"
-    android:layout_height="56dp"
+    android:background="?attr/selectableItemBackground"
     android:paddingStart="8dp"
     android:paddingEnd="8dp"
-    android:paddingTop="12dp"
-    android:paddingBottom="12dp"
-    android:background="?attr/selectableItemBackground"
-    android:scaleType="centerCrop"
-    tools:src="@drawable/george_clooney" />
+    android:paddingTop="16dp"
+    android:paddingBottom="16dp"
+    android:layout_width="56dp"
+    android:layout_height="72dp">
+    <ImageView
+        android:id="@+id/avatar_image"
+        android:elevation="12dp"
+        android:padding="3dp"
+        android:background="@drawable/avatar_border"
+        android:scaleType="fitCenter"
+        android:layout_width="40dp"
+        android:layout_height="40dp"
+        tools:src="@drawable/george_clooney" />
+</FrameLayout>
+
