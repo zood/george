@@ -1,6 +1,7 @@
 package io.pijun.george;
 
 import android.animation.ValueAnimator;
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
@@ -219,10 +220,10 @@ public class WelcomeActivity extends AppCompatActivity implements WelcomeLayout.
         });
     }
 
+    @SuppressLint("WrongThread")
     @AnyThread
     void setLoginError(@IdRes final int textInputLayout, @StringRes final int msg) {
         if (Looper.myLooper() == Looper.getMainLooper()) {
-            //noinspection WrongThread
             _setLoginError(textInputLayout, msg);
         } else {
             App.runOnUiThread(new UiRunnable() {
@@ -267,7 +268,11 @@ public class WelcomeActivity extends AppCompatActivity implements WelcomeLayout.
             return;
         }
         AuthenticationChallenge authChallenge = startChallengeResp.body();
-
+        if (authChallenge == null) {
+            setBusy(false);
+            Utils.showStringAlert(this, null, "Server returned a malformed authentication challenge. Try again later, and contact support if the problem persists.");
+            return;
+        }
         final byte[] passwordHash = Sodium.createHashFromPassword(
                 Sodium.getSymmetricKeyLength(),
                 password.getBytes(),
@@ -306,7 +311,13 @@ public class WelcomeActivity extends AppCompatActivity implements WelcomeLayout.
             Utils.showAlert(this, 0, R.string.server_key_retrieval_unknown_error_msg);
             return;
         }
-        byte[] pubKey = pubKeyResp.body().publicKey;
+        ServerPublicKeyResponse srvrPubKeyResp = pubKeyResp.body();
+        if (srvrPubKeyResp == null) {
+            setBusy(false);
+            Utils.showAlert(this, 0, R.string.server_key_retrieval_bad_response_msg);
+            return;
+        }
+        byte[] pubKey = srvrPubKeyResp.publicKey;
 
         FinishedAuthenticationChallenge finishedChallenge = new FinishedAuthenticationChallenge();
         finishedChallenge.challenge = Sodium.publicKeyEncrypt(authChallenge.challenge, pubKey, secretKey);
@@ -334,6 +345,11 @@ public class WelcomeActivity extends AppCompatActivity implements WelcomeLayout.
         }
 
         final LoginResponse loginResponse = completeChallengeResp.body();
+        if (loginResponse == null) {
+            setBusy(false);
+            Utils.showStringAlert(this, null, "The server returned a malformed login response. Try again later, and if it continues, contact support.");
+            return;
+        }
         byte[] symmetricKey = Sodium.symmetricKeyDecrypt(loginResponse.wrappedSymmetricKey,
                 loginResponse.wrappedSymmetricKeyNonce,
                 passwordHash);
@@ -363,6 +379,11 @@ public class WelcomeActivity extends AppCompatActivity implements WelcomeLayout.
             // If we get here, that means no backup was found. It's weird, but not strictly wrong.
         } else {
             EncryptedData encSnapshot = dbResponse.body();
+            if (encSnapshot == null) {
+                setBusy(false);
+                Utils.showStringAlert(this, null, "The server returned a malformed response when retrieving your profile. Try again later, and if it still fails, contact support.");
+                return;
+            }
             byte[] jsonDb = Sodium.symmetricKeyDecrypt(encSnapshot.cipherText, encSnapshot.nonce, symmetricKey);
             if (jsonDb == null) {
                 setBusy(false);
@@ -478,6 +499,10 @@ public class WelcomeActivity extends AppCompatActivity implements WelcomeLayout.
             setBusy(false);
             if (response.isSuccessful()) {
                 CreateUserResponse resp = response.body();
+                if (resp == null) {
+                    Utils.showStringAlert(this, null, "The server returned a malformed response when creating your account. Try again later or contact support if the problem continues.");
+                    return;
+                }
                 Prefs prefs = Prefs.get(this);
                 prefs.setUserId(resp.id);
                 prefs.setUsername(user.username);
@@ -568,10 +593,10 @@ public class WelcomeActivity extends AppCompatActivity implements WelcomeLayout.
         imm.hideSoftInputFromWindow(findViewById(R.id.root).getWindowToken(), 0);
     }
 
+    @SuppressLint("WrongThread")
     @AnyThread
     private void setBusy(final boolean b) {
         if (Looper.myLooper() == Looper.getMainLooper()) {
-            //noinspection WrongThread
             _setBusy(b);
         } else {
             App.runOnUiThread(new UiRunnable() {

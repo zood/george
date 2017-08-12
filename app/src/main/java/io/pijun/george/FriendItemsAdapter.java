@@ -114,6 +114,8 @@ class FriendItemsAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
             }
 
             // -- SHARE SWITCH + LABEL --
+            // remove the listener while we're setting the checked state
+            h.shareSwitch.setOnCheckedChangeListener(null);
             if (friend.sendingBoxId != null) {
                 h.shareSwitch.setChecked(true);
                 h.shareSwitchLabel.setText(R.string.sharing);
@@ -121,7 +123,14 @@ class FriendItemsAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
                 h.shareSwitch.setChecked(false);
                 h.shareSwitchLabel.setText(R.string.not_sharing);
             }
-            h.shareSwitch.setChecked(friend.sendingBoxId != null);
+            h.shareSwitch.setOnCheckedChangeListener((buttonView, isChecked) -> {
+                onShareSwitchCheckedChange(holder.getAdapterPosition(), isChecked);
+                if (isChecked) {
+                    h.shareSwitchLabel.setText(R.string.sharing);
+                } else {
+                    h.shareSwitchLabel.setText(R.string.not_sharing);
+                }
+            });
             h.itemView.requestLayout();
         }
     }
@@ -140,14 +149,6 @@ class FriendItemsAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
         holder.avatar.setOutlineProvider(vop);
         holder.avatar.setClipToOutline(true);
 
-        holder.shareSwitch.setOnCheckedChangeListener((buttonView, isChecked) -> {
-            onShareSwitchCheckedChange(holder.getAdapterPosition(), isChecked);
-            if (isChecked) {
-                holder.shareSwitchLabel.setText(R.string.sharing);
-            } else {
-                holder.shareSwitchLabel.setText(R.string.not_sharing);
-            }
-        });
         return holder;
     }
 

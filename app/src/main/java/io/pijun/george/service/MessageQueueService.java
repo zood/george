@@ -76,7 +76,18 @@ public class MessageQueueService extends IntentService {
                     // just remove the invalid message
                     queue.poll();
                     break;
+                case MessageUtils.ERROR_DECRYPTION_FAILED:
+                    // somebody must have a corrupt keypair
+                case MessageUtils.ERROR_NOT_LOGGED_IN:
+                    // if we're not logged in, toss the message
+                case MessageUtils.ERROR_DATABASE_EXCEPTION:
+                case MessageUtils.ERROR_DATABASE_INCONSISTENCY:
+                case MessageUtils.ERROR_ENCRYPTION_FAILED:
+                case MessageUtils.ERROR_NOT_A_FRIEND:
+                case MessageUtils.ERROR_UNKNOWN_SENDER:
+                case MessageUtils.ERROR_UNKNOWN:
                 default:
+                    queue.poll();
                     L.w("error processing message: " + result);
                     break;
             }

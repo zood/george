@@ -70,4 +70,5 @@
     <string name="select">Select</string>
     <string name="avatar_preview">Avatar preview</string>
     <string name="friends">Friends</string>
+    <string name="server_key_retrieval_bad_response_msg">The server sent us a malformed response while trying to retrieve its public key. Try again later, and if the problem persists, please contact support.</string>
 </resources>
