@@ -45,7 +45,7 @@ public class FriendsSheetFragment extends Fragment implements FriendItemsAdapter
 
         mFriendItemsAdapter.setListener(this);
         mTenDips = Utils.dpsToPix(getContext(), 10);
-        mTwentyFourDips = Utils.dpsToPix(getContext(), 24);
+        mTwentyFourDips = Utils.dpsToPix(getContext(), 36);
     }
 
     @Nullable
@@ -237,7 +237,6 @@ public class FriendsSheetFragment extends Fragment implements FriendItemsAdapter
         @Override
         @UiThread
         public void onSlide(@NonNull View bottomSheet, float slideOffset) {
-//            L.i("BS.onSlide: " + slideOffset);
             float height = mBinding.avatars.getHeight();
             mBinding.avatars.setTranslationY(height*slideOffset*-3.0f);
 
@@ -254,13 +253,10 @@ public class FriendsSheetFragment extends Fragment implements FriendItemsAdapter
             mBinding.toggle.setRotation(btnRot);
             mBinding.toggle.setTranslationY(btnTrY);
 
-            // our goal is to line up the top of the title with the top of the toggle button's image
             float maxTrY = mBinding.toggle.getTop(); // top right of the toggle button
-            maxTrY = maxTrY + mBinding.toggle.getHeight()/2.0f - mTwentyFourDips/2.0f;  // to calculate the top of the image on the button
+            maxTrY += mBinding.toggle.getHeight()/2.0f;  // to calculate the center of the toggle
             maxTrY += mTenDips; // because at the end of the animation the toggle goes down 10dp
-            maxTrY -= mBinding.title.getTop();    // to calculate the actual difference
-//            float titleTrY = slideOffset * (mBinding.toggle.getY() + mBinding.toggle.getHeight()/2.0f - mBinding.title.getY() - mBinding.title.getHeight() - Utils.dpsToPix(getContext(), 24) + mTenDips);
-//            L.i("titleTrY: " + titleTrY);
+            maxTrY -= mBinding.title.getTop() + mBinding.title.getHeight()/2.0f;    // to calculate the actual difference with the center of the title
             mBinding.title.setTranslationY(maxTrY * slideOffset);
         }
     };

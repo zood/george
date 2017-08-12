@@ -14,17 +14,17 @@ android {
         multiDexEnabled true
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
         resConfigs "en"
-        packagingOptions {
-            exclude "lib/mips/*"
-            exclude "lib/x86/*"
-            exclude "lib/x86_64/*"
-            exclude "lib/armeabi/*"
-        }
+//        packagingOptions {
+//            exclude "lib/mips/*"
+//            exclude "lib/x86/*"
+//            exclude "lib/x86_64/*"
+//            exclude "lib/armeabi/*"
+//        }
         externalNativeBuild {
             cmake {
                 cppFlags ""
-//                abiFilters 'x86', 'x86_64', 'armeabi', 'armeabi-v7a', 'arm64-v8a'
-                abiFilters 'armeabi-v7a', 'arm64-v8a'
+                abiFilters 'x86', 'x86_64', 'armeabi', 'armeabi-v7a', 'arm64-v8a'
+//                abiFilters 'armeabi-v7a', 'arm64-v8a'
             }
         }
     }
@@ -60,9 +60,9 @@ dependencies {
     compile 'com.android.support:design:25.4.0'
     compile 'com.android.support:percent:25.4.0'
 
-    compile 'com.google.android.gms:play-services-location:11.0.2'
-    compile 'com.google.firebase:firebase-messaging:11.0.2'
-    compile 'com.google.firebase:firebase-crash:11.0.2'
+    compile 'com.google.android.gms:play-services-location:11.0.4'
+    compile 'com.google.firebase:firebase-messaging:11.0.4'
+    compile 'com.google.firebase:firebase-crash:11.0.4'
 
     compile 'com.android.support.constraint:constraint-layout:1.1.0-beta1'
 
@@ -74,12 +74,12 @@ dependencies {
 
     compile 'com.neovisionaries:nv-websocket-client:1.30'
 
-    compile ('com.mapbox.mapboxsdk:mapbox-android-sdk:4.2.2@aar') {
+    compile ('com.mapbox.mapboxsdk:mapbox-android-sdk:5.1.2@aar') {
         transitive=true
     }
 
     testCompile 'junit:junit:4.12'
-    compile 'com.android.support.test.espresso:espresso-core:2.2.2'
+    androidTestCompile 'com.android.support.test.espresso:espresso-core:2.2.2'
 }
 
 apply plugin: 'com.google.gms.google-services'

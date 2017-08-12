@@ -1012,7 +1012,6 @@ public class WelcomeLayout extends ViewGroup implements View.OnFocusChangeListen
         return new LayoutParams(getContext(), attrs);
     }
 
-    @SuppressWarnings("WeakerAccess")
     public static class LayoutParams extends PercentRelativeLayout.LayoutParams {
 
         public LayoutParams(Context c, AttributeSet attrs) {

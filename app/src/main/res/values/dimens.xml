@@ -4,9 +4,12 @@
     <dimen name="activity_vertical_margin">16dp</dimen>
     <dimen name="eight">8dp</dimen>
     <dimen name="sixteen">16dp</dimen>
+    <dimen name="twentyFour">24dp</dimen>
+    <dimen name="twentyEight">28dp</dimen>
     <dimen name="thirtyTwo">32dp</dimen>
     <dimen name="forty">40dp</dimen>
+    <dimen name="fortyTwo">42dp</dimen>
+    <dimen name="fortyFive">45dp</dimen>
     <dimen name="fortyEight">48dp</dimen>
     <dimen name="ninetySix">96dp</dimen>
-    <dimen name="twentyEight">28dp</dimen>
 </resources>

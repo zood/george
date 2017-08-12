@@ -166,6 +166,7 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
         App.isInForeground = true;
         checkForLocationPermission();
         App.registerOnBus(this);
+        mMapView.onStart();
 
         App.runInBackground(() -> {
             Prefs prefs = Prefs.get(MapActivity.this);
@@ -242,15 +243,17 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
     @Override
     @UiThread
     protected void onPause() {
-        mMapView.onPause();
-
         super.onPause();
+
+        mMapView.onPause();
     }
 
     @Override
     @UiThread
     protected void onStop() {
         super.onStop();
+
+        mMapView.onStop();
 
         if (mMapboxMap != null) {
             CameraPosition pos = mMapboxMap.getCameraPosition();
@@ -282,14 +285,13 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
     @Override
     @UiThread
     protected void onDestroy() {
+        mMarkerTracker.clear();
+
+        super.onDestroy();
         if (mMapView != null) {
             mMapView.onDestroy();
             mMapView = null;
         }
-
-        mMarkerTracker.clear();
-
-        super.onDestroy();
     }
 
     @Override
@@ -338,6 +340,7 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
             mMapboxMap.moveCamera(CameraUpdateFactory.newCameraPosition(pos));
         }
         mMapboxMap.setOnMarkerClickListener(this);
+        mMapboxMap.getUiSettings().setCompassEnabled(false);
         mMapboxMap.setOnScrollListener(() -> {
             mCameraTracksMyLocation = false;
             findViewById(R.id.my_location_fab).setSelected(false);
@@ -375,9 +378,9 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
             return;
         }
 
-        int sixteen = getResources().getDimensionPixelSize(R.dimen.sixteen);
-        Bitmap bitmap = Bitmap.createBitmap(sixteen, sixteen, Bitmap.Config.ARGB_8888);
-        MyLocationView.draw(bitmap);
+//        int fortyFive = getResources().getDimensionPixelSize(R.dimen.fortyFive);
+        Bitmap bitmap = MyLocationView.getBitmap(this);// Bitmap.createBitmap(fortyFive, fortyFive, Bitmap.Config.ARGB_8888);
+//        MyLocationView.draw(this, bitmap);
 
         Icon descriptor = IconFactory.getInstance(this).fromBitmap(bitmap);
         MarkerViewOptions opts = new MarkerViewOptions()

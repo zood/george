@@ -12,9 +12,8 @@
     <com.mapbox.mapboxsdk.maps.MapView
         android:id="@+id/map"
         android:layout_width="0dp"
-        mapbox:style_url="mapbox://styles/arashpayan/ciyy3rvkj001e2sll2lvg36so"
+        mapbox:mapbox_styleUrl="mapbox://styles/arashpayan/ciyy3rvkj001e2sll2lvg36so"
         tools:background="@android:color/holo_green_light"
-        app:compass_enabled="false"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintLeft_toLeftOf="parent"
         app:layout_constraintRight_toRightOf="parent"
@@ -46,5 +45,4 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         tools:layout_editor_absoluteX="280dp" />
-
 </android.support.constraint.ConstraintLayout>

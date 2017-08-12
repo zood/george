@@ -103,7 +103,11 @@ public class OscarTasksService extends IntentService {
                 }
             }
         } finally {
-            wakeLock.release();
+            try {
+                // There's a chance that this wakelock may timeout right before we release it
+                // If that happens, calling release will throw an Exception.
+                wakeLock.release();
+            } catch (Exception ignore) {}
         }
     }
 

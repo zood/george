@@ -10,6 +10,7 @@ import android.database.sqlite.SQLiteCursorDriver;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.database.sqlite.SQLiteQuery;
+import android.support.annotation.CheckResult;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.annotation.Size;
@@ -247,12 +248,14 @@ public class DB {
 
     @WorkerThread
     @Nullable
+    @CheckResult
     public FriendRecord getFriendByReceivingBoxId(@NonNull @Size(Constants.DROP_BOX_ID_LENGTH) final byte[] boxId) {
         return getFriendMatchingBlob(boxId, FRIENDS_COL_RECEIVING_BOX_ID);
     }
 
     @WorkerThread
     @Nullable
+    @CheckResult
     public FriendRecord getFriendByUserId(long userId) {
         FriendRecord friend = null;
         SQLiteDatabase db = mDbHelper.getReadableDatabase();
@@ -269,6 +272,7 @@ public class DB {
     }
 
     @Nullable
+    @CheckResult
     public FriendLocation getFriendLocation(long friendRecordId) {
         FriendLocation fl = null;
         SQLiteDatabase db = mDbHelper.getReadableDatabase();
@@ -306,6 +310,7 @@ public class DB {
 
     @WorkerThread
     @Nullable
+    @CheckResult
     private FriendRecord getFriendMatchingBlob(@NonNull final byte[] blob, @NonNull String matchingColumn) {
         StringBuilder sql = new StringBuilder("SELECT ");
         String delim = "";
@@ -336,6 +341,7 @@ public class DB {
 
     @WorkerThread
     @NonNull
+    @CheckResult
     public ArrayList<FriendRecord> getFriends() {
         ArrayList<FriendRecord> records = new ArrayList<>();
         SQLiteDatabase db = mDbHelper.getReadableDatabase();
@@ -352,6 +358,7 @@ public class DB {
 
     @WorkerThread
     @NonNull
+    @CheckResult
     public ArrayList<FriendRecord> getFriendsToShareWith() {
         ArrayList<FriendRecord> records = new ArrayList<>();
         SQLiteDatabase db = mDbHelper.getReadableDatabase();
@@ -369,6 +376,7 @@ public class DB {
 
     @WorkerThread
     @Nullable
+    @CheckResult
     public LimitedShare getLimitedShare() {
         SQLiteDatabase db = mDbHelper.getReadableDatabase();
         try (Cursor c = db.query(LIMITED_SHARES_TABLE, LIMITED_SHARES_COLUMNS, null, null, null, null, null)) {
@@ -381,12 +389,14 @@ public class DB {
     }
 
     @WorkerThread
+    @CheckResult
     public int getSchemaVersion() {
         return mDbHelper.getReadableDatabase().getVersion();
     }
 
     @WorkerThread
     @NonNull
+    @CheckResult
     public Snapshot getSnapshot() {
         Snapshot snapshot = new Snapshot();
         SQLiteDatabase db = mDbHelper.getReadableDatabase();
@@ -432,6 +442,7 @@ public class DB {
 
     @WorkerThread
     @Nullable
+    @CheckResult
     public UserRecord getUser(@NonNull final byte[] id) {
         StringBuilder sql = new StringBuilder("SELECT ");
         String delim = "";
@@ -457,6 +468,7 @@ public class DB {
 
     @WorkerThread
     @Nullable
+    @CheckResult
     public UserRecord getUser(@NonNull String username) {
         UserRecord ur = null;
         SQLiteDatabase db = mDbHelper.getReadableDatabase();
@@ -473,6 +485,7 @@ public class DB {
 
     @WorkerThread
     @Nullable
+    @CheckResult
     public UserRecord getUserById(long id) {
         UserRecord ur = null;
         SQLiteDatabase db = mDbHelper.getReadableDatabase();
@@ -489,6 +502,7 @@ public class DB {
 
     @WorkerThread
     @NonNull
+    @CheckResult
     private static FriendRecord readFriend(Cursor c) {
         FriendRecord f = new FriendRecord();
         f.id = c.getLong(c.getColumnIndexOrThrow(FRIENDS_COL_ID));
@@ -501,6 +515,7 @@ public class DB {
 
     @WorkerThread
     @NonNull
+    @CheckResult
     private static LimitedShare readLimitedShare(Cursor c) {
         LimitedShare ls = new LimitedShare();
         ls.id = c.getLong(c.getColumnIndexOrThrow(LIMITED_SHARES_COL_ID));
@@ -512,6 +527,7 @@ public class DB {
 
     @WorkerThread
     @NonNull
+    @CheckResult
     private static UserRecord readUser(Cursor c) {
         UserRecord ur = new UserRecord();
         ur.id = c.getLong(c.getColumnIndexOrThrow(USERS_COL_ID));

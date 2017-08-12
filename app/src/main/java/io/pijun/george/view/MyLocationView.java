@@ -7,34 +7,48 @@ import android.graphics.Color;
 import android.graphics.Paint;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
+import android.support.v4.content.ContextCompat;
 import android.util.AttributeSet;
 import android.view.View;
 
+import io.pijun.george.R;
+import io.pijun.george.Utils;
+
 public class MyLocationView extends View {
 
-    public static void draw(Bitmap bitmap) {
-        Paint fill = new Paint();
-        fill.setStyle(Paint.Style.FILL);
-        fill.setColor(Color.rgb(65, 137, 238));
-        fill.setAntiAlias(true);
+    public static Bitmap getBitmap(Context ctx) {
+        int fortyFive = Utils.dpsToPix(ctx, 45);
+        Bitmap bitmap = Bitmap.createBitmap(fortyFive, fortyFive, Bitmap.Config.ARGB_8888);
+        Canvas canvas = new Canvas(bitmap);
+        float cx = fortyFive/2.0f;
+        float cy = fortyFive/2.0f;
+        int three = Utils.dpsToPix(ctx, 3);
 
-        Paint border = new Paint();
-        border.setStyle(Paint.Style.STROKE);
-        border.setColor(Color.WHITE);
-        border.setAntiAlias(true);
+        Paint blue = new Paint();
+        blue.setStyle(Paint.Style.FILL);
+        blue.setColor(0x8032b6f4);
+        blue.setAntiAlias(true);
+        blue.setShadowLayer(three, 0, 1, 0x33000000);
+        float blueRadius = Utils.dpsToPix(ctx, 42)/2.0f;
+        canvas.drawCircle(cx, cy, blueRadius, blue);
 
-        draw(new Canvas(bitmap), fill, border);
+        Paint white = new Paint();
+        white.setStyle(Paint.Style.FILL);
+        white.setColor(Color.WHITE);
+        white.setAntiAlias(true);
+        white.setShadowLayer(3, 0, 1, 0x33000000);
+        float whiteRadius = Utils.dpsToPix(ctx, 24)/2.0f;
+        canvas.drawCircle(cx, cy, whiteRadius, white);
+
+        Paint green = new Paint();
+        green.setStyle(Paint.Style.FILL);
+        green.setColor(ContextCompat.getColor(ctx, R.color.colorPrimary));
+        green.setAntiAlias(true);
+        float greenRadius = Utils.dpsToPix(ctx, 10)/2.0f;
+        canvas.drawCircle(cx, cy, greenRadius, green);
+
+        return bitmap;
     }
-
-    public static void draw(@NonNull Canvas canvas, Paint fill, Paint border) {
-        int width = canvas.getWidth();
-        int height = canvas.getHeight();
-        float radius = (float)Math.min(width, height) / 2.0f;
-        border.setStrokeWidth(radius/8.0f);
-        canvas.drawCircle(width/2.0f, height/2.0f, radius, fill);
-        canvas.drawCircle(width/2.0f, height/2.0f, radius-radius/16.0f, border);
-    }
-
     public MyLocationView(Context context) {
         super(context);
     }
@@ -51,20 +65,7 @@ public class MyLocationView extends View {
         super(context, attrs, defStyleAttr, defStyleRes);
     }
 
-    private Paint mFill;
-    private Paint mBorder;
-
-    private void init() {
-        mFill = new Paint();
-        mFill.setColor(Color.rgb(65, 137, 238));
-
-        mBorder = new Paint();
-        mBorder.setStyle(Paint.Style.STROKE);
-        mBorder.setColor(Color.WHITE);
-    }
-
     @Override
     protected void onDraw(Canvas canvas) {
-        MyLocationView.draw(canvas, mFill, mBorder);
     }
 }

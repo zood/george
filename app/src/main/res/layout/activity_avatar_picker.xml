@@ -24,6 +24,11 @@
         android:layout_width="64dp"
         android:layout_height="64dp"
         android:contentDescription="@string/avatar_preview" />
+    <io.pijun.george.view.MeDotView
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        android:layout_width="64dp"
+        android:layout_height="64dp" />
     <android.support.v7.widget.RecyclerView
         android:id="@+id/avatar_list"
         android:layout_margin="16dp"
