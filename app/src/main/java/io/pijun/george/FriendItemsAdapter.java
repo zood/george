@@ -9,6 +9,7 @@ import android.graphics.Typeface;
 import android.os.Looper;
 import android.support.annotation.AnyThread;
 import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 import android.support.annotation.UiThread;
 import android.support.v4.graphics.drawable.RoundedBitmapDrawable;
 import android.support.v4.graphics.drawable.RoundedBitmapDrawableFactory;
@@ -78,9 +79,6 @@ class FriendItemsAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
 
             // -- LOCATION AND UPDATE TIME --
             if (friend.receivingBoxId == null) {
-                if (friend.id == 1) {
-                    L.i("friends receivingboxid is null");
-                }
                 h.location.setText("");
                 h.updateTime.setText(R.string.not_sharing_location);
             } else {
@@ -91,7 +89,12 @@ class FriendItemsAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
                 } else {
                     String area = AreaCache.getArea(loc.latitude, loc.longitude);
                     if (area == null) {
-                        AreaCache.fetchArea(h.location.getContext(), loc.latitude, loc.longitude, area1 -> reloadFriend(friend.id));
+                        AreaCache.fetchArea(h.location.getContext(), loc.latitude, loc.longitude, new AreaCache.ReverseGeocodingListener() {
+                            @Override
+                            public void onReverseGeocodingCompleted(@Nullable String area) {
+                                reloadFriend(friend.id);
+                            }
+                        });
                     }
                     if (area != null) {
                         h.location.setText(area);
@@ -148,6 +151,13 @@ class FriendItemsAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
         };
         holder.avatar.setOutlineProvider(vop);
         holder.avatar.setClipToOutline(true);
+        holder.itemView.setOnClickListener(v -> {
+            if (mListener == null) {
+                return;
+            }
+            FriendRecord friend = mFriends.get(holder.getAdapterPosition());
+            mListener.onShowFriendInfoAction(friend);
+        });
 
         return holder;
     }
@@ -161,11 +171,23 @@ class FriendItemsAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
     }
 
     @UiThread
-    private void reloadFriend(long friendId) {
+    void reloadFriend(long friendId) {
         for (int i=0; i<mFriends.size(); i++) {
             FriendRecord friend = mFriends.get(i);
             if (friend.id == friendId) {
                 notifyItemChanged(i);
+                break;
+            }
+        }
+    }
+
+    @UiThread
+    void removeFriend(long friendId) {
+        for (int i=0; i<mFriends.size(); i++) {
+            FriendRecord friend = mFriends.get(i);
+            if (friend.id == friendId) {
+                mFriends.remove(i);
+                notifyItemRemoved(i);
                 break;
             }
         }
@@ -188,7 +210,7 @@ class FriendItemsAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
     }
 
     @UiThread
-    void updateFriend(FriendRecord friend) {
+    void updateFriend(@NonNull FriendRecord friend) {
         // check if we're replacing or adding the friend
         int idx = mFriends.indexOf(friend);
         if (idx == -1) {
@@ -223,6 +245,7 @@ class FriendItemsAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
     interface FriendItemsListener {
         @UiThread
         void onSharingStateChanged(@NonNull FriendRecord friend, boolean shouldShare);
+        void onShowFriendInfoAction(@NonNull FriendRecord friend);
     }
 
     private static class FriendItemViewHolder extends RecyclerView.ViewHolder {

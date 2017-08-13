@@ -1,5 +1,6 @@
 package io.pijun.george;
 
+import android.content.DialogInterface;
 import android.databinding.DataBindingUtil;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
@@ -8,11 +9,14 @@ import android.support.annotation.UiThread;
 import android.support.annotation.WorkerThread;
 import android.support.design.widget.BottomSheetBehavior;
 import android.support.v4.app.Fragment;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.widget.LinearLayoutManager;
 import android.text.TextUtils;
+import android.util.Base64;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Toast;
 
 import com.google.firebase.crash.FirebaseCrash;
 import com.squareup.otto.Subscribe;
@@ -25,6 +29,7 @@ import io.pijun.george.api.UserComm;
 import io.pijun.george.crypto.EncryptedData;
 import io.pijun.george.crypto.KeyPair;
 import io.pijun.george.databinding.FragmentFriendsSheetBinding;
+import io.pijun.george.event.FriendRemoved;
 import io.pijun.george.event.LocationSharingGranted;
 import io.pijun.george.event.LocationSharingRevoked;
 import io.pijun.george.models.FriendLocation;
@@ -105,6 +110,28 @@ public class FriendsSheetFragment extends Fragment implements FriendItemsAdapter
         });
     }
 
+    @UiThread
+    private void promptToRemoveFriend(@NonNull final FriendRecord friend) {
+        AlertDialog.Builder bldr = new AlertDialog.Builder(getContext(), R.style.AlertDialogTheme);
+        String msg = getString(R.string.remove_friend_prompt_msg, friend.user.username);
+        bldr.setMessage(msg);
+        bldr.setCancelable(true);
+        bldr.setPositiveButton(R.string.remove_friend, new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                removeFriend(friend);
+            }
+        });
+        bldr.setNeutralButton(R.string.never_mind, null);
+        bldr.show();
+    }
+
+    @Subscribe
+    public void onFriendRemoved(FriendRemoved evt) {
+        mFriendItemsAdapter.removeFriend(evt.friendId);
+        mAvatarsAdapter.removeFriend(evt.friendId);
+    }
+
     @Override
     public void onSharingStateChanged(@NonNull FriendRecord friend, boolean shouldShare) {
         App.runInBackground(() -> {
@@ -114,6 +141,22 @@ public class FriendsSheetFragment extends Fragment implements FriendItemsAdapter
                 stopSharingWith(friend);
             }
         });
+    }
+
+    @Override
+    public void onShowFriendInfoAction(@NonNull FriendRecord friend) {
+        AlertDialog.Builder bldr = new AlertDialog.Builder(getContext(), R.style.AlertDialogTheme);
+        bldr.setTitle(friend.user.username);
+        bldr.setMessage("Key:\n" + Hex.toHexString(friend.user.publicKey));
+        bldr.setPositiveButton(R.string.ok, null);
+        bldr.setNegativeButton(R.string.remove_friend, new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                promptToRemoveFriend(friend);
+            }
+        });
+        bldr.setCancelable(true);
+        bldr.show();
     }
 
     @Override
@@ -151,7 +194,33 @@ public class FriendsSheetFragment extends Fragment implements FriendItemsAdapter
     }
 
     @WorkerThread
-    private void startSharingWith(FriendRecord friend) {
+    private void removeFriend(@NonNull FriendRecord friend) {
+        Prefs prefs = Prefs.get(getContext());
+        String accessToken = prefs.getAccessToken();
+        if (TextUtils.isEmpty(accessToken)) {
+            Utils.showStringAlert(getContext(), null, "How are you not logged in right now? (missing access token)");
+            return;
+        }
+        KeyPair keyPair = prefs.getKeyPair();
+        if (keyPair == null) {
+            Utils.showStringAlert(getContext(), null, "How are you not logged in right now? (missing key pair)");
+            return;
+        }
+
+        try {
+            DB.get(getContext()).removeFriend(friend);
+        } catch (DB.DBException ex) {
+            L.w("Error removing friend", ex);
+            FirebaseCrash.report(ex);
+            Utils.showStringAlert(getContext(), null, "There was a problem removing this friend. Try again, and if it still fails, contact support.");
+            return;
+        }
+
+        App.postOnBus(new FriendRemoved(friend.id, friend.user.id, friend.user.username));
+    }
+
+    @WorkerThread
+    private void startSharingWith(@NonNull FriendRecord friend) {
         Prefs prefs = Prefs.get(getContext());
         String accessToken = prefs.getAccessToken();
         if (TextUtils.isEmpty(accessToken)) {
@@ -180,12 +249,31 @@ public class FriendsSheetFragment extends Fragment implements FriendItemsAdapter
         try {
             db.startSharingWith(friend.user, sendingBoxId);
         } catch (DB.DBException ex) {
-            FirebaseCrash.report(ex);            // TODO: handle this. Toast or snackbar?
+            FirebaseCrash.report(ex);
+            App.runOnUiThread(new UiRunnable() {
+                @Override
+                public void run() {
+                    Toast.makeText(getContext(), R.string.toast_enable_sharing_error_msg, Toast.LENGTH_SHORT).show();
+                    mFriendItemsAdapter.reloadFriend(friend.id);
+                }
+            });
         }
+
+        FriendRecord updatedFriend = db.getFriendById(friend.id);
+        if (updatedFriend == null) {
+            L.w("Somebody deleted a friend while we were enabling sharing with them.");
+            return;
+        }
+        App.runOnUiThread(new UiRunnable() {
+            @Override
+            public void run() {
+                mFriendItemsAdapter.updateFriend(updatedFriend);
+            }
+        });
     }
 
     @WorkerThread
-    private void stopSharingWith(FriendRecord friend) {
+    private void stopSharingWith(@NonNull FriendRecord friend) {
         Prefs prefs = Prefs.get(getContext());
         String accessToken = prefs.getAccessToken();
         if (TextUtils.isEmpty(accessToken)) {
@@ -204,7 +292,13 @@ public class FriendsSheetFragment extends Fragment implements FriendItemsAdapter
             db.stopSharingWith(friend.user);
         } catch (DB.DBException ex) {
             FirebaseCrash.report(ex);
-            // TODO: handle this. Toast or snackbar?
+            App.runOnUiThread(new UiRunnable() {
+                @Override
+                public void run() {
+                    Toast.makeText(getContext(), R.string.toast_disable_sharing_error_msg, Toast.LENGTH_SHORT).show();
+                    mFriendItemsAdapter.reloadFriend(friend.id);
+                }
+            });
         }
 
         UserComm comm = UserComm.newLocationSharingRevocation();
@@ -214,6 +308,20 @@ public class FriendsSheetFragment extends Fragment implements FriendItemsAdapter
         } else {
             FirebaseCrash.report(new Exception("The message was null!"));
         }
+
+        // grab the updated friend record, and apply it on our adapter
+        FriendRecord updatedFriend = db.getFriendById(friend.id);
+        if (updatedFriend == null) {
+            // somebody deleted the friend while we were disabling sharing?
+            L.w("Somebody deleted a friend while we were disabling sharing with them");
+            return;
+        }
+        App.runOnUiThread(new UiRunnable() {
+            @Override
+            public void run() {
+                mFriendItemsAdapter.updateFriend(updatedFriend);
+            }
+        });
     }
 
     private void toggleFriendsSheet() {

@@ -69,15 +69,13 @@ public class MessageQueueService extends IntentService {
                     L.w("reschedulable message processing error");
                     rescheduleService();
                     break;
+                case MessageUtils.ERROR_DECRYPTION_FAILED:
+                    // somebody must have a corrupt keypair
                 case MessageUtils.ERROR_INVALID_SENDER_ID:
                 case MessageUtils.ERROR_MISSING_CIPHER_TEXT:
                 case MessageUtils.ERROR_MISSING_NONCE:
                 case MessageUtils.ERROR_INVALID_COMMUNICATION:
                     // just remove the invalid message
-                    queue.poll();
-                    break;
-                case MessageUtils.ERROR_DECRYPTION_FAILED:
-                    // somebody must have a corrupt keypair
                 case MessageUtils.ERROR_NOT_LOGGED_IN:
                     // if we're not logged in, toss the message
                 case MessageUtils.ERROR_DATABASE_EXCEPTION:

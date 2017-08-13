@@ -12,14 +12,12 @@ import com.google.firebase.crash.FirebaseCrash;
 import java.io.IOException;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
-import java.security.SecureRandom;
 
 import io.pijun.george.api.OscarAPI;
 import io.pijun.george.api.OscarClient;
 import io.pijun.george.api.OscarError;
 import io.pijun.george.api.User;
 import io.pijun.george.api.UserComm;
-import io.pijun.george.crypto.EncryptedData;
 import io.pijun.george.crypto.KeyPair;
 import io.pijun.george.event.LocationSharingGranted;
 import io.pijun.george.event.LocationSharingRevoked;
@@ -55,48 +53,6 @@ public class MessageUtils {
     public static final int ERROR_DECRYPTION_FAILED = 12;
     public static final int ERROR_DATABASE_INCONSISTENCY = 13;
     public static final int ERROR_ENCRYPTION_FAILED = 14;
-
-    @Error
-    public static int approveFriendRequest(@NonNull Context context, long userId) {
-        byte[] boxId = new byte[Constants.DROP_BOX_ID_LENGTH];
-        new SecureRandom().nextBytes(boxId);
-        return approveFriendRequest(context, userId, boxId);
-    }
-
-    @Error
-    public static int approveFriendRequest(@NonNull Context context, long userId, @NonNull byte[] boxId) {
-        Prefs prefs = Prefs.get(context);
-        String accessToken = prefs.getAccessToken();
-        if (TextUtils.isEmpty(accessToken)) {
-            return ERROR_NOT_LOGGED_IN;
-        }
-        KeyPair kp = prefs.getKeyPair();
-        if (kp == null) {
-            return ERROR_NOT_LOGGED_IN;
-        }
-
-        UserComm comm = UserComm.newLocationSharingGrant(boxId);
-        byte[] msgBytes = comm.toJSON();
-        UserRecord user = DB.get(context).getUserById(userId);
-        if (user == null) {
-            throw new RuntimeException("How was approve called for an unknown user?");
-        }
-        EncryptedData encMsg = Sodium.publicKeyEncrypt(msgBytes, user.publicKey, kp.secretKey);
-        if (encMsg == null) {
-            return ERROR_ENCRYPTION_FAILED;
-        }
-        OscarClient.queueSendMessage(context, accessToken, user.userId, encMsg, false);
-
-        try {
-            DB.get(context).startSharingWith(user, boxId);
-        } catch (DB.DBException ex) {
-            L.w("serious problem setting drop box id", ex);
-            FirebaseCrash.report(ex);
-            return ERROR_DATABASE_EXCEPTION;
-        }
-
-        return ERROR_NONE;
-    }
 
     @WorkerThread
     @Error

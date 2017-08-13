@@ -71,4 +71,12 @@
     <string name="avatar_preview">Avatar preview</string>
     <string name="friends">Friends</string>
     <string name="server_key_retrieval_bad_response_msg">The server sent us a malformed response while trying to retrieve its public key. Try again later, and if the problem persists, please contact support.</string>
+    <string name="remove_friend">Remove friend</string>
+    <string name="remove_friend_prompt_msg">Are you sure you want to remove %s from your friends?</string>
+    <string name="never_mind">Never mind</string>
+    <string name="toast_disable_sharing_error_msg">Error disabling sharing. Try again.</string>
+    <string name="toast_enable_sharing_error_msg">Error enabling sharing. Try again.</string>
+    <string name="about">About</string>
+    <string name="settings">Settings</string>
+    <string name="profile">Profile</string>
 </resources>

@@ -80,9 +80,11 @@ public class LogActivity extends AppCompatActivity implements Toolbar.OnMenuItem
             FileInputStream stream = openFileInput(L.LOG_FILENAME);
             BufferedInputStream bis = new BufferedInputStream(stream);
             StringWriter sw = new StringWriter();
-            int val;
-            while ((val = bis.read()) != -1) {
-                sw.write(val);
+            byte[] buf = new byte[8192];
+            while (bis.available() > 0) {
+                int numRead = bis.read(buf);
+                String str = new String(buf, 0, numRead);
+                sw.write(str);
             }
             logText = sw.toString();
         } catch (FileNotFoundException fnfe) {

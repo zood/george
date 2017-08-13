@@ -21,6 +21,7 @@ import com.google.firebase.crash.FirebaseCrash;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 
 import io.pijun.george.models.FriendLocation;
 import io.pijun.george.models.FriendRecord;
@@ -535,6 +536,26 @@ public class DB {
         ur.userId = c.getBlob(c.getColumnIndexOrThrow(USERS_COL_USER_ID));
         ur.username = c.getString(c.getColumnIndexOrThrow(USERS_COL_USERNAME));
         return ur;
+    }
+
+    @WorkerThread
+    public void removeFriend(@NonNull FriendRecord friend) throws DBException {
+        SQLiteDatabase db = mDbHelper.getWritableDatabase();
+        int result = 0;
+        try {
+            String[] args = new String[]{String.valueOf(friend.user.id)};
+            result = db.delete(FRIENDS_TABLE, FRIENDS_COL_USER_ID + "=?", args);
+        } catch (SQLException ex) {
+            String msg = String.format(Locale.US, "Error removing friend %d (%s)", friend.id, friend.user.username);
+            throw new DBException(msg, ex);
+        }
+
+        if (result != 1) {
+            String msg = String.format(Locale.US, "%d rows affected when attempting to remove 1 friend. Id: %d, Username: %s", result, friend.id, friend.user.username);
+            throw new DBException(msg);
+        }
+
+        scheduleBackup();
     }
 
     @WorkerThread

@@ -75,6 +75,7 @@ import io.pijun.george.api.User;
 import io.pijun.george.api.UserComm;
 import io.pijun.george.crypto.EncryptedData;
 import io.pijun.george.crypto.KeyPair;
+import io.pijun.george.event.FriendRemoved;
 import io.pijun.george.event.LocationSharingGranted;
 import io.pijun.george.event.LocationSharingRevoked;
 import io.pijun.george.models.FriendLocation;
@@ -577,8 +578,7 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
         drawer.closeDrawers();
 
-        if (item.getItemId() == R.id.your_friends) {
-        } else if (item.getItemId() == R.id.log_out) {
+        if (item.getItemId() == R.id.log_out) {
             onLogOutAction();
         } else if (item.getItemId() == R.id.view_logs) {
             onShowLogs();
@@ -753,6 +753,14 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
         } catch (DB.DBException dbe) {
             Utils.showStringAlert(this, null, "Error adding friend into database");
             FirebaseCrash.report(dbe);
+        }
+    }
+
+    @Subscribe
+    public void onFriendRemoved(FriendRemoved evt) {
+        Marker marker = mMarkerTracker.removeMarker(evt.friendId);
+        if (marker != null) {
+            mMapboxMap.removeMarker(marker);
         }
     }
 

@@ -24,14 +24,14 @@ class AvatarsAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
     private ArrayList<FriendRecord> mFriends = new ArrayList<>();
     @Nullable private AvatarsAdapterListener mListener;
 
-    @SuppressLint("WrongThread")
     @AnyThread
     void addFriend(final FriendRecord friend) {
-        if (Looper.myLooper() == Looper.getMainLooper()) {
-            _addFriend(friend);
-        } else {
-            App.runOnUiThread(() -> _addFriend(friend));
-        }
+        App.runOnUiThread(new UiRunnable() {
+            @Override
+            public void run() {
+                _addFriend(friend);
+            }
+        });
     }
 
     @UiThread
@@ -98,14 +98,26 @@ class AvatarsAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
         throw new IllegalArgumentException("Unknown view type");
     }
 
-    @SuppressLint("WrongThread")
+    @UiThread
+    void removeFriend(long friendId) {
+        for (int i=0; i<mFriends.size(); i++) {
+            FriendRecord friend = mFriends.get(i);
+            if (friend.id == friendId) {
+                mFriends.remove(i);
+                notifyItemRemoved(i);
+                break;
+            }
+        }
+    }
+
     @AnyThread
     void setFriends(final ArrayList<FriendRecord> friends) {
-        if (Looper.myLooper() == Looper.getMainLooper()) {
-            _setFriends(friends);
-        } else {
-            App.runOnUiThread(() -> _setFriends(friends));
-        }
+        App.runOnUiThread(new UiRunnable() {
+            @Override
+            public void run() {
+                _setFriends(friends);
+            }
+        });
     }
 
     @UiThread

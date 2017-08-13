@@ -3,11 +3,10 @@
     <group
         android:id="@+id/primary_drawer_group"
         android:checkableBehavior="all">
-        <item android:id="@+id/your_friends" android:title="@string/your_friends" />
+        <item android:id="@+id/profile" android:title="@string/profile" />
+        <item android:id="@+id/settings" android:title="@string/settings" />
+        <item android:id="@+id/about" android:title="@string/about" />
         <item android:id="@+id/log_out" android:title="@string/log_out" />
-        <!--<item android:id="@+id/add_friend" android:title="@string/add_friend" />-->
-        <!--<item android:id="@+id/check_messages" android:title="@string/check_messages" />-->
-        <!--<item android:id="@+id/friend_requests" android:title="@string/friend_requests" />-->
     </group>
     <group>
         <item android:id="@+id/view_logs" android:title="@string/view_logs"/>
