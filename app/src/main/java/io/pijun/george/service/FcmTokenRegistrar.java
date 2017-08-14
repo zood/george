@@ -4,6 +4,7 @@ import android.app.IntentService;
 import android.content.Context;
 import android.content.Intent;
 import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 import android.support.annotation.WorkerThread;
 import android.text.TextUtils;
 
@@ -24,7 +25,7 @@ public class FcmTokenRegistrar extends IntentService {
         return newIntent(ctx, false, null);
     }
 
-    public static Intent newIntent(Context ctx, boolean unregister, String accessToken) {
+    public static Intent newIntent(Context ctx, boolean unregister, @Nullable String accessToken) {
         Intent i = new Intent(ctx, FcmTokenRegistrar.class);
         if (unregister && accessToken == null) {
             throw new IllegalArgumentException("You must provide an access token when you want to unregister");

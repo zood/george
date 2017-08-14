@@ -253,12 +253,18 @@ public class LimitedShareService extends Service implements LocationListener {
         Toast.makeText(this, "Link copied to clipboard", Toast.LENGTH_SHORT).show();
     }
 
+    @AnyThread
     private void stopLimitedShare(boolean userStopped) {
         stopForeground(true);
 
         mLocationProviderClient.removeLocationUpdates(mLocationCallbackHelper);
 
-        DB.get(this).deleteLimitedShares();
+        App.runInBackground(new WorkerRunnable() {
+            @Override
+            public void run() {
+                DB.get(App.getApp()).deleteLimitedShares();
+            }
+        });
         LimitedShareService.IsRunning = false;
 
         if (userStopped) {
@@ -277,7 +283,7 @@ public class LimitedShareService extends Service implements LocationListener {
         @Override
         @UiThread
         public void onLocationResult(LocationResult result) {
-            L.i("LLS.onLocationChanged");
+            L.i("LSS.onLocationChanged");
             Location location = result.getLastLocation();
             if (location != null) {
                 App.postOnBus(location);

@@ -107,7 +107,7 @@ public class MessageUtils {
                 }
                 User user = response.body();
                 if (user == null) {
-                    FirebaseCrash.report(new Exception("Unable to decode user " + Hex.toHexString(senderId) + " from response"));
+                    FirebaseCrash.log("Unable to decode user " + Hex.toHexString(senderId) + " from response");
                     return ERROR_UNKNOWN;
                 }
                 // now that we've encountered a new user, add them to the database (because of TOFU)

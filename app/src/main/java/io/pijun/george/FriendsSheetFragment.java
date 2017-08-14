@@ -3,6 +3,7 @@ package io.pijun.george;
 import android.content.DialogInterface;
 import android.databinding.DataBindingUtil;
 import android.os.Bundle;
+import android.support.annotation.Keep;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.annotation.UiThread;
@@ -12,7 +13,6 @@ import android.support.v4.app.Fragment;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.widget.LinearLayoutManager;
 import android.text.TextUtils;
-import android.util.Base64;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -42,7 +42,6 @@ public class FriendsSheetFragment extends Fragment implements FriendItemsAdapter
     private BottomSheetBehavior mBehavior;
     private FragmentFriendsSheetBinding mBinding;
     private int mTenDips;
-    private int mTwentyFourDips;
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
@@ -50,7 +49,6 @@ public class FriendsSheetFragment extends Fragment implements FriendItemsAdapter
 
         mFriendItemsAdapter.setListener(this);
         mTenDips = Utils.dpsToPix(getContext(), 10);
-        mTwentyFourDips = Utils.dpsToPix(getContext(), 36);
     }
 
     @Nullable
@@ -77,11 +75,13 @@ public class FriendsSheetFragment extends Fragment implements FriendItemsAdapter
     }
 
     @Subscribe
+    @Keep
     public void onFriendLocationUpdated(final FriendLocation loc) {
         mFriendItemsAdapter.setFriendLocation(getContext(), loc);
     }
 
     @Subscribe
+    @Keep
     @UiThread
     public void onLocationSharingGranted(LocationSharingGranted grant) {
         App.runInBackground(() -> {
@@ -94,6 +94,7 @@ public class FriendsSheetFragment extends Fragment implements FriendItemsAdapter
     }
 
     @Subscribe
+    @Keep
     @UiThread
     public void onLocationSharingRevoked(LocationSharingRevoked revoked) {
         App.runInBackground(() -> {
@@ -127,6 +128,7 @@ public class FriendsSheetFragment extends Fragment implements FriendItemsAdapter
     }
 
     @Subscribe
+    @Keep
     public void onFriendRemoved(FriendRemoved evt) {
         mFriendItemsAdapter.removeFriend(evt.friendId);
         mAvatarsAdapter.removeFriend(evt.friendId);
@@ -240,7 +242,7 @@ public class FriendsSheetFragment extends Fragment implements FriendItemsAdapter
         if (msg != null) {
             OscarClient.queueSendMessage(getContext(), accessToken, friend.user.userId, msg, false);
         } else {
-            FirebaseCrash.report(new Exception("The message was null!"));
+            FirebaseCrash.log("The message was null!");
             return;
         }
 
@@ -306,7 +308,7 @@ public class FriendsSheetFragment extends Fragment implements FriendItemsAdapter
         if (msg != null) {
             OscarClient.queueSendMessage(getContext(), accessToken, friend.user.userId, msg, false);
         } else {
-            FirebaseCrash.report(new Exception("The message was null!"));
+            FirebaseCrash.log("The message was null!");
         }
 
         // grab the updated friend record, and apply it on our adapter

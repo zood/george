@@ -33,6 +33,7 @@ public class LocationJobService extends JobService {
         if (!Prefs.get(this).isLoggedIn()) {
             jobFinished(params, false);
 
+            L.i("LJS.onStartJob cancelling because not logged in");
             JobScheduler scheduler = (JobScheduler) getSystemService(Context.JOB_SCHEDULER_SERVICE);
             scheduler.cancel(LocationJobService.JOB_ID);
             return false;

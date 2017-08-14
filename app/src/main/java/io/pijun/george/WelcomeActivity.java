@@ -223,16 +223,12 @@ public class WelcomeActivity extends AppCompatActivity implements WelcomeLayout.
     @SuppressLint("WrongThread")
     @AnyThread
     void setLoginError(@IdRes final int textInputLayout, @StringRes final int msg) {
-        if (Looper.myLooper() == Looper.getMainLooper()) {
-            _setLoginError(textInputLayout, msg);
-        } else {
-            App.runOnUiThread(new UiRunnable() {
-                @Override
-                public void run() {
-                    _setLoginError(textInputLayout, msg);
-                }
-            });
-        }
+        App.runOnUiThread(new UiRunnable() {
+            @Override
+            public void run() {
+                _setLoginError(textInputLayout, msg);
+            }
+        });
     }
 
     @UiThread
@@ -253,7 +249,7 @@ public class WelcomeActivity extends AppCompatActivity implements WelcomeLayout.
             startChallengeResp = api.getAuthenticationChallenge(username).execute();
         } catch (IOException ex) {
             setBusy(false);
-            Utils.showStringAlert(this, null, "Unable to start log in process");
+            Utils.showStringAlert(this, null, "Unable to start log in process: " + ex.getLocalizedMessage());
             return;
         }
 
@@ -384,10 +380,11 @@ public class WelcomeActivity extends AppCompatActivity implements WelcomeLayout.
                 Utils.showStringAlert(this, null, "The server returned a malformed response when retrieving your profile. Try again later, and if it still fails, contact support.");
                 return;
             }
+            L.i("symmetric key: " + Hex.toHexString(symmetricKey));
             byte[] jsonDb = Sodium.symmetricKeyDecrypt(encSnapshot.cipherText, encSnapshot.nonce, symmetricKey);
             if (jsonDb == null) {
                 setBusy(false);
-                Utils.showStringAlert(this, null, "Unable to restore profile. Did your key change?");
+                Utils.showStringAlert(this, null, "Unable to restore profile. Did your symmetric key change?");
                 return;
             }
             Snapshot snapshot = Snapshot.fromJson(jsonDb);

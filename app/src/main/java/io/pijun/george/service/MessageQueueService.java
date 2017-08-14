@@ -8,6 +8,7 @@ import android.support.annotation.NonNull;
 import android.support.annotation.WorkerThread;
 import android.text.TextUtils;
 
+import io.pijun.george.DB;
 import io.pijun.george.L;
 import io.pijun.george.MessageUtils;
 import io.pijun.george.Prefs;
@@ -15,6 +16,7 @@ import io.pijun.george.api.Message;
 import io.pijun.george.api.OscarClient;
 import io.pijun.george.api.task.MessageConverter;
 import io.pijun.george.api.task.PersistentQueue;
+import io.pijun.george.models.UserRecord;
 
 public class MessageQueueService extends IntentService {
 
@@ -87,6 +89,12 @@ public class MessageQueueService extends IntentService {
                 default:
                     queue.poll();
                     L.w("error processing message: " + result);
+                    UserRecord user = DB.get(this).getUser(msg.senderId);
+                    if (user != null) {
+                        L.w("\tfrom " + user.username);
+                    } else {
+                        L.w("\tfrom an unknown user");
+                    }
                     break;
             }
         }

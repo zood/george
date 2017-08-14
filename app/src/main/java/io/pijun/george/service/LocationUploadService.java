@@ -5,8 +5,6 @@ import android.app.job.JobScheduler;
 import android.content.Context;
 import android.content.Intent;
 import android.location.Location;
-import android.net.ConnectivityManager;
-import android.net.NetworkInfo;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.IBinder;
@@ -35,6 +33,7 @@ import io.pijun.george.api.UserComm;
 import io.pijun.george.crypto.EncryptedData;
 import io.pijun.george.crypto.KeyPair;
 import io.pijun.george.event.MovementsUpdated;
+import io.pijun.george.event.UserLoggedOut;
 import io.pijun.george.models.FriendRecord;
 import io.pijun.george.models.LimitedShare;
 import io.pijun.george.models.MovementType;
@@ -102,14 +101,7 @@ public class LocationUploadService extends Service {
             }
 
             mLocations.add(l);
-
-            // make sure we have an internet connection before attempting to send
-            ConnectivityManager cm = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
-            NetworkInfo activeNetwork = cm.getActiveNetworkInfo();
-            boolean isConnected = activeNetwork != null && activeNetwork.isConnectedOrConnecting();
-            if (isConnected) {
-                flush();
-            }
+            flush();
         });
     }
 
@@ -119,6 +111,12 @@ public class LocationUploadService extends Service {
         this.mMovements = mu.movements;
     }
 
+    @Subscribe
+    @Keep
+    public void onUserLoggedOut(UserLoggedOut evt) {
+        stopSelf();
+    }
+
     /**
      * Get the most recent location and report it.
      */
@@ -126,7 +124,7 @@ public class LocationUploadService extends Service {
     private void flush() {
         // If we have no location to report, just get out of here.
         if (mLocations.isEmpty()) {
-            L.i("  no location to flush");
+            L.i("LUS.flush: no location to flush");
             return;
         }
 
@@ -134,7 +132,7 @@ public class LocationUploadService extends Service {
         String token = prefs.getAccessToken();
         KeyPair keyPair = prefs.getKeyPair();
         if (token == null || keyPair == null) {
-            L.i("  LM.flush token or keypair was null, so skipping upload");
+            L.i("LUS.flush: token or keypair was null, so skipping upload");
             mLocations.clear();
             return;
         }
@@ -144,28 +142,32 @@ public class LocationUploadService extends Service {
         byte[] msgBytes = locMsg.toJSON();
         // share to our friends
         ArrayList<FriendRecord> friends = DB.get(this).getFriendsToShareWith();
+        boolean droppedPackage = false;
         for (FriendRecord fr : friends) {
-//            L.i("  to friend " + fr.user.username);
             EncryptedData encMsg = Sodium.publicKeyEncrypt(msgBytes, fr.user.publicKey, keyPair.secretKey);
             if (encMsg == null) {
-                L.w("  encryption failed");
+                L.w("LUS.flush: encryption failed");
                 continue;
             }
             OscarClient.queueDropPackage(this, token, Hex.toHexString(fr.sendingBoxId), encMsg);
+            droppedPackage = true;
+        }
+        if (droppedPackage) {
+            Prefs.get(this).setLastLocationUpdateTime(System.currentTimeMillis());
         }
         // also check for a limited share
         LimitedShare ls = DB.get(this).getLimitedShare();
         if (ls != null) {
-            L.i("  to limited share");
+            L.i("LUS.flush: to limited share");
             if (LimitedShareService.IsRunning) {
                 EncryptedData encMsg = Sodium.publicKeyEncrypt(msgBytes, ls.publicKey, keyPair.secretKey);
                 if (encMsg != null) {
                     OscarClient.queueDropPackage(this, token, Hex.toHexString(ls.sendingBoxId), encMsg);
                 } else {
-                    L.w("  encryption failed");
+                    L.w("LUS.flush: encryption failed");
                 }
             } else {
-                L.i("  oops. the limited share isn't running. we'll delete it.");
+                L.i("LUS.flush: oops. the limited share isn't running. we'll delete it.");
                 DB.get(this).deleteLimitedShares();
             }
         }

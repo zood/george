@@ -4,8 +4,8 @@ import android.Manifest;
 import android.animation.FloatEvaluator;
 import android.animation.ObjectAnimator;
 import android.animation.ValueAnimator;
-import android.app.job.JobScheduler;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentSender;
 import android.content.pm.PackageManager;
@@ -15,6 +15,7 @@ import android.location.Location;
 import android.os.Bundle;
 import android.os.Looper;
 import android.support.annotation.AnyThread;
+import android.support.annotation.Keep;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.annotation.UiThread;
@@ -63,6 +64,7 @@ import com.squareup.otto.Subscribe;
 import java.io.IOException;
 import java.security.SecureRandom;
 import java.util.ArrayList;
+import java.util.Locale;
 
 import io.pijun.george.api.LocationIQClient;
 import io.pijun.george.api.Message;
@@ -332,7 +334,7 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
     public void onMapReady(MapboxMap mapboxMap ) {
         if (mapboxMap == null) {
             L.i("onMapReady has a null map arg");
-            FirebaseCrash.report(new Exception("MapboxMap is null"));
+            FirebaseCrash.log("MapboxMap is null");
             return;
         }
         mMapboxMap = mapboxMap;
@@ -488,6 +490,7 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
     }
 
     @Subscribe
+    @Keep
     @UiThread
     public void onLocationSharingGranted(final LocationSharingGranted grant) {
         L.i("onLocationSharingGranted");
@@ -507,6 +510,7 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
     }
 
     @Subscribe
+    @Keep
     @UiThread
     public void onLocationSharingRevoked(final LocationSharingRevoked revoked) {
         // remove the map marker, if there is one
@@ -527,6 +531,7 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
     }
 
     @Subscribe
+    @Keep
     @UiThread
     public void onFriendLocationUpdated(final FriendLocation loc) {
         // check if we already have a marker for this friend
@@ -553,18 +558,23 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
 
     @UiThread
     private void onLogOutAction() {
-        JobScheduler jobScheduler = (JobScheduler) getSystemService(Context.JOB_SCHEDULER_SERVICE);
-        jobScheduler.cancelAll();
-
         AlertDialog.Builder builder = new AlertDialog.Builder(this, R.style.AlertDialogTheme);
         builder.setMessage(R.string.confirm_log_out_msg);
         builder.setCancelable(true);
         builder.setNegativeButton(R.string.no, null);
-        builder.setPositiveButton(R.string.log_out, (dialog, which) -> Prefs.get(MapActivity.this).logOut(MapActivity.this, () -> {
-            Intent welcomeIntent = WelcomeActivity.newIntent(MapActivity.this);
-            startActivity(welcomeIntent);
-            finish();
-        }));
+        builder.setPositiveButton(R.string.log_out, new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                Utils.logOut(MapActivity.this, new UiRunnable() {
+                    @Override
+                    public void run() {
+                        Intent welcomeIntent = WelcomeActivity.newIntent(MapActivity.this);
+                        startActivity(welcomeIntent);
+                        finish();
+                    }
+                });
+            }
+        });
         builder.show();
     }
 
@@ -578,10 +588,19 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
         drawer.closeDrawers();
 
-        if (item.getItemId() == R.id.log_out) {
-            onLogOutAction();
-        } else if (item.getItemId() == R.id.view_logs) {
-            onShowLogs();
+        int id = item.getItemId();
+        switch (id) {
+            case R.id.profile:
+                showProfile();
+                break;
+            case R.id.about:
+                break;
+            case R.id.log_out:
+                onLogOutAction();
+                break;
+            case R.id.view_logs:
+                onShowLogs();
+                break;
         }
 
         return false;
@@ -689,6 +708,22 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
         mUsernameField = (EditText) dialog.findViewById(R.id.username);
     }
 
+    private void showProfile() {
+        Prefs prefs = Prefs.get(this);
+        String username = prefs.getUsername();
+        KeyPair kp = prefs.getKeyPair();
+        String msg;
+        if (kp == null) {
+            msg = "You're not logged in";
+        } else {
+            msg = String.format(
+                    Locale.US,
+                    "Public key:\n%s",
+                    Hex.toHexString(kp.publicKey));
+        }
+        Utils.showStringAlert(this, username, msg);
+    }
+
     @WorkerThread
     private void attemptLocationGrant(String username) {
         Prefs prefs = Prefs.get(this);
@@ -757,6 +792,7 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
     }
 
     @Subscribe
+    @Keep
     public void onFriendRemoved(FriendRemoved evt) {
         Marker marker = mMarkerTracker.removeMarker(evt.friendId);
         if (marker != null) {

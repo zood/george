@@ -5,13 +5,11 @@ import android.content.SharedPreferences;
 import android.support.annotation.AnyThread;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
-import android.text.TextUtils;
 
 import com.mapbox.mapboxsdk.camera.CameraPosition;
 import com.mapbox.mapboxsdk.geometry.LatLng;
 
 import io.pijun.george.crypto.KeyPair;
-import io.pijun.george.service.FcmTokenRegistrar;
 
 public class Prefs {
 
@@ -34,8 +32,6 @@ public class Prefs {
     private final static String KEY_CAMERA_POSITION_BEARING = "camera_position_bearing";
     private final static String KEY_CAMERA_POSITION_TILT = "camera_position_tilt";
     private final static String KEY_CAMERA_POSITION_ZOOM = "camera_position_zoom";
-
-    private final static String KEY_LAST_LOCATION_UPDATE_REQUEST_TIME = "last_location_update_request_time";
     private final static String KEY_LAST_LOCATION_UPDATE_TIME = "last_location_update_time";
 
     private Prefs(Context context) {
@@ -56,6 +52,11 @@ public class Prefs {
     }
 
     @AnyThread
+    public void clearAll() {
+        mPrefs.edit().clear().apply();
+    }
+
+    @AnyThread
     public boolean isLoggedIn() {
         String token = getAccessToken();
         KeyPair keyPair = getKeyPair();
@@ -69,30 +70,6 @@ public class Prefs {
         }
 
         return false;
-    }
-
-    @AnyThread
-    public void logOut(@NonNull final Context context, @Nullable final UiRunnable completion) {
-        App.runInBackground(new WorkerRunnable() {
-            @Override
-            public void run() {
-                String token = getAccessToken();
-                if (!TextUtils.isEmpty(token)) {
-                    context.startService(FcmTokenRegistrar.newIntent(context, true, token));
-                }
-
-                setAccessToken(null);
-                setKeyPair(null);
-                setPasswordSalt(null);
-                setSymmetricKey(null);
-                setUserId(null);
-                DB.get(context).deleteUserData();
-
-                if (completion != null) {
-                    App.runOnUiThread(completion);
-                }
-            }
-        });
     }
 
     @Nullable
@@ -224,14 +201,6 @@ public class Prefs {
                 .putLong(KEY_CAMERA_POSITION_ALTITUDE, Double.doubleToRawLongBits(pos.target.getAltitude()))
                 .putBoolean(KEY_CAMERA_POSITION_SAVED, true)
                 .apply();
-    }
-
-    public long getLastLocationUpdateRequestTime() {
-        return mPrefs.getLong(KEY_LAST_LOCATION_UPDATE_REQUEST_TIME, 0);
-    }
-
-    public void setLastLocationUpdateRequestTime(long time) {
-        mPrefs.edit().putLong(KEY_LAST_LOCATION_UPDATE_REQUEST_TIME, time).apply();
     }
 
     public long getLastLocationUpdateTime() {
