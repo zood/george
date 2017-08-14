@@ -30,8 +30,9 @@ public class Utils {
         App.runInBackground(new WorkerRunnable() {
             @Override
             public void run() {
+                String fcmToken = Prefs.get(ctx).getFcmToken();
+                ctx.startService(FcmTokenRegistrar.newIntent(ctx, true, fcmToken));
                 Prefs.get(ctx).clearAll();
-                ctx.startService(FcmTokenRegistrar.newIntent(ctx, true, null));
                 DB.get(ctx).deleteUserData();
                 JobScheduler jobScheduler = (JobScheduler) ctx.getSystemService(Context.JOB_SCHEDULER_SERVICE);
                 jobScheduler.cancelAll();

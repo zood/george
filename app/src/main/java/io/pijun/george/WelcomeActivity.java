@@ -380,7 +380,6 @@ public class WelcomeActivity extends AppCompatActivity implements WelcomeLayout.
                 Utils.showStringAlert(this, null, "The server returned a malformed response when retrieving your profile. Try again later, and if it still fails, contact support.");
                 return;
             }
-            L.i("symmetric key: " + Hex.toHexString(symmetricKey));
             byte[] jsonDb = Sodium.symmetricKeyDecrypt(encSnapshot.cipherText, encSnapshot.nonce, symmetricKey);
             if (jsonDb == null) {
                 setBusy(false);
