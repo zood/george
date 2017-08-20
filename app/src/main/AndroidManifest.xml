@@ -37,6 +37,10 @@
             android:windowSoftInputMode="adjustResize"
             android:theme="@style/AppTheme" />
         <activity
+            android:name=".ProfileActivity"
+            android:windowSoftInputMode="adjustResize"
+            android:theme="@style/AppTheme" />
+        <activity
             android:name=".TestActivity"
             android:windowSoftInputMode="adjustResize|stateHidden"
             android:theme="@style/AppTheme" />

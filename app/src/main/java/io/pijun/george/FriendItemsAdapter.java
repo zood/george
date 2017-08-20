@@ -11,8 +11,6 @@ import android.support.annotation.AnyThread;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.annotation.UiThread;
-import android.support.v4.graphics.drawable.RoundedBitmapDrawable;
-import android.support.v4.graphics.drawable.RoundedBitmapDrawableFactory;
 import android.support.v7.widget.RecyclerView;
 import android.text.format.DateUtils;
 import android.util.LongSparseArray;
@@ -20,7 +18,6 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewOutlineProvider;
-import android.widget.ImageView;
 import android.widget.Switch;
 import android.widget.TextView;
 
@@ -28,6 +25,7 @@ import java.util.ArrayList;
 
 import io.pijun.george.models.FriendLocation;
 import io.pijun.george.models.FriendRecord;
+import io.pijun.george.view.AvatarView;
 
 class FriendItemsAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
 
@@ -60,10 +58,8 @@ class FriendItemsAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
             Bitmap bmp = Bitmap.createBitmap(forty, forty, Bitmap.Config.ARGB_8888);
             final FriendRecord friend = mFriends.get(position);
             Identicon.draw(bmp, friend.user.username);
-            RoundedBitmapDrawable rounded = RoundedBitmapDrawableFactory.create(rsrc, bmp);
-            rounded.setCircular(true);
-            h.avatar.setImageDrawable(rounded);
-            h.avatar.setActivated(friend.receivingBoxId != null);
+            h.avatar.setImage(bmp);
+            h.avatar.setBorderColor(friend.receivingBoxId != null ? R.color.colorPrimary : R.color.ui_tint_gray);
 
             // -- USERNAME --
             h.username.setText(friend.user.username);
@@ -250,7 +246,7 @@ class FriendItemsAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
 
     private static class FriendItemViewHolder extends RecyclerView.ViewHolder {
 
-        private final ImageView avatar;
+        private final AvatarView avatar;
         private final TextView username;
         private final TextView location;
         private final TextView updateTime;
@@ -260,7 +256,7 @@ class FriendItemsAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
         FriendItemViewHolder(View itemView) {
             super(itemView);
 
-            avatar = (ImageView) itemView.findViewById(R.id.avatar);
+            avatar = (AvatarView) itemView.findViewById(R.id.avatar);
             username = (TextView) itemView.findViewById(R.id.username);
             location = (TextView) itemView.findViewById(R.id.location);
             updateTime = (TextView) itemView.findViewById(R.id.update_time);

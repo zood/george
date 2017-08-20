@@ -9,14 +9,9 @@
     android:paddingBottom="16dp"
     android:layout_width="56dp"
     android:layout_height="72dp">
-    <ImageView
+    <io.pijun.george.view.AvatarView
         android:id="@+id/avatar_image"
-        android:elevation="12dp"
-        android:padding="3dp"
-        android:background="@drawable/avatar_border"
-        android:scaleType="fitCenter"
         android:layout_width="40dp"
-        android:layout_height="40dp"
-        tools:src="@drawable/george_clooney" />
+        android:layout_height="40dp" />
 </FrameLayout>
 

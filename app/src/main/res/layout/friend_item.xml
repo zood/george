@@ -12,13 +12,9 @@
     android:background="?attr/selectableItemBackground"
     android:layout_width="match_parent"
     android:layout_height="wrap_content">
-    <ImageView
+    <io.pijun.george.view.AvatarView
         android:id="@+id/avatar"
         tools:src="@drawable/george_clooney"
-        android:elevation="12dp"
-        android:background="@drawable/avatar_border"
-        android:scaleType="fitCenter"
-        android:padding="3dp"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintBottom_toBottomOf="parent"

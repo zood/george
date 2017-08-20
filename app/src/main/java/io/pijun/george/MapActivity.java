@@ -64,7 +64,6 @@ import com.squareup.otto.Subscribe;
 import java.io.IOException;
 import java.security.SecureRandom;
 import java.util.ArrayList;
-import java.util.Locale;
 
 import io.pijun.george.api.LocationIQClient;
 import io.pijun.george.api.Message;
@@ -709,6 +708,9 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
     }
 
     private void showProfile() {
+        Intent i = ProfileActivity.newIntent(this);
+        startActivity(i);
+        /*
         Prefs prefs = Prefs.get(this);
         String username = prefs.getUsername();
         KeyPair kp = prefs.getKeyPair();
@@ -722,6 +724,7 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
                     Hex.toHexString(kp.publicKey));
         }
         Utils.showStringAlert(this, username, msg);
+        */
     }
 
     @WorkerThread
