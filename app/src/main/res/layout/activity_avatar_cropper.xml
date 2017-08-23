@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layout xmlns:tools="http://schemas.android.com/tools"
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+    <AbsoluteLayout
+        android:id="@+id/root"
+        android:background="@android:color/black"
+        tools:background="@android:color/white"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        tools:ignore="Deprecated">
+        <ImageView
+            android:id="@+id/avatar"
+            tools:src="@drawable/george_clooney"
+            android:scaleType="fitXY"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent" />
+        <View
+            android:id="@+id/top_shade"
+            android:background="@color/shade"
+            tools:background="#F28500"
+            android:layout_width="match_parent"
+            android:layout_height="10dp" />
+        <View
+            android:id="@+id/bottom_shade"
+            android:background="@color/shade"
+            tools:background="#0000BB"
+            android:layout_x="0dp"
+            android:layout_y="400dp"
+            android:layout_width="match_parent"
+            android:layout_height="10dp" />
+        <View
+            android:id="@+id/left_shade"
+            android:background="@color/shade"
+            tools:background="#32CD32"
+            android:layout_width="10dp"
+            android:layout_height="match_parent" />
+        <View
+            android:id="@+id/right_shade"
+            android:background="@color/shade"
+            tools:background="#FF0000"
+            android:layout_x="300dp"
+            android:layout_width="10dp"
+            android:layout_height="match_parent" />
+    </AbsoluteLayout>
+</layout>
