@@ -225,8 +225,6 @@ public class AvatarCropperActivity extends AppCompatActivity implements MoveGest
         float scale = detector.getScaleFactor();
 
         AbsoluteLayout.LayoutParams params = (AbsoluteLayout.LayoutParams) mBinding.avatar.getLayoutParams();
-        mCurrWidth *= scale;
-        mCurrHeight *= scale;
         float newWidth = mCurrWidth * scale;
         float newHeight = mCurrHeight * scale;
         params.width = (int) newWidth;
@@ -242,6 +240,10 @@ public class AvatarCropperActivity extends AppCompatActivity implements MoveGest
         params.x = (int) mImgXY.x;
         params.y = (int) mImgXY.y;
         mBinding.avatar.setLayoutParams(params);
+
+        mCurrWidth = newWidth;
+        mCurrHeight = newHeight;
+
         return true;
     }
 
