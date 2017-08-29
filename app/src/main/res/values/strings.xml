@@ -84,4 +84,6 @@
     <string name="camera">Camera</string>
     <string name="photos">Photos</string>
     <string name="images">Images</string>
+    <string name="crop_instructions_msg">Move and zoom photo\nto fit the square.</string>
+    <string name="done">Done</string>
 </resources>

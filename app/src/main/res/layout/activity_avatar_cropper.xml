@@ -42,5 +42,30 @@
             android:layout_x="300dp"
             android:layout_width="10dp"
             android:layout_height="match_parent" />
+        <TextView
+            android:id="@+id/instructions"
+            android:textColor="@android:color/white"
+            android:textAlignment="center"
+            android:text="@string/crop_instructions_msg"
+            android:textSize="24sp"
+            android:layout_y="48dp"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content" />
+        <Button
+            android:id="@+id/done"
+            android:text="@string/done"
+            android:textColor="#FFFFFF"
+            style="@style/Widget.AppCompat.Button.Borderless"
+            android:onClick="onDoneClicked"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content" />
+        <ImageButton
+            android:id="@+id/cancel"
+            android:src="@drawable/ic_close_black_24dp"
+            style="@style/Widget.AppCompat.Button.Borderless"
+            android:onClick="onCancelClicked"
+            android:tint="#FFFFFF"
+            android:layout_width="44dp"
+            android:layout_height="48dp" />
     </AbsoluteLayout>
 </layout>

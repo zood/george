@@ -16,6 +16,7 @@ import android.text.TextUtils;
 import android.view.MotionEvent;
 import android.view.ScaleGestureDetector;
 import android.view.View;
+import android.view.ViewTreeObserver;
 import android.widget.AbsoluteLayout;
 
 import com.arashpayan.gesture.MoveGestureRecognizer;
@@ -32,11 +33,26 @@ public class AvatarCropperActivity extends AppCompatActivity implements MoveGest
     private Bitmap mOriginalImage;
     private MoveGestureRecognizer mMoveRecognizer;
     private ScaleGestureDetector mScaleDetector;
-    private PointF mTouchStart;
-    private PointF mAvatarStart;
+//    private PointF mAvatarStart;
     private boolean mIsScaling = false;
-    private float mScalingStartSpan = 0;
-    private float mLastScalingValue = 1;
+    private float mCurrWidth;
+    private float mCurrHeight;
+    private PointF mLastMovePoint;
+    private PointF mImgXY = new PointF();
+    private PointF mImgOffset = new PointF();
+
+    @SuppressWarnings("deprecation")
+    private void finishLayout() {
+        // fix the instructions
+        AbsoluteLayout.LayoutParams params = (AbsoluteLayout.LayoutParams) mBinding.instructions.getLayoutParams();
+        params.x = (mBinding.root.getWidth() - mBinding.instructions.getWidth())/2;
+        L.i("x: " + params.x + ", rootW: " + mBinding.root.getWidth() + ", instW: " + mBinding.instructions.getWidth());
+        mBinding.instructions.setLayoutParams(params);
+
+        // and now the 'cancel' and 'done' buttons
+        params = (AbsoluteLayout.LayoutParams) mBinding.done.getLayoutParams();
+        params.x = mBinding.root.getWidth() - mBinding.done.getWidth();
+    }
 
     public static Intent newIntent(@NonNull Context ctx, @NonNull Bitmap img) {
         Intent i = new Intent(ctx, AvatarCropperActivity.class);
@@ -50,6 +66,11 @@ public class AvatarCropperActivity extends AppCompatActivity implements MoveGest
         i.putExtra(ARG_TYPE, ARG_URI);
         i.putExtra(ARG_URI, uri);
         return i;
+    }
+
+    @UiThread
+    public void onCancelClicked(View v) {
+        finish();
     }
 
     @Override
@@ -105,9 +126,24 @@ public class AvatarCropperActivity extends AppCompatActivity implements MoveGest
             });
         }
 
+        mBinding.root.getViewTreeObserver().addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
+            private boolean initialLayoutDone = false;
+            @Override
+            public void onGlobalLayout() {
+                if (!initialLayoutDone) {
+                    initialLayoutDone = true;
+                    finishLayout();
+                }
+            }
+        });
+
         mBinding.root.setOnTouchListener(this);
         mMoveRecognizer = new MoveGestureRecognizer().setListener(this);
         mScaleDetector = new ScaleGestureDetector(this, this);
+    }
+
+    @UiThread
+    public void onDoneClicked(View v) {
     }
 
     @SuppressWarnings("deprecation")
@@ -146,56 +182,80 @@ public class AvatarCropperActivity extends AppCompatActivity implements MoveGest
         mBinding.rightShade.setLayoutParams(params);
 
         params = (AbsoluteLayout.LayoutParams) mBinding.avatar.getLayoutParams();
-        params.width = mOriginalImage.getWidth();
-        params.height = mOriginalImage.getHeight();
-        params.x = (int)(width/2.0f - mOriginalImage.getWidth()/2.0f);
-        params.y = (int)(height/2.0f - mOriginalImage.getHeight()/2.0f);
+        mCurrWidth = mOriginalImage.getWidth();
+        mCurrHeight = mOriginalImage.getHeight();
+        params.width = (int) mCurrWidth;
+        params.height = (int) mCurrHeight;
+        mImgXY.x = width/2.0f - mCurrWidth/2.0f;
+        mImgXY.y = height/2.0f - mCurrHeight/2.0f;
+        params.x = (int) mImgXY.x;
+        params.y = (int) mImgXY.y;
         L.i("x: " + params.x + ", y: " + params.y);
         mBinding.avatar.setLayoutParams(params);
     }
 
     @Override
     public void onMoveGestureBegan(View v, PointF start) {
-        mTouchStart = start;
-        mAvatarStart = new PointF(mBinding.avatar.getX(), mBinding.avatar.getY());
+        mLastMovePoint = start;
     }
 
+    @SuppressWarnings("deprecation")
     @Override
     public void onMoveGestureChanged(View v, PointF current) {
-        float dx = current.x - mTouchStart.x;
-        float dy = current.y - mTouchStart.y;
-        mBinding.avatar.setX(mAvatarStart.x + dx);
-        mBinding.avatar.setY(mAvatarStart.y + dy);
+        float dx = current.x - mLastMovePoint.x;
+        float dy = current.y - mLastMovePoint.y;
+        mLastMovePoint = current;
+        mImgOffset.x += dx;
+        mImgOffset.y += dy;
+
+        AbsoluteLayout.LayoutParams params = (AbsoluteLayout.LayoutParams) mBinding.avatar.getLayoutParams();
+        params.x += dx;
+        params.y += dy;
+        mBinding.avatar.setLayoutParams(params);
     }
 
     @Override
     public void onMoveGestureEnded(View v, PointF end) {
+        mLastMovePoint = null;
     }
 
+    @SuppressWarnings("deprecation")
     @Override
     public boolean onScale(ScaleGestureDetector detector) {
-        float span = detector.getCurrentSpan();
-        float spanX = detector.getCurrentSpanX();
-        float spanY = detector.getCurrentSpanY();
-        float scale = span / mScalingStartSpan;
-        scale *= mLastScalingValue;
-        if (scale > 2.0f) {
-            scale = 2.0f;
-        } else if (scale < 0.3f) {
-            scale = 0.3f;
-        }
-//        L.i(String.format("span: %f, x: %f, y: %f", span, spanX, spanY));
-//        float newW = (float)mBinding.avatar.getWidth() * scale;
-//        float newH = (float)mBinding.avatar.getHeight() * scale;
-        mBinding.avatar.animate().scaleX(scale).scaleY(scale).setDuration(0);
-        L.i("scale: " + scale);
+        float scale = detector.getScaleFactor();
+
+        AbsoluteLayout.LayoutParams params = (AbsoluteLayout.LayoutParams) mBinding.avatar.getLayoutParams();
+        mCurrWidth *= scale;
+        mCurrHeight *= scale;
+        float newWidth = mCurrWidth * scale;
+        float newHeight = mCurrHeight * scale;
+        params.width = (int) newWidth;
+        params.height = (int) newHeight;
+        float fx = detector.getFocusX();
+        float fy = detector.getFocusY();
+        float dx = fx - mImgXY.x;
+        float dy = fy - mImgXY.y;
+        dx = dx * scale - dx;
+        dy = dy * scale - dy;
+        mImgXY.x -= dx;
+        mImgXY.y -= dy;
+        params.x = (int) mImgXY.x;
+        params.y = (int) mImgXY.y;
+        mBinding.avatar.setLayoutParams(params);
         return true;
     }
 
     @Override
     public boolean onScaleBegin(ScaleGestureDetector detector) {
-        mScalingStartSpan = detector.getCurrentSpan();
-        L.i("onScale Begin: " + mScalingStartSpan);
+        float fx = detector.getFocusX();
+        float fy = detector.getFocusY();
+        L.i("onScale Begin - fx: " + fx + ", fy: " + fy);
+        // merge the offst into the image xy, so calculations are easier while we scale
+        mImgXY.x = mImgXY.x + mImgOffset.x;
+        mImgXY.y = mImgXY.y + mImgOffset.y;
+        mImgOffset.x = 0;
+        mImgOffset.y = 0;
+
         mIsScaling = true;
         return true;
     }
@@ -203,14 +263,6 @@ public class AvatarCropperActivity extends AppCompatActivity implements MoveGest
     @Override
     public void onScaleEnd(ScaleGestureDetector detector) {
         L.i("onScale end");
-        float span = detector.getCurrentSpan();
-        float scale = span / mScalingStartSpan;
-        mLastScalingValue *= scale;
-        if (mLastScalingValue > 2.0f) {
-            mLastScalingValue = 2.0f;
-        } else if (mLastScalingValue < 0.3f) {
-            mLastScalingValue = 0.3f;
-        }
         mIsScaling = false;
     }
 

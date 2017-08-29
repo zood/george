@@ -170,66 +170,69 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
         App.registerOnBus(this);
         mMapView.onStart();
 
-        App.runInBackground(() -> {
-            Prefs prefs = Prefs.get(MapActivity.this);
-            String token = prefs.getAccessToken();
-            if (token == null) {
-                return;
-            }
-            mPkgWatcher = PackageWatcher.createWatcher(MapActivity.this, token);
-            if (mPkgWatcher == null) {
-                L.w("unable to create package watcher");
-                return;
-            }
-
-            ArrayList<FriendRecord> friends = DB.get(MapActivity.this).getFriends();
-            for (FriendRecord fr: friends) {
-                if (fr.receivingBoxId != null) {
-                    mPkgWatcher.watch(fr.receivingBoxId);
+        App.runInBackground(new WorkerRunnable() {
+            @Override
+            public void run() {
+                Prefs prefs = Prefs.get(MapActivity.this);
+                String token = prefs.getAccessToken();
+                if (token == null) {
+                    return;
                 }
-            }
-
-            // Request a location update from any friend that hasn't given us an update for
-            // 3 minutes
-            long now = System.currentTimeMillis();
-            KeyPair keypair = prefs.getKeyPair();
-            for (FriendRecord fr : friends) {
-                // check if this friend shares location with us
-                if (fr.receivingBoxId == null) {
-                    continue;
+                mPkgWatcher = PackageWatcher.createWatcher(MapActivity.this, token);
+                if (mPkgWatcher == null) {
+                    L.w("unable to create package watcher");
+                    return;
                 }
-                FriendLocation loc = DB.get(MapActivity.this).getFriendLocation(fr.id);
-                if (loc == null || (now-loc.time) > 180 * DateUtils.SECOND_IN_MILLIS) {
-                    if (keypair != null) {
-                        UserComm comm = UserComm.newLocationUpdateRequest();
-                        byte[] msgBytes = comm.toJSON();
-                        EncryptedData encMsg = Sodium.publicKeyEncrypt(msgBytes, fr.user.publicKey, keypair.secretKey);
-                        if (encMsg != null) {
-                            OscarClient.queueSendMessage(MapActivity.this, token, fr.user.userId, encMsg, true);
-                        } else {
-                            L.w("Failed to encrypt a location update request message to " + fr.user.username);
+
+                ArrayList<FriendRecord> friends = DB.get(MapActivity.this).getFriends();
+                for (FriendRecord fr: friends) {
+                    if (fr.receivingBoxId != null) {
+                        mPkgWatcher.watch(fr.receivingBoxId);
+                    }
+                }
+
+                // Request a location update from any friend that hasn't given us an update for
+                // 3 minutes
+                long now = System.currentTimeMillis();
+                KeyPair keypair = prefs.getKeyPair();
+                for (FriendRecord fr : friends) {
+                    // check if this friend shares location with us
+                    if (fr.receivingBoxId == null) {
+                        continue;
+                    }
+                    FriendLocation loc = DB.get(MapActivity.this).getFriendLocation(fr.id);
+                    if (loc == null || (now-loc.time) > 180 * DateUtils.SECOND_IN_MILLIS) {
+                        if (keypair != null) {
+                            UserComm comm = UserComm.newLocationUpdateRequest();
+                            byte[] msgBytes = comm.toJSON();
+                            EncryptedData encMsg = Sodium.publicKeyEncrypt(msgBytes, fr.user.publicKey, keypair.secretKey);
+                            if (encMsg != null) {
+                                OscarClient.queueSendMessage(MapActivity.this, token, fr.user.userId, encMsg, true);
+                            } else {
+                                L.w("Failed to encrypt a location update request message to " + fr.user.username);
+                            }
                         }
                     }
                 }
-            }
 
-            OscarAPI api = OscarClient.newInstance(token);
-            try {
-                Response<Message[]> response = api.getMessages().execute();
-                if (!response.isSuccessful()) {
-                    OscarError err = OscarError.fromResponse(response);
-                    L.w("error checking for messages: " + err);
-                    return;
+                OscarAPI api = OscarClient.newInstance(token);
+                try {
+                    Response<Message[]> response = api.getMessages().execute();
+                    if (!response.isSuccessful()) {
+                        OscarError err = OscarError.fromResponse(response);
+                        L.w("error checking for messages: " + err);
+                        return;
+                    }
+                    Message[] msgs = response.body();
+                    if (msgs == null) {
+                        return;
+                    }
+                    for (Message msg : msgs) {
+                        MessageQueueService.queueMessage(MapActivity.this, msg);
+                    }
+                } catch (IOException ignore) {
+                    // meh, we'll try again later
                 }
-                Message[] msgs = response.body();
-                if (msgs == null) {
-                    return;
-                }
-                for (Message msg : msgs) {
-                    MessageQueueService.queueMessage(MapActivity.this, msg);
-                }
-            } catch (IOException ignore) {
-                // meh, we'll try again later
             }
         });
     }
