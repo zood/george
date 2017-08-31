@@ -73,7 +73,7 @@ public class OscarClient {
         if (accessToken != null) {
             httpBuilder.addInterceptor(new Interceptor() {
                 @Override
-                public Response intercept(Chain chain) throws IOException {
+                public Response intercept(@NonNull Chain chain) throws IOException {
                     Request request = chain.request();
                     request = request.newBuilder()
                             .addHeader("X-Oscar-Access-Token", accessToken)
