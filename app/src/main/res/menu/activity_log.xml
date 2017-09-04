@@ -5,8 +5,5 @@
         <item
             android:id="@+id/delete_log"
             android:title="@string/delete" />
-        <item
-            android:id="@+id/log_lls_stack"
-            android:title="Log LLS stack" />
     </group>
 </menu>

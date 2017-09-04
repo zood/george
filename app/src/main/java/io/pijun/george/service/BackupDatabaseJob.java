@@ -9,6 +9,8 @@ import android.support.annotation.WorkerThread;
 import android.text.TextUtils;
 import android.text.format.DateUtils;
 
+import com.google.firebase.crash.FirebaseCrash;
+
 import java.io.IOException;
 
 import io.pijun.george.App;
@@ -57,13 +59,13 @@ public class BackupDatabaseJob extends JobService {
                 uploadSnapshot();
             }
         });
-        return false;
+        return true;
     }
 
     @Override
     public boolean onStopJob(JobParameters params) {
-        mShouldStop = false;
-        return false;
+        mShouldStop = true;
+        return true;
     }
 
     @WorkerThread
@@ -93,7 +95,8 @@ public class BackupDatabaseJob extends JobService {
 
             if (!response.isSuccessful()) {
                 OscarError err = OscarError.fromResponse(response);
-                L.w("Encrypted db backup failed: " + err);
+                FirebaseCrash.log("Encrypted db backup failed: " + err);
+                L.w("\terror from server: " + err);
                 jobFinished(mJobParams, true);
             } else {
                 jobFinished(mJobParams, false);

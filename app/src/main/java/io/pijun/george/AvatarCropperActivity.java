@@ -144,6 +144,22 @@ public class AvatarCropperActivity extends AppCompatActivity implements MoveGest
 
     @UiThread
     public void onDoneClicked(View v) {
+        float screenWidth = mBinding.root.getWidth();
+        float screenHeight = mBinding.root.getHeight();
+
+        float boxSize = screenWidth * 0.7f;
+        float boxLeft = screenWidth * 0.15f;
+        float boxTop = (screenHeight - boxSize)/2.0f;
+        float imgX = mImgXY.x + mImgOffset.x;
+        float imgY = mImgXY.y + mImgOffset.y;
+        float imgW = mBinding.avatar.getWidth();
+        float imgH = mBinding.avatar.getHeight();
+        L.i("imgx: " + imgX + ", imgy: " + imgY + ", imgw: " + imgW + ", imgh: " + imgH);
+        float cx = (boxLeft - imgX);
+        float ct = (boxTop - imgY);
+        float cw = boxSize;
+        float ch = boxSize;
+        L.i("cx: " + cx + ", ct: " + ct + ", cw: " + cw + ", ch: " + ch);
     }
 
     @SuppressWarnings("deprecation")
@@ -153,7 +169,7 @@ public class AvatarCropperActivity extends AppCompatActivity implements MoveGest
         mBinding.avatar.setImageBitmap(mOriginalImage);
 
         // configure the shades to expose the center of the screen, with width
-        // and height equal to 80% of the screen width (portrait)
+        // and height equal to 70% of the screen width (portrait)
         float width = mBinding.root.getWidth();
         float height = mBinding.root.getHeight();
         float boxSize = width * 0.7f;

@@ -9,10 +9,10 @@
     android:layout_height="match_parent"
     tools:context=".MapActivity">
 
+    <!--mapbox:mapbox_styleUrl="mapbox://styles/arashpayan/ciyy3rvkj001e2sll2lvg36so"-->
     <com.mapbox.mapboxsdk.maps.MapView
         android:id="@+id/map"
         android:layout_width="0dp"
-        mapbox:mapbox_styleUrl="mapbox://styles/arashpayan/ciyy3rvkj001e2sll2lvg36so"
         tools:background="@android:color/holo_green_light"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintLeft_toLeftOf="parent"

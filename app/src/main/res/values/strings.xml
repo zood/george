@@ -86,4 +86,5 @@
     <string name="images">Images</string>
     <string name="crop_instructions_msg">Move and zoom photo\nto fit the square.</string>
     <string name="done">Done</string>
+    <string name="location_broadcast">Location broadcast</string>
 </resources>

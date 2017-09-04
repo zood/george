@@ -1,6 +1,7 @@
 package io.pijun.george.api;
 
 import android.content.Context;
+import android.support.annotation.CheckResult;
 import android.support.annotation.NonNull;
 import android.support.annotation.WorkerThread;
 
@@ -20,11 +21,10 @@ import io.pijun.george.api.task.DeleteFcmTokenTask;
 import io.pijun.george.api.task.DeleteMessageTask;
 import io.pijun.george.api.task.DropPackageTask;
 import io.pijun.george.api.task.OscarTask;
+import io.pijun.george.PersistentQueue;
 import io.pijun.george.api.task.QueueConverter;
 import io.pijun.george.api.task.SendMessageTask;
-import io.pijun.george.api.task.PersistentQueue;
 import io.pijun.george.crypto.EncryptedData;
-import io.pijun.george.service.OscarTasksService;
 import okhttp3.Interceptor;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
@@ -46,7 +46,9 @@ public class OscarClient {
                 .create();
     }
 
-    public static PersistentQueue<OscarTask> getQueue(Context context) {
+    @NonNull
+    @CheckResult
+    static PersistentQueue<OscarTask> getQueue(@NonNull Context context) {
         if (sQueue == null) {
             synchronized (OscarClient.class) {
                 if (sQueue == null) {
@@ -58,6 +60,7 @@ public class OscarClient {
         return sQueue;
     }
 
+    @NonNull
     public static OscarAPI newInstance(final String accessToken) {
         String url;
         if (Constants.USE_PRODUCTION) {
@@ -97,7 +100,6 @@ public class OscarClient {
         AddFcmTokenTask aftt = new AddFcmTokenTask(accessToken);
         aftt.body = body;
         getQueue(context).offer(aftt);
-        context.startService(OscarTasksService.newIntent(context));
     }
 
     @WorkerThread
@@ -105,7 +107,6 @@ public class OscarClient {
         DeleteFcmTokenTask dftt = new DeleteFcmTokenTask(accessToken);
         dftt.fcmToken = fcmToken;
         getQueue(context).offer(dftt);
-        context.startService(OscarTasksService.newIntent(context));
     }
 
     @WorkerThread
@@ -113,15 +114,14 @@ public class OscarClient {
         DeleteMessageTask dmt = new DeleteMessageTask(accessToken);
         dmt.messageId = msgId;
         getQueue(context).offer(dmt);
-        context.startService(OscarTasksService.newIntent(context));
     }
 
+    @WorkerThread
     public static void queueDropPackage(@NonNull Context context, @NonNull String accessToken, @NonNull String hexBoxId, @NonNull EncryptedData pkg) {
         DropPackageTask dpt = new DropPackageTask(accessToken);
         dpt.hexBoxId = hexBoxId;
         dpt.pkg = pkg;
         getQueue(context).offer(dpt);
-        context.startService(OscarTasksService.newIntent(context));
     }
 
     @WorkerThread
@@ -131,7 +131,6 @@ public class OscarClient {
         smt.message = msg;
         smt.urgent = urgent;
         getQueue(context).offer(smt);
-        context.startService(OscarTasksService.newIntent(context));
     }
 
 }

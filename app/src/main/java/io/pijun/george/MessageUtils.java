@@ -24,7 +24,6 @@ import io.pijun.george.event.LocationSharingRevoked;
 import io.pijun.george.models.FriendLocation;
 import io.pijun.george.models.FriendRecord;
 import io.pijun.george.models.UserRecord;
-import io.pijun.george.service.LocationListenerService;
 import retrofit2.Response;
 
 public class MessageUtils {
@@ -169,7 +168,7 @@ public class MessageUtils {
                 long now = System.currentTimeMillis();
                 if (now - updateTime > 3 * DateUtils.MINUTE_IN_MILLIS) {
                     L.i("  ok, provide a location update");
-                    context.startService(LocationListenerService.newIntent(context));
+                    new LocationSeeker().start(context);
                 } else {
                     L.i("  already provided an update at " + updateTime + ". It's " + now + " now");
                 }

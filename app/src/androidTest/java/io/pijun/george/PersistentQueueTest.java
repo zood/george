@@ -7,14 +7,12 @@ import android.support.test.runner.AndroidJUnit4;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
-import io.pijun.george.api.task.PersistentQueue;
-
 import static junit.framework.Assert.*;
 
 @RunWith(AndroidJUnit4.class)
 public class PersistentQueueTest {
 
-    static PersistentQueue.Converter<String> mConverter = new PersistentQueue.Converter<String>() {
+    private static PersistentQueue.Converter<String> mConverter = new PersistentQueue.Converter<String>() {
         @Override
         public String deserialize(byte[] bytes) {
             return new String(bytes);
@@ -26,10 +24,10 @@ public class PersistentQueueTest {
         }
     };
 
-    static PersistentQueue<String> mQueue;
-    static final String element1 = "Hello, world";
-    static final String element2 = "Goodbye, world";
-    static final String element3 = "Allah-u-Abha, Abha Kingdom!";
+    private static PersistentQueue<String> mQueue;
+    private static final String element1 = "Hello, world";
+    private static final String element2 = "Goodbye, world";
+    private static final String element3 = "Allah-u-Abha, Abha Kingdom!";
 
     @Test
     public void testCreation() throws Exception {
@@ -74,4 +72,12 @@ public class PersistentQueueTest {
         assertEquals(mQueue.size(), 0);
     }
 
+    @Test
+    public void testTake() throws Exception {
+        mQueue.offer(element1);
+        mQueue.offer(element2);
+
+        assertEquals(mQueue.take(), element1);
+        assertEquals(mQueue.take(), element2);
+    }
 }

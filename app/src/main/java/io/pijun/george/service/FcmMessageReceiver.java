@@ -10,6 +10,7 @@ import com.google.firebase.messaging.RemoteMessage;
 import java.util.Map;
 
 import io.pijun.george.L;
+import io.pijun.george.MessageProcessor;
 import io.pijun.george.api.Message;
 
 public class FcmMessageReceiver extends FirebaseMessagingService {
@@ -51,7 +52,7 @@ public class FcmMessageReceiver extends FirebaseMessagingService {
         msg.nonce = Base64.decode(data.get("nonce"), Base64.NO_WRAP);
         msg.senderId = Base64.decode(data.get("sender_id"), Base64.NO_WRAP);
 
-        MessageQueueService.queueMessage(this, msg);
+        MessageProcessor.get().queue(msg);
     }
 
     @WorkerThread

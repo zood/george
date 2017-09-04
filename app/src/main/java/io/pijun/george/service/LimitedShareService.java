@@ -1,6 +1,8 @@
 package io.pijun.george.service;
 
 import android.Manifest;
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.Service;
 import android.content.ClipData;
@@ -10,6 +12,7 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.location.Location;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.IBinder;
@@ -19,8 +22,8 @@ import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.annotation.UiThread;
 import android.support.annotation.WorkerThread;
+import android.support.v4.app.NotificationCompat;
 import android.support.v4.content.ContextCompat;
-import android.support.v7.app.NotificationCompat;
 import android.text.format.DateUtils;
 import android.widget.Toast;
 
@@ -52,11 +55,12 @@ public class LimitedShareService extends Service implements LocationListener {
     public static final String ACTION_START = "start";
     public static final String ACTION_END = "end";
     public static final String ACTION_COPY_LINK = "copy_link";
+    public static final String LIMITED_SHARE_CHANNEL_ID = "limited_share_01";
     /**
      * IsRunning is checked by LocationUploadService. In the event that the process is cleaned
      * up without notice, the record of this limited share will still exist in the database
      * when the app comes back, and location data will continue to be shared with the limited share.
-     * That's bad, so LocationUploadService checks this to see if the service is actually running,
+     * That's bad, so LocationUploader checks this to see if the service is actually running,
      * and if it's not, it will wipe the limited share data from the db.
      */
     public static volatile boolean IsRunning = false;
@@ -69,7 +73,7 @@ public class LimitedShareService extends Service implements LocationListener {
     private static Looper sServiceLooper;
     private static Handler sServiceHandler;
     static {
-        HandlerThread thread = new HandlerThread(LocationListenerService.class.getSimpleName());
+        HandlerThread thread = new HandlerThread(LimitedShareService.class.getSimpleName());
         thread.start();
 
         sServiceLooper = thread.getLooper();
@@ -132,7 +136,12 @@ public class LimitedShareService extends Service implements LocationListener {
             case ACTION_START:
                 if (!mIsStarted) {
                     mIsStarted = true;
-                    sServiceHandler.post((WorkerRunnable) this::startLimitedShare);
+                    sServiceHandler.post(new WorkerRunnable() {
+                        @Override
+                        public void run() {
+                            startLimitedShare();
+                        }
+                    });
                 }
                 break;
             case ACTION_COPY_LINK:
@@ -172,7 +181,21 @@ public class LimitedShareService extends Service implements LocationListener {
 
     @AnyThread
     private void showNotification() {
-        NotificationCompat.Builder bldr = new NotificationCompat.Builder(this);
+        // if we're on Android O, we need to create the notification channel
+        if (Build.VERSION.SDK_INT >= 26) {
+            NotificationManager mgr = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+            if (mgr != null) {
+                String name = getString(R.string.location_broadcast);
+                NotificationChannel channel = new NotificationChannel(
+                        LIMITED_SHARE_CHANNEL_ID,
+                        name,
+                        NotificationManager.IMPORTANCE_LOW);
+                channel.setDescription("Used only for the location broadcast notification.");
+                mgr.createNotificationChannel(channel);
+            }
+        }
+
+        NotificationCompat.Builder bldr = new NotificationCompat.Builder(this, LIMITED_SHARE_CHANNEL_ID);
         bldr.setSmallIcon(R.mipmap.ic_launcher);
         bldr.setContentTitle("Location broadcast is on");
         bldr.setContentText("Share the link to let others view your location");
@@ -246,11 +269,12 @@ public class LimitedShareService extends Service implements LocationListener {
         String url = getUrl();
         L.i("share url: " + url);
         ClipboardManager cm = (ClipboardManager) getSystemService(CLIPBOARD_SERVICE);
-        ClipData clipData = ClipData.newRawUri("Pijun URL", Uri.parse(url));
-        cm.setPrimaryClip(clipData);
-
-        // create a toast to let the user know it's done
-        Toast.makeText(this, "Link copied to clipboard", Toast.LENGTH_SHORT).show();
+        if (cm != null) {
+            ClipData clipData = ClipData.newRawUri("Pijun URL", Uri.parse(url));
+            cm.setPrimaryClip(clipData);
+            // create a toast to let the user know it's done
+            Toast.makeText(this, "Link copied to clipboard", Toast.LENGTH_SHORT).show();
+        }
     }
 
     @AnyThread

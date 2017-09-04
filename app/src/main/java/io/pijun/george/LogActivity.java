@@ -18,8 +18,6 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.StringWriter;
 
-import io.pijun.george.service.LocationListenerService;
-
 public class LogActivity extends AppCompatActivity implements Toolbar.OnMenuItemClickListener {
 
     public static Intent newIntent(@NonNull Context context) {
@@ -33,7 +31,7 @@ public class LogActivity extends AppCompatActivity implements Toolbar.OnMenuItem
 
         setContentView(R.layout.activity_log);
 
-        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
+        Toolbar toolbar = findViewById(R.id.toolbar);
         toolbar.inflateMenu(R.menu.activity_log);
         toolbar.setOnMenuItemClickListener(this);
 
@@ -52,22 +50,6 @@ public class LogActivity extends AppCompatActivity implements Toolbar.OnMenuItem
             L.resetLog(this);
             setLogContents("");
             return true;
-        } else if (id == R.id.log_lls_stack) {
-            StackTraceElement[] stackTrace = LocationListenerService.sServiceLooper.getThread().getStackTrace();
-            StringBuilder sb = new StringBuilder();
-            sb.append("LLS stack trace\n");
-            for (StackTraceElement ste : stackTrace) {
-                sb.append(ste.getClassName()).
-                        append('.').
-                        append(ste.getMethodName()).
-                        append('(').
-                        append(ste.getFileName()).
-                        append(':').
-                        append(ste.getLineNumber()).
-                        append(')').
-                        append('\n');
-            }
-            L.i(sb.toString());
         }
 
         return false;
@@ -103,7 +85,7 @@ public class LogActivity extends AppCompatActivity implements Toolbar.OnMenuItem
 
     @UiThread
     private void setLogContents(String logContents) {
-        TextView tv = (TextView) findViewById(R.id.log_contents);
+        TextView tv = findViewById(R.id.log_contents);
         tv.setText(logContents);
     }
 }

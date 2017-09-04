@@ -13,6 +13,8 @@ import com.squareup.otto.Bus;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
+import io.pijun.george.api.TaskSender;
+
 public class App extends Application {
 
     private static volatile App sApp;
@@ -39,8 +41,9 @@ public class App extends Application {
         Mapbox.getInstance(this, mapboxToken);
         MapboxTelemetry.getInstance().setTelemetryEnabled(false);
 
-//        MapboxAccountManager.start(this, mapboxToken);
-//        MapboxEventManager.getMapboxEventManager().setTelemetryEnabled(false);
+        LocationUploader lu = LocationUploader.get();
+        registerOnBus(lu);
+        TaskSender.get().start(this);
     }
 
     public static App getApp() {

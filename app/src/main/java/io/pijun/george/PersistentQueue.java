@@ -1,4 +1,4 @@
-package io.pijun.george.api.task;
+package io.pijun.george;
 
 import android.content.ContentValues;
 import android.content.Context;
@@ -13,6 +13,8 @@ import android.support.annotation.WorkerThread;
 
 import com.google.firebase.crash.FirebaseCrash;
 
+import java.util.concurrent.Semaphore;
+
 import io.pijun.george.L;
 
 public class PersistentQueue<E> {
@@ -23,16 +25,64 @@ public class PersistentQueue<E> {
 
     private final QueueHelper mHelper;
     private final Converter<E> mConverter;
+    private final Semaphore mSemaphore;
 
     public PersistentQueue(@NonNull Context context, @NonNull String queueName, @NonNull Converter<E> converter) {
         mConverter = converter;
         mHelper = new QueueHelper(context, queueName);
+        mSemaphore = new Semaphore(size(), true);
     }
 
     @WorkerThread
-    public int clear() {
+    @CheckResult
+    @NonNull
+    public E blockingPeek() throws InterruptedException {
+        mSemaphore.acquire();
+        try {
+            E element = getHead(false);
+            if (element == null) {
+                throw new RuntimeException("Mismatch between semaphore permits and actual queue count");
+            }
+            return element;
+        } finally {
+            mSemaphore.release();
+        }
+    }
+
+    @WorkerThread
+    public void clear() {
+        mSemaphore.drainPermits();
         SQLiteDatabase db = mHelper.getWritableDatabase();
-        return db.delete(TASKS_TABLE, null, null);
+        db.delete(TASKS_TABLE, null, null);
+    }
+
+    private void deleteRow(int itemId) {
+        SQLiteDatabase db = mHelper.getWritableDatabase();
+        int num = db.delete(TASKS_TABLE, TASKS_COL_ID + "=?", new String[]{""+itemId});
+        if (num != 1) {
+            throw new RuntimeException("Deleting the queue item affected " + num + " rows");
+        }
+    }
+
+    @WorkerThread
+    @Nullable
+    private E getHead(boolean thenDelete) {
+        E element = null;
+        SQLiteDatabase db = mHelper.getWritableDatabase();
+        int itemId = 0;
+        try (Cursor c = db.query(TASKS_TABLE, new String[]{TASKS_COL_ID, TASKS_COL_DATA}, null, null, null, null, TASKS_COL_ID + " ASC", "1")) {
+            if (c.moveToNext()) {
+                itemId = c.getInt(c.getColumnIndexOrThrow(TASKS_COL_ID));
+                byte[] data = c.getBlob(c.getColumnIndexOrThrow(TASKS_COL_DATA));
+                element = mConverter.deserialize(data);
+            }
+        }
+
+        if (thenDelete && itemId != 0) {
+            deleteRow(itemId);
+        }
+
+        return element;
     }
 
     @WorkerThread
@@ -43,19 +93,26 @@ public class PersistentQueue<E> {
         try {
             mHelper.getWritableDatabase().insertOrThrow(TASKS_TABLE, null, cv);
         } catch (SQLException ex) {
+            L.w("Error offering", ex);
             FirebaseCrash.report(ex);
+            return;
         }
+        mSemaphore.release();
     }
 
     @Nullable
     @WorkerThread
     @CheckResult
     public E peek() {
-        SQLiteDatabase db = mHelper.getReadableDatabase();
-        try (Cursor c = db.query(TASKS_TABLE, new String[]{TASKS_COL_DATA}, null, null, null, null, TASKS_COL_ID + " ASC", "1")) {
-            if (c.moveToNext()) {
-                byte[] data = c.getBlob(0);
-                return mConverter.deserialize(data);
+        if (mSemaphore.tryAcquire()) {
+            try {
+                E element = getHead(false);
+                if (element == null) {
+                    throw new RuntimeException("Mismatch between semaphore permits and actual queue count");
+                }
+                return element;
+            } finally {
+                mSemaphore.release();
             }
         }
 
@@ -63,23 +120,17 @@ public class PersistentQueue<E> {
     }
 
     @WorkerThread
+    @Nullable
     public E poll() {
-        SQLiteDatabase db = mHelper.getWritableDatabase();
-        int itemId = 0;
-        E element = null;
-        try (Cursor c = db.query(TASKS_TABLE, new String[]{TASKS_COL_ID, TASKS_COL_DATA}, null, null, null, null, TASKS_COL_ID + " ASC", "1")) {
-            if (c.moveToNext()) {
-                itemId = c.getInt(c.getColumnIndexOrThrow(TASKS_COL_ID));
-                byte[] data = c.getBlob(c.getColumnIndexOrThrow(TASKS_COL_DATA));
-                element = mConverter.deserialize(data);
+        if (mSemaphore.tryAcquire()) {
+            E element = getHead(true);
+            if (element == null) {
+                throw new RuntimeException("Mismatch between semaphore permits and actual queue count");
             }
+            return element;
         }
 
-        if (itemId != 0) {
-            deleteRow(itemId);
-        }
-
-        return element;
+        return null;
     }
 
     @CheckResult
@@ -100,12 +151,15 @@ public class PersistentQueue<E> {
         return cnt;
     }
 
-    private void deleteRow(int itemId) {
-        SQLiteDatabase db = mHelper.getWritableDatabase();
-        int num = db.delete(TASKS_TABLE, TASKS_COL_ID + "=?", new String[]{""+itemId});
-        if (num != 1) {
-            throw new RuntimeException("Deleting the queue item affected " + num + " rows");
+    @WorkerThread
+    @NonNull
+    public E take() throws InterruptedException {
+        mSemaphore.acquire();
+        E element = getHead(true);
+        if (element == null) {
+            throw new RuntimeException("Mismatch between semaphore permits and actual queue count");
         }
+        return element;
     }
 
     private static class QueueHelper extends SQLiteOpenHelper {

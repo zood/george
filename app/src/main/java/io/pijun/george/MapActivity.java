@@ -85,8 +85,6 @@ import io.pijun.george.models.MovementType;
 import io.pijun.george.models.UserRecord;
 import io.pijun.george.service.FcmTokenRegistrar;
 import io.pijun.george.service.LimitedShareService;
-import io.pijun.george.service.LocationUploadService;
-import io.pijun.george.service.MessageQueueService;
 import io.pijun.george.view.MyLocationView;
 import retrofit2.Call;
 import retrofit2.Response;
@@ -129,11 +127,11 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
         getWindow().setStatusBarColor(Color.TRANSPARENT);
         setContentView(R.layout.activity_map);
 
-        final Button button = (Button) findViewById(R.id.drawer_button);
+        final Button button = findViewById(R.id.drawer_button);
         final ConstraintLayout.LayoutParams params = (ConstraintLayout.LayoutParams) button.getLayoutParams();
         params.topMargin = getStatusBarHeight();
 
-        mMapView = (MapView) findViewById(R.id.map);
+        mMapView = findViewById(R.id.map);
         mMapView.onCreate(savedInstanceState);
         mMapView.getMapAsync(this);
 
@@ -144,7 +142,7 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
             flyCameraToMyLocation();
         });
 
-        NavigationView navView = (NavigationView) findViewById(R.id.navigation);
+        NavigationView navView = findViewById(R.id.navigation);
         navView.setNavigationItemSelectedListener(navItemListener);
 
         mLocationProviderClient = LocationServices.getFusedLocationProviderClient(this);
@@ -228,7 +226,7 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
                         return;
                     }
                     for (Message msg : msgs) {
-                        MessageQueueService.queueMessage(MapActivity.this, msg);
+                        MessageProcessor.get().queue(msg);
                     }
                 } catch (IOException ignore) {
                     // meh, we'll try again later
@@ -455,8 +453,6 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
 
     @UiThread
     private void locationPermissionVerified() {
-        startService(LocationUploadService.newIntent(this));
-
         mSettingsClient.checkLocationSettings(mLocationSettingsRequest)
                 .addOnFailureListener(this, e -> {
                     int statusCode = ((ApiException) e).getStatusCode();
@@ -554,7 +550,7 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
 
     @UiThread
     public void onShowDrawerAction(View v) {
-        DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
+        DrawerLayout drawer = findViewById(R.id.drawer_layout);
         drawer.openDrawer(GravityCompat.START, true);
     }
 
@@ -587,7 +583,7 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
     }
 
     private NavigationView.OnNavigationItemSelectedListener navItemListener = item -> {
-        DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
+        DrawerLayout drawer = findViewById(R.id.drawer_layout);
         drawer.closeDrawers();
 
         int id = item.getItemId();
@@ -688,12 +684,15 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
         L.i("onAddFriendAction");
         AlertDialog.Builder builder = new AlertDialog.Builder(this, R.style.AlertDialogTheme);
         builder.setPositiveButton("Add friend", (dialog, which) -> showAddFriendDialog())
-                .setNeutralButton("Limited Share",
-                        (dialog, which) -> startService(LimitedShareService.newIntent(MapActivity.this, LimitedShareService.ACTION_START)))
+                .setNeutralButton("Limited Share", (dialog, which) -> {
+                    Intent i = LimitedShareService.newIntent(this, LimitedShareService.ACTION_START);
+                    ContextCompat.startForegroundService(this, i);
+                })
                 .setNegativeButton("Cancel", null)
                 .setCancelable(true).setMessage("Add friend?").show();
     }
 
+    @UiThread
     private void showAddFriendDialog() {
         AlertDialog.Builder builder = new AlertDialog.Builder(this, R.style.AlertDialogTheme);
         builder.setTitle(R.string.add_friend);
@@ -707,7 +706,7 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
         AlertDialog dialog = builder.create();
         dialog.show();
 
-        mUsernameField = (EditText) dialog.findViewById(R.id.username);
+        mUsernameField = dialog.findViewById(R.id.username);
     }
 
     private void showProfile() {
@@ -790,7 +789,7 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
             db.startSharingWith(userRecord, sendingBoxId);
             Utils.showStringAlert(this, null, "You're now sharing with " + username);
         } catch (IOException ex) {
-            Utils.showStringAlert(this, null, "Network problem trying to share your location. Check your connection thent ry again.");
+            Utils.showStringAlert(this, null, "Network problem trying to share your location. Check your connection then try again.");
         } catch (DB.DBException dbe) {
             Utils.showStringAlert(this, null, "Error adding friend into database");
             FirebaseCrash.report(dbe);

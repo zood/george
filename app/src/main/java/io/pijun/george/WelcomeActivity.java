@@ -40,6 +40,7 @@ import io.pijun.george.api.ServerPublicKeyResponse;
 import io.pijun.george.api.User;
 import io.pijun.george.crypto.EncryptedData;
 import io.pijun.george.crypto.KeyPair;
+import io.pijun.george.event.UserLoggedIn;
 import io.pijun.george.interpolator.Bezier65Interpolator;
 import io.pijun.george.models.Snapshot;
 import retrofit2.Response;
@@ -55,26 +56,26 @@ public class WelcomeActivity extends AppCompatActivity implements WelcomeLayout.
         super.onCreate(savedInstanceState);
 
         setContentView(R.layout.activity_welcome);
-        final WelcomeLayout root = (WelcomeLayout) findViewById(R.id.root);
+        final WelcomeLayout root = findViewById(R.id.root);
 
-        TextInputLayout usernameC = (TextInputLayout) root.findViewById(R.id.reg_username_container);
-        TextInputEditText username = (TextInputEditText) usernameC.findViewById(R.id.reg_username);
+        TextInputLayout usernameC = root.findViewById(R.id.reg_username_container);
+        TextInputEditText username = usernameC.findViewById(R.id.reg_username);
         username.addTextChangedListener(new UsernameWatcher(usernameC, username));
 
-        TextInputLayout passwordC = (TextInputLayout) root.findViewById(R.id.reg_password_container);
-        TextInputEditText password = (TextInputEditText) passwordC.findViewById(R.id.reg_password);
+        TextInputLayout passwordC = root.findViewById(R.id.reg_password_container);
+        TextInputEditText password = passwordC.findViewById(R.id.reg_password);
         password.addTextChangedListener(new PasswordWatcher(passwordC, password));
 
-        TextInputLayout emailC = (TextInputLayout) root.findViewById(R.id.reg_email_container);
-        TextInputEditText email = (TextInputEditText) emailC.findViewById(R.id.reg_email);
+        TextInputLayout emailC = root.findViewById(R.id.reg_email_container);
+        TextInputEditText email = emailC.findViewById(R.id.reg_email);
         email.addTextChangedListener(new EmailWatcher(emailC, email));
 
-        TextInputLayout siUsernameC = (TextInputLayout) root.findViewById(R.id.si_username_container);
-        TextInputEditText siUsername = (TextInputEditText) siUsernameC.findViewById(R.id.si_username);
+        TextInputLayout siUsernameC = root.findViewById(R.id.si_username_container);
+        TextInputEditText siUsername = siUsernameC.findViewById(R.id.si_username);
         siUsername.addTextChangedListener(new ErrorDisabler(siUsernameC));
 
-        TextInputLayout siPasswordC = (TextInputLayout) root.findViewById(R.id.si_password_container);
-        TextInputEditText siPassword = (TextInputEditText) root.findViewById(R.id.si_password);
+        TextInputLayout siPasswordC = root.findViewById(R.id.si_password_container);
+        TextInputEditText siPassword = root.findViewById(R.id.si_password);
         siPassword.addTextChangedListener(new ErrorDisabler(siPasswordC));
 
         App.runOnUiThread(new UiRunnable() {
@@ -89,7 +90,7 @@ public class WelcomeActivity extends AppCompatActivity implements WelcomeLayout.
     protected void onStart() {
         super.onStart();
 
-        final WelcomeLayout root = (WelcomeLayout) findViewById(R.id.root);
+        final WelcomeLayout root = findViewById(R.id.root);
         if (root != null) {
             root.setCloudMovementEnabled(true);
             root.setFocusListener(this);
@@ -100,7 +101,7 @@ public class WelcomeActivity extends AppCompatActivity implements WelcomeLayout.
     protected void onStop() {
         super.onStop();
 
-        final WelcomeLayout root = (WelcomeLayout) findViewById(R.id.root);
+        final WelcomeLayout root = findViewById(R.id.root);
         if (root != null) {
             root.setCloudMovementEnabled(false);
         }
@@ -108,7 +109,7 @@ public class WelcomeActivity extends AppCompatActivity implements WelcomeLayout.
 
     @Override
     public void onBackPressed() {
-        WelcomeLayout root = (WelcomeLayout) findViewById(R.id.root);
+        WelcomeLayout root = findViewById(R.id.root);
         int state = root.getState();
         if (state == WelcomeLayout.STATE_REGISTER || state == WelcomeLayout.STATE_SIGN_IN) {
             root.transitionTo(WelcomeLayout.STATE_SPLASH);
@@ -122,18 +123,18 @@ public class WelcomeActivity extends AppCompatActivity implements WelcomeLayout.
     public void onSignInAction(View v) {
         boolean foundError = false;
 
-        EditText usernameField = (EditText) findViewById(R.id.si_username);
+        EditText usernameField = findViewById(R.id.si_username);
         final String username = usernameField.getText().toString();
         if (TextUtils.isEmpty(username)) {
-            TextInputLayout til = (TextInputLayout) findViewById(R.id.si_username_container);
+            TextInputLayout til = findViewById(R.id.si_username_container);
             til.setError(getString(R.string.username_please_msg));
             foundError = true;
         }
 
-        EditText passwordField = (EditText) findViewById(R.id.si_password);
+        EditText passwordField = findViewById(R.id.si_password);
         final String password = passwordField.getText().toString();
         if(TextUtils.isEmpty(password)) {
-            TextInputLayout til = (TextInputLayout) findViewById(R.id.si_password_container);
+            TextInputLayout til = findViewById(R.id.si_password_container);
             til.setError(getString(R.string.password_missing_msg));
             foundError = true;
         }
@@ -152,40 +153,40 @@ public class WelcomeActivity extends AppCompatActivity implements WelcomeLayout.
     }
 
     public void onShowRegistration(View v) {
-        WelcomeLayout root = (WelcomeLayout) findViewById(R.id.root);
+        WelcomeLayout root = findViewById(R.id.root);
         root.transitionTo(WelcomeLayout.STATE_REGISTER);
     }
 
     public void onShowSignIn(View v) {
-        WelcomeLayout root = (WelcomeLayout) findViewById(R.id.root);
+        WelcomeLayout root = findViewById(R.id.root);
         root.transitionTo(WelcomeLayout.STATE_SIGN_IN);
     }
 
     @UiThread
     public void onRegisterAction(View v) {
         boolean foundError = false;
-        final EditText usernameField = (EditText) findViewById(R.id.reg_username);
+        final EditText usernameField = findViewById(R.id.reg_username);
         final String username = usernameField.getText().toString();
         int msgId = Utils.getInvalidUsernameReason(username);
         if (msgId != 0) {
-            TextInputLayout til = (TextInputLayout) findViewById(R.id.reg_username_container);
+            TextInputLayout til = findViewById(R.id.reg_username_container);
             til.setError(getString(msgId));
             foundError = true;
         }
 
-        final EditText passwordField = (EditText) findViewById(R.id.reg_password);
+        final EditText passwordField = findViewById(R.id.reg_password);
         final String password = passwordField.getText().toString();
         if (password.length() < Constants.PASSWORD_TEXT_MIN_LENGTH) {
-            TextInputLayout til = (TextInputLayout) findViewById(R.id.reg_password_container);
+            TextInputLayout til = findViewById(R.id.reg_password_container);
             til.setError(getString(R.string.too_short));
             foundError = true;
         }
 
-        final EditText emailField = (EditText) findViewById(R.id.reg_email);
+        final EditText emailField = findViewById(R.id.reg_email);
         final String email = emailField.getText().toString().trim();
         if (!TextUtils.isEmpty(email)) {
             if (!Utils.isValidEmail(email)) {
-                TextInputLayout til = (TextInputLayout) findViewById(R.id.reg_email_container);
+                TextInputLayout til = findViewById(R.id.reg_email_container);
                 til.setError(getString(R.string.invalid_address));
                 foundError = true;
             }
@@ -236,7 +237,7 @@ public class WelcomeActivity extends AppCompatActivity implements WelcomeLayout.
         if (textInputLayout != R.id.si_password_container && textInputLayout != R.id.si_username_container) {
             throw new IllegalArgumentException("Incorrect textinputlayout used for setLoginError");
         }
-        TextInputLayout layout = (TextInputLayout) findViewById(textInputLayout);
+        TextInputLayout layout = findViewById(textInputLayout);
         layout.setError(getString(msg));
     }
 
@@ -421,6 +422,7 @@ public class WelcomeActivity extends AppCompatActivity implements WelcomeLayout.
         prefs.setUsername(username);
         prefs.setAccessToken(loginResponse.accessToken);
 
+        App.postOnBus(new UserLoggedIn());
         App.runOnUiThread(new UiRunnable() {
             @Override
             public void run() {
@@ -531,7 +533,7 @@ public class WelcomeActivity extends AppCompatActivity implements WelcomeLayout.
 
     @Override
     public void onWelcomeLayoutFocused(final View view) {
-        handleFocusChange(view, (ScrollView) findViewById(R.id.scrollview), (WelcomeLayout) findViewById(R.id.root));
+        handleFocusChange(view, findViewById(R.id.scrollview), findViewById(R.id.root));
     }
 
     private void handleFocusChange(final View view, final ScrollView sv, final WelcomeLayout root) {
@@ -586,6 +588,9 @@ public class WelcomeActivity extends AppCompatActivity implements WelcomeLayout.
     @UiThread
     private void hideKeyboard() {
         InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
+        if (imm == null) {
+            return;
+        }
         imm.hideSoftInputFromWindow(findViewById(R.id.root).getWindowToken(), 0);
     }
 
@@ -606,7 +611,7 @@ public class WelcomeActivity extends AppCompatActivity implements WelcomeLayout.
 
     @UiThread
     private void _setBusy(boolean b) {
-        WelcomeLayout root = (WelcomeLayout) findViewById(R.id.root);
+        WelcomeLayout root = findViewById(R.id.root);
         root.requestFocus();
         if (root.getState() == WelcomeLayout.STATE_REGISTER) {
             root.setRegistrationSpinnerVisible(b);
