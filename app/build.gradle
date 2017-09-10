@@ -9,8 +9,8 @@ android {
         applicationId "io.pijun.george"
         minSdkVersion 21
         targetSdkVersion 26
-        versionCode 4
-        versionName "0.4"
+        versionCode 5
+        versionName "0.5"
         multiDexEnabled true
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
         resConfigs "en"

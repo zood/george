@@ -154,11 +154,12 @@ public class AvatarCropperActivity extends AppCompatActivity implements MoveGest
         float imgY = mImgXY.y + mImgOffset.y;
         float imgW = mBinding.avatar.getWidth();
         float imgH = mBinding.avatar.getHeight();
-        L.i("imgx: " + imgX + ", imgy: " + imgY + ", imgw: " + imgW + ", imgh: " + imgH);
-        float cx = (boxLeft - imgX);
-        float ct = (boxTop - imgY);
-        float cw = boxSize;
-        float ch = boxSize;
+//        L.i("imgx: " + imgX + ", imgy: " + imgY + ", imgw: " + imgW + ", imgh: " + imgH);
+        float cx = ((boxLeft - imgX)/imgW) * mOriginalImage.getWidth();
+        float ct = ((boxTop - imgY)/imgH) * mOriginalImage.getHeight();
+        float cw = (boxSize/imgW) * mOriginalImage.getWidth();
+        float ch = (boxSize/imgH) * mOriginalImage.getHeight();
+//        L.i("boxTop: " + boxTop);
         L.i("cx: " + cx + ", ct: " + ct + ", cw: " + cw + ", ch: " + ch);
     }
 
@@ -174,6 +175,7 @@ public class AvatarCropperActivity extends AppCompatActivity implements MoveGest
         float height = mBinding.root.getHeight();
         float boxSize = width * 0.7f;
         float yStart = (height - boxSize)/2.0f;
+        L.i("yStart: " + yStart);
 
         AbsoluteLayout.LayoutParams params = (AbsoluteLayout.LayoutParams) mBinding.topShade.getLayoutParams();
         params.height = (int)yStart;
@@ -225,8 +227,8 @@ public class AvatarCropperActivity extends AppCompatActivity implements MoveGest
         mImgOffset.y += dy;
 
         AbsoluteLayout.LayoutParams params = (AbsoluteLayout.LayoutParams) mBinding.avatar.getLayoutParams();
-        params.x += dx;
-        params.y += dy;
+        params.x = (int) (mImgXY.x + mImgOffset.x); // += dx;
+        params.y = (int) (mImgXY.y + mImgOffset.y); // += dy;
         mBinding.avatar.setLayoutParams(params);
     }
 

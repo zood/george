@@ -69,6 +69,7 @@ public class LocationJobService extends JobService implements LocationSeeker.Loc
     @Override
     @WorkerThread
     public void locationSeekerFinished(@NonNull LocationSeeker seeker) {
+        L.i("LJS.locationSeekerFinished");
         jobFinished(mParams, false);
     }
 }

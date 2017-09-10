@@ -49,13 +49,17 @@ public class LocationSeeker {
     @WorkerThread
     synchronized public void shutdown() {
         L.i("LS.shutdown");
-        mHandler.post(new Runnable() {
-            @Override
-            public void run() {
-                _shutdown();
-            }
-        });
-        mThread.quit();
+        try {
+            mHandler.post(new Runnable() {
+                @Override
+                public void run() {
+                    _shutdown();
+                }
+            });
+            mThread.quit();
+        } catch (Throwable t) {
+            L.w("Error shutting down LocationSeeker", t);
+        }
     }
 
     @WorkerThread
