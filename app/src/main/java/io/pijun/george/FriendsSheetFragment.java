@@ -29,6 +29,7 @@ import io.pijun.george.api.UserComm;
 import io.pijun.george.crypto.EncryptedData;
 import io.pijun.george.crypto.KeyPair;
 import io.pijun.george.databinding.FragmentFriendsSheetBinding;
+import io.pijun.george.event.AvatarUpdated;
 import io.pijun.george.event.FriendRemoved;
 import io.pijun.george.event.LocationSharingGranted;
 import io.pijun.george.event.LocationSharingRevoked;
@@ -42,6 +43,12 @@ public class FriendsSheetFragment extends Fragment implements FriendItemsAdapter
     private BottomSheetBehavior mBehavior;
     private FragmentFriendsSheetBinding mBinding;
     private int mTenDips;
+
+    @Subscribe @Keep @UiThread
+    public void onAvatarUpdated(AvatarUpdated evt) {
+        mAvatarsAdapter.onAvatarUpdated(evt.username);
+        mFriendItemsAdapter.onAvatarUpdated(evt.username);
+    }
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {

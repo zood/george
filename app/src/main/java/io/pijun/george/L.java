@@ -15,7 +15,7 @@ import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 public class L {
-    private static final String TAG = "Pijun";
+    public static final String TAG = "Pijun";
     private static volatile FileOutputStream sLogStream;
     private static final SimpleDateFormat sDateFormat = new SimpleDateFormat("MM-dd HH:mm:ss.SSS", Locale.US);
     static final String LOG_FILENAME = "logs.txt";
@@ -23,27 +23,27 @@ public class L {
 
     public static void i(@NonNull String msg) {
         Log.i(TAG, msg);
-        write("I", msg.getBytes());
+//        write("I", msg.getBytes());
     }
 
     public static void d(@NonNull String msg) {
         Log.d(TAG, msg);
-        write("D", msg.getBytes());
+//        write("D", msg.getBytes());
     }
 
     public static void w(@NonNull String msg) {
         Log.w(TAG, msg);
-        write("W", msg.getBytes());
+//        write("W", msg.getBytes());
     }
 
     public static void w(@NonNull String msg, @NonNull Throwable t) {
         Log.w(TAG, msg, t);
-        write("W", msg.getBytes(), t);
+//        write("W", msg.getBytes(), t);
     }
 
     public static void e(@NonNull String msg, @NonNull Throwable t) {
         Log.e(TAG, msg, t);
-        write("W", msg.getBytes(), t);
+//        write("W", msg.getBytes(), t);
     }
 
     private static void write(@NonNull String severity, @NonNull byte[] msg) {

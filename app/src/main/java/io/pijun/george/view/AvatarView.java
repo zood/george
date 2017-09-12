@@ -5,7 +5,6 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.BitmapShader;
 import android.graphics.Canvas;
-import android.graphics.Color;
 import android.graphics.Matrix;
 import android.graphics.Paint;
 import android.graphics.Shader;
@@ -34,13 +33,10 @@ public class AvatarView extends View {
     private float mHeight;
     private Paint mBorderPaint;
     private float mBorderWidth;
-    private Bitmap mImg;
-    private BitmapShader mImgShader;
+    @Nullable private Bitmap mImg;
+    @Nullable private BitmapShader mImgShader;
     private Paint mImgPaint;
     private float mRadius;
-    private Paint mBlackPaint;
-
-    private Paint mShadowPaint;
 
     public AvatarView(Context context) {
         super(context);
@@ -57,59 +53,50 @@ public class AvatarView extends View {
         init();
     }
 
-    public AvatarView(Context context, @Nullable AttributeSet attrs, int defStyleAttr, int defStyleRes) {
-        super(context, attrs, defStyleAttr, defStyleRes);
-        init();
-    }
-
     private void handleSizeChanged() {
         mBorderWidth = mWidth * 0.07f;
         mBorderPaint.setStrokeWidth(mBorderWidth);
         mRadius = mWidth/2.0f - mBorderWidth/2.0f;
 
-        float xScale = (mRadius*2-mBorderWidth) / (float)mImg.getWidth();
-        float yScale = (mRadius*2-mBorderWidth) / (float)mImg.getHeight();
+        if (mImg != null && mImgShader != null) {
+            float xScale = (mRadius * 2 - mBorderWidth) / (float) mImg.getWidth();
+            float yScale = (mRadius * 2 - mBorderWidth) / (float) mImg.getHeight();
 
-        Matrix matrix = new Matrix();
-        matrix.postScale(xScale, yScale);
-        matrix.postTranslate(mBorderWidth, mBorderWidth);
-        mImgShader.setLocalMatrix(matrix);
+            Matrix matrix = new Matrix();
+            matrix.postScale(xScale, yScale);
+            matrix.postTranslate(mBorderWidth, mBorderWidth);
+            mImgShader.setLocalMatrix(matrix);
+        }
     }
 
     private void init() {
         setLayerType(View.LAYER_TYPE_SOFTWARE, null);
-
-        mBlackPaint = new Paint();
-        mBlackPaint.setColor(Color.BLACK);
-
-        mShadowPaint = new Paint();
-        mShadowPaint.setColor(0x80000000);
-        mShadowPaint.setStyle(Paint.Style.STROKE);
-        mShadowPaint.setAntiAlias(true);
 
         mBorderPaint = new Paint();
         mBorderPaint.setColor(ContextCompat.getColor(getContext(), R.color.colorPrimary));
         mBorderPaint.setStyle(Paint.Style.STROKE);
         mBorderPaint.setAntiAlias(true);
 
-        mImg = BitmapFactory.decodeResource(getResources(), R.drawable.george_clooney);
-        mImgShader = new BitmapShader(mImg, Shader.TileMode.CLAMP, Shader.TileMode.CLAMP);
-
         mImgPaint = new Paint();
         mImgPaint.setAntiAlias(true);
-        mImgPaint.setShader(mImgShader);
+
+        if (isInEditMode()) {
+            mImg = BitmapFactory.decodeResource(getResources(), R.drawable.george_clooney);
+            mImgShader = new BitmapShader(mImg, Shader.TileMode.CLAMP, Shader.TileMode.CLAMP);
+            mImgPaint.setShader(mImgShader);
+        }
     }
 
     @Override
     protected void onDraw(Canvas canvas) {
         super.onDraw(canvas);
 
-//        canvas.drawRect(0, 0, mWidth, mHeight, mBlackPaint);
         canvas.drawCircle(mWidth/2.0f, mHeight/2.0f, mRadius, mBorderPaint);
+        //noinspection SuspiciousNameCombination
         canvas.drawRoundRect(mBorderWidth,
                 mBorderWidth,
-                mRadius*2.0f,
-                mRadius*2.0f,
+                mRadius * 2.0f,
+                mRadius * 2.0f,
                 mRadius,
                 mRadius,
                 mImgPaint);

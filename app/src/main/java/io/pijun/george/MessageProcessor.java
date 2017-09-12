@@ -50,11 +50,11 @@ public class MessageProcessor {
             try {
                 msg = mQueue.blockingPeek();
                 int result = MessageUtils.unwrapAndProcess(App.getApp(), msg.senderId, msg.cipherText, msg.nonce);
+                String token = Prefs.get(App.getApp()).getAccessToken();
                 switch (result) {
                     case MessageUtils.ERROR_NONE:
                         mQueue.poll();
                         // delete the message from the server
-                        String token = Prefs.get(App.getApp()).getAccessToken();
                         if (!TextUtils.isEmpty(token)) {
                             OscarClient.queueDeleteMessage(App.getApp(), token, msg.id);
                         }
@@ -82,6 +82,10 @@ public class MessageProcessor {
                     case MessageUtils.ERROR_UNKNOWN:
                     default:
                         mQueue.poll();
+                        // delete the message from the server
+                        if (!TextUtils.isEmpty(token)) {
+                            OscarClient.queueDeleteMessage(App.getApp(), token, msg.id);
+                        }
                         L.w("error processing message: " + result);
                         UserRecord user = DB.get(App.getApp()).getUser(msg.senderId);
                         if (user != null) {

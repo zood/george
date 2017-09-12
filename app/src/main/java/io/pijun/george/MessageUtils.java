@@ -131,6 +131,17 @@ public class MessageUtils {
         }
         L.i("  comm type: " + comm.type);
         switch (comm.type) {
+            case AvatarUpdate:
+                L.i("AvatarUpdate");
+                try {
+                    boolean success = AvatarManager.saveAvatar(context, userRecord.username, comm.avatar);
+                    if (!success) {
+                        L.w("Failed to save avatar from " + userRecord.username);
+                    }
+                } catch (IOException ex) {
+                    FirebaseCrash.report(ex);
+                }
+                break;
             case LocationSharingGrant:
                 L.i("LocationSharingGrant");
                 try {

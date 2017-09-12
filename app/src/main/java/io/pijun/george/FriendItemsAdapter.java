@@ -6,6 +6,7 @@ import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.Outline;
 import android.graphics.Typeface;
+import android.graphics.drawable.Drawable;
 import android.os.Looper;
 import android.support.annotation.AnyThread;
 import android.support.annotation.NonNull;
@@ -21,7 +22,11 @@ import android.view.ViewOutlineProvider;
 import android.widget.Switch;
 import android.widget.TextView;
 
+import com.squareup.picasso.Picasso;
+import com.squareup.picasso.Target;
+
 import java.util.ArrayList;
+import java.util.Locale;
 
 import io.pijun.george.models.FriendLocation;
 import io.pijun.george.models.FriendRecord;
@@ -47,6 +52,21 @@ class FriendItemsAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
         return mFriends.size();
     }
 
+    @UiThread
+    void onAvatarUpdated(@Nullable String username) {
+        if (username == null) {
+            return;
+        }
+
+        username = username.toLowerCase(Locale.US);
+        for (int i=0; i<mFriends.size(); i++) {
+            FriendRecord f = mFriends.get(i);
+            if (f.user.username.toLowerCase(Locale.US).equals(username)) {
+                notifyItemChanged(i);
+            }
+        }
+    }
+
     @Override
     public void onBindViewHolder(RecyclerView.ViewHolder holder, int position) {
         if (holder instanceof FriendItemViewHolder) {
@@ -55,11 +75,30 @@ class FriendItemsAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
             // -- AVATAR --
             Resources rsrc = h.avatar.getResources();
             int forty = rsrc.getDimensionPixelSize(R.dimen.forty);
-            Bitmap bmp = Bitmap.createBitmap(forty, forty, Bitmap.Config.ARGB_8888);
+            Context ctx = h.avatar.getContext();
             final FriendRecord friend = mFriends.get(position);
-            Identicon.draw(bmp, friend.user.username);
-            h.avatar.setImage(bmp);
             h.avatar.setBorderColor(friend.receivingBoxId != null ? R.color.colorPrimary : R.color.ui_tint_gray);
+            Target target = new Target() {
+                @Override
+                public void onBitmapLoaded(Bitmap bitmap, Picasso.LoadedFrom from) {
+                    h.avatar.setImage(bitmap);
+                }
+
+                @Override
+                public void onBitmapFailed(Drawable errorDrawable) {
+                    Bitmap bmp = Bitmap.createBitmap(forty, forty, Bitmap.Config.ARGB_8888);
+                    Identicon.draw(bmp, friend.user.username);
+                    h.avatar.setImage(bmp);
+                }
+
+                @Override
+                public void onPrepareLoad(Drawable placeHolderDrawable) {}
+            };
+            h.avatar.setTag(target);
+            Picasso.with(ctx).
+                    load(AvatarManager.getAvatar(ctx, friend.user.username)).
+                    resize(forty, forty).
+                    into(target);
 
             // -- USERNAME --
             h.username.setText(friend.user.username);
@@ -256,12 +295,12 @@ class FriendItemsAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
         FriendItemViewHolder(View itemView) {
             super(itemView);
 
-            avatar = (AvatarView) itemView.findViewById(R.id.avatar);
-            username = (TextView) itemView.findViewById(R.id.username);
-            location = (TextView) itemView.findViewById(R.id.location);
-            updateTime = (TextView) itemView.findViewById(R.id.update_time);
-            shareSwitch = (Switch) itemView.findViewById(R.id.share_switch);
-            shareSwitchLabel = (TextView) itemView.findViewById(R.id.share_switch_label);
+            avatar = itemView.findViewById(R.id.avatar);
+            username = itemView.findViewById(R.id.username);
+            location = itemView.findViewById(R.id.location);
+            updateTime = itemView.findViewById(R.id.update_time);
+            shareSwitch = itemView.findViewById(R.id.share_switch);
+            shareSwitchLabel = itemView.findViewById(R.id.share_switch_label);
         }
     }
 

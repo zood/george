@@ -76,6 +76,10 @@ public class LocationUploader {
         }
 
         Location location = mLocations.peek();
+        if (location == null) {
+            // another call to flush could have raced us to the last location
+            return;
+        }
         UserComm locMsg = UserComm.newLocationInfo(location, mMovements);
         byte[] msgBytes = locMsg.toJSON();
         // share to our friends

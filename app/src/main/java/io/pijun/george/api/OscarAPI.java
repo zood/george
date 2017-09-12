@@ -38,6 +38,9 @@ public interface OscarAPI {
     @GET("users/me/backup")
     Call<EncryptedData> getDatabaseBackup();
 
+    @GET("messages/{msgId}")
+    Call<Message> getMessage(@Path("msgId") long msgId);
+
     @GET("messages")
     Call<Message[]> getMessages();
 

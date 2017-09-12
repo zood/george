@@ -1,18 +1,19 @@
 package io.pijun.george;
 
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.Intent;
 import android.databinding.DataBindingUtil;
 import android.graphics.Bitmap;
 import android.graphics.PointF;
+import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.Bundle;
-import android.provider.MediaStore;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.annotation.UiThread;
 import android.support.v7.app.AppCompatActivity;
-import android.text.TextUtils;
+import android.util.Log;
 import android.view.MotionEvent;
 import android.view.ScaleGestureDetector;
 import android.view.View;
@@ -20,20 +21,22 @@ import android.view.ViewTreeObserver;
 import android.widget.AbsoluteLayout;
 
 import com.arashpayan.gesture.MoveGestureRecognizer;
+import com.google.firebase.crash.FirebaseCrash;
+import com.squareup.picasso.Picasso;
+import com.squareup.picasso.Target;
+
+import java.io.IOException;
 
 import io.pijun.george.databinding.ActivityAvatarCropperBinding;
 
 public class AvatarCropperActivity extends AppCompatActivity implements MoveGestureRecognizer.MoveGestureListener, View.OnTouchListener, ScaleGestureDetector.OnScaleGestureListener {
 
-    private static String ARG_BITMAP = "bitmap";
-    private static String ARG_TYPE = "type";
     private static String ARG_URI = "uri";
 
     private ActivityAvatarCropperBinding mBinding;
     private Bitmap mOriginalImage;
     private MoveGestureRecognizer mMoveRecognizer;
     private ScaleGestureDetector mScaleDetector;
-//    private PointF mAvatarStart;
     private boolean mIsScaling = false;
     private float mCurrWidth;
     private float mCurrHeight;
@@ -54,16 +57,8 @@ public class AvatarCropperActivity extends AppCompatActivity implements MoveGest
         params.x = mBinding.root.getWidth() - mBinding.done.getWidth();
     }
 
-    public static Intent newIntent(@NonNull Context ctx, @NonNull Bitmap img) {
-        Intent i = new Intent(ctx, AvatarCropperActivity.class);
-        i.putExtra(ARG_TYPE, ARG_BITMAP);
-        i.putExtra(ARG_BITMAP, img);
-        return i;
-    }
-
     public static Intent newIntent(@NonNull Context ctx, @NonNull Uri uri) {
         Intent i = new Intent(ctx, AvatarCropperActivity.class);
-        i.putExtra(ARG_TYPE, ARG_URI);
         i.putExtra(ARG_URI, uri);
         return i;
     }
@@ -81,50 +76,30 @@ public class AvatarCropperActivity extends AppCompatActivity implements MoveGest
         if (extras == null) {
             throw new IllegalArgumentException("You need to use newIntent to start the activity");
         }
-        String type = extras.getString(ARG_TYPE, null);
-        if (TextUtils.isEmpty(type)) {
-            throw new IllegalArgumentException("Arg type is missing from intent.");
-        }
-        if (!type.equals(ARG_BITMAP) && !type.equals(ARG_URI)) {
-            throw new IllegalArgumentException("Unknown arg type '" + type + "'");
-        }
 
         mBinding = DataBindingUtil.setContentView(this, R.layout.activity_avatar_cropper);
 
-        if (type.equals(ARG_BITMAP)) {
-            mOriginalImage = extras.getParcelable(ARG_BITMAP);
-            App.runOnUiThread(new UiRunnable() {
-                @Override
-                public void run() {
-                    onImageLoaded();
-                }
-            });
-            if (mOriginalImage == null) {
-                throw new IllegalArgumentException("You promised me a bitmap");
-            }
-        } else if (type.equals(ARG_URI)) {
-            Uri uri = extras.getParcelable(ARG_URI);
-            if (uri == null) {
-                throw new IllegalArgumentException("You promised me a uri");
-            }
-            App.runInBackground(new WorkerRunnable() {
-                @Override
-                public void run() {
-                    try {
-                        mOriginalImage = MediaStore.Images.Media.getBitmap(getContentResolver(), uri);
-                        App.runOnUiThread(new UiRunnable() {
-                            @Override
-                            public void run() {
-                                onImageLoaded();
-                            }
-                        });
-                    } catch (Exception ex) {
-                        L.w("Failed to get bitmap from uri", ex);
-                        finish();
-                    }
-                }
-            });
+        Uri uri = extras.getParcelable(ARG_URI);
+        if (uri == null) {
+            throw new IllegalArgumentException("You promised me a uri");
         }
+        Target target = new Target() {
+            @Override
+            public void onBitmapLoaded(Bitmap bitmap, Picasso.LoadedFrom from) {
+                mOriginalImage = bitmap;
+                onImageLoaded();
+            }
+
+            @Override
+            public void onBitmapFailed(Drawable errorDrawable) {
+                FirebaseCrash.logcat(Log.WARN, L.TAG, "Unable to open bitmap for cropping");
+                finish();
+            }
+            @Override
+            public void onPrepareLoad(Drawable placeHolderDrawable) {}
+        };
+        mBinding.avatar.setTag(target);
+        Picasso.with(this).load(uri).into(target);
 
         mBinding.root.getViewTreeObserver().addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
             private boolean initialLayoutDone = false;
@@ -154,13 +129,50 @@ public class AvatarCropperActivity extends AppCompatActivity implements MoveGest
         float imgY = mImgXY.y + mImgOffset.y;
         float imgW = mBinding.avatar.getWidth();
         float imgH = mBinding.avatar.getHeight();
-//        L.i("imgx: " + imgX + ", imgy: " + imgY + ", imgw: " + imgW + ", imgh: " + imgH);
         float cx = ((boxLeft - imgX)/imgW) * mOriginalImage.getWidth();
-        float ct = ((boxTop - imgY)/imgH) * mOriginalImage.getHeight();
+        float cy = ((boxTop - imgY)/imgH) * mOriginalImage.getHeight();
         float cw = (boxSize/imgW) * mOriginalImage.getWidth();
         float ch = (boxSize/imgH) * mOriginalImage.getHeight();
-//        L.i("boxTop: " + boxTop);
-        L.i("cx: " + cx + ", ct: " + ct + ", cw: " + cw + ", ch: " + ch);
+
+        mBinding.done.setEnabled(false);
+        mBinding.cancel.setEnabled(false);
+
+        App.runInBackground(new WorkerRunnable() {
+            @Override
+            public void run() {
+                L.i("cropping image");
+                Bitmap cropped = Bitmap.createBitmap(mOriginalImage, (int) cx, (int) cy, (int) cw, (int) ch, null, false);
+                try {
+                    boolean success = AvatarManager.setMyAvatar(AvatarCropperActivity.this, cropped);
+                    if (success) {
+                        App.runOnUiThread(new UiRunnable() {
+                            @Override
+                            public void run() {
+                                finish();
+                            }
+                        });
+                        return;
+                    }
+                    App.runOnUiThread(new UiRunnable() {
+                        @Override
+                        public void run() {
+                            Utils.showStringAlert(AvatarCropperActivity.this, "Save error", "There was a problem saving your profile image. Try again, and if the problem persists, contact support.");
+                            mBinding.done.setEnabled(true);
+                            mBinding.cancel.setEnabled(true);
+                        }
+                    });
+                } catch (IOException ex) {
+                    App.runOnUiThread(new UiRunnable() {
+                        @Override
+                        public void run() {
+                            Utils.showStringAlert(AvatarCropperActivity.this, "Save error", "We couldn't save your profile image. Make sure you have enough free space on your device, then try again.");
+                            mBinding.done.setEnabled(true);
+                            mBinding.cancel.setEnabled(true);
+                        }
+                    });
+                }
+            }
+        });
     }
 
     @SuppressWarnings("deprecation")
@@ -175,7 +187,6 @@ public class AvatarCropperActivity extends AppCompatActivity implements MoveGest
         float height = mBinding.root.getHeight();
         float boxSize = width * 0.7f;
         float yStart = (height - boxSize)/2.0f;
-        L.i("yStart: " + yStart);
 
         AbsoluteLayout.LayoutParams params = (AbsoluteLayout.LayoutParams) mBinding.topShade.getLayoutParams();
         params.height = (int)yStart;
@@ -208,7 +219,6 @@ public class AvatarCropperActivity extends AppCompatActivity implements MoveGest
         mImgXY.y = height/2.0f - mCurrHeight/2.0f;
         params.x = (int) mImgXY.x;
         params.y = (int) mImgXY.y;
-        L.i("x: " + params.x + ", y: " + params.y);
         mBinding.avatar.setLayoutParams(params);
     }
 
@@ -267,9 +277,6 @@ public class AvatarCropperActivity extends AppCompatActivity implements MoveGest
 
     @Override
     public boolean onScaleBegin(ScaleGestureDetector detector) {
-        float fx = detector.getFocusX();
-        float fy = detector.getFocusY();
-        L.i("onScale Begin - fx: " + fx + ", fy: " + fy);
         // merge the offst into the image xy, so calculations are easier while we scale
         mImgXY.x = mImgXY.x + mImgOffset.x;
         mImgXY.y = mImgXY.y + mImgOffset.y;
@@ -282,10 +289,10 @@ public class AvatarCropperActivity extends AppCompatActivity implements MoveGest
 
     @Override
     public void onScaleEnd(ScaleGestureDetector detector) {
-        L.i("onScale end");
         mIsScaling = false;
     }
 
+    @SuppressLint("ClickableViewAccessibility")
     @Override
     public boolean onTouch(View v, MotionEvent event) {
         mScaleDetector.onTouchEvent(event);

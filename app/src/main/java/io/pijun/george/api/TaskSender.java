@@ -149,7 +149,7 @@ public class TaskSender {
                     L.i("  " + err);
                 }
             } catch (IOException e) {
-                L.w("task exception: " + e.getMessage());
+                L.w("task exception", e);
                 // a connection problem. we'll try again when the connection is back.
                 return;
             } finally {

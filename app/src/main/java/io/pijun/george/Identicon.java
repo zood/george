@@ -15,7 +15,7 @@ import java.security.NoSuchAlgorithmException;
 
 public class Identicon extends View {
 
-    public static void draw(Bitmap bitmap, String data) {
+    public static void draw(@NonNull Bitmap bitmap, @NonNull String data) {
         byte[] hash = getHash(data);
         draw(new Canvas(bitmap), hash, new Paint());
     }
@@ -49,10 +49,8 @@ public class Identicon extends View {
             digest.update(data.getBytes());
             return digest.digest();
         } catch (NoSuchAlgorithmException ex) {
-            L.w("MD5 algo not found", ex);
+            throw new RuntimeException("MD5 algo not found", ex);
         }
-
-        return null;
     }
 
     @ColorInt
@@ -92,11 +90,6 @@ public class Identicon extends View {
 
     public Identicon(Context context, AttributeSet attrs, int defStyleAttr) {
         super(context, attrs, defStyleAttr);
-        init();
-    }
-
-    public Identicon(Context context, AttributeSet attrs, int defStyleAttr, int defStyleRes) {
-        super(context, attrs, defStyleAttr, defStyleRes);
         init();
     }
 

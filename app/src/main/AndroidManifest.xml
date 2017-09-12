@@ -70,6 +70,18 @@
         <service android:name=".service.UserActivityReceiver" />
         <!-- END SERVICES -->
 
+        <!-- BEGIN PROVIDERS -->
+        <provider
+            android:authorities="io.pijun.george.fileprovider"
+            android:name="android.support.v4.content.FileProvider"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/file_paths" />
+        </provider>
+        <!-- END PROVIDERS -->
+
         <meta-data
             android:name="com.google.android.gms.version"
             android:value="@integer/google_play_services_version" />

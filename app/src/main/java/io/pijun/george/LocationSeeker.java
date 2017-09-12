@@ -30,6 +30,7 @@ public class LocationSeeker {
     private final Handler mHandler;
     @Nullable private FusedLocationProviderClient client;
     @Nullable private LocationSeekerListener mListener;
+    private Thread mTimeoutThread;
 
     @AnyThread
     public LocationSeeker() {
@@ -50,13 +51,14 @@ public class LocationSeeker {
     synchronized public void shutdown() {
         L.i("LS.shutdown");
         try {
+            L.i("shutdown about to post runnable");
             mHandler.post(new Runnable() {
                 @Override
                 public void run() {
                     _shutdown();
                 }
             });
-            mThread.quit();
+            mThread.quitSafely();
         } catch (Throwable t) {
             L.w("Error shutting down LocationSeeker", t);
         }
@@ -98,9 +100,15 @@ public class LocationSeeker {
             @Override
             public void run() {
                 try {
+                    mTimeoutThread = Thread.currentThread();
                     Thread.sleep(MAX_WAIT_SECONDS * 1000);
-                } catch (InterruptedException ignore) {}
-                L.i("LocationSeeker time out is running");
+                } catch (InterruptedException ignore) {
+                    L.i("LocationSeeker interrupted");
+                    return;
+                } finally {
+                    mTimeoutThread = null;
+                }
+                L.i("LocationSeeker timed out");
                 shutdown();
             }
         });
@@ -118,12 +126,16 @@ public class LocationSeeker {
                 if (location != null) {
                     App.postOnBus(location);
                     // if we get a location with an accuracy within 10 meters, that's good enough
-                    L.i("\thasAcc? " + location.hasAccuracy() + ", acc? " + location.getAccuracy());
-                    if (location.hasAccuracy() && location.getAccuracy() <= 10) {
+                    // Also, the location needs to be from within the last 30 seconds
+                    L.i("\thasAcc? " + location.hasAccuracy() + ", acc? " + location.getAccuracy() + ", time: " + location.getTime() + ", now: " + System.currentTimeMillis());
+                    if (location.hasAccuracy() && location.getAccuracy() <= 10 &&
+                            (System.currentTimeMillis() - location.getTime()) < 30000) {
+                        mTimeoutThread.interrupt();
                         shutdown();
                     }
                 }
             } catch (Throwable t) {
+                L.w("Exception in onLocationResult", t);
                 FirebaseCrash.report(t);
             }
         }

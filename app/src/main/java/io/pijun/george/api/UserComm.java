@@ -1,6 +1,7 @@
 package io.pijun.george.api;
 
 import android.location.Location;
+import android.support.annotation.CheckResult;
 import android.support.annotation.NonNull;
 
 import java.io.ByteArrayInputStream;
@@ -27,7 +28,7 @@ public class UserComm {
     public Float bearing;
     public String movements;
 
-    @NonNull
+    @NonNull @CheckResult
     public static UserComm newAvatarUpdate(@NonNull byte[] avatarData) {
         UserComm c = new UserComm();
         c.type = CommType.AvatarUpdate;
@@ -35,7 +36,7 @@ public class UserComm {
         return c;
     }
 
-    @NonNull
+    @NonNull @CheckResult
     public static UserComm newLocationSharingGrant(@NonNull byte[] boxId) {
         UserComm c = new UserComm();
         c.type = CommType.LocationSharingGrant;
@@ -43,20 +44,21 @@ public class UserComm {
         return c;
     }
 
-    @NonNull
+    @NonNull @CheckResult
     public static UserComm newLocationSharingRevocation() {
         UserComm c = new UserComm();
         c.type = CommType.LocationSharingRevocation;
         return c;
     }
 
+    @NonNull @CheckResult
     public static UserComm newLocationUpdateRequest() {
         UserComm c = new UserComm();
         c.type = CommType.LocationUpdateRequest;
         return c;
     }
 
-    @NonNull
+    @NonNull @CheckResult
     public static UserComm newLocationInfo(@NonNull Location l, List<MovementType> movements) {
         UserComm c = new UserComm();
         c.type = CommType.LocationInfo;
@@ -79,6 +81,11 @@ public class UserComm {
 
     public boolean isValid() {
         switch (type) {
+            case AvatarUpdate:
+                if (avatar == null) {
+                    return false;
+                }
+                return true;
             case LocationSharingGrant:
                 //noinspection RedundantIfStatement
                 if (dropBox == null || dropBox.length != Constants.DROP_BOX_ID_LENGTH) {
@@ -106,11 +113,13 @@ public class UserComm {
         }
     }
 
+    @CheckResult
     public static UserComm fromJSON(byte[] bytes) {
         InputStreamReader isr = new InputStreamReader(new ByteArrayInputStream(bytes));
         return OscarClient.sGson.fromJson(isr, UserComm.class);
     }
 
+    @CheckResult
     public byte[] toJSON() {
         String s = OscarClient.sGson.toJson(this);
         return s.getBytes();
