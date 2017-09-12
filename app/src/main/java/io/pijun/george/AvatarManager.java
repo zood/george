@@ -34,7 +34,6 @@ class AvatarManager {
 
     @CheckResult @NonNull @AnyThread
     static File getAvatar(@NonNull Context ctx, @NonNull String username) {
-        L.i("AvatarManager.getAvatar");
         File filesDir = ctx.getFilesDir();
         File avatarsDir = new File(filesDir, AVATAR_DIR);
         return new File(avatarsDir, username.toLowerCase(Locale.US) + ".jpg");
@@ -84,7 +83,6 @@ class AvatarManager {
     @WorkerThread
     @CheckResult
     static boolean setMyAvatar(@NonNull Context ctx, @NonNull Bitmap img) throws IOException {
-        L.i("AvatarManager.setMyAvatar");
         File filesDir = ctx.getFilesDir();
         File avatarsDir = new File(filesDir, AVATAR_DIR);
         if (!avatarsDir.exists()) {
