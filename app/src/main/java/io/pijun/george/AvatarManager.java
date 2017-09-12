@@ -126,6 +126,37 @@ class AvatarManager {
     }
 
     @WorkerThread
+    static void sendAvatarToFriend(@NonNull Context ctx, @NonNull FriendRecord friend) throws IOException {
+        File avatarFile = getMyAvatar(ctx);
+        if (!avatarFile.exists()) {
+            return;
+        }
+        Prefs prefs = Prefs.get(ctx);
+        String token = prefs.getAccessToken();
+        KeyPair keyPair = prefs.getKeyPair();
+        if (token == null || keyPair == null) {
+            L.i("AvatarManager.sendAvatarToFriend missing token or keypair");
+            return;
+        }
+        FileInputStream fis = new FileInputStream(avatarFile);
+        byte []buffer = new byte[(int) avatarFile.length()];
+        int read = fis.read(buffer);
+        if (read < avatarFile.length()) {
+            L.w("Did not read entire avatar image");
+            return;
+        }
+        UserComm comm = UserComm.newAvatarUpdate(buffer);
+        byte[] json = comm.toJSON();
+        EncryptedData encMsg = Sodium.publicKeyEncrypt(json, friend.user.publicKey, keyPair.secretKey);
+        if (encMsg == null) {
+            L.i("Encrypting avatar for " + friend.user.username + " failed");
+            return;
+        }
+        L.i("Sending avatar to " + friend.user.username);
+        OscarClient.queueSendMessage(ctx, token, friend.user.userId, encMsg, false);
+    }
+
+    @WorkerThread
     private static void sendAvatarToFriends() throws IOException {
         Context ctx = App.getApp();
         File avatarFile = getMyAvatar(ctx);

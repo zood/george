@@ -21,6 +21,7 @@ import android.widget.Toast;
 import com.google.firebase.crash.FirebaseCrash;
 import com.squareup.otto.Subscribe;
 
+import java.io.IOException;
 import java.security.SecureRandom;
 import java.util.ArrayList;
 
@@ -257,6 +258,7 @@ public class FriendsSheetFragment extends Fragment implements FriendItemsAdapter
         DB db = DB.get(getContext());
         try {
             db.startSharingWith(friend.user, sendingBoxId);
+            AvatarManager.sendAvatarToFriend(getContext(), friend);
         } catch (DB.DBException ex) {
             FirebaseCrash.report(ex);
             App.runOnUiThread(new UiRunnable() {
@@ -266,6 +268,8 @@ public class FriendsSheetFragment extends Fragment implements FriendItemsAdapter
                     mFriendItemsAdapter.reloadFriend(friend.id);
                 }
             });
+        } catch (IOException ex) {
+            FirebaseCrash.report(ex);
         }
 
         FriendRecord updatedFriend = db.getFriendById(friend.id);
