@@ -26,6 +26,7 @@ import io.pijun.george.crypto.EncryptedData;
 import io.pijun.george.crypto.KeyPair;
 import io.pijun.george.event.AvatarUpdated;
 import io.pijun.george.models.FriendRecord;
+import io.pijun.george.models.UserRecord;
 
 class AvatarManager {
 
@@ -126,7 +127,7 @@ class AvatarManager {
     }
 
     @WorkerThread
-    static void sendAvatarToFriend(@NonNull Context ctx, @NonNull FriendRecord friend) throws IOException {
+    static void sendAvatarToUser(@NonNull Context ctx, @NonNull UserRecord user) throws IOException {
         File avatarFile = getMyAvatar(ctx);
         if (!avatarFile.exists()) {
             return;
@@ -135,7 +136,7 @@ class AvatarManager {
         String token = prefs.getAccessToken();
         KeyPair keyPair = prefs.getKeyPair();
         if (token == null || keyPair == null) {
-            L.i("AvatarManager.sendAvatarToFriend missing token or keypair");
+            L.i("AvatarManager.sendAvatarToUser missing token or keypair");
             return;
         }
         FileInputStream fis = new FileInputStream(avatarFile);
@@ -147,13 +148,13 @@ class AvatarManager {
         }
         UserComm comm = UserComm.newAvatarUpdate(buffer);
         byte[] json = comm.toJSON();
-        EncryptedData encMsg = Sodium.publicKeyEncrypt(json, friend.user.publicKey, keyPair.secretKey);
+        EncryptedData encMsg = Sodium.publicKeyEncrypt(json, user.publicKey, keyPair.secretKey);
         if (encMsg == null) {
-            L.i("Encrypting avatar for " + friend.user.username + " failed");
+            L.i("Encrypting avatar for " + user.username + " failed");
             return;
         }
-        L.i("Sending avatar to " + friend.user.username);
-        OscarClient.queueSendMessage(ctx, token, friend.user.userId, encMsg, false);
+        L.i("Sending avatar to " + user.username);
+        OscarClient.queueSendMessage(ctx, token, user.userId, encMsg, false);
     }
 
     @WorkerThread

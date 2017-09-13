@@ -124,14 +124,14 @@ public class DB {
     }
 
     @WorkerThread
-    public long addFriend(long userId,
+    public void addFriend(long userId,
                           @Nullable @Size(Constants.DROP_BOX_ID_LENGTH) byte[] sendingBoxId,
                           @Nullable @Size(Constants.DROP_BOX_ID_LENGTH) byte[] receivingBoxId) throws DBException {
-        return addFriend(userId, sendingBoxId, receivingBoxId, true);
+        addFriend(userId, sendingBoxId, receivingBoxId, true);
     }
 
     @WorkerThread
-    private long addFriend(long userId,
+    private void addFriend(long userId,
                           @Nullable @Size(Constants.DROP_BOX_ID_LENGTH) byte[] sendingBoxId,
                           @Nullable @Size(Constants.DROP_BOX_ID_LENGTH) byte[] receivingBoxId,
                           boolean triggerBackup) throws DBException {
@@ -147,15 +147,17 @@ public class DB {
             throw new DBException("Error creating friend " + userId, ex);
         }
 
+        if (result == -1) {
+            throw new DBException("Unknown database error while adding friend (-1)");
+        }
+
         if (triggerBackup) {
             scheduleBackup();
         }
-
-        return result;
     }
 
     @WorkerThread
-    public long addLimitedShare(@NonNull @Size(Constants.PUBLIC_KEY_LENGTH) byte[] publicKey, @NonNull @Size(Constants.DROP_BOX_ID_LENGTH) byte[] sendingBoxId) throws DBException {
+    public void addLimitedShare(@NonNull @Size(Constants.PUBLIC_KEY_LENGTH) byte[] publicKey, @NonNull @Size(Constants.DROP_BOX_ID_LENGTH) byte[] sendingBoxId) throws DBException {
         // to make sure we always have just one at a time, wipe the database before proceeding
         deleteLimitedShares();
 
@@ -170,9 +172,12 @@ public class DB {
             throw new DBException("Error adding limited share {pubKey:"+Hex.toHexString(publicKey) + ", sendingBoxId:"+Hex.toHexString(sendingBoxId) + "}", ex);
         }
 
+        if (result == -1) {
+            throw new DBException("Unknown database error adding limited share (-1)");
+        }
+
         // NOTE: We don't bother scheduling a backup here because this data is (purposely) not
         // included in a snapshot.
-        return result;
     }
 
     @WorkerThread
@@ -541,7 +546,7 @@ public class DB {
     @WorkerThread
     public void removeFriend(@NonNull FriendRecord friend) throws DBException {
         SQLiteDatabase db = mDbHelper.getWritableDatabase();
-        int result = 0;
+        int result;
         try {
             String[] args = new String[]{String.valueOf(friend.user.id)};
             result = db.delete(FRIENDS_TABLE, FRIENDS_COL_USER_ID + "=?", args);
@@ -591,7 +596,9 @@ public class DB {
     @WorkerThread
     private void scheduleBackup() {
         JobScheduler scheduler = (JobScheduler) mContext.getSystemService(Context.JOB_SCHEDULER_SERVICE);
-        scheduler.schedule(BackupDatabaseJob.getJobInfo(mContext));
+        if (scheduler != null) {    // it will never be null
+            scheduler.schedule(BackupDatabaseJob.getJobInfo(mContext));
+        }
     }
 
     @WorkerThread

@@ -258,7 +258,7 @@ public class FriendsSheetFragment extends Fragment implements FriendItemsAdapter
         DB db = DB.get(getContext());
         try {
             db.startSharingWith(friend.user, sendingBoxId);
-            AvatarManager.sendAvatarToFriend(getContext(), friend);
+            AvatarManager.sendAvatarToUser(getContext(), friend.user);
         } catch (DB.DBException ex) {
             FirebaseCrash.report(ex);
             App.runOnUiThread(new UiRunnable() {

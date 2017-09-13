@@ -799,6 +799,10 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
             OscarClient.queueSendMessage(this, accessToken, userRecord.userId, msg, false);
 
             db.startSharingWith(userRecord, sendingBoxId);
+            try { AvatarManager.sendAvatarToUser(this, userRecord); }
+            catch (IOException ex) {
+                FirebaseCrash.report(ex);
+            }
             Utils.showStringAlert(this, null, "You're now sharing with " + username);
         } catch (IOException ex) {
             Utils.showStringAlert(this, null, "Network problem trying to share your location. Check your connection then try again.");
