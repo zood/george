@@ -11,7 +11,6 @@ import android.content.IntentSender;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.Color;
-import android.graphics.drawable.Drawable;
 import android.location.Location;
 import android.os.Bundle;
 import android.os.Looper;
@@ -62,7 +61,6 @@ import com.mapbox.mapboxsdk.maps.MapboxMap;
 import com.mapbox.mapboxsdk.maps.OnMapReadyCallback;
 import com.squareup.otto.Subscribe;
 import com.squareup.picasso.Picasso;
-import com.squareup.picasso.Target;
 
 import java.io.IOException;
 import java.security.SecureRandom;
@@ -362,8 +360,7 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
                 if (location == null) {
                     continue;
                 }
-
-                App.runOnUiThread(() -> addMapMarker(f, location));
+                addMapMarker(f, location);
             }
         });
     }
@@ -397,19 +394,32 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
         mMeMarker = mMapboxMap.addMarker(opts);
     }
 
-    @UiThread
-    private void addMapMarker(FriendRecord friend, FriendLocation loc) {
+    @WorkerThread
+    private void addMapMarker(@NonNull FriendRecord friend, @NonNull FriendLocation loc) {
         if (mMapboxMap == null) {
             return;
         }
         int thirtyTwo = getResources().getDimensionPixelSize(R.dimen.thirtyTwo);
-//        Bitmap bitmap = Bitmap.createBitmap(thirtyTwo, thirtyTwo, Bitmap.Config.ARGB_8888);
-//        Identicon.draw(bitmap, friend.user.username);
-        Target target = new Target() {
+        Bitmap bmp = null;
+        try {
+            bmp = Picasso.with(this).load(AvatarManager.getAvatar(this, friend.user.username)).resize(thirtyTwo, thirtyTwo).get();
+        } catch (IOException ignore) {}
+        if (bmp == null) {
+            bmp = Bitmap.createBitmap(thirtyTwo, thirtyTwo, Bitmap.Config.ARGB_8888);
+            Identicon.draw(bmp, friend.user.username);
+        }
+
+        final Bitmap img = bmp;
+        App.runOnUiThread(new UiRunnable() {
             @Override
-            public void onBitmapLoaded(Bitmap bitmap, Picasso.LoadedFrom from) {
-                L.i("addMapMarker.onBitmapLoaded");
-                Icon descriptor = IconFactory.getInstance(MapActivity.this).fromBitmap(bitmap);
+            public void run() {
+                // check if it's already there
+                if (mMarkerTracker.getById(friend.id) != null) {
+                    // don't add another one
+                    return;
+                }
+
+                Icon descriptor = IconFactory.getInstance(MapActivity.this).fromBitmap(img);
                 MarkerOptions opts = new MarkerOptions()
                         .position(new LatLng(loc.latitude, loc.longitude))
                         .icon(descriptor)
@@ -417,25 +427,7 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
                 Marker marker = mMapboxMap.addMarker(opts);
                 mMarkerTracker.add(marker, friend.id, loc);
             }
-
-            @Override
-            public void onBitmapFailed(Drawable errorDrawable) {
-                L.i("addMapMarker.onBitmapFailed");
-                Bitmap bitmap = Bitmap.createBitmap(thirtyTwo, thirtyTwo, Bitmap.Config.ARGB_8888);
-                Identicon.draw(bitmap, friend.user.username);
-                Icon descriptor = IconFactory.getInstance(MapActivity.this).fromBitmap(bitmap);
-                MarkerOptions opts = new MarkerOptions()
-                        .position(new LatLng(loc.latitude, loc.longitude))
-                        .icon(descriptor)
-                        .title(friend.user.username);
-                Marker marker = mMapboxMap.addMarker(opts);
-                mMarkerTracker.add(marker, friend.id, loc);
-            }
-
-            @Override
-            public void onPrepareLoad(Drawable placeHolderDrawable) {}
-        };
-        Picasso.with(this).load(AvatarManager.getAvatar(this, friend.user.username)).resize(thirtyTwo, thirtyTwo).into(target);
+        });
     }
 
     @UiThread
@@ -564,7 +556,9 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
         if (marker == null) {
             App.runInBackground(() -> {
                 final FriendRecord friend = DB.get(MapActivity.this).getFriendById(loc.friendId);
-                App.runOnUiThread(() -> addMapMarker(friend, loc));
+                if (friend != null) {
+                    addMapMarker(friend, loc);
+                }
             });
         } else {
             if (marker.isInfoWindowShown()) {

@@ -1,26 +1,23 @@
 package io.pijun.george;
 
-import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
 import android.support.annotation.ColorInt;
 import android.support.annotation.NonNull;
-import android.util.AttributeSet;
-import android.view.View;
 
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 
-public class Identicon extends View {
+class Identicon {
 
-    public static void draw(@NonNull Bitmap bitmap, @NonNull String data) {
+    static void draw(@NonNull Bitmap bitmap, @NonNull String data) {
         byte[] hash = getHash(data);
         draw(new Canvas(bitmap), hash, new Paint());
     }
 
-    public static void draw(@NonNull Canvas canvas, @NonNull byte[] hash, @NonNull Paint paint) {
+    private static void draw(@NonNull Canvas canvas, @NonNull byte[] hash, @NonNull Paint paint) {
         paint.setColor(getHashColor(hash[15]));
 
         int boxWidth = canvas.getWidth() / 5;
@@ -74,51 +71,4 @@ public class Identicon extends View {
             return Color.parseColor("#FF9800"); // orange
         }
     }
-
-    private byte[] mHash;
-    private Paint mPaint;
-
-    public Identicon(Context context) {
-        super(context);
-        init();
-    }
-
-    public Identicon(Context context, AttributeSet attrs) {
-        super(context, attrs);
-        init();
-    }
-
-    public Identicon(Context context, AttributeSet attrs, int defStyleAttr) {
-        super(context, attrs, defStyleAttr);
-        init();
-    }
-
-    private void init() {
-        mPaint = new Paint();
-//        mHash = new byte[]{100, 0, 100, 0, 100, 0, 100, 0, 100, 0, 100, 0, 100, 0, 100, 0};
-        setData("skippy");
-    }
-
-    @Override
-    protected void onDraw(Canvas canvas) {
-        super.onDraw(canvas);
-
-        if (isInEditMode()) {
-            canvas.drawColor(Color.YELLOW);
-            return;
-        }
-
-        Identicon.draw(canvas, mHash, mPaint);
-    }
-
-    public void setData(String data) {
-        try {
-            MessageDigest digest = MessageDigest.getInstance("MD5");
-            digest.update(data.getBytes());
-            mHash = digest.digest();
-        } catch (NoSuchAlgorithmException ex) {
-            L.w("MD5 algo not found", ex);
-        }
-    }
-
 }
