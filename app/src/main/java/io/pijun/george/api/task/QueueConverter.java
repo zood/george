@@ -23,6 +23,8 @@ public class QueueConverter implements PersistentQueue.Converter<OscarTask> {
                 return OscarClient.sGson.fromJson(root, DeleteFcmTokenTask.class);
             case DeleteMessageTask.NAME:
                 return OscarClient.sGson.fromJson(root, DeleteMessageTask.class);
+            case DropMultiplePackagesTask.NAME:
+                return OscarClient.sGson.fromJson(root, DropMultiplePackagesTask.class);
             case DropPackageTask.NAME:
                 return OscarClient.sGson.fromJson(root, DropPackageTask.class);
             case SendMessageTask.NAME:
@@ -44,6 +46,9 @@ public class QueueConverter implements PersistentQueue.Converter<OscarTask> {
             case DeleteMessageTask.NAME:
                 DeleteMessageTask dmt = (DeleteMessageTask) task;
                 return OscarClient.sGson.toJson(dmt).getBytes();
+            case DropMultiplePackagesTask.NAME:
+                DropMultiplePackagesTask dmpt = (DropMultiplePackagesTask) task;
+                return OscarClient.sGson.toJson(dmpt).getBytes();
             case DropPackageTask.NAME:
                 DropPackageTask dpt = (DropPackageTask) task;
                 return OscarClient.sGson.toJson(dpt).getBytes();

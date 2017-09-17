@@ -13,6 +13,7 @@ import com.google.firebase.crash.FirebaseCrash;
 import com.squareup.otto.Subscribe;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.concurrent.LinkedBlockingQueue;
 
 import io.pijun.george.api.OscarClient;
@@ -84,35 +85,32 @@ public class LocationUploader {
         byte[] msgBytes = locMsg.toJSON();
         // share to our friends
         ArrayList<FriendRecord> friends = DB.get(ctx).getFriendsToShareWith();
-        boolean droppedPackage = false;
-        for (FriendRecord fr : friends) {
-            EncryptedData encMsg = Sodium.publicKeyEncrypt(msgBytes, fr.user.publicKey, keyPair.secretKey);
+        HashMap<String, EncryptedData> pkgs = new HashMap<>(friends.size());
+        for (FriendRecord f : friends) {
+            EncryptedData encMsg = Sodium.publicKeyEncrypt(msgBytes, f.user.publicKey, keyPair.secretKey);
             if (encMsg == null) {
-                L.w("LU.flush: encryption failed");
+                L.w("LU.flush encryption failed for " + f.user.username);
                 continue;
             }
-            OscarClient.queueDropPackage(ctx, token, Hex.toHexString(fr.sendingBoxId), encMsg);
-            droppedPackage = true;
+            pkgs.put(Hex.toHexString(f.sendingBoxId), encMsg);
         }
-        if (droppedPackage) {
-            Prefs.get(ctx).setLastLocationUpdateTime(System.currentTimeMillis());
-        }
-        // also check for a limited share
         LimitedShare ls = DB.get(ctx).getLimitedShare();
         if (ls != null) {
             L.i("LU.flush: to limited share");
             if (LimitedShareService.IsRunning) {
                 EncryptedData encMsg = Sodium.publicKeyEncrypt(msgBytes, ls.publicKey, keyPair.secretKey);
                 if (encMsg != null) {
-                    OscarClient.queueDropPackage(ctx, token, Hex.toHexString(ls.sendingBoxId), encMsg);
+                    pkgs.put(Hex.toHexString(ls.sendingBoxId), encMsg);
                 } else {
-                    L.w("LU.flush: encryption failed");
+                    L.w("LU.flush: limited share encryption failed");
                 }
             } else {
                 L.i("LU.flush: oops. the limited share isn't running. we'll delete it.");
                 DB.get(ctx).deleteLimitedShares();
             }
         }
+        OscarClient.queueDropMultiplePackages(ctx, token, pkgs);
+        Prefs.get(ctx).setLastLocationUpdateTime(System.currentTimeMillis());
 
         mLocations.clear();
     }

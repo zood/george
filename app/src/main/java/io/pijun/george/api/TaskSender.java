@@ -26,6 +26,7 @@ import io.pijun.george.WorkerRunnable;
 import io.pijun.george.api.task.AddFcmTokenTask;
 import io.pijun.george.api.task.DeleteFcmTokenTask;
 import io.pijun.george.api.task.DeleteMessageTask;
+import io.pijun.george.api.task.DropMultiplePackagesTask;
 import io.pijun.george.api.task.DropPackageTask;
 import io.pijun.george.api.task.OscarTask;
 import io.pijun.george.PersistentQueue;
@@ -106,6 +107,7 @@ public class TaskSender {
 
             OscarAPI api = OscarClient.newInstance(task.accessToken);
             Call call;
+            L.i("about to process method: " + task.apiMethod);
             switch (task.apiMethod) {
                 case AddFcmTokenTask.NAME:
                     AddFcmTokenTask aftt = (AddFcmTokenTask) task;
@@ -118,6 +120,10 @@ public class TaskSender {
                 case DeleteMessageTask.NAME:
                     DeleteMessageTask dmt = (DeleteMessageTask) task;
                     call = api.deleteMessage(dmt.messageId);
+                    break;
+                case DropMultiplePackagesTask.NAME:
+                    DropMultiplePackagesTask dmpt = (DropMultiplePackagesTask) task;
+                    call = api.dropMultiplePackages(dmpt.packages);
                     break;
                 case DropPackageTask.NAME:
                     DropPackageTask dpt = (DropPackageTask) task;

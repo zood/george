@@ -7,8 +7,10 @@ import retrofit2.Call;
 import retrofit2.http.Body;
 import retrofit2.http.DELETE;
 import retrofit2.http.GET;
+import retrofit2.http.Multipart;
 import retrofit2.http.POST;
 import retrofit2.http.PUT;
+import retrofit2.http.PartMap;
 import retrofit2.http.Path;
 import retrofit2.http.Query;
 
@@ -28,6 +30,10 @@ public interface OscarAPI {
 
     @DELETE("messages/{messageId}")
     Call<Void> deleteMessage(@Path("messageId") long msgId);
+
+    @Multipart
+    @POST("drop-boxes/send")
+    Call<Void> dropMultiplePackages(@PartMap Map<String, EncryptedData> packages);
 
     @PUT("drop-boxes/{boxId}")
     Call<Void> dropPackage(@Path("boxId") String hexId, @Body EncryptedData pkg);

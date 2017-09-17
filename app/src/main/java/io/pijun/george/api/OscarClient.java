@@ -19,6 +19,7 @@ import io.pijun.george.api.adapter.CommTypeAdapter;
 import io.pijun.george.api.task.AddFcmTokenTask;
 import io.pijun.george.api.task.DeleteFcmTokenTask;
 import io.pijun.george.api.task.DeleteMessageTask;
+import io.pijun.george.api.task.DropMultiplePackagesTask;
 import io.pijun.george.api.task.DropPackageTask;
 import io.pijun.george.api.task.OscarTask;
 import io.pijun.george.PersistentQueue;
@@ -114,6 +115,13 @@ public class OscarClient {
         DeleteMessageTask dmt = new DeleteMessageTask(accessToken);
         dmt.messageId = msgId;
         getQueue(context).offer(dmt);
+    }
+
+    @WorkerThread
+    public static void queueDropMultiplePackages(@NonNull Context context, @NonNull String accessToken, @NonNull Map<String, EncryptedData> pkgs) {
+        DropMultiplePackagesTask dmpt = new DropMultiplePackagesTask(accessToken);
+        dmpt.packages = pkgs;
+        getQueue(context).offer(dmpt);
     }
 
     @WorkerThread
