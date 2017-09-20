@@ -1,5 +1,6 @@
 package io.pijun.george;
 
+import android.content.Context;
 import android.content.DialogInterface;
 import android.databinding.DataBindingUtil;
 import android.os.Bundle;
@@ -45,10 +46,38 @@ public class FriendsSheetFragment extends Fragment implements FriendItemsAdapter
     private FragmentFriendsSheetBinding mBinding;
     private int mTenDips;
 
+    @Override
+    public void onAttach(Context context) {
+        super.onAttach(context);
+
+        if (context instanceof MapActivity) {
+            ((MapActivity) context).setFriendsSheetFragment(this);
+        }
+    }
+
     @Subscribe @Keep @UiThread
     public void onAvatarUpdated(AvatarUpdated evt) {
         mAvatarsAdapter.onAvatarUpdated(evt.username);
         mFriendItemsAdapter.onAvatarUpdated(evt.username);
+    }
+
+    /**
+     * Should be called by the containing activity
+     * @return <code>true</code> if the FriendsSheetFragment consumed the button press. <code>false</code>
+     * otherwise.
+     */
+    public boolean onBackPressed() {
+        if (mBehavior == null) {
+            return false;
+        }
+
+        int state = mBehavior.getState();
+        if (state == BottomSheetBehavior.STATE_EXPANDED) {
+            mBehavior.setState(BottomSheetBehavior.STATE_COLLAPSED);
+            return true;
+        }
+
+        return false;
     }
 
     @Override

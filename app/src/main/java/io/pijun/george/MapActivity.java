@@ -63,6 +63,7 @@ import com.squareup.otto.Subscribe;
 import com.squareup.picasso.Picasso;
 
 import java.io.IOException;
+import java.lang.ref.WeakReference;
 import java.security.SecureRandom;
 import java.util.ArrayList;
 
@@ -106,9 +107,24 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
     private MarkerView mMeMarker;
     private boolean mCameraTracksMyLocation = false;
     private EditText mUsernameField;
+    private WeakReference<FriendsSheetFragment> mFriendsSheet;
 
     public static Intent newIntent(Context ctx) {
         return new Intent(ctx, MapActivity.class);
+    }
+
+    @Override
+    public void onBackPressed() {
+        // check if the friends sheet wants to handle the back press
+        FriendsSheetFragment fragment = mFriendsSheet.get();
+        if (fragment != null) {
+            boolean result = fragment.onBackPressed();
+            if (result) {
+                return;
+            }
+        }
+
+        super.onBackPressed();
     }
 
     @Override
@@ -699,6 +715,15 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
                 .tilt(0).build();
         CameraUpdate cu = CameraUpdateFactory.newCameraPosition(cp);
         mMapboxMap.animateCamera(cu, 1000);
+    }
+
+    @UiThread
+    void setFriendsSheetFragment(@Nullable FriendsSheetFragment fragment) {
+        if (fragment == null) {
+            mFriendsSheet = null;
+        } else {
+            mFriendsSheet = new WeakReference<>(fragment);
+        }
     }
 
     public void onAddFriendAction(View v) {
