@@ -133,11 +133,21 @@ public class OscarClient {
     }
 
     @WorkerThread
-    public static void queueSendMessage(@NonNull Context context, @NonNull String accessToken, @NonNull byte[] userId, @NonNull EncryptedData msg, boolean urgent) {
+    public static void queueSendMessage(@NonNull Context context, @NonNull String accessToken,
+                                        @NonNull byte[] userId, @NonNull EncryptedData msg,
+                                        boolean urgent) {
+        queueSendMessage(context, accessToken, userId, msg, urgent, false);
+    }
+
+    @WorkerThread
+    public static void queueSendMessage(@NonNull Context context, @NonNull String accessToken,
+                                        @NonNull byte[] userId, @NonNull EncryptedData msg,
+                                        boolean urgent, boolean isTransient) {
         SendMessageTask smt = new SendMessageTask(accessToken);
         smt.hexUserId = Hex.toHexString(userId);
         smt.message = msg;
         smt.urgent = urgent;
+        smt.isTransient = isTransient;
         getQueue(context).offer(smt);
     }
 

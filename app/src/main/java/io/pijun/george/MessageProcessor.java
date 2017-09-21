@@ -55,7 +55,7 @@ public class MessageProcessor {
                     case MessageUtils.ERROR_NONE:
                         mQueue.poll();
                         // delete the message from the server
-                        if (!TextUtils.isEmpty(token)) {
+                        if (msg.id != 0 && !TextUtils.isEmpty(token)) {
                             OscarClient.queueDeleteMessage(App.getApp(), token, msg.id);
                         }
                         break;
@@ -83,7 +83,7 @@ public class MessageProcessor {
                     default:
                         mQueue.poll();
                         // delete the message from the server
-                        if (!TextUtils.isEmpty(token)) {
+                        if (msg.id != 0 && !TextUtils.isEmpty(token)) {
                             OscarClient.queueDeleteMessage(App.getApp(), token, msg.id);
                         }
                         L.w("error processing message: " + result);

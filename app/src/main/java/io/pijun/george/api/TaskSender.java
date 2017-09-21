@@ -131,7 +131,9 @@ public class TaskSender {
                     break;
                 case SendMessageTask.NAME:
                     SendMessageTask smt = (SendMessageTask) task;
-                    Map<String, Object> map = Utils.map("cipher_text", smt.message.cipherText, "nonce", smt.message.nonce, "urgent", smt.urgent);
+                    Map<String, Object> map = Utils.map("cipher_text", smt.message.cipherText,
+                            "nonce", smt.message.nonce, "urgent", smt.urgent,
+                            "transient", smt.isTransient);
                     call = api.sendMessage(smt.hexUserId, map);
                     break;
                 default:

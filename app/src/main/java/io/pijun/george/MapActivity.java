@@ -223,7 +223,7 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
                             byte[] msgBytes = comm.toJSON();
                             EncryptedData encMsg = Sodium.publicKeyEncrypt(msgBytes, fr.user.publicKey, keypair.secretKey);
                             if (encMsg != null) {
-                                OscarClient.queueSendMessage(MapActivity.this, token, fr.user.userId, encMsg, true);
+                                OscarClient.queueSendMessage(MapActivity.this, token, fr.user.userId, encMsg, true, true);
                             } else {
                                 L.w("Failed to encrypt a location update request message to " + fr.user.username);
                             }

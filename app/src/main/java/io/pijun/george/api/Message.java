@@ -8,6 +8,7 @@ public class Message {
     public byte[] senderId;
     public byte[] cipherText;
     public byte[] nonce;
+    public long sentDate;
 
     @Override
     public String toString() {
@@ -16,6 +17,7 @@ public class Message {
                 ", senderId=" + Hex.toHexString(senderId) +
                 ", cipherText=" + Hex.toHexString(cipherText) +
                 ", nonce=" + Hex.toHexString(nonce) +
+                ", sentDate=" + sentDate +
                 '}';
     }
 }
