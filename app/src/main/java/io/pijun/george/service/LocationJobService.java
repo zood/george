@@ -25,7 +25,7 @@ public class LocationJobService extends JobService implements LocationSeeker.Loc
     public static JobInfo getJobInfo(Context context) {
         ComponentName compName = new ComponentName(context, LocationJobService.class);
         JobInfo.Builder builder = new JobInfo.Builder(LocationJobService.JOB_ID, compName)
-                .setPeriodic(10 * DateUtils.MINUTE_IN_MILLIS)
+                .setPeriodic(15 * DateUtils.MINUTE_IN_MILLIS)
                 .setRequiredNetworkType(JobInfo.NETWORK_TYPE_ANY)
                 .setRequiresCharging(false)
                 .setRequiresDeviceIdle(false);

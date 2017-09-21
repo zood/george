@@ -28,12 +28,20 @@ public class UserComm {
     public Float bearing;
     public String movements;
 
+    // debug
+    public String debugData;
+
     @NonNull @CheckResult
     public static UserComm newAvatarUpdate(@NonNull byte[] avatarData) {
         UserComm c = new UserComm();
         c.type = CommType.AvatarUpdate;
         c.avatar = avatarData;
         return c;
+    }
+
+    @NonNull @CheckResult
+    public static UserComm newDebug() {
+        return new UserComm();
     }
 
     @NonNull @CheckResult

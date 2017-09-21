@@ -18,6 +18,7 @@ import io.pijun.george.api.OscarClient;
 import io.pijun.george.api.OscarError;
 import io.pijun.george.api.User;
 import io.pijun.george.api.UserComm;
+import io.pijun.george.crypto.EncryptedData;
 import io.pijun.george.crypto.KeyPair;
 import io.pijun.george.event.LocationSharingGranted;
 import io.pijun.george.event.LocationSharingRevoked;
@@ -158,7 +159,7 @@ public class MessageUtils {
                 db.sharingRevokedBy(userRecord);
                 App.postOnBus(new LocationSharingRevoked(userRecord.id));
                 break;
-            case LocationInfo:
+            case LocationInfo: {
                 FriendRecord fr = db.getFriendByUserId(userRecord.id);
                 if (fr == null) {
                     // there should be a friend record for any locations that we receive
@@ -172,17 +173,29 @@ public class MessageUtils {
                     return ERROR_DATABASE_EXCEPTION;
                 }
                 App.postOnBus(new FriendLocation(fr.id, comm));
+            }
                 break;
-            case LocationUpdateRequest:
+            case LocationUpdateRequest: {
                 long updateTime = prefs.getLastLocationUpdateTime();
                 // only perform the update if it's been more than 3 minutes since the last one
                 long now = System.currentTimeMillis();
+                UserComm c = UserComm.newDebug();
                 if (now - updateTime > 3 * DateUtils.MINUTE_IN_MILLIS) {
                     L.i("  ok, provide a location update");
+                    c.debugData = "Starting LocationSeeker";
                     new LocationSeeker().start(context);
                 } else {
                     L.i("  already provided an update at " + updateTime + ". It's " + now + " now");
+                    c.debugData = "already provided an update at " + updateTime + ". It's " + now + " now";
                 }
+                byte[] msgBytes = c.toJSON();
+                EncryptedData encMsg = Sodium.publicKeyEncrypt(msgBytes, userRecord.publicKey, keyPair.secretKey);
+                if (encMsg != null) {
+                    OscarClient.queueSendMessage(context, token, userRecord.userId, encMsg, true);
+                } else {
+                    FirebaseCrash.report(new RuntimeException("Unable to encrypt msg for debug report to " + userRecord.username + " from " + prefs.getUsername()));
+                }
+            }
                 break;
         }
 
