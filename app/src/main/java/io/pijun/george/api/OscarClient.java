@@ -3,29 +3,37 @@ package io.pijun.george.api;
 import android.content.Context;
 import android.support.annotation.CheckResult;
 import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 import android.support.annotation.WorkerThread;
+import android.text.TextUtils;
 
 import com.google.gson.FieldNamingPolicy;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
 import java.io.IOException;
+import java.lang.ref.WeakReference;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 import io.pijun.george.Constants;
 import io.pijun.george.Hex;
+import io.pijun.george.L;
+import io.pijun.george.PersistentQueue;
+import io.pijun.george.Prefs;
+import io.pijun.george.Sodium;
 import io.pijun.george.api.adapter.BytesToBase64Adapter;
 import io.pijun.george.api.adapter.CommTypeAdapter;
 import io.pijun.george.api.task.AddFcmTokenTask;
 import io.pijun.george.api.task.DeleteFcmTokenTask;
 import io.pijun.george.api.task.DeleteMessageTask;
 import io.pijun.george.api.task.DropMultiplePackagesTask;
-import io.pijun.george.api.task.DropPackageTask;
 import io.pijun.george.api.task.OscarTask;
-import io.pijun.george.PersistentQueue;
 import io.pijun.george.api.task.QueueConverter;
 import io.pijun.george.api.task.SendMessageTask;
 import io.pijun.george.crypto.EncryptedData;
+import io.pijun.george.crypto.KeyPair;
+import io.pijun.george.models.UserRecord;
 import okhttp3.Interceptor;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
@@ -38,6 +46,7 @@ public class OscarClient {
     public static final Gson sGson;
     private static volatile PersistentQueue<OscarTask> sQueue;
     private static final String QUEUE_FILENAME = "oscar.queue";
+    private static final ConcurrentHashMap<String, WeakReference<OscarAPI>> sApiCache = new ConcurrentHashMap<>();
 
     static {
         sGson = new GsonBuilder()
@@ -62,7 +71,20 @@ public class OscarClient {
     }
 
     @NonNull
-    public static OscarAPI newInstance(final String accessToken) {
+    public static OscarAPI newInstance(@Nullable final String accessToken) {
+        // check if we already have an API object for this token around
+        // However, if the token is null, just create a new api object, because
+        // ConcurrentHashMap doesn't support null keys
+        if (accessToken != null) {
+            WeakReference<OscarAPI> apiRef = sApiCache.get(accessToken);
+            if (apiRef != null) {
+                OscarAPI api = apiRef.get();
+                if (api != null) {
+                    return api;
+                }
+            }
+        }
+
         String url;
         if (Constants.USE_PRODUCTION) {
             url = "https://api.pijun.io/alpha/";
@@ -93,7 +115,12 @@ public class OscarClient {
                 .client(httpBuilder.build())
                 .build();
 
-        return retrofit.create(OscarAPI.class);
+        // if the access token is not null, store it in our cache
+        OscarAPI api = retrofit.create(OscarAPI.class);
+        if (accessToken != null) {
+            sApiCache.put(accessToken, new WeakReference<>(api));
+        }
+        return api;
     }
 
     @WorkerThread
@@ -124,31 +151,40 @@ public class OscarClient {
         getQueue(context).offer(dmpt);
     }
 
-    @WorkerThread
-    public static void queueDropPackage(@NonNull Context context, @NonNull String accessToken, @NonNull String hexBoxId, @NonNull EncryptedData pkg) {
-        DropPackageTask dpt = new DropPackageTask(accessToken);
-        dpt.hexBoxId = hexBoxId;
-        dpt.pkg = pkg;
-        getQueue(context).offer(dpt);
+    @WorkerThread @CheckResult
+    public static String queueSendMessage(@NonNull Context context, @NonNull UserRecord user, @NonNull UserComm comm, boolean urgent, boolean isTransient) {
+        return queueSendMessage(context, user, comm.toJSON(), urgent, isTransient);
     }
 
-    @WorkerThread
-    public static void queueSendMessage(@NonNull Context context, @NonNull String accessToken,
-                                        @NonNull byte[] userId, @NonNull EncryptedData msg,
-                                        boolean urgent) {
-        queueSendMessage(context, accessToken, userId, msg, urgent, false);
-    }
-
-    @WorkerThread
-    public static void queueSendMessage(@NonNull Context context, @NonNull String accessToken,
-                                        @NonNull byte[] userId, @NonNull EncryptedData msg,
-                                        boolean urgent, boolean isTransient) {
-        SendMessageTask smt = new SendMessageTask(accessToken);
-        smt.hexUserId = Hex.toHexString(userId);
-        smt.message = msg;
+    @WorkerThread @CheckResult
+    public static String queueSendMessage(@NonNull Context context, @NonNull UserRecord user,
+                                        @NonNull byte[] msgBytes, boolean urgent, boolean isTransient) {
+        Prefs prefs = Prefs.get(context);
+        KeyPair keyPair = prefs.getKeyPair();
+        if (keyPair == null) {
+            String msg = "Oops! Tried sending a message while the keypair was null";
+            L.w(msg);
+            return msg;
+        }
+        String token = prefs.getAccessToken();
+        if (TextUtils.isEmpty(token)) {
+            String msg = "Somebody is trying to send a message when we have no access token";
+            L.w(msg);
+            return msg;
+        }
+        EncryptedData encMsg = Sodium.publicKeyEncrypt(msgBytes, user.publicKey, keyPair.secretKey);
+        if (encMsg == null) {
+            String msg = "Encrypting msg to " + user.username + " failed.";
+            L.w(msg);
+            return msg;
+        }
+        SendMessageTask smt = new SendMessageTask(token);
+        smt.hexUserId = Hex.toHexString(user.userId);
+        smt.message = encMsg;
         smt.urgent = urgent;
         smt.isTransient = isTransient;
         getQueue(context).offer(smt);
-    }
 
+        return null;
+    }
 }

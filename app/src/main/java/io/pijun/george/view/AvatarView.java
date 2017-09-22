@@ -9,7 +9,6 @@ import android.graphics.Matrix;
 import android.graphics.Paint;
 import android.graphics.Shader;
 import android.support.annotation.ColorRes;
-import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.annotation.UiThread;
 import android.support.v4.content.ContextCompat;
@@ -116,10 +115,15 @@ public class AvatarView extends View {
     }
 
     @UiThread
-    public void setImage(@NonNull Bitmap img) {
+    public void setImage(@Nullable Bitmap img) {
         mImg = img;
-        mImgShader = new BitmapShader(img, Shader.TileMode.CLAMP, Shader.TileMode.CLAMP);
-        mImgPaint.setShader(mImgShader);
+        if (img == null) {
+            mImgShader = null;
+            mImgPaint.setShader(null);
+        } else {
+            mImgShader = new BitmapShader(img, Shader.TileMode.CLAMP, Shader.TileMode.CLAMP);
+            mImgPaint.setShader(mImgShader);
+        }
         handleSizeChanged();
         invalidate();
     }

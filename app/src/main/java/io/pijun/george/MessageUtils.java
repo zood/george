@@ -18,7 +18,6 @@ import io.pijun.george.api.OscarClient;
 import io.pijun.george.api.OscarError;
 import io.pijun.george.api.User;
 import io.pijun.george.api.UserComm;
-import io.pijun.george.crypto.EncryptedData;
 import io.pijun.george.crypto.KeyPair;
 import io.pijun.george.event.LocationSharingGranted;
 import io.pijun.george.event.LocationSharingRevoked;
@@ -127,7 +126,7 @@ public class MessageUtils {
         }
         UserComm comm = UserComm.fromJSON(unwrappedBytes);
         if (!comm.isValid()) {
-            L.i("usercomm was invalid. here it is: " + comm);
+            L.i("usercomm from " + userRecord.username + " was invalid. here it is: " + comm);
             return ERROR_INVALID_COMMUNICATION;
         }
         L.i("  comm type: " + comm.type);
@@ -142,6 +141,9 @@ public class MessageUtils {
                 } catch (IOException ex) {
                     FirebaseCrash.report(ex);
                 }
+                break;
+            case Debug:
+                L.i("debug from " + userRecord.username + ": " + comm.debugData);
                 break;
             case LocationSharingGrant:
                 L.i("LocationSharingGrant");
@@ -179,21 +181,35 @@ public class MessageUtils {
                 long updateTime = prefs.getLastLocationUpdateTime();
                 // only perform the update if it's been more than 3 minutes since the last one
                 long now = System.currentTimeMillis();
-                UserComm c = UserComm.newDebug();
-                if (now - updateTime > 3 * DateUtils.MINUTE_IN_MILLIS) {
-                    L.i("  ok, provide a location update");
-                    c.debugData = "Starting LocationSeeker";
-                    new LocationSeeker().start(context);
-                } else {
-                    L.i("  already provided an update at " + updateTime + ". It's " + now + " now");
-                    c.debugData = "already provided an update at " + updateTime + ". It's " + now + " now";
+                if (now - updateTime < 3 * DateUtils.MINUTE_IN_MILLIS) {
+                    L.i("\talready provided an update at " + updateTime + ". It's " + now +
+                            " now");
+                    String errMsg = OscarClient.queueSendMessage(context, userRecord,
+                            UserComm.newDebug("already provided an update at " + updateTime +
+                                    ". It's " + now + " now"),
+                            true, false);
+                    if (errMsg != null) {
+                        L.w(errMsg);
+                    }
+                    return ERROR_NONE;
                 }
-                byte[] msgBytes = c.toJSON();
-                EncryptedData encMsg = Sodium.publicKeyEncrypt(msgBytes, userRecord.publicKey, keyPair.secretKey);
-                if (encMsg != null) {
-                    OscarClient.queueSendMessage(context, token, userRecord.userId, encMsg, true);
-                } else {
-                    FirebaseCrash.report(new RuntimeException("Unable to encrypt msg for debug report to " + userRecord.username + " from " + prefs.getUsername()));
+                // make sure this is actually a friend
+                FriendRecord f = DB.get(context).getFriendByUserId(userRecord.id);
+                if (f == null) {
+                    L.i("\tyou are not a friend");
+                    String errMsg = OscarClient.queueSendMessage(context, userRecord,
+                            UserComm.newDebug("You are not a friend"), true, false);
+                    if (errMsg != null) {
+                        L.w(errMsg);
+                    }
+                    return ERROR_NONE;
+                }
+                L.i("\tok, provide a location update");
+                new LocationSeeker().start(context);
+                String errMsg = OscarClient.queueSendMessage(context, userRecord,
+                        UserComm.newDebug("started location seeker"), true, false);
+                if (errMsg != null) {
+                    L.w(errMsg);
                 }
             }
                 break;

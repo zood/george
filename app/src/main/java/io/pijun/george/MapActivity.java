@@ -76,7 +76,6 @@ import io.pijun.george.api.PackageWatcher;
 import io.pijun.george.api.RevGeocoding;
 import io.pijun.george.api.User;
 import io.pijun.george.api.UserComm;
-import io.pijun.george.crypto.EncryptedData;
 import io.pijun.george.crypto.KeyPair;
 import io.pijun.george.event.FriendRemoved;
 import io.pijun.george.event.LocationSharingGranted;
@@ -210,7 +209,7 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
                 // Request a location update from any friend that hasn't given us an update for
                 // 3 minutes
                 long now = System.currentTimeMillis();
-                KeyPair keypair = prefs.getKeyPair();
+                UserComm comm = UserComm.newLocationUpdateRequest();
                 for (FriendRecord fr : friends) {
                     // check if this friend shares location with us
                     if (fr.receivingBoxId == null) {
@@ -218,15 +217,9 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
                     }
                     FriendLocation loc = DB.get(MapActivity.this).getFriendLocation(fr.id);
                     if (loc == null || (now-loc.time) > 180 * DateUtils.SECOND_IN_MILLIS) {
-                        if (keypair != null) {
-                            UserComm comm = UserComm.newLocationUpdateRequest();
-                            byte[] msgBytes = comm.toJSON();
-                            EncryptedData encMsg = Sodium.publicKeyEncrypt(msgBytes, fr.user.publicKey, keypair.secretKey);
-                            if (encMsg != null) {
-                                OscarClient.queueSendMessage(MapActivity.this, token, fr.user.userId, encMsg, true, true);
-                            } else {
-                                L.w("Failed to encrypt a location update request message to " + fr.user.username);
-                            }
+                        String errMsg = OscarClient.queueSendMessage(MapActivity.this, fr.user, comm, true, true);
+                        if (errMsg != null) {
+                            L.w("failed to queue location_update_request: " + errMsg);
                         }
                     }
                 }
@@ -531,14 +524,21 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
             return;
         }
 
-        App.runInBackground(() -> {
-            final FriendRecord friend = DB.get(MapActivity.this).getFriendByUserId(grant.userId);
-            if (friend == null) {
-                L.w("MapActivity.onLocationSharingGranted didn't find friend record");
-                return;
+        App.runInBackground(new WorkerRunnable() {
+            @Override
+            public void run() {
+                final FriendRecord friend = DB.get(MapActivity.this).getFriendByUserId(grant.userId);
+                if (friend == null) {
+                    L.w("MapActivity.onLocationSharingGranted didn't find friend record");
+                    return;
+                }
+                // Perform the null check because the location sharing grant may have been revoked.
+                // (If the other person is flipping the sharing switch back and forth).
+                if (friend.receivingBoxId != null) {
+                    L.i("onLocationSharingGranted: friend found. will watch");
+                    mPkgWatcher.watch(friend.receivingBoxId);
+                }
             }
-            L.i("onLocationSharingGranted: friend found. will watch");
-            mPkgWatcher.watch(friend.receivingBoxId);
         });
     }
 
@@ -798,9 +798,9 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
                 if (friend.sendingBoxId != null) {
                     // send the sending box id to this person one more time, just in case
                     UserComm comm = UserComm.newLocationSharingGrant(friend.sendingBoxId);
-                    EncryptedData msg = Sodium.publicKeyEncrypt(comm.toJSON(), userRecord.publicKey, keyPair.secretKey);
-                    if (msg != null) {
-                        OscarClient.queueSendMessage(this, accessToken, userRecord.userId, msg, false);
+                    String errMsg = OscarClient.queueSendMessage(this, userRecord, comm, false, false);
+                    if (errMsg != null) {
+                        FirebaseCrash.report(new RuntimeException(errMsg));
                     }
                     Utils.showStringAlert(this, null, "You're already sharing your location with " + username);
                     return;
@@ -810,12 +810,11 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
             byte[] sendingBoxId = new byte[Constants.DROP_BOX_ID_LENGTH];
             new SecureRandom().nextBytes(sendingBoxId);
             UserComm comm = UserComm.newLocationSharingGrant(sendingBoxId);
-            EncryptedData msg = Sodium.publicKeyEncrypt(comm.toJSON(), userRecord.publicKey, keyPair.secretKey);
-            if (msg == null) {
-                Utils.showStringAlert(this, null, "Unable to create sharing grant");
+            String errMsg = OscarClient.queueSendMessage(this, userRecord, comm, false, false);
+            if (errMsg != null) {
+                Utils.showStringAlert(this, null, "Unable to create sharing grant: " + errMsg);
                 return;
             }
-            OscarClient.queueSendMessage(this, accessToken, userRecord.userId, msg, false);
 
             db.startSharingWith(userRecord, sendingBoxId);
             try { AvatarManager.sendAvatarToUser(this, userRecord); }

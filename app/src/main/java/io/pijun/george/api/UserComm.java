@@ -31,6 +31,8 @@ public class UserComm {
     // debug
     public String debugData;
 
+    private UserComm() {}
+
     @NonNull @CheckResult
     public static UserComm newAvatarUpdate(@NonNull byte[] avatarData) {
         UserComm c = new UserComm();
@@ -40,8 +42,11 @@ public class UserComm {
     }
 
     @NonNull @CheckResult
-    public static UserComm newDebug() {
-        return new UserComm();
+    public static UserComm newDebug(@NonNull String data) {
+        UserComm c = new UserComm();
+        c.type = CommType.Debug;
+        c.debugData = data;
+        return c;
     }
 
     @NonNull @CheckResult
@@ -88,9 +93,17 @@ public class UserComm {
     }
 
     public boolean isValid() {
+        if (type == null) {
+            return false;
+        }
         switch (type) {
             case AvatarUpdate:
                 if (avatar == null) {
+                    return false;
+                }
+                return true;
+            case Debug:
+                if (debugData == null) {
                     return false;
                 }
                 return true;
@@ -128,6 +141,7 @@ public class UserComm {
     }
 
     @CheckResult
+    @NonNull
     public byte[] toJSON() {
         String s = OscarClient.sGson.toJson(this);
         return s.getBytes();

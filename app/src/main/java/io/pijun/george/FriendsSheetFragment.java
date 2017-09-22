@@ -28,7 +28,6 @@ import java.util.ArrayList;
 
 import io.pijun.george.api.OscarClient;
 import io.pijun.george.api.UserComm;
-import io.pijun.george.crypto.EncryptedData;
 import io.pijun.george.crypto.KeyPair;
 import io.pijun.george.databinding.FragmentFriendsSheetBinding;
 import io.pijun.george.event.AvatarUpdated;
@@ -260,26 +259,13 @@ public class FriendsSheetFragment extends Fragment implements FriendItemsAdapter
 
     @WorkerThread
     private void startSharingWith(@NonNull FriendRecord friend) {
-        Prefs prefs = Prefs.get(getContext());
-        String accessToken = prefs.getAccessToken();
-        if (TextUtils.isEmpty(accessToken)) {
-            Utils.showStringAlert(getContext(), null, "How are you not logged in right now? (missing access token)");
-            return;
-        }
-        KeyPair keyPair = prefs.getKeyPair();
-        if (keyPair == null) {
-            Utils.showStringAlert(getContext(), null, "How are you not logged in right now? (missing key pair)");
-            return;
-        }
         byte[] sendingBoxId = new byte[Constants.DROP_BOX_ID_LENGTH];
         new SecureRandom().nextBytes(sendingBoxId);
         // send the sending box id to the friend
         UserComm comm = UserComm.newLocationSharingGrant(sendingBoxId);
-        EncryptedData msg = Sodium.publicKeyEncrypt(comm.toJSON(), friend.user.publicKey, keyPair.secretKey);
-        if (msg != null) {
-            OscarClient.queueSendMessage(getContext(), accessToken, friend.user.userId, msg, false);
-        } else {
-            FirebaseCrash.log("The message was null!");
+        String errMsg = OscarClient.queueSendMessage(getContext(), friend.user, comm, false, false);
+        if (errMsg != null) {
+            FirebaseCrash.report(new RuntimeException(errMsg));
             return;
         }
 
@@ -316,18 +302,6 @@ public class FriendsSheetFragment extends Fragment implements FriendItemsAdapter
 
     @WorkerThread
     private void stopSharingWith(@NonNull FriendRecord friend) {
-        Prefs prefs = Prefs.get(getContext());
-        String accessToken = prefs.getAccessToken();
-        if (TextUtils.isEmpty(accessToken)) {
-            Utils.showStringAlert(getContext(), null, "How are you not logged in right now? (missing access token)");
-            return;
-        }
-        KeyPair keyPair = prefs.getKeyPair();
-        if (keyPair == null) {
-            Utils.showStringAlert(getContext(), null, "How are you not logged in right now? (missing key pair)");
-            return;
-        }
-
         // remove the sending box id from the database
         DB db = DB.get(getContext());
         try {
@@ -344,11 +318,9 @@ public class FriendsSheetFragment extends Fragment implements FriendItemsAdapter
         }
 
         UserComm comm = UserComm.newLocationSharingRevocation();
-        EncryptedData msg = Sodium.publicKeyEncrypt(comm.toJSON(), friend.user.publicKey, keyPair.secretKey);
-        if (msg != null) {
-            OscarClient.queueSendMessage(getContext(), accessToken, friend.user.userId, msg, false);
-        } else {
-            FirebaseCrash.log("The message was null!");
+        String errMsg = OscarClient.queueSendMessage(getContext(), friend.user, comm, false, false);
+        if (errMsg != null) {
+            FirebaseCrash.report(new RuntimeException(errMsg));
         }
 
         // grab the updated friend record, and apply it on our adapter

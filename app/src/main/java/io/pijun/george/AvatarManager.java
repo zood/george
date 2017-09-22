@@ -154,7 +154,10 @@ class AvatarManager {
             return;
         }
         L.i("Sending avatar to " + user.username);
-        OscarClient.queueSendMessage(ctx, token, user.userId, encMsg, false);
+        String errMsg = OscarClient.queueSendMessage(ctx, user, comm, false, false);
+        if (errMsg != null) {
+            L.w(errMsg);
+        }
     }
 
     @WorkerThread
@@ -186,12 +189,11 @@ class AvatarManager {
         UserComm comm = UserComm.newAvatarUpdate(buffer);
         byte[] json = comm.toJSON();
         for (FriendRecord f : friends) {
-            EncryptedData encMsg = Sodium.publicKeyEncrypt(json, f.user.publicKey, keyPair.secretKey);
-            if (encMsg == null) {
-                continue;
-            }
             L.i("Sending avatar to " + f.user.username);
-            OscarClient.queueSendMessage(ctx, token, f.user.userId, encMsg, false);
+            String errMsg = OscarClient.queueSendMessage(ctx, f.user, json, false, false);
+            if (errMsg != null) {
+                L.w("Problem sending avatar: " + errMsg);
+            }
         }
     }
 

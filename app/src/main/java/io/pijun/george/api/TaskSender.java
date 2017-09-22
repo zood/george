@@ -71,7 +71,11 @@ public class TaskSender {
         for (WeakReference<OneTimeListener> l : mListeners) {
             OneTimeListener listener = l.get();
             if (listener != null) {
-                listener.taskSenderPaused();
+                try {
+                    listener.taskSenderPaused();
+                } catch (Throwable t) {
+                    FirebaseCrash.report(t);
+                }
             }
         }
         mListeners.clear();
@@ -107,7 +111,6 @@ public class TaskSender {
 
             OscarAPI api = OscarClient.newInstance(task.accessToken);
             Call call;
-            L.i("about to process method: " + task.apiMethod);
             switch (task.apiMethod) {
                 case AddFcmTokenTask.NAME:
                     AddFcmTokenTask aftt = (AddFcmTokenTask) task;
@@ -149,7 +152,7 @@ public class TaskSender {
                     } catch (InterruptedException ie) {
                         // shouldn't happen
                         FirebaseCrash.report(ie);
-                        L.w("Take after successful response interrupted", ie);
+                        L.w("take() after successful response interrupted", ie);
                     }
                 } else {
                     OscarError err = OscarError.fromResponse(response);
@@ -160,6 +163,15 @@ public class TaskSender {
                 L.w("task exception", e);
                 // a connection problem. we'll try again when the connection is back.
                 return;
+            } catch (Throwable t) {
+                FirebaseCrash.report(t);
+                try {
+                    queue.take();
+                } catch (InterruptedException ie) {
+                    // shouldn't happen
+                    FirebaseCrash.report(ie);
+                    L.w("take() after failed task execution was interrupted", ie);
+                }
             } finally {
                 try {
                     // There's a chance that this wakelock may timeout right before we release it

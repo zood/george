@@ -109,8 +109,10 @@ public class LocationUploader {
                 DB.get(ctx).deleteLimitedShares();
             }
         }
-        OscarClient.queueDropMultiplePackages(ctx, token, pkgs);
-        Prefs.get(ctx).setLastLocationUpdateTime(System.currentTimeMillis());
+        if (pkgs.size() > 0) {
+            OscarClient.queueDropMultiplePackages(ctx, token, pkgs);
+            Prefs.get(ctx).setLastLocationUpdateTime(System.currentTimeMillis());
+        }
 
         mLocations.clear();
     }
