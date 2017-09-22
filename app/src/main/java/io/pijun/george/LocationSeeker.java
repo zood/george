@@ -7,6 +7,7 @@ import android.location.Location;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.Looper;
+import android.os.PowerManager;
 import android.support.annotation.AnyThread;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
@@ -19,7 +20,10 @@ import com.google.android.gms.location.LocationCallback;
 import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationResult;
 import com.google.android.gms.location.LocationServices;
+import com.google.android.gms.tasks.Task;
 import com.google.firebase.crash.FirebaseCrash;
+
+import java.util.concurrent.ConcurrentHashMap;
 
 public class LocationSeeker {
 
@@ -31,6 +35,10 @@ public class LocationSeeker {
     @Nullable private FusedLocationProviderClient client;
     @Nullable private LocationSeekerListener mListener;
     private Thread mTimeoutThread;
+    private PowerManager.WakeLock mWakeLock;
+    // keep LocationSeekers in here so they don't get garbage collected
+    @SuppressWarnings("MismatchedQueryAndUpdateOfCollection")
+    private static ConcurrentHashMap<LocationSeeker, Boolean> sActiveLocationSeekers = new ConcurrentHashMap<>();
 
     @AnyThread
     public LocationSeeker() {
@@ -73,11 +81,17 @@ public class LocationSeeker {
         if (mListener != null) {
             mListener.locationSeekerFinished(this);
         }
+        try {
+            mWakeLock.release();
+            mWakeLock = null;
+        } catch (Throwable ignore) {} // in case the lock already expired
+        sActiveLocationSeekers.remove(this);
     }
 
     @AnyThread
     @NonNull
     public LocationSeeker start(@NonNull Context context) {
+        sActiveLocationSeekers.put(this, true);
         L.i("LocationSeeker.startSeeking");
         if (ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
             App.runInBackground(new WorkerRunnable() {
@@ -93,7 +107,21 @@ public class LocationSeeker {
         LocationRequest request = new LocationRequest();
         request.setInterval(5 * DateUtils.SECOND_IN_MILLIS);
         request.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
-        client.requestLocationUpdates(request, mLocationCallbackHelper, mLooper);
+        Task<Void> task = client.requestLocationUpdates(request, mLocationCallbackHelper, mLooper);
+        if (!task.isSuccessful()) {
+            Exception ex = task.getException();
+            if (ex == null) {
+                FirebaseCrash.report(new RuntimeException("Unable to request location updates"));
+            } else {
+                FirebaseCrash.report(new RuntimeException("Unable to request location updates because of exception", ex));
+            }
+        }
+
+        PowerManager pwrMgr = (PowerManager) context.getSystemService(Context.POWER_SERVICE);
+        if (pwrMgr != null) {   // should never be null
+            mWakeLock = pwrMgr.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "LocationSeekerLock"+SEEKER_COUNT);
+            mWakeLock.acquire(MAX_WAIT_SECONDS * DateUtils.SECOND_IN_MILLIS);
+        }
 
         // schedule a shutdown in case we can't get a precise location quickly enough
         App.runInBackground(new WorkerRunnable() {
@@ -101,7 +129,7 @@ public class LocationSeeker {
             public void run() {
                 try {
                     mTimeoutThread = Thread.currentThread();
-                    Thread.sleep(MAX_WAIT_SECONDS * 1000);
+                    Thread.sleep(MAX_WAIT_SECONDS * DateUtils.SECOND_IN_MILLIS);
                 } catch (InterruptedException ignore) {
                     L.i("LocationSeeker interrupted");
                     return;

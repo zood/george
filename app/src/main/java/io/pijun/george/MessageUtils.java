@@ -53,8 +53,105 @@ public class MessageUtils {
     public static final int ERROR_DATABASE_INCONSISTENCY = 13;
     public static final int ERROR_ENCRYPTION_FAILED = 14;
 
-    @WorkerThread
-    @Error
+    @WorkerThread @Error
+    private static int handleAvatarUpdate(@NonNull Context context, @NonNull UserRecord user, @NonNull UserComm comm) {
+        try {
+            boolean success = AvatarManager.saveAvatar(context, user.username, comm.avatar);
+            if (!success) {
+                L.w("Failed to save avatar from " + user.username);
+            }
+        } catch (IOException ex) {
+            FirebaseCrash.report(ex);
+        }
+        return ERROR_NONE;
+    }
+
+    @WorkerThread @Error
+    private static int handleLocationInfo(@NonNull Context context, @NonNull UserRecord user, @NonNull UserComm comm) {
+        DB db = DB.get(context);
+        FriendRecord fr = db.getFriendByUserId(user.id);
+        if (fr == null) {
+            // there should be a friend record for any locations that we receive
+            return ERROR_NOT_A_FRIEND;
+        }
+        try {
+            db.setFriendLocation(fr.id, comm.latitude, comm.longitude, comm.time, comm.accuracy, comm.speed, comm.bearing);
+        } catch (DB.DBException ex) {
+            L.w("error setting location info for friend", ex);
+            FirebaseCrash.report(ex);
+            return ERROR_DATABASE_EXCEPTION;
+        }
+        App.postOnBus(new FriendLocation(fr.id, comm));
+
+        return ERROR_NONE;
+    }
+
+    @WorkerThread @Error
+    private static int handleLocationSharingGrant(@NonNull Context context, @NonNull UserRecord user, @NonNull UserComm comm) {
+        L.i("LocationSharingGrant");
+        DB db = DB.get(context);
+        try {
+            db.sharingGrantedBy(user, comm.dropBox);
+        } catch (DB.DBException ex) {
+            L.w("error recording location grant", ex);
+            FirebaseCrash.report(ex);
+            return ERROR_DATABASE_EXCEPTION;
+        }
+        App.postOnBus(new LocationSharingGranted(user.id));
+
+        return ERROR_NONE;
+    }
+
+    @WorkerThread @Error
+    private static int handleLocationSharingRevocation(@NonNull Context context, @NonNull UserRecord user) {
+        L.i("LocationSharingRevocation");
+        DB db = DB.get(context);
+        db.sharingRevokedBy(user);
+        App.postOnBus(new LocationSharingRevoked(user.id));
+        return ERROR_NONE;
+    }
+
+    @WorkerThread @Error
+    private static int handleLocationUpdateRequest(@NonNull Context context, @NonNull UserRecord userRecord) {
+        Prefs prefs = Prefs.get(context);
+        long updateTime = prefs.getLastLocationUpdateTime();
+        // only perform the update if it's been more than 3 minutes since the last one
+        long now = System.currentTimeMillis();
+        if (now - updateTime < 3 * DateUtils.MINUTE_IN_MILLIS) {
+            L.i("\talready provided an update at " + updateTime + ". It's " + now +
+                    " now");
+            String errMsg = OscarClient.queueSendMessage(context, userRecord,
+                    UserComm.newDebug("already provided an update at " + updateTime +
+                            ". It's " + now + " now"),
+                    true, false);
+            if (errMsg != null) {
+                L.w(errMsg);
+            }
+            return ERROR_NONE;
+        }
+        // make sure this is actually a friend
+        FriendRecord f = DB.get(context).getFriendByUserId(userRecord.id);
+        if (f == null) {
+            L.i("\tyou are not a friend");
+            String errMsg = OscarClient.queueSendMessage(context, userRecord,
+                    UserComm.newDebug("You are not a friend"), true, false);
+            if (errMsg != null) {
+                L.w(errMsg);
+            }
+            return ERROR_NONE;
+        }
+        L.i("\tok, provide a location update");
+        new LocationSeeker().start(context);
+        String errMsg = OscarClient.queueSendMessage(context, userRecord,
+                UserComm.newDebug("started location seeker"), true, false);
+        if (errMsg != null) {
+            L.w(errMsg);
+        }
+
+        return ERROR_NONE;
+    }
+
+    @WorkerThread @Error
     public static int unwrapAndProcess(@NonNull Context context, @NonNull byte[] senderId, @NonNull byte[] cipherText, @NonNull byte[] nonce) {
         L.i("MessageUtils.unwrapAndProcess");
         //noinspection ConstantConditions
@@ -132,90 +229,23 @@ public class MessageUtils {
         L.i("  comm type: " + comm.type);
         switch (comm.type) {
             case AvatarUpdate:
-                L.i("AvatarUpdate");
-                try {
-                    boolean success = AvatarManager.saveAvatar(context, userRecord.username, comm.avatar);
-                    if (!success) {
-                        L.w("Failed to save avatar from " + userRecord.username);
-                    }
-                } catch (IOException ex) {
-                    FirebaseCrash.report(ex);
-                }
-                break;
+                return handleAvatarUpdate(context, userRecord, comm);
             case Debug:
                 L.i("debug from " + userRecord.username + ": " + comm.debugData);
-                break;
+                return ERROR_NONE;
             case LocationSharingGrant:
-                L.i("LocationSharingGrant");
-                try {
-                    db.sharingGrantedBy(userRecord, comm.dropBox);
-                } catch (DB.DBException ex) {
-                    L.w("error recording location grant", ex);
-                    FirebaseCrash.report(ex);
-                    return ERROR_DATABASE_EXCEPTION;
-                }
-                App.postOnBus(new LocationSharingGranted(userRecord.id));
-                break;
+                return handleLocationSharingGrant(context, userRecord, comm);
             case LocationSharingRevocation:
-                L.i("LocationSharingRevocation");
-                db.sharingRevokedBy(userRecord);
-                App.postOnBus(new LocationSharingRevoked(userRecord.id));
-                break;
-            case LocationInfo: {
-                FriendRecord fr = db.getFriendByUserId(userRecord.id);
-                if (fr == null) {
-                    // there should be a friend record for any locations that we receive
-                    return ERROR_NOT_A_FRIEND;
-                }
-                try {
-                    db.setFriendLocation(fr.id, comm.latitude, comm.longitude, comm.time, comm.accuracy, comm.speed, comm.bearing);
-                } catch (DB.DBException ex) {
-                    L.w("error setting location info for friend", ex);
-                    FirebaseCrash.report(ex);
-                    return ERROR_DATABASE_EXCEPTION;
-                }
-                App.postOnBus(new FriendLocation(fr.id, comm));
-            }
-                break;
-            case LocationUpdateRequest: {
-                long updateTime = prefs.getLastLocationUpdateTime();
-                // only perform the update if it's been more than 3 minutes since the last one
-                long now = System.currentTimeMillis();
-                if (now - updateTime < 3 * DateUtils.MINUTE_IN_MILLIS) {
-                    L.i("\talready provided an update at " + updateTime + ". It's " + now +
-                            " now");
-                    String errMsg = OscarClient.queueSendMessage(context, userRecord,
-                            UserComm.newDebug("already provided an update at " + updateTime +
-                                    ". It's " + now + " now"),
-                            true, false);
-                    if (errMsg != null) {
-                        L.w(errMsg);
-                    }
-                    return ERROR_NONE;
-                }
-                // make sure this is actually a friend
-                FriendRecord f = DB.get(context).getFriendByUserId(userRecord.id);
-                if (f == null) {
-                    L.i("\tyou are not a friend");
-                    String errMsg = OscarClient.queueSendMessage(context, userRecord,
-                            UserComm.newDebug("You are not a friend"), true, false);
-                    if (errMsg != null) {
-                        L.w(errMsg);
-                    }
-                    return ERROR_NONE;
-                }
-                L.i("\tok, provide a location update");
-                new LocationSeeker().start(context);
-                String errMsg = OscarClient.queueSendMessage(context, userRecord,
-                        UserComm.newDebug("started location seeker"), true, false);
-                if (errMsg != null) {
-                    L.w(errMsg);
-                }
-            }
-                break;
+                return handleLocationSharingRevocation(context, userRecord);
+            case LocationInfo:
+                return handleLocationInfo(context, userRecord, comm);
+            case LocationUpdateRequest:
+                return handleLocationUpdateRequest(context, userRecord);
+            default:
+                L.i("The invalid comm should have been caught during the isValid() check: " +
+                        userRecord.username + " - " + comm);
+                return ERROR_INVALID_COMMUNICATION;
         }
-
-        return ERROR_NONE;
     }
 
 }
