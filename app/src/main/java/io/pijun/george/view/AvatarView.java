@@ -8,6 +8,7 @@ import android.graphics.Canvas;
 import android.graphics.Matrix;
 import android.graphics.Paint;
 import android.graphics.Shader;
+import android.support.annotation.ColorInt;
 import android.support.annotation.ColorRes;
 import android.support.annotation.Nullable;
 import android.support.annotation.UiThread;
@@ -109,9 +110,14 @@ public class AvatarView extends View {
     }
 
     @UiThread
-    public void setBorderColor(@ColorRes int color) {
-        mBorderPaint.setColor(ContextCompat.getColor(getContext(), color));
+    public void setBorderColor(@ColorInt int color) {
+        mBorderPaint.setColor(color);
         invalidate();
+    }
+
+    @UiThread
+    public void setBorderColorRes(@ColorRes int color) {
+        setBorderColor(ContextCompat.getColor(getContext(), color));
     }
 
     @UiThread

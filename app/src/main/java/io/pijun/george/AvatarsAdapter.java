@@ -107,7 +107,7 @@ class AvatarsAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
                     load(AvatarManager.getAvatar(ctx, friend.user.username)).
                     resize(imgSize, imgSize).
                     into(target);
-            h.image.setBorderColor(friend.receivingBoxId != null ? R.color.colorPrimary : R.color.ui_tint_gray);
+            h.image.setBorderColorRes(friend.receivingBoxId != null ? R.color.colorPrimary : R.color.ui_tint_gray);
         }
     }
 

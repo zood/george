@@ -10,6 +10,7 @@ import android.content.Intent;
 import android.content.IntentSender;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
+import android.graphics.Canvas;
 import android.graphics.Color;
 import android.location.Location;
 import android.os.Bundle;
@@ -86,6 +87,7 @@ import io.pijun.george.models.MovementType;
 import io.pijun.george.models.UserRecord;
 import io.pijun.george.service.FcmTokenRegistrar;
 import io.pijun.george.service.LimitedShareService;
+import io.pijun.george.view.AvatarView;
 import io.pijun.george.view.MyLocationView;
 import retrofit2.Call;
 import retrofit2.Response;
@@ -391,10 +393,7 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
             return;
         }
 
-//        int fortyFive = getResources().getDimensionPixelSize(R.dimen.fortyFive);
-        Bitmap bitmap = MyLocationView.getBitmap(this);// Bitmap.createBitmap(fortyFive, fortyFive, Bitmap.Config.ARGB_8888);
-//        MyLocationView.draw(this, bitmap);
-
+        Bitmap bitmap = MyLocationView.getBitmap(this);
         Icon descriptor = IconFactory.getInstance(this).fromBitmap(bitmap);
         MarkerViewOptions opts = new MarkerViewOptions()
                 .position(new LatLng(location.getLatitude(), location.getLongitude()))
@@ -408,13 +407,13 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
         if (mMapboxMap == null) {
             return;
         }
-        int thirtyTwo = getResources().getDimensionPixelSize(R.dimen.thirtyTwo);
+        int thirtySix = getResources().getDimensionPixelSize(R.dimen.thirtySix);
         Bitmap bmp = null;
         try {
-            bmp = Picasso.with(this).load(AvatarManager.getAvatar(this, friend.user.username)).resize(thirtyTwo, thirtyTwo).get();
+            bmp = Picasso.with(this).load(AvatarManager.getAvatar(this, friend.user.username)).resize(thirtySix, thirtySix).get();
         } catch (IOException ignore) {}
         if (bmp == null) {
-            bmp = Bitmap.createBitmap(thirtyTwo, thirtyTwo, Bitmap.Config.ARGB_8888);
+            bmp = Bitmap.createBitmap(thirtySix, thirtySix, Bitmap.Config.ARGB_8888);
             Identicon.draw(bmp, friend.user.username);
         }
 
@@ -428,7 +427,17 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
                     return;
                 }
 
-                Icon descriptor = IconFactory.getInstance(MapActivity.this).fromBitmap(img);
+                AvatarView avView = new AvatarView(MapActivity.this);
+                avView.setBorderColor(Color.WHITE);
+                int spec = View.MeasureSpec.makeMeasureSpec(thirtySix, View.MeasureSpec.AT_MOST);
+                avView.measure(spec, spec);
+                avView.setImage(img);
+                Bitmap avatar = Bitmap.createBitmap(thirtySix, thirtySix, Bitmap.Config.ARGB_8888);
+                avView.layout(0, 0, thirtySix, thirtySix);
+                Canvas c = new Canvas(avatar);
+                avView.draw(c);
+
+                Icon descriptor = IconFactory.getInstance(MapActivity.this).fromBitmap(avatar);
                 MarkerOptions opts = new MarkerOptions()
                         .position(new LatLng(loc.latitude, loc.longitude))
                         .icon(descriptor)

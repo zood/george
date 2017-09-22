@@ -77,7 +77,7 @@ class FriendItemsAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
             int forty = rsrc.getDimensionPixelSize(R.dimen.forty);
             Context ctx = h.avatar.getContext();
             final FriendRecord friend = mFriends.get(position);
-            h.avatar.setBorderColor(friend.receivingBoxId != null ? R.color.colorPrimary : R.color.ui_tint_gray);
+            h.avatar.setBorderColorRes(friend.receivingBoxId != null ? R.color.colorPrimary : R.color.ui_tint_gray);
             Target target = new Target() {
                 @Override
                 public void onBitmapLoaded(Bitmap bitmap, Picasso.LoadedFrom from) {
