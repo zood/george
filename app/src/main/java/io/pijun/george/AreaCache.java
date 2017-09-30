@@ -7,10 +7,13 @@ import android.support.annotation.Nullable;
 import android.support.annotation.UiThread;
 import android.support.annotation.WorkerThread;
 
+import com.google.firebase.crash.FirebaseCrash;
+
 import java.io.IOException;
 import java.util.concurrent.ConcurrentHashMap;
 
 import io.pijun.george.api.LocationIQClient;
+import io.pijun.george.api.OscarClient;
 import io.pijun.george.api.RevGeocoding;
 import okhttp3.ResponseBody;
 import retrofit2.Response;
@@ -22,8 +25,9 @@ class AreaCache {
 
     @WorkerThread
     private static void _fetchArea(@NonNull Context ctx, double lat, double lng, @Nullable ReverseGeocodingListener l) {
+        String str = null;  // for debugging a crash
         try {
-            Response<RevGeocoding> response = LocationIQClient.get(ctx).getReverseGeocoding("" + lat, "" + lng).execute();
+            Response<ResponseBody> response = LocationIQClient.get(ctx).getReverseGeocoding2("" + lat, "" + lng).execute();
             if (!response.isSuccessful()) {
                 ResponseBody body = response.errorBody();
                 if (body == null) {
@@ -42,7 +46,11 @@ class AreaCache {
                 return;
             }
 
-            RevGeocoding rg = response.body();
+            str = response.body().string();
+//            L.i("geo string: " + str);
+//            bytes = response.raw().body().bytes();
+            RevGeocoding rg = OscarClient.sGson.fromJson(str, RevGeocoding.class);
+//            RevGeocoding rg = response.body();
             if (rg == null) {
                 notifyListener(l, null);
                 return;
@@ -51,6 +59,15 @@ class AreaCache {
             mCachedAreas.put(new LatLng(lat, lng), area);
             notifyListener(l, area);
         } catch (IOException e) {
+            notifyListener(l, null);
+        } catch (Throwable t) {
+            if (str == null) {
+                FirebaseCrash.log("the string was null, so you're on your own");
+                FirebaseCrash.report(t);
+            } else {
+                FirebaseCrash.log("the string was: " + str);
+                FirebaseCrash.report(t);
+            }
             notifyListener(l, null);
         } finally {
             LatLng latLng = new LatLng(lat, lng);
