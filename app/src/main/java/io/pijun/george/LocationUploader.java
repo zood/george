@@ -49,6 +49,7 @@ public class LocationUploader {
                         FirebaseCrash.log("JobScheduler was null");
                         return;
                     }
+                    L.i("Scheduling LocationJobService");
                     scheduler.schedule(LocationJobService.getJobInfo(app));
                 }
             }
