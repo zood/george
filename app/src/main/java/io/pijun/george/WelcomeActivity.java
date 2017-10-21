@@ -200,11 +200,6 @@ public class WelcomeActivity extends AppCompatActivity implements WelcomeLayout.
         App.runInBackground(new WorkerRunnable() {
             @Override
             public void run() {
-                try {
-                    Thread.sleep(5000);
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
                 final User user = generateUser(username, password);
                 if (user == null) {
                     Utils.showAlert(WelcomeActivity.this, 0, R.string.unknown_user_generation_error_msg);
