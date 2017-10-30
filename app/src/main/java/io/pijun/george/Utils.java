@@ -12,7 +12,7 @@ import android.support.annotation.StringRes;
 import android.support.annotation.UiThread;
 import android.support.v7.app.AlertDialog;
 
-import com.mapbox.mapboxsdk.geometry.LatLng;
+import com.google.android.gms.maps.model.LatLng;
 
 import java.util.HashMap;
 import java.util.Locale;
@@ -35,7 +35,9 @@ public class Utils {
                 Prefs.get(ctx).clearAll();
                 DB.get(ctx).deleteUserData();
                 JobScheduler jobScheduler = (JobScheduler) ctx.getSystemService(Context.JOB_SCHEDULER_SERVICE);
-                jobScheduler.cancelAll();
+                if (jobScheduler != null) { // it will never be null
+                    jobScheduler.cancelAll();
+                }
 
                 App.postOnBus(new UserLoggedOut());
                 if (completion != null) {
@@ -106,16 +108,13 @@ public class Utils {
 
     static class LatLngEvaluator implements TypeEvaluator<LatLng> {
         // Method is used to interpolate the marker animation.
-
-        private LatLng latLng = new LatLng();
-
         @Override
         public LatLng evaluate(float fraction, LatLng startValue, LatLng endValue) {
-            latLng.setLatitude(startValue.getLatitude()
-                    + ((endValue.getLatitude() - startValue.getLatitude()) * fraction));
-            latLng.setLongitude(startValue.getLongitude()
-                    + ((endValue.getLongitude() - startValue.getLongitude()) * fraction));
-            return latLng;
+            double lat = startValue.latitude
+                    + ((endValue.latitude - startValue.latitude) * fraction);
+            double lng = startValue.longitude
+                    + ((endValue.longitude - startValue.longitude) * fraction);
+            return new LatLng(lat, lng);
         }
     }
 

@@ -6,8 +6,6 @@ import android.os.Looper;
 import android.support.annotation.AnyThread;
 import android.support.v7.app.AppCompatDelegate;
 
-import com.mapbox.mapboxsdk.Mapbox;
-import com.mapbox.services.android.telemetry.MapboxTelemetry;
 import com.squareup.otto.Bus;
 
 import java.util.concurrent.ExecutorService;
@@ -36,10 +34,6 @@ public class App extends Application {
         mUiThreadHandler = new Handler();
         mExecutor = Executors.newCachedThreadPool();
         mBus = new Bus();
-
-        String mapboxToken = getString(R.string.mapbox_access_token);
-        Mapbox.getInstance(this, mapboxToken);
-        MapboxTelemetry.getInstance().setTelemetryEnabled(false);
 
         LocationUploader lu = LocationUploader.get();
         registerOnBus(lu);

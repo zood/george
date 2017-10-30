@@ -10,7 +10,7 @@
     tools:context=".MapActivity">
 
     <!--mapbox:mapbox_styleUrl="mapbox://styles/arashpayan/ciyy3rvkj001e2sll2lvg36so"-->
-    <com.mapbox.mapboxsdk.maps.MapView
+    <com.google.android.gms.maps.MapView
         android:id="@+id/map"
         android:layout_width="0dp"
         tools:background="@android:color/holo_green_light"
@@ -20,6 +20,16 @@
         app:layout_constraintHorizontal_bias="1.0"
         android:layout_height="0dp"
         app:layout_constraintBottom_toBottomOf="parent" />
+    <!--<com.mapbox.mapboxsdk.maps.MapView-->
+        <!--android:id="@+id/map"-->
+        <!--android:layout_width="0dp"-->
+        <!--tools:background="@android:color/holo_green_light"-->
+        <!--app:layout_constraintTop_toTopOf="parent"-->
+        <!--app:layout_constraintLeft_toLeftOf="parent"-->
+        <!--app:layout_constraintRight_toRightOf="parent"-->
+        <!--app:layout_constraintHorizontal_bias="1.0"-->
+        <!--android:layout_height="0dp"-->
+        <!--app:layout_constraintBottom_toBottomOf="parent" />-->
 
     <Button
         android:text="Drawer"

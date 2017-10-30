@@ -6,8 +6,8 @@ import android.support.annotation.AnyThread;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 
-import com.mapbox.mapboxsdk.camera.CameraPosition;
-import com.mapbox.mapboxsdk.geometry.LatLng;
+import com.google.android.gms.maps.model.CameraPosition;
+import com.google.android.gms.maps.model.LatLng;
 
 import io.pijun.george.crypto.KeyPair;
 
@@ -28,7 +28,6 @@ public class Prefs {
     private final static String KEY_CAMERA_POSITION_SAVED = "camera_position_saved";
     private final static String KEY_CAMERA_POSITION_LATITUDE = "camera_position_latitude";
     private final static String KEY_CAMERA_POSITION_LONGITUDE = "camera_position_longitude";
-    private final static String KEY_CAMERA_POSITION_ALTITUDE = "camera_position_altitude";
     private final static String KEY_CAMERA_POSITION_BEARING = "camera_position_bearing";
     private final static String KEY_CAMERA_POSITION_TILT = "camera_position_tilt";
     private final static String KEY_CAMERA_POSITION_ZOOM = "camera_position_zoom";
@@ -52,7 +51,7 @@ public class Prefs {
     }
 
     @AnyThread
-    public void clearAll() {
+    void clearAll() {
         mPrefs.edit().clear().apply();
     }
 
@@ -117,11 +116,11 @@ public class Prefs {
     }
 
     @Nullable
-    public byte[] getPasswordSalt() {
+    private byte[] getPasswordSalt() {
         return getBytes(KEY_PASSWORD_SALT);
     }
 
-    public void setPasswordSalt(byte[] salt) {
+    void setPasswordSalt(byte[] salt) {
         setBytes(salt, KEY_PASSWORD_SALT);
     }
 
@@ -130,7 +129,7 @@ public class Prefs {
         return getBytes(KEY_SYMMETRIC_KEY);
     }
 
-    public void setSymmetricKey(byte[] symKey) {
+    void setSymmetricKey(byte[] symKey) {
         setBytes(symKey, KEY_SYMMETRIC_KEY);
     }
 
@@ -170,44 +169,51 @@ public class Prefs {
     }
 
     @Nullable
-    public CameraPosition getCameraPosition() {
+    CameraPosition getCameraPosition() {
         if (!mPrefs.getBoolean(KEY_CAMERA_POSITION_SAVED, false)) {
             return null;
         }
 
-        double bearing = Double.longBitsToDouble(mPrefs.getLong(KEY_CAMERA_POSITION_BEARING, 0));
-        double tilt = Double.longBitsToDouble(mPrefs.getLong(KEY_CAMERA_POSITION_TILT, 0));
-        double zoom = Double.longBitsToDouble(mPrefs.getLong(KEY_CAMERA_POSITION_ZOOM, 0));
+        float bearing = 0;
+        try {
+            bearing = mPrefs.getFloat(KEY_CAMERA_POSITION_BEARING, 0);
+        } catch (Throwable ignore) {}
+        float tilt = 0;
+        try {
+            tilt = mPrefs.getFloat(KEY_CAMERA_POSITION_TILT, 0);
+        } catch (Throwable ignore) {}
+        float zoom = 0;
+        try {
+            zoom = mPrefs.getFloat(KEY_CAMERA_POSITION_ZOOM, 0);
+        } catch (Throwable ignore) {}
         double lat = Double.longBitsToDouble(mPrefs.getLong(KEY_CAMERA_POSITION_LATITUDE, 0));
         double lng = Double.longBitsToDouble(mPrefs.getLong(KEY_CAMERA_POSITION_LONGITUDE, 0));
-        double alt = Double.longBitsToDouble(mPrefs.getLong(KEY_CAMERA_POSITION_ALTITUDE, 0));
 
-        LatLng ll = new LatLng(lat, lng, alt);
+        LatLng ll = new LatLng(lat, lng);
         return new CameraPosition.Builder().bearing(bearing).target(ll).tilt(tilt).zoom(zoom).build();
     }
 
-    public void setCameraPosition(@Nullable CameraPosition pos) {
+    void setCameraPosition(@Nullable CameraPosition pos) {
         if (pos == null) {
             mPrefs.edit().putBoolean(KEY_CAMERA_POSITION_SAVED, false).apply();
             return;
         }
 
         mPrefs.edit()
-                .putLong(KEY_CAMERA_POSITION_BEARING, Double.doubleToRawLongBits(pos.bearing))
-                .putLong(KEY_CAMERA_POSITION_TILT, Double.doubleToRawLongBits(pos.tilt))
-                .putLong(KEY_CAMERA_POSITION_ZOOM, Double.doubleToRawLongBits(pos.zoom))
-                .putLong(KEY_CAMERA_POSITION_LATITUDE, Double.doubleToRawLongBits(pos.target.getLatitude()))
-                .putLong(KEY_CAMERA_POSITION_LONGITUDE, Double.doubleToRawLongBits(pos.target.getLongitude()))
-                .putLong(KEY_CAMERA_POSITION_ALTITUDE, Double.doubleToRawLongBits(pos.target.getAltitude()))
+                .putFloat(KEY_CAMERA_POSITION_BEARING, pos.bearing)
+                .putFloat(KEY_CAMERA_POSITION_TILT, pos.tilt)
+                .putFloat(KEY_CAMERA_POSITION_ZOOM, pos.zoom)
+                .putLong(KEY_CAMERA_POSITION_LATITUDE, Double.doubleToRawLongBits(pos.target.latitude))
+                .putLong(KEY_CAMERA_POSITION_LONGITUDE, Double.doubleToRawLongBits(pos.target.longitude))
                 .putBoolean(KEY_CAMERA_POSITION_SAVED, true)
                 .apply();
     }
 
-    public long getLastLocationUpdateTime() {
+    long getLastLocationUpdateTime() {
         return mPrefs.getLong(KEY_LAST_LOCATION_UPDATE_TIME, 0);
     }
 
-    public void setLastLocationUpdateTime(long time) {
+    void setLastLocationUpdateTime(long time) {
         mPrefs.edit().putLong(KEY_LAST_LOCATION_UPDATE_TIME, time).apply();
     }
 

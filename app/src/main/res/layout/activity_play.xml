@@ -4,11 +4,6 @@
     android:orientation="vertical"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools">
-    <!--<ScrollView-->
-        <!--android:fitsSystemWindows="true"-->
-        <!--android:layout_width="match_parent"-->
-        <!--android:layout_height="match_parent"-->
-        <!--tools:context=".WelcomeActivity">-->
     <ImageView
         android:id="@+id/logo"
         android:src="@drawable/pijun_symbol"
@@ -21,8 +16,6 @@
         android:id="@+id/screen_title"
         android:src="@drawable/ic_pijun_text"
         android:layout_marginTop="32dp"
-        android:layout_centerHorizontal="true"
-        android:layout_below="@id/logo"
         android:layout_width="85dp"
         android:layout_height="38dp" />
 
@@ -30,8 +23,6 @@
         android:id="@+id/screen_subtitle"
         android:text="@string/share_wisely"
         android:textSize="15sp"
-        android:layout_centerHorizontal="true"
-        android:layout_below="@id/screen_title"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="4dp" />
@@ -85,7 +76,7 @@
             android:id="@+id/testfield"
             android:drawableStart="@drawable/ic_padlock"
             android:text="@string/add_friend"
-            android:textColor="@color/mapbox_blue"
+            android:textColor="@color/colorAccent"
             android:hint="@string/pijun"
             android:inputType="textPassword"
             android:layout_width="match_parent"

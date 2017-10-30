@@ -46,20 +46,18 @@ import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.location.LocationSettingsRequest;
 import com.google.android.gms.location.LocationSettingsStatusCodes;
 import com.google.android.gms.location.SettingsClient;
+import com.google.android.gms.maps.CameraUpdate;
+import com.google.android.gms.maps.CameraUpdateFactory;
+import com.google.android.gms.maps.GoogleMap;
+import com.google.android.gms.maps.MapView;
+import com.google.android.gms.maps.OnMapReadyCallback;
+import com.google.android.gms.maps.model.BitmapDescriptor;
+import com.google.android.gms.maps.model.BitmapDescriptorFactory;
+import com.google.android.gms.maps.model.CameraPosition;
+import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.Marker;
+import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.firebase.crash.FirebaseCrash;
-import com.mapbox.mapboxsdk.annotations.Icon;
-import com.mapbox.mapboxsdk.annotations.IconFactory;
-import com.mapbox.mapboxsdk.annotations.Marker;
-import com.mapbox.mapboxsdk.annotations.MarkerOptions;
-import com.mapbox.mapboxsdk.annotations.MarkerView;
-import com.mapbox.mapboxsdk.annotations.MarkerViewOptions;
-import com.mapbox.mapboxsdk.camera.CameraPosition;
-import com.mapbox.mapboxsdk.camera.CameraUpdate;
-import com.mapbox.mapboxsdk.camera.CameraUpdateFactory;
-import com.mapbox.mapboxsdk.geometry.LatLng;
-import com.mapbox.mapboxsdk.maps.MapView;
-import com.mapbox.mapboxsdk.maps.MapboxMap;
-import com.mapbox.mapboxsdk.maps.OnMapReadyCallback;
 import com.squareup.otto.Subscribe;
 import com.squareup.picasso.Picasso;
 
@@ -92,20 +90,20 @@ import io.pijun.george.view.MyLocationView;
 import retrofit2.Call;
 import retrofit2.Response;
 
-public class MapActivity extends AppCompatActivity implements OnMapReadyCallback, MapboxMap.OnMarkerClickListener, AvatarsAdapter.AvatarsAdapterListener {
+public class MapActivity extends AppCompatActivity implements OnMapReadyCallback, GoogleMap.OnMarkerClickListener, AvatarsAdapter.AvatarsAdapterListener {
 
     private static final int REQUEST_LOCATION_PERMISSION = 18;
     private static final int REQUEST_LOCATION_SETTINGS = 20;
 
     private MapView mMapView;
-    private MapboxMap mMapboxMap;
+    private GoogleMap mGoogMap;
     private volatile PackageWatcher mPkgWatcher;
     private MarkerTracker mMarkerTracker = new MarkerTracker();
     private FusedLocationProviderClient mLocationProviderClient;
     private SettingsClient mSettingsClient;
     private LocationRequest mLocationRequest;
     private LocationSettingsRequest mLocationSettingsRequest;
-    private MarkerView mMeMarker;
+    private Marker mMeMarker;
     private boolean mCameraTracksMyLocation = false;
     private EditText mUsernameField;
     private WeakReference<FriendsSheetFragment> mFriendsSheet;
@@ -271,8 +269,9 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
 
         mMapView.onStop();
 
-        if (mMapboxMap != null) {
-            CameraPosition pos = mMapboxMap.getCameraPosition();
+        if (mGoogMap != null) {
+            CameraPosition pos = mGoogMap.getCameraPosition();
+            L.i("onStop cam pos: " + pos);
             Prefs.get(this).setCameraPosition(pos);
         }
 
@@ -327,7 +326,7 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
     }
 
     private void flyCameraToMyLocation() {
-        if (mMapboxMap == null) {
+        if (mGoogMap == null) {
             return;
         }
         if (mMeMarker == null) {
@@ -339,27 +338,36 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
                 .bearing(0)
                 .tilt(0).build();
         CameraUpdate cu = CameraUpdateFactory.newCameraPosition(cp);
-        mMapboxMap.animateCamera(cu, 1000);
+        mGoogMap.animateCamera(cu);
+//        mGoogMap.animateCamera(cu, 1000);
     }
 
     @Override
     @UiThread
-    public void onMapReady(MapboxMap mapboxMap ) {
+    public void onMapReady(GoogleMap mapboxMap ) {
         if (mapboxMap == null) {
             L.i("onMapReady has a null map arg");
             FirebaseCrash.log("MapboxMap is null");
             return;
         }
-        mMapboxMap = mapboxMap;
+        mGoogMap = mapboxMap;
         CameraPosition pos = Prefs.get(this).getCameraPosition();
         if (pos != null) {
-            mMapboxMap.moveCamera(CameraUpdateFactory.newCameraPosition(pos));
+            L.i("found a saved camera position");
+            mGoogMap.moveCamera(CameraUpdateFactory.newCameraPosition(pos));
+        } else {
+            L.i("camera position is null in restore");
         }
-        mMapboxMap.setOnMarkerClickListener(this);
-        mMapboxMap.getUiSettings().setCompassEnabled(false);
-        mMapboxMap.setOnScrollListener(() -> {
-            mCameraTracksMyLocation = false;
-            findViewById(R.id.my_location_fab).setSelected(false);
+        mGoogMap.setOnMarkerClickListener(this);
+        mGoogMap.getUiSettings().setCompassEnabled(false);
+        mGoogMap.setOnCameraMoveStartedListener(new GoogleMap.OnCameraMoveStartedListener() {
+            @Override
+            public void onCameraMoveStarted(int reason) {
+                if (reason == REASON_GESTURE) {
+                    mCameraTracksMyLocation = false;
+                    findViewById(R.id.my_location_fab).setSelected(false);
+                }
+            }
         });
 
         // add markers for all friends
@@ -389,22 +397,22 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
     }
 
     private void addMyLocation(Location location) {
-        if (mMapboxMap == null) {
+        if (mGoogMap == null) {
             return;
         }
 
         Bitmap bitmap = MyLocationView.getBitmap(this);
-        Icon descriptor = IconFactory.getInstance(this).fromBitmap(bitmap);
-        MarkerViewOptions opts = new MarkerViewOptions()
+        BitmapDescriptor descriptor = BitmapDescriptorFactory.fromBitmap(bitmap);
+        MarkerOptions opts = new MarkerOptions()
                 .position(new LatLng(location.getLatitude(), location.getLongitude()))
                 .rotation(location.getBearing())
                 .icon(descriptor);
-        mMeMarker = mMapboxMap.addMarker(opts);
+        mMeMarker = mGoogMap.addMarker(opts);
     }
 
     @WorkerThread
     private void addMapMarker(@NonNull FriendRecord friend, @NonNull FriendLocation loc) {
-        if (mMapboxMap == null) {
+        if (mGoogMap == null) {
             return;
         }
         int thirtySix = getResources().getDimensionPixelSize(R.dimen.thirtySix);
@@ -437,12 +445,12 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
                 Canvas c = new Canvas(avatar);
                 avView.draw(c);
 
-                Icon descriptor = IconFactory.getInstance(MapActivity.this).fromBitmap(avatar);
+                BitmapDescriptor descriptor = BitmapDescriptorFactory.fromBitmap(avatar);
                 MarkerOptions opts = new MarkerOptions()
                         .position(new LatLng(loc.latitude, loc.longitude))
                         .icon(descriptor)
                         .title(friend.user.username);
-                Marker marker = mMapboxMap.addMarker(opts);
+                Marker marker = mGoogMap.addMarker(opts);
                 mMarkerTracker.add(marker, friend.id, loc);
             }
         });
@@ -567,7 +575,7 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
                 if (marker == null) {
                     return;
                 }
-                mMapboxMap.removeMarker(marker);
+                marker.remove();
             });
         });
     }
@@ -653,7 +661,7 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
     @Override
     @UiThread
     public boolean onMarkerClick(@NonNull final Marker marker) {
-        if (marker == mMeMarker) {
+        if (marker.equals(mMeMarker)) {
             return true;
         }
 
@@ -723,7 +731,7 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
                 .bearing(0)
                 .tilt(0).build();
         CameraUpdate cu = CameraUpdateFactory.newCameraPosition(cp);
-        mMapboxMap.animateCamera(cu, 1000);
+        mGoogMap.animateCamera(cu);
     }
 
     @UiThread
@@ -844,7 +852,7 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
     public void onFriendRemoved(FriendRemoved evt) {
         Marker marker = mMarkerTracker.removeMarker(evt.friendId);
         if (marker != null) {
-            mMapboxMap.removeMarker(marker);
+            marker.remove();
         }
     }
 
@@ -877,9 +885,9 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
             }
 
             if (mCameraTracksMyLocation) {
-                if (mMapboxMap != null) {
+                if (mGoogMap != null) {
                     CameraUpdate update = CameraUpdateFactory.newLatLng(new LatLng(location.getLatitude(), location.getLongitude()));
-                    mMapboxMap.animateCamera(update, 300);
+                    mGoogMap.animateCamera(update);
                 }
             }
             App.postOnBus(location);

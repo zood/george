@@ -5,7 +5,7 @@ import android.support.annotation.Nullable;
 import android.support.annotation.UiThread;
 import android.support.v4.util.LongSparseArray;
 
-import com.mapbox.mapboxsdk.annotations.Marker;
+import com.google.android.gms.maps.model.Marker;
 
 import java.util.HashMap;
 import java.util.Set;
@@ -26,7 +26,7 @@ public class MarkerTracker {
     }
 
     @UiThread
-    public void clear() {
+    void clear() {
         mIdToMarker.clear();
         mIdToLocation.clear();
         mMarkerToId.clear();
@@ -34,25 +34,25 @@ public class MarkerTracker {
 
     @Nullable
     @UiThread
-    public Marker getById(long friendId) {
+    Marker getById(long friendId) {
         return mIdToMarker.get(friendId);
     }
 
     @UiThread
-    public FriendLocation getLocation(Marker marker) {
+    FriendLocation getLocation(Marker marker) {
         long id = mMarkerToId.get(marker);
         return mIdToLocation.get(id);
     }
 
     @NonNull
     @UiThread
-    public Set<Marker> getMarkers() {
+    Set<Marker> getMarkers() {
         return mMarkerToId.keySet();
     }
 
     @Nullable
     @UiThread
-    public Marker removeMarker(long friendId) {
+    Marker removeMarker(long friendId) {
         Marker marker = mIdToMarker.get(friendId);
         if (marker == null) {
             return null;
@@ -64,7 +64,7 @@ public class MarkerTracker {
     }
 
     @UiThread
-    public void updateLocation(long friendId, FriendLocation loc) {
+    void updateLocation(long friendId, FriendLocation loc) {
         mIdToLocation.put(friendId, loc);
     }
 }
