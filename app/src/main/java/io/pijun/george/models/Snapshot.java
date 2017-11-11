@@ -9,7 +9,6 @@ import java.io.ByteArrayInputStream;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
 
-import io.pijun.george.Hex;
 import io.pijun.george.api.OscarClient;
 
 public class Snapshot {
@@ -18,21 +17,6 @@ public class Snapshot {
         public byte[] userId;
         public byte[] sendingBoxId;
         public byte[] receivingBoxId;
-    }
-
-    public static class Request {
-        public byte[] userId;
-        public long sentDate;
-        public String response;
-
-        @Override
-        public String toString() {
-            return "Request{" +
-                    "userId=" + Hex.toHexString(userId) +
-                    ", sentDate=" + sentDate +
-                    ", response='" + response + '\'' +
-                    '}';
-        }
     }
 
     public static class User {
@@ -44,11 +28,9 @@ public class Snapshot {
     @NonNull
     public ArrayList<Friend> friends = new ArrayList<>();
     @NonNull
-    public ArrayList<Request> incomingRequests = new ArrayList<>();
-    @NonNull
-    public ArrayList<Request> outgoingRequests = new ArrayList<>();
-    @NonNull
     public ArrayList<User> users = new ArrayList<>();
+    @Nullable
+    public byte[] avatar;
 
     public int schemaVersion;
     public long timestamp;

@@ -31,7 +31,7 @@ import io.pijun.george.models.UserRecord;
 class AvatarManager {
 
     private static final String AVATAR_DIR = "avatars";
-    private static final String MY_AVATAR = "me";
+    static final String MY_AVATAR = "me";
 
     @CheckResult @NonNull @AnyThread
     static File getAvatar(@NonNull Context ctx, @NonNull String username) {
@@ -117,6 +117,7 @@ class AvatarManager {
             public void run() {
                 try {
                     sendAvatarToFriends();
+                    DB.get(ctx).scheduleBackup();
                 } catch (IOException ex) {
                     FirebaseCrash.report(ex);
                 }

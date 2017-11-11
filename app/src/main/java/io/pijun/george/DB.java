@@ -19,6 +19,10 @@ import android.support.v4.util.LongSparseArray;
 
 import com.google.firebase.crash.FirebaseCrash;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
@@ -435,12 +439,27 @@ public class DB {
                     snapshot.friends.add(f);
                 }
             }
+
             snapshot.schemaVersion = db.getVersion();
             snapshot.timestamp = System.currentTimeMillis();
 
             db.setTransactionSuccessful();
         } finally {
             db.endTransaction();
+        }
+
+        File avatar = AvatarManager.getMyAvatar(App.getApp());
+        try {
+            FileInputStream fis = new FileInputStream(avatar);
+            byte[] buffer = new byte[(int)avatar.length()];
+            int read = fis.read(buffer);
+            if (read == avatar.length()) {
+                snapshot.avatar = buffer;
+            }
+        } catch (FileNotFoundException fnfe) {
+            L.w("No avatar found");
+        } catch (IOException ioe) {
+            L.w("Unable to read avatar data", ioe);
         }
 
         return snapshot;
@@ -591,10 +610,21 @@ public class DB {
             db.endTransaction();
         }
 
+        if (snapshot.avatar != null && snapshot.avatar.length > 0) {
+            try {
+                // We can use this method, because we don't need to notify our friends about an avatar change
+                boolean success = AvatarManager.saveAvatar(App.getApp(), AvatarManager.MY_AVATAR, snapshot.avatar);
+                if (!success) {
+                    L.w("Failed to restore avatar from backup");
+                }
+            } catch (IOException ioe) {
+                L.w("Failed to restore avatar to disk", ioe);
+            }
+        }
     }
 
     @WorkerThread
-    private void scheduleBackup() {
+    public void scheduleBackup() {
         JobScheduler scheduler = (JobScheduler) mContext.getSystemService(Context.JOB_SCHEDULER_SERVICE);
         if (scheduler != null) {    // it will never be null
             scheduler.schedule(BackupDatabaseJob.getJobInfo(mContext));
