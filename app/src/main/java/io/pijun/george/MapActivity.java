@@ -1,7 +1,6 @@
 package io.pijun.george;
 
 import android.Manifest;
-import android.animation.FloatEvaluator;
 import android.animation.ObjectAnimator;
 import android.animation.ValueAnimator;
 import android.content.Context;
@@ -54,6 +53,8 @@ import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.model.BitmapDescriptor;
 import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.CameraPosition;
+import com.google.android.gms.maps.model.Circle;
+import com.google.android.gms.maps.model.CircleOptions;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
@@ -104,8 +105,11 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
     private LocationRequest mLocationRequest;
     private LocationSettingsRequest mLocationSettingsRequest;
     private Marker mMeMarker;
-    private boolean mCameraTracksMyLocation = false;
+    private Circle mMyCircle;
+//    private boolean mCameraTracksMyLocation = false;
+    private long mFriendForCameraToTrack = -1;
     private EditText mUsernameField;
+    private Circle mCurrentCircle;
     private WeakReference<FriendsSheetFragment> mFriendsSheet;
 
     public static Intent newIntent(Context ctx) {
@@ -154,7 +158,7 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
         final View myLocFab = findViewById(R.id.my_location_fab);
         myLocFab.setOnClickListener(v -> {
             myLocFab.setSelected(true);
-            mCameraTracksMyLocation = true;
+            mFriendForCameraToTrack = 0;
             flyCameraToMyLocation();
         });
 
@@ -334,12 +338,11 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
         }
         CameraPosition cp = new CameraPosition.Builder()
                 .target(mMeMarker.getPosition())
-                .zoom(13)
+                .zoom(Constants.DEFAULT_ZOOM_LEVEL)
                 .bearing(0)
                 .tilt(0).build();
         CameraUpdate cu = CameraUpdateFactory.newCameraPosition(cp);
         mGoogMap.animateCamera(cu);
-//        mGoogMap.animateCamera(cu, 1000);
     }
 
     @Override
@@ -364,7 +367,7 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
             @Override
             public void onCameraMoveStarted(int reason) {
                 if (reason == REASON_GESTURE) {
-                    mCameraTracksMyLocation = false;
+                    mFriendForCameraToTrack = -1;
                     findViewById(R.id.my_location_fab).setSelected(false);
                 }
             }
@@ -396,6 +399,25 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
         mLocationProviderClient.requestLocationUpdates(mLocationRequest, mLocationCallbackHelper, Looper.getMainLooper());
     }
 
+    @UiThread
+    private void addMyErrorCircle(Location location) {
+        if (mGoogMap == null) {
+            return;
+        }
+
+        if (!location.hasAccuracy()) {
+            return;
+        }
+
+        CircleOptions opts = new CircleOptions()
+                .center(new LatLng(location.getLatitude(), location.getLongitude()))
+                .radius(location.getAccuracy())
+                .strokeColor(Color.TRANSPARENT)
+                .fillColor(0x8032b6f4);
+        mMyCircle = mGoogMap.addCircle(opts);
+    }
+
+    @UiThread
     private void addMyLocation(Location location) {
         if (mGoogMap == null) {
             return;
@@ -403,9 +425,10 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
 
         Bitmap bitmap = MyLocationView.getBitmap(this);
         BitmapDescriptor descriptor = BitmapDescriptorFactory.fromBitmap(bitmap);
+        LatLng ll = new LatLng(location.getLatitude(), location.getLongitude());
         MarkerOptions opts = new MarkerOptions()
-                .position(new LatLng(location.getLatitude(), location.getLongitude()))
-                .rotation(location.getBearing())
+                .position(ll)
+                .anchor(0.5f, 0.5f)
                 .icon(descriptor);
         mMeMarker = mGoogMap.addMarker(opts);
     }
@@ -449,6 +472,7 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
                 MarkerOptions opts = new MarkerOptions()
                         .position(new LatLng(loc.latitude, loc.longitude))
                         .icon(descriptor)
+                        .anchor(0.5f, 0.5f)
                         .title(friend.user.username);
                 Marker marker = mGoogMap.addMarker(opts);
                 mMarkerTracker.add(marker, friend.id, loc);
@@ -600,6 +624,11 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
             marker.setPosition(new LatLng(loc.latitude, loc.longitude));
             mMarkerTracker.updateLocation(loc.friendId, loc);
         }
+
+        if (mFriendForCameraToTrack == loc.friendId && mGoogMap != null) {
+            CameraUpdate update = CameraUpdateFactory.newLatLng(new LatLng(loc.latitude, loc.longitude));
+            mGoogMap.animateCamera(update);
+        }
     }
 
     @UiThread
@@ -692,8 +721,9 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
             snippetBuilder.append(movements).append(", ");
         }
         final String snippet = snippetBuilder.toString();
-
         marker.setSnippet(snippet);
+
+        showFriendErrorCircle(loc);
 
         App.runInBackground(() -> {
             try {
@@ -723,15 +753,28 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
             return;
         }
 
-        mCameraTracksMyLocation = false;
+        mFriendForCameraToTrack = fr.id;
         findViewById(R.id.my_location_fab).setSelected(false);
         CameraPosition cp = new CameraPosition.Builder()
                 .target(marker.getPosition())
-                .zoom(13)
+                .zoom(Constants.DEFAULT_ZOOM_LEVEL)
                 .bearing(0)
                 .tilt(0).build();
         CameraUpdate cu = CameraUpdateFactory.newCameraPosition(cp);
         mGoogMap.animateCamera(cu);
+
+        App.runInBackground(new WorkerRunnable() {
+            @Override
+            public void run() {
+                FriendLocation loc = DB.get(MapActivity.this).getFriendLocation(fr.id);
+                App.runOnUiThread(new UiRunnable() {
+                    @Override
+                    public void run() {
+                        showFriendErrorCircle(loc);
+                    }
+                });
+            }
+        });
     }
 
     @UiThread
@@ -770,6 +813,50 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
         dialog.show();
 
         mUsernameField = dialog.findViewById(R.id.username);
+    }
+
+    @UiThread
+    private void showFriendErrorCircle(FriendLocation loc) {
+        if (mGoogMap == null) {
+            return;
+        }
+
+        // check if we even need a circle
+        if (loc.accuracy == null) {
+            // no circle needed
+            // check if there's a circle that we need to remove
+            if (mCurrentCircle != null) {
+                mCurrentCircle.remove();
+                mCurrentCircle = null;
+            }
+            return;
+        }
+        // check if there is already a circle
+        if (mCurrentCircle != null) {
+            // does this circle already belong to this friend?
+            long friendId = (long)mCurrentCircle.getTag();
+            if (friendId != loc.friendId) {
+                // nope! Remove it.
+                mCurrentCircle.remove();
+                mCurrentCircle = null;
+            }
+        }
+
+        // If this friend doesn't have a circle, create it
+        if (mCurrentCircle == null) {
+            CircleOptions opts = new CircleOptions()
+                    .center(new LatLng(loc.latitude, loc.longitude))
+                    .radius(loc.accuracy)
+                    .strokeColor(Color.TRANSPARENT)
+                    .fillColor(ContextCompat.getColor(this, R.color.error_circle_fill));
+            mCurrentCircle = mGoogMap.addCircle(opts);
+            mCurrentCircle.setTag(loc.friendId);
+        } else {
+            // This friend already has a circle, so just adjust the radius and position
+            mCurrentCircle.setRadius(loc.accuracy);
+            mCurrentCircle.setCenter(new LatLng(loc.latitude, loc.longitude));
+        }
+
     }
 
     private void showProfile() {
@@ -864,27 +951,46 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
             if (mMeMarker == null) {
                 addMyLocation(location);
             } else {
+                LatLng ll = new LatLng(location.getLatitude(), location.getLongitude());
                 ValueAnimator posAnimator = ObjectAnimator.ofObject(
                         mMeMarker,
                         "position",
                         new Utils.LatLngEvaluator(),
                         mMeMarker.getPosition(),
-                        new LatLng(location.getLatitude(), location.getLongitude()));
-                posAnimator.setDuration(300);
-
-                ValueAnimator rotAnimator = ObjectAnimator.ofObject(
-                        mMeMarker,
-                        "rotation",
-                        new FloatEvaluator(),
-                        mMeMarker.getRotation(),
-                        location.getBearing());
-                rotAnimator.setDuration(300);
+                        ll);
+                posAnimator.setDuration(500);
 
                 posAnimator.start();
-                rotAnimator.start();
             }
 
-            if (mCameraTracksMyLocation) {
+            if (mMyCircle == null) {
+                addMyErrorCircle(location);
+            } else {
+                if (!location.hasAccuracy()) {
+                    mMyCircle.remove();
+                    mMyCircle = null;
+                } else {
+                    ValueAnimator posAnimator = ObjectAnimator.ofObject(
+                            mMyCircle,
+                            "center",
+                            new Utils.LatLngEvaluator(),
+                            mMyCircle.getCenter(),
+                            new LatLng(location.getLatitude(), location.getLongitude()));
+                    posAnimator.setDuration(500);
+                    ValueAnimator errAnimator = ObjectAnimator.ofObject(
+                            mMyCircle,
+                            "radius",
+                            new Utils.DoubleEvaluator(),
+                            mMyCircle.getRadius(),
+                            (double)location.getAccuracy());
+                    errAnimator.setDuration(500);
+
+                    posAnimator.start();
+                    errAnimator.start();
+                }
+            }
+
+            if (mFriendForCameraToTrack == 0) {
                 if (mGoogMap != null) {
                     CameraUpdate update = CameraUpdateFactory.newLatLng(new LatLng(location.getLatitude(), location.getLongitude()));
                     mGoogMap.animateCamera(update);

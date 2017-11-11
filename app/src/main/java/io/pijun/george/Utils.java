@@ -118,6 +118,13 @@ public class Utils {
         }
     }
 
+    static class DoubleEvaluator implements TypeEvaluator<Double> {
+        @Override
+        public Double evaluate(float fraction, Double startVal, Double endVal) {
+            return startVal + ((endVal - startVal) * fraction);
+        }
+    }
+
     public static int pixToDps(Context ctx, int pixs) {
         float scale = ctx.getResources().getDisplayMetrics().density;
         return (int)((pixs - 0.5f)/scale);
