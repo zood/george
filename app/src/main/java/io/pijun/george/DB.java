@@ -583,7 +583,7 @@ public class DB {
     }
 
     @WorkerThread
-    public void restoreDatabase(@NonNull Snapshot snapshot) throws DBException {
+    public void restoreDatabase(@NonNull Context ctx, @NonNull Snapshot snapshot) throws DBException {
         L.i("snapshot: " + new String(snapshot.toJson()));
         SQLiteDatabase db = mDbHelper.getWritableDatabase();
         if (snapshot.schemaVersion > db.getVersion()) {
@@ -613,7 +613,7 @@ public class DB {
         if (snapshot.avatar != null && snapshot.avatar.length > 0) {
             try {
                 // We can use this method, because we don't need to notify our friends about an avatar change
-                boolean success = AvatarManager.saveAvatar(App.getApp(), AvatarManager.MY_AVATAR, snapshot.avatar);
+                boolean success = AvatarManager.saveAvatar(ctx, AvatarManager.MY_AVATAR, snapshot.avatar);
                 if (!success) {
                     L.w("Failed to restore avatar from backup");
                 }

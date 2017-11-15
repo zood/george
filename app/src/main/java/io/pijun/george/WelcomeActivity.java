@@ -28,6 +28,7 @@ import com.google.firebase.crash.FirebaseCrash;
 
 import java.io.IOException;
 import java.security.SecureRandom;
+import java.util.ArrayList;
 
 import io.pijun.george.api.AuthenticationChallenge;
 import io.pijun.george.api.CreateUserResponse;
@@ -38,10 +39,12 @@ import io.pijun.george.api.OscarClient;
 import io.pijun.george.api.OscarError;
 import io.pijun.george.api.ServerPublicKeyResponse;
 import io.pijun.george.api.User;
+import io.pijun.george.api.UserComm;
 import io.pijun.george.crypto.EncryptedData;
 import io.pijun.george.crypto.KeyPair;
 import io.pijun.george.event.UserLoggedIn;
 import io.pijun.george.interpolator.Bezier65Interpolator;
+import io.pijun.george.models.FriendRecord;
 import io.pijun.george.models.Snapshot;
 import retrofit2.Response;
 
@@ -397,7 +400,7 @@ public class WelcomeActivity extends AppCompatActivity implements WelcomeLayout.
             }
 
             try {
-                DB.get(this).restoreDatabase(snapshot);
+                DB.get(this).restoreDatabase(this, snapshot);
             } catch (DB.DBException ex) {
                 setBusy(false);
                 FirebaseCrash.report(ex);
@@ -425,6 +428,17 @@ public class WelcomeActivity extends AppCompatActivity implements WelcomeLayout.
             }
         });
         setBusy(false);
+
+        // request avatars from all friends
+        UserComm avatarReq = UserComm.newAvatarRequest();
+        byte[] reqJson = avatarReq.toJSON();
+        ArrayList<FriendRecord> friends = DB.get(this).getFriends();
+        for (FriendRecord f : friends) {
+            String err = OscarClient.queueSendMessage(this, f.user, reqJson, false, false);
+            if (err != null) {
+                L.w("Error queue avatar request to friend " + f.user.username + ": " + err);
+            }
+        }
     }
 
     @WorkerThread

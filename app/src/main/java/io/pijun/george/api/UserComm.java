@@ -34,6 +34,13 @@ public class UserComm {
     private UserComm() {}
 
     @NonNull @CheckResult
+    public static UserComm newAvatarRequest() {
+        UserComm c = new UserComm();
+        c.type = CommType.AvatarRequest;
+        return c;
+    }
+
+    @NonNull @CheckResult
     public static UserComm newAvatarUpdate(@NonNull byte[] avatarData) {
         UserComm c = new UserComm();
         c.type = CommType.AvatarUpdate;
@@ -97,6 +104,8 @@ public class UserComm {
             return false;
         }
         switch (type) {
+            case AvatarRequest:
+                return true;
             case AvatarUpdate:
                 if (avatar == null) {
                     return false;

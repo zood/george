@@ -53,6 +53,14 @@ public class MessageUtils {
     public static final int ERROR_DATABASE_INCONSISTENCY = 13;
     public static final int ERROR_ENCRYPTION_FAILED = 14;
 
+    private static int handleAvatarRequest(@NonNull Context ctx, @NonNull UserRecord user) {
+        try {
+            AvatarManager.sendAvatarToUser(ctx, user);
+        } catch (IOException ignore) {}
+
+        return ERROR_NONE;
+    }
+
     @WorkerThread @Error
     private static int handleAvatarUpdate(@NonNull Context context, @NonNull UserRecord user, @NonNull UserComm comm) {
         try {
@@ -228,6 +236,8 @@ public class MessageUtils {
         }
         L.i("  comm type: " + comm.type);
         switch (comm.type) {
+            case AvatarRequest:
+                return handleAvatarRequest(context, userRecord);
             case AvatarUpdate:
                 return handleAvatarUpdate(context, userRecord, comm);
             case Debug:
