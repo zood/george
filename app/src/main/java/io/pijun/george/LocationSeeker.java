@@ -27,7 +27,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 public class LocationSeeker {
 
-    private static final int MAX_WAIT_SECONDS = 30;
+    private static final int MAX_WAIT_SECONDS = 35;
     private static int SEEKER_COUNT = 1;
     private final Looper mLooper;
     private final HandlerThread mThread;
