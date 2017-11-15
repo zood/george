@@ -623,6 +623,20 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
             }
             marker.setPosition(new LatLng(loc.latitude, loc.longitude));
             mMarkerTracker.updateLocation(loc.friendId, loc);
+
+            // if there is an error circle being shown on this marker, adjust it too
+            if (mCurrentCircle != null) {
+                long friendId = (long) mCurrentCircle.getTag();
+                if (loc.friendId == friendId) {
+                    if (loc.accuracy != null) {
+                        mCurrentCircle.setRadius(loc.accuracy);
+                        mCurrentCircle.setCenter(new LatLng(loc.latitude, loc.longitude));
+                    } else {
+                        // no accuracy, so remove the circle
+                        mCurrentCircle.remove();
+                    }
+                }
+            }
         }
 
         if (mFriendForCameraToTrack == loc.friendId && mGoogMap != null) {
