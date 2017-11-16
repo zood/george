@@ -10,6 +10,7 @@ import java.util.Arrays;
 import java.util.List;
 
 import io.pijun.george.Constants;
+import io.pijun.george.L;
 import io.pijun.george.models.MovementType;
 
 public class UserComm {
@@ -139,7 +140,8 @@ public class UserComm {
             case LocationUpdateRequest:
                 return true;
             default:
-                throw new UnsupportedOperationException("unknown commtype: '" + type.val + "'");
+                L.i("encountered unknown commtype. probably from a different version of Pijun");
+                return false;
         }
     }
 
