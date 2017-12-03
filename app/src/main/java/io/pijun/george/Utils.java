@@ -188,9 +188,11 @@ public class Utils {
         public boolean onScroll(MotionEvent down, MotionEvent curr, float distanceX, float distanceY) {
             if (isClosed) {
                 float dx = curr.getX() - down.getX();
+                dx = Math.max(0, dx);
                 mListener.onOpenDrawer(dx);
             } else {
                 float dx = down.getX() - curr.getX();
+                dx = Math.max(0, dx);
                 mListener.onCloseDrawer(dx);
             }
 
