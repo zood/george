@@ -13,6 +13,7 @@ import android.databinding.DataBindingUtil;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
+import android.graphics.Outline;
 import android.location.Location;
 import android.os.Bundle;
 import android.os.Looper;
@@ -31,6 +32,7 @@ import android.text.format.DateUtils;
 import android.view.GestureDetector;
 import android.view.MotionEvent;
 import android.view.View;
+import android.view.ViewOutlineProvider;
 import android.view.ViewTreeObserver;
 import android.widget.EditText;
 import android.widget.Toast;
@@ -168,6 +170,13 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
         mMapView = findViewById(R.id.map);
         mMapView.onCreate(savedInstanceState);
         mMapView.getMapAsync(this);
+
+        mBinding.coordinator.setOutlineProvider(new ViewOutlineProvider() {
+            @Override
+            public void getOutline(View view, Outline outline) {
+                outline.setRect(view.getLeft(), view.getTop(), view.getRight(), view.getBottom());
+            }
+        });
 
         final View myLocFab = findViewById(R.id.my_location_fab);
         myLocFab.setOnClickListener(v -> {
@@ -985,7 +994,6 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
             }
             return detectorConsumed;
         });
-        mBinding.root.bringChildToFront(mBinding.touchInterceptor);
     }
 
     @Override
@@ -1014,7 +1022,6 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
     @Override
     public void onOpenDrawer(float pixels) {
         mBinding.coordinator.setPivotY(mBinding.root.getHeight()/2);
-//        mBinding.coordinator.setElevation(Utils.dpsToPix(this, 10));
 
         float range = mBinding.root.getWidth() * 0.75f;
         float xOffset = Math.max(pixels, 0);
@@ -1029,7 +1036,6 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
 
         // animate the drawer elements too
         float uiOffset = Math.min(0, mUiHiddenOffset + pixels);
-//        L.i("uiOffset: " + uiOffset);
         mBinding.avatar.setTranslationX(uiOffset);
         mBinding.username.setTranslationX(uiOffset);
         mBinding.location.setTranslationX(uiOffset);
@@ -1040,7 +1046,6 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
 
     @Override
     public void onFlingCloseDrawer() {
-//        mBinding.coordinator.setPivotY(mBinding.root.getHeight()/2);
         mBinding.coordinator.animate().x(0);
         mBinding.coordinator.animate().scaleX(1).scaleY(1);
 
@@ -1050,8 +1055,6 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
         mBinding.settings.animate().translationX(mUiHiddenOffset).setDuration(200);
         mBinding.about.animate().translationX(mUiHiddenOffset).setDuration(200);
         mBinding.logOut.animate().translationX(mUiHiddenOffset).setDuration(200);
-
-//        mBinding.coordinator.setElevation(Utils.dpsToPix(this, 10));
     }
 
     @Override
@@ -1075,11 +1078,6 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
         mBinding.settings.animate().translationX(0).setDuration(200);
         mBinding.about.animate().translationX(0).setDuration(200);
         mBinding.logOut.animate().translationX(0).setDuration(200);
-
-        // move the buttons to the front
-        mBinding.root.bringChildToFront(mBinding.settings);
-        mBinding.root.bringChildToFront(mBinding.about);
-        mBinding.root.bringChildToFront(mBinding.logOut);
     }
 
     @Override

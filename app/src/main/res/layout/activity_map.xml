@@ -8,12 +8,14 @@
     android:fitsSystemWindows="false"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:clipToPadding="false"
     tools:context=".MapActivity">
     <io.pijun.george.view.DrawerBackground
         android:layout_width="match_parent"
         android:layout_height="match_parent" />
     <View
         android:id="@+id/touch_interceptor"
+        android:elevation="100dp"
         android:background="#00000000"
         android:layout_width="match_parent"
         android:layout_height="match_parent" />
@@ -23,7 +25,7 @@
         android:src="@drawable/ic_arrow_back_24dp"
         android:backgroundTint="#00000000"
         android:layout_marginStart="32dp"
-        android:layout_marginTop="32dp"
+        android:layout_marginTop="48dp"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
         android:layout_width="wrap_content"
@@ -35,8 +37,8 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/close_button"
         android:layout_marginStart="40dp"
-        android:layout_width="64dp"
-        android:layout_height="64dp" />
+        android:layout_width="56dp"
+        android:layout_height="56dp" />
     <TextView
         android:id="@+id/username"
         tools:text="arash"
@@ -70,6 +72,7 @@
     <Button
         android:id="@+id/settings"
         android:text="@string/settings"
+        android:elevation="110dp"
         android:onClick="showProfile"
         android:textColor="@color/ui_tint_gray"
         style="@style/Base.Widget.AppCompat.Button.Borderless"
@@ -84,6 +87,7 @@
     <Button
         android:id="@+id/about"
         android:text="@string/about"
+        android:elevation="110dp"
         android:textColor="@color/ui_tint_gray"
         style="@style/Base.Widget.AppCompat.Button.Borderless"
         android:textAllCaps="false"
@@ -98,6 +102,7 @@
     <Button
         android:id="@+id/log_out"
         android:text="@string/log_out"
+        android:elevation="110dp"
         android:onClick="onLogOutAction"
         android:textColor="@color/ui_tint_gray"
         style="@style/Base.Widget.AppCompat.Button.Borderless"
@@ -114,6 +119,7 @@
     <android.support.design.widget.CoordinatorLayout
         android:id="@+id/coordinator"
         android:transformPivotX="0px"
+        android:elevation="30dp"
         tools:visibility="invisible"
         android:layout_width="match_parent"
         android:layout_height="match_parent">
