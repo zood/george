@@ -12,10 +12,14 @@ import android.util.AttributeSet;
 import android.view.View;
 
 import io.pijun.george.R;
+import io.pijun.george.Utils;
 
 public class DrawerBackground extends View {
 
     private Paint mPaint;
+    private float mCenterX;
+    private float mCenterY;
+    private float mRadius;
 
     public DrawerBackground(Context context) {
         super(context);
@@ -37,15 +41,24 @@ public class DrawerBackground extends View {
         setWillNotDraw(false);
 
         mPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
-        int colorPrimary = ContextCompat.getColor(getContext(), R.color.colorPrimary);
-        LinearGradient lg = new LinearGradient(0, 300, getWidth(), 0, colorPrimary, Color.GREEN, Shader.TileMode.MIRROR);
-        mPaint.setShader(lg);
     }
 
     @Override
     protected void onDraw(Canvas canvas) {
-        super.onDraw(canvas);
+        canvas.drawCircle(mCenterX, mCenterY, mRadius, mPaint);
+    }
 
-//        canvas.drawCircle();
+    @Override
+    protected void onSizeChanged(int w, int h, int oldw, int oldh) {
+        mCenterX = (float)w * 0.25f;
+        float exposed = Utils.dpsToPix(getContext(), 200); //float)h * 0.40f;
+        // radius of the circle should be 3 times the exposed portion
+        mRadius = exposed * 3.0f;
+        mCenterY = -exposed * 2.0f;
+
+        int colorStart = ContextCompat.getColor(getContext(), R.color.colorPrimary);
+        int colorEnd = ContextCompat.getColor(getContext(), R.color.drawer_gradient_end);
+        LinearGradient lg = new LinearGradient(0, exposed, w, 0, colorStart, colorEnd, Shader.TileMode.MIRROR);
+        mPaint.setShader(lg);
     }
 }

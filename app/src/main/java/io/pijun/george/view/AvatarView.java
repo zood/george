@@ -1,6 +1,7 @@
 package io.pijun.george.view;
 
 import android.content.Context;
+import android.content.res.TypedArray;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.BitmapShader;
@@ -8,6 +9,7 @@ import android.graphics.Canvas;
 import android.graphics.Matrix;
 import android.graphics.Paint;
 import android.graphics.Shader;
+import android.graphics.drawable.Drawable;
 import android.support.annotation.ColorInt;
 import android.support.annotation.ColorRes;
 import android.support.annotation.Nullable;
@@ -16,6 +18,10 @@ import android.support.v4.content.ContextCompat;
 import android.util.AttributeSet;
 import android.view.View;
 
+import com.squareup.picasso.Picasso;
+import com.squareup.picasso.Target;
+
+import io.pijun.george.Identicon;
 import io.pijun.george.R;
 
 /*
@@ -27,7 +33,7 @@ shadow-color = border-color at 50% alpha
 shadow size = 7%
  */
 
-public class AvatarView extends View {
+public class AvatarView extends View implements Target {
 
     private float mWidth;
     private float mHeight;
@@ -37,20 +43,21 @@ public class AvatarView extends View {
     @Nullable private BitmapShader mImgShader;
     private Paint mImgPaint;
     private float mRadius;
+    public String username;
 
     public AvatarView(Context context) {
         super(context);
-        init();
+        init(null);
     }
 
     public AvatarView(Context context, @Nullable AttributeSet attrs) {
         super(context, attrs);
-        init();
+        init(attrs);
     }
 
     public AvatarView(Context context, @Nullable AttributeSet attrs, int defStyleAttr) {
         super(context, attrs, defStyleAttr);
-        init();
+        init(attrs);
     }
 
     private void handleSizeChanged() {
@@ -69,11 +76,21 @@ public class AvatarView extends View {
         }
     }
 
-    private void init() {
+    private void init(@Nullable AttributeSet attrs) {
+        int borderColor = ContextCompat.getColor(getContext(), R.color.colorPrimary);
+        if (attrs != null) {
+            TypedArray a = getContext().getTheme().obtainStyledAttributes(attrs, R.styleable.AvatarView, 0, 0);
+            try {
+                borderColor = a.getColor(R.styleable.AvatarView_borderColor, borderColor);
+            } finally {
+                a.recycle();
+            }
+        }
+
         setLayerType(View.LAYER_TYPE_SOFTWARE, null);
 
         mBorderPaint = new Paint();
-        mBorderPaint.setColor(ContextCompat.getColor(getContext(), R.color.colorPrimary));
+        mBorderPaint.setColor(borderColor);
         mBorderPaint.setStyle(Paint.Style.STROKE);
         mBorderPaint.setAntiAlias(true);
 
@@ -133,4 +150,20 @@ public class AvatarView extends View {
         handleSizeChanged();
         invalidate();
     }
+
+    @Override
+    public void onBitmapLoaded(Bitmap bitmap, Picasso.LoadedFrom from) {
+        setImage(bitmap);
+    }
+
+    @Override
+    public void onBitmapFailed(Drawable errorDrawable) {
+        // load the identicon instead
+        Bitmap bmp = Bitmap.createBitmap(getWidth(), getHeight(), Bitmap.Config.ARGB_8888);
+        Identicon.draw(bmp, username);
+        setImage(bmp);
+    }
+
+    @Override
+    public void onPrepareLoad(Drawable placeHolderDrawable) {}
 }

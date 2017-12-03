@@ -10,9 +10,9 @@ import android.support.annotation.NonNull;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 
-class Identicon {
+public class Identicon {
 
-    static void draw(@NonNull Bitmap bitmap, @NonNull String data) {
+    public static void draw(@NonNull Bitmap bitmap, @NonNull String data) {
         byte[] hash = getHash(data);
         draw(new Canvas(bitmap), hash, new Paint());
     }

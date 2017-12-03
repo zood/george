@@ -16,4 +16,5 @@
     <color name="ui_tint_gray">#aab9c6</color>
     <color name="shade">#A0000000</color>
     <color name="error_circle_fill">#3032b6f4</color>
+    <color name="drawer_gradient_end">#8fe163</color>
 </resources>

@@ -3,11 +3,13 @@ package io.pijun.george;
 import android.Manifest;
 import android.animation.ObjectAnimator;
 import android.animation.ValueAnimator;
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentSender;
 import android.content.pm.PackageManager;
+import android.databinding.DataBindingUtil;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
@@ -20,18 +22,16 @@ import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.annotation.UiThread;
 import android.support.annotation.WorkerThread;
-import android.support.constraint.ConstraintLayout;
-import android.support.design.widget.NavigationView;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
-import android.support.v4.view.GravityCompat;
-import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.text.TextUtils;
 import android.text.format.DateUtils;
+import android.view.GestureDetector;
+import android.view.MotionEvent;
 import android.view.View;
-import android.widget.Button;
+import android.view.ViewTreeObserver;
 import android.widget.EditText;
 import android.widget.Toast;
 
@@ -62,6 +62,7 @@ import com.google.firebase.crash.FirebaseCrash;
 import com.squareup.otto.Subscribe;
 import com.squareup.picasso.Picasso;
 
+import java.io.File;
 import java.io.IOException;
 import java.lang.ref.WeakReference;
 import java.security.SecureRandom;
@@ -77,6 +78,8 @@ import io.pijun.george.api.RevGeocoding;
 import io.pijun.george.api.User;
 import io.pijun.george.api.UserComm;
 import io.pijun.george.crypto.KeyPair;
+import io.pijun.george.databinding.ActivityMapBinding;
+import io.pijun.george.event.AvatarUpdated;
 import io.pijun.george.event.FriendRemoved;
 import io.pijun.george.event.LocationSharingGranted;
 import io.pijun.george.event.LocationSharingRevoked;
@@ -91,11 +94,12 @@ import io.pijun.george.view.MyLocationView;
 import retrofit2.Call;
 import retrofit2.Response;
 
-public class MapActivity extends AppCompatActivity implements OnMapReadyCallback, GoogleMap.OnMarkerClickListener, AvatarsAdapter.AvatarsAdapterListener {
+public class MapActivity extends AppCompatActivity implements OnMapReadyCallback, GoogleMap.OnMarkerClickListener, AvatarsAdapter.AvatarsAdapterListener, Utils.DrawerSwipesListener {
 
     private static final int REQUEST_LOCATION_PERMISSION = 18;
     private static final int REQUEST_LOCATION_SETTINGS = 20;
 
+    private ActivityMapBinding mBinding;
     private MapView mMapView;
     private GoogleMap mGoogMap;
     private volatile PackageWatcher mPkgWatcher;
@@ -106,11 +110,14 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
     private LocationSettingsRequest mLocationSettingsRequest;
     private Marker mMeMarker;
     private Circle mMyCircle;
-//    private boolean mCameraTracksMyLocation = false;
     private long mFriendForCameraToTrack = -1;
     private EditText mUsernameField;
     private Circle mCurrentCircle;
     private WeakReference<FriendsSheetFragment> mFriendsSheet;
+    private boolean mInitialLayoutDone = false;
+    private float mUiHiddenOffset;
+    private GestureDetector mGestureDetector;
+    private Utils.DrawerActionRecognizer mDrawerActionRecognizer;
 
     public static Intent newIntent(Context ctx) {
         return new Intent(ctx, MapActivity.class);
@@ -145,11 +152,18 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
 
         getWindow().getDecorView().setBackground(null);
         getWindow().setStatusBarColor(Color.TRANSPARENT);
-        setContentView(R.layout.activity_map);
+        mBinding = DataBindingUtil.setContentView(this, R.layout.activity_map);
 
-        final Button button = findViewById(R.id.drawer_button);
-        final ConstraintLayout.LayoutParams params = (ConstraintLayout.LayoutParams) button.getLayoutParams();
-        params.topMargin = getStatusBarHeight();
+        mBinding.root.getViewTreeObserver().addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
+            @Override
+            public void onGlobalLayout() {
+                if (mInitialLayoutDone) {
+                    return;
+                }
+                mInitialLayoutDone = true;
+                onInitialLayoutDone();
+            }
+        });
 
         mMapView = findViewById(R.id.map);
         mMapView.onCreate(savedInstanceState);
@@ -162,9 +176,6 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
             flyCameraToMyLocation();
         });
 
-        NavigationView navView = findViewById(R.id.navigation);
-        navView.setNavigationItemSelectedListener(navItemListener);
-
         mLocationProviderClient = LocationServices.getFusedLocationProviderClient(this);
         mSettingsClient = LocationServices.getSettingsClient(this);
         mLocationRequest = new LocationRequest();
@@ -176,6 +187,17 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
 
         startService(FcmTokenRegistrar.newIntent(this));
 //        startService(ActivityMonitor.newIntent(this));
+
+        App.runOnUiThread(new UiRunnable() {
+            @Override
+            public void run() {
+                String username = Prefs.get(MapActivity.this).getUsername();
+                mBinding.username.setText(username);
+                mBinding.avatar.username = username;
+                File myAvatar = AvatarManager.getMyAvatar(MapActivity.this);
+                Picasso.with(MapActivity.this).load(myAvatar).into(mBinding.avatar);
+            }
+        });
     }
 
     @Override
@@ -545,15 +567,21 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
         beginLocationUpdates();
     }
 
+    @Subscribe
+    @Keep
     @UiThread
-    private int getStatusBarHeight() {
-        int result = 0;
-        int resourceId = getResources().getIdentifier("status_bar_height", "dimen", "android");
-        if (resourceId > 0) {
-            result = getResources().getDimensionPixelSize(resourceId);
+    public void onAvatarUpdated(AvatarUpdated evt) {
+        if (mBinding == null) {
+            // UI isn't loaded, so get outta here
+            return;
         }
-
-        return result;
+        // we're only interested in updates to the user profile
+        if (evt.username != null) {
+            return;
+        }
+        // Update it
+        File myAvatar = AvatarManager.getMyAvatar(this);
+        Picasso.with(this).load(myAvatar).into(mBinding.avatar);
     }
 
     @Subscribe
@@ -646,13 +674,8 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
     }
 
     @UiThread
-    public void onShowDrawerAction(View v) {
-        DrawerLayout drawer = findViewById(R.id.drawer_layout);
-        drawer.openDrawer(GravityCompat.START, true);
-    }
-
-    @UiThread
-    private void onLogOutAction() {
+    public void onLogOutAction(View v) {
+        L.i("onLogOutAction");
         AlertDialog.Builder builder = new AlertDialog.Builder(this, R.style.AlertDialogTheme);
         builder.setMessage(R.string.confirm_log_out_msg);
         builder.setCancelable(true);
@@ -671,35 +694,10 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
             }
         });
         builder.show();
+
+        onFlingCloseDrawer();
+        mDrawerActionRecognizer.setClosed(true);
     }
-
-    @UiThread
-    private void onShowLogs() {
-        Intent i = LogActivity.newIntent(this);
-        startActivity(i);
-    }
-
-    private NavigationView.OnNavigationItemSelectedListener navItemListener = item -> {
-        DrawerLayout drawer = findViewById(R.id.drawer_layout);
-        drawer.closeDrawers();
-
-        int id = item.getItemId();
-        switch (id) {
-            case R.id.profile:
-                showProfile();
-                break;
-            case R.id.about:
-                break;
-            case R.id.log_out:
-                onLogOutAction();
-                break;
-            case R.id.view_logs:
-                onShowLogs();
-                break;
-        }
-
-        return false;
-    };
 
     @Override
     @UiThread
@@ -873,9 +871,13 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
 
     }
 
-    private void showProfile() {
+    @UiThread
+    public void showProfile(View v) {
         Intent i = ProfileActivity.newIntent(this);
         startActivity(i);
+
+        onFlingCloseDrawer();
+        mDrawerActionRecognizer.setClosed(true);
     }
 
     @WorkerThread
@@ -954,6 +956,143 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
         Marker marker = mMarkerTracker.removeMarker(evt.friendId);
         if (marker != null) {
             marker.remove();
+        }
+    }
+
+    @SuppressLint("ClickableViewAccessibility")
+    @UiThread
+    private void onInitialLayoutDone() {
+        // translate the drawer components out of view
+        mUiHiddenOffset = -(mBinding.location.getX() + Utils.dpsToPix(this, 100));
+        mBinding.avatar.setTranslationX(mUiHiddenOffset);
+        mBinding.username.setTranslationX(mUiHiddenOffset);
+        mBinding.location.setTranslationX(mUiHiddenOffset);
+        mBinding.settings.setTranslationX(mUiHiddenOffset);
+        mBinding.about.setTranslationX(mUiHiddenOffset);
+        mBinding.logOut.setTranslationX(mUiHiddenOffset);
+
+        // install the gesture listener
+        // move the interceptor to the front
+        mDrawerActionRecognizer = new Utils.DrawerActionRecognizer(mBinding.root.getWidth(), this);
+        mGestureDetector = new GestureDetector(this, mDrawerActionRecognizer);
+        mBinding.touchInterceptor.setOnTouchListener((View v, MotionEvent event) -> {
+            boolean onUp = event.getAction() == MotionEvent.ACTION_UP;
+            boolean detectorConsumed = mGestureDetector.onTouchEvent(event);
+            if (!detectorConsumed && onUp && mDrawerActionRecognizer.isGesturing()) {
+                L.i("touchEvent.onUp");
+                mDrawerActionRecognizer.onUp();
+                return true;
+            }
+            return detectorConsumed;
+        });
+        mBinding.root.bringChildToFront(mBinding.touchInterceptor);
+    }
+
+    @Override
+    public void onCloseDrawer(float pixels) {
+        onOpenDrawer(pixels);
+        float range = mBinding.root.getWidth() * 0.75f;
+        float xOffset = range - pixels;
+        xOffset = Math.max(xOffset, 0);
+        mBinding.coordinator.setTranslationX(xOffset);
+
+        float progress = xOffset / range;
+        float scale = 1 - 0.25f * progress;
+        mBinding.coordinator.setScaleX(scale);
+        mBinding.coordinator.setScaleY(scale);
+
+        float uiOffset = Math.max(mUiHiddenOffset, -pixels);
+        uiOffset = Math.min(0, uiOffset);
+        mBinding.avatar.setTranslationX(uiOffset);
+        mBinding.username.setTranslationX(uiOffset);
+        mBinding.location.setTranslationX(uiOffset);
+        mBinding.settings.setTranslationX(uiOffset);
+        mBinding.about.setTranslationX(uiOffset);
+        mBinding.logOut.setTranslationX(uiOffset);
+    }
+
+    @Override
+    public void onOpenDrawer(float pixels) {
+        mBinding.coordinator.setPivotY(mBinding.root.getHeight()/2);
+//        mBinding.coordinator.setElevation(Utils.dpsToPix(this, 10));
+
+        float range = mBinding.root.getWidth() * 0.75f;
+        float xOffset = Math.max(pixels, 0);
+        xOffset = Math.min(xOffset, range);
+        mBinding.coordinator.setTranslationX(xOffset);
+
+        float progress = xOffset / range;
+        // the smallest we shrink is 75%
+        float scale = 1 - 0.25f * progress;
+        mBinding.coordinator.setScaleX(scale);
+        mBinding.coordinator.setScaleY(scale);
+
+        // animate the drawer elements too
+        float uiOffset = Math.min(0, mUiHiddenOffset + pixels);
+//        L.i("uiOffset: " + uiOffset);
+        mBinding.avatar.setTranslationX(uiOffset);
+        mBinding.username.setTranslationX(uiOffset);
+        mBinding.location.setTranslationX(uiOffset);
+        mBinding.settings.setTranslationX(uiOffset);
+        mBinding.about.setTranslationX(uiOffset);
+        mBinding.logOut.setTranslationX(uiOffset);
+    }
+
+    @Override
+    public void onFlingCloseDrawer() {
+//        mBinding.coordinator.setPivotY(mBinding.root.getHeight()/2);
+        mBinding.coordinator.animate().x(0);
+        mBinding.coordinator.animate().scaleX(1).scaleY(1);
+
+        mBinding.avatar.animate().translationX(mUiHiddenOffset).setDuration(200);
+        mBinding.username.animate().translationX(mUiHiddenOffset).setDuration(200);
+        mBinding.location.animate().translationX(mUiHiddenOffset).setDuration(200);
+        mBinding.settings.animate().translationX(mUiHiddenOffset).setDuration(200);
+        mBinding.about.animate().translationX(mUiHiddenOffset).setDuration(200);
+        mBinding.logOut.animate().translationX(mUiHiddenOffset).setDuration(200);
+
+//        mBinding.coordinator.setElevation(Utils.dpsToPix(this, 10));
+    }
+
+    @Override
+    public void onFlingOpenDrawer() {
+        mBinding.coordinator.setPivotY(mBinding.root.getHeight()/2);
+
+        float range = mBinding.root.getWidth() * 0.75f;
+        mBinding.coordinator.animate().x(range).setDuration(200);
+
+        // the smallest we shrink is 75%
+        float scale = 1 - 0.25f;
+        mBinding.coordinator.animate()
+                .scaleX(scale)
+                .scaleY(scale)
+                .setDuration(200);
+
+        // animate the drawer elements too
+        mBinding.avatar.animate().translationX(0).setDuration(200);
+        mBinding.username.animate().translationX(0).setDuration(200);
+        mBinding.location.animate().translationX(0).setDuration(200);
+        mBinding.settings.animate().translationX(0).setDuration(200);
+        mBinding.about.animate().translationX(0).setDuration(200);
+        mBinding.logOut.animate().translationX(0).setDuration(200);
+
+        // move the buttons to the front
+        mBinding.root.bringChildToFront(mBinding.settings);
+        mBinding.root.bringChildToFront(mBinding.about);
+        mBinding.root.bringChildToFront(mBinding.logOut);
+    }
+
+    @Override
+    public boolean onSettleDrawer() {
+        float transX = mBinding.coordinator.getTranslationX();
+        float range = mBinding.root.getWidth() * 0.75f;
+        float progress = transX / range;
+        if (progress >= 0.5) {
+            onFlingOpenDrawer();
+            return true;
+        } else {
+            onFlingCloseDrawer();
+            return false;
         }
     }
 

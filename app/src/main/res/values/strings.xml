@@ -88,4 +88,5 @@
     <string name="done">Done</string>
     <string name="location_broadcast">Location broadcast</string>
     <string name="error_loading_key">Error loading key</string>
+    <string name="close_drawer">Close drawer</string>
 </resources>
