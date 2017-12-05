@@ -9,12 +9,13 @@
     android:clipToPadding="false"
     android:clickable="true"
     android:focusable="true"
-    android:background="?attr/selectableItemBackground"
+    android:background="?android:attr/selectableItemBackground"
     android:layout_width="match_parent"
     android:layout_height="wrap_content">
     <io.pijun.george.view.AvatarView
         android:id="@+id/avatar"
         tools:src="@drawable/george_clooney"
+        android:elevation="8dp"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintBottom_toBottomOf="parent"
@@ -35,11 +36,11 @@
         <TextView
             android:id="@+id/share_switch_label"
             tools:text="Not sharing"
-            android:fontFamily="sans-serif-light"
+            android:fontFamily="@font/lato_bold"
             android:textSize="10sp"
-            android:textStyle="bold"
             android:layout_width="wrap_content"
-            android:layout_height="wrap_content" />
+            android:layout_height="wrap_content"
+            tools:ignore="SmallSp" />
         <Switch
             android:id="@+id/share_switch"
             android:layout_width="wrap_content"
@@ -52,8 +53,8 @@
         android:id="@+id/username"
         tools:text="MoonMeander"
         android:textColor="@color/friend_item_username"
-        android:textStyle="bold"
-        android:textSize="16sp"
+        android:textSize="14sp"
+        android:fontFamily="@font/lato_black"
         android:layout_marginStart="16dp"
         app:layout_constraintVertical_chainStyle="packed"
         app:layout_constraintStart_toEndOf="@id/avatar"
@@ -67,8 +68,8 @@
         android:gravity="center_vertical"
         tools:text="Sherman Oaks"
         android:textColor="@color/friend_item_black"
-        android:textStyle="bold"
         android:textSize="12sp"
+        android:fontFamily="@font/lato_bold"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:drawableStart="@drawable/ic_location_on_black_24dp"
@@ -84,12 +85,11 @@
         android:ellipsize="end"
         android:textSize="12sp"
         android:textColor="@color/friend_item_gray"
-        android:fontFamily="sans-serif-light"
+        android:fontFamily="@font/lato_regular"
         app:layout_constraintStart_toEndOf="@id/location"
         app:layout_constraintTop_toTopOf="@id/location"
         app:layout_constraintBottom_toBottomOf="@id/location"
         app:layout_constraintEnd_toStartOf="@id/sharing_items"
-
         app:layout_constraintHorizontal_bias="0"
         android:layout_width="0dp"
         android:layout_height="0dp" />

@@ -46,6 +46,7 @@
         <item name="android:colorControlNormal">@color/welcome_edittext_text</item>
         <item name="android:colorControlActivated">@color/welcome_edittext_text</item>
         <item name="android:colorControlHighlight">@color/welcome_edittext_text</item>
+        <item name="android:fontFamily">@font/lato_bold</item>
     </style>
     
     <style name="PijunSwitch">

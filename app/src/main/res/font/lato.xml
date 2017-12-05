@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<font-family
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <!--Regular-->
+    <font
+        android:fontStyle="normal"
+        android:fontWeight="400"
+        android:font="@font/lato_regular"
+        app:fontStyle="normal"
+        app:fontWeight="400"
+        app:font="@font/lato_regular"/>
+
+    <!--Bold-->
+    <font
+        android:fontStyle="normal"
+        android:fontWeight="700"
+        android:font="@font/lato_bold"
+        app:fontStyle="normal"
+        app:fontWeight="700"
+        app:font="@font/lato_bold" />
+
+    <!--Black-->
+    <font
+        android:fontStyle="normal"
+        android:fontWeight="900"
+        android:font="@font/lato_black"
+        app:fontStyle="normal"
+        app:fontWeight="900"
+        app:font="@font/lato_black" />
+</font-family>

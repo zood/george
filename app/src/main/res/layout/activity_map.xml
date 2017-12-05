@@ -8,7 +8,6 @@
     android:fitsSystemWindows="false"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:clipToPadding="false"
     tools:context=".MapActivity">
     <io.pijun.george.view.DrawerBackground
         android:layout_width="match_parent"
@@ -32,6 +31,7 @@
         android:layout_height="wrap_content" />
     <io.pijun.george.view.AvatarView
         android:id="@+id/avatar"
+        android:elevation="10dp"
         app:borderColor="@android:color/white"
         android:onClick="showProfile"
         app:layout_constraintStart_toStartOf="parent"
@@ -45,6 +45,7 @@
         tools:text="arash"
         android:textColor="@android:color/white"
         android:textSize="18sp"
+        android:fontFamily="@font/lato_bold"
         android:layout_marginStart="12dp"
         app:layout_constraintVertical_chainStyle="packed"
         app:layout_constraintStart_toEndOf="@id/avatar"
@@ -57,6 +58,7 @@
         tools:text="Thousand Oaks"
         android:textColor="@android:color/white"
         android:textSize="13sp"
+        android:fontFamily="@font/lato_bold"
         android:layout_marginStart="12dp"
         app:layout_constraintVertical_chainStyle="packed"
         app:layout_constraintStart_toEndOf="@id/avatar"
@@ -77,6 +79,7 @@
         android:onClick="showProfile"
         android:textColor="@color/ui_tint_gray"
         style="@style/Base.Widget.AppCompat.Button.Borderless"
+        android:fontFamily="@font/lato_bold"
         android:textAllCaps="false"
         android:textSize="14sp"
         android:layout_marginStart="32dp"
@@ -91,6 +94,7 @@
         android:elevation="110dp"
         android:textColor="@color/ui_tint_gray"
         style="@style/Base.Widget.AppCompat.Button.Borderless"
+        android:fontFamily="@font/lato_bold"
         android:textAllCaps="false"
         android:textSize="14sp"
         android:layout_marginStart="32dp"
@@ -107,6 +111,7 @@
         android:onClick="onLogOutAction"
         android:textColor="@color/ui_tint_gray"
         style="@style/Base.Widget.AppCompat.Button.Borderless"
+        android:fontFamily="@font/lato_bold"
         android:textAllCaps="false"
         android:textSize="14sp"
         android:layout_marginStart="32dp"

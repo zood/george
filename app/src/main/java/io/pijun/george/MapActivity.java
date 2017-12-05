@@ -988,7 +988,6 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
             boolean onUp = event.getAction() == MotionEvent.ACTION_UP;
             boolean detectorConsumed = mGestureDetector.onTouchEvent(event);
             if (!detectorConsumed && onUp && mDrawerActionRecognizer.isGesturing()) {
-                L.i("touchEvent.onUp");
                 mDrawerActionRecognizer.onUp();
                 return true;
             }

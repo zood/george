@@ -7,6 +7,7 @@ import android.graphics.BitmapFactory;
 import android.graphics.BitmapShader;
 import android.graphics.Canvas;
 import android.graphics.Matrix;
+import android.graphics.Outline;
 import android.graphics.Paint;
 import android.graphics.Shader;
 import android.graphics.drawable.Drawable;
@@ -17,6 +18,7 @@ import android.support.annotation.UiThread;
 import android.support.v4.content.ContextCompat;
 import android.util.AttributeSet;
 import android.view.View;
+import android.view.ViewOutlineProvider;
 
 import com.squareup.picasso.Picasso;
 import com.squareup.picasso.Target;
@@ -102,6 +104,13 @@ public class AvatarView extends View implements Target {
             mImgShader = new BitmapShader(mImg, Shader.TileMode.CLAMP, Shader.TileMode.CLAMP);
             mImgPaint.setShader(mImgShader);
         }
+
+        setOutlineProvider(new ViewOutlineProvider() {
+            @Override
+            public void getOutline(View v, Outline o) {
+                o.setRoundRect(0, 0, getWidth(), getHeight(), mRadius);
+            }
+        });
     }
 
     @Override

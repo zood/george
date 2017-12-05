@@ -11,7 +11,8 @@
         android:layout_height="match_parent">
         <ImageButton
             android:id="@+id/toggle"
-            android:background="?attr/selectableItemBackground"
+            android:contentDescription="@string/dismiss"
+            android:background="?android:attr/selectableItemBackground"
             android:src="@drawable/ic_expand_less_36dp"
             android:tint="@color/ui_tint_gray"
             app:layout_constraintTop_toTopOf="parent"
@@ -22,9 +23,9 @@
         <TextView
             android:id="@+id/title"
             android:text="@string/friends"
-            android:textSize="16sp"
+            android:textSize="17sp"
             android:textColor="@color/ui_tint_gray"
-            android:textStyle="bold"
+            android:fontFamily="@font/lato_bold"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="@+id/friend_items"
             android:layout_marginStart="72dp"

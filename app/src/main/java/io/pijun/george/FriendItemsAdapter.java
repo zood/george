@@ -4,7 +4,6 @@ import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.res.Resources;
 import android.graphics.Bitmap;
-import android.graphics.Outline;
 import android.graphics.Typeface;
 import android.graphics.drawable.Drawable;
 import android.os.Looper;
@@ -18,7 +17,6 @@ import android.util.LongSparseArray;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.ViewOutlineProvider;
 import android.widget.Switch;
 import android.widget.TextView;
 
@@ -178,14 +176,6 @@ class FriendItemsAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
         LayoutInflater inflater = LayoutInflater.from(parent.getContext());
         View view = inflater.inflate(R.layout.friend_item, parent, false);
         final FriendItemViewHolder holder = new FriendItemViewHolder(view);
-        ViewOutlineProvider vop = new ViewOutlineProvider() {
-            @Override
-            public void getOutline(View view, Outline outline) {
-                outline.setOval(0, 0, view.getWidth(), view.getHeight());
-            }
-        };
-        holder.avatar.setOutlineProvider(vop);
-        holder.avatar.setClipToOutline(true);
         holder.itemView.setOnClickListener(v -> {
             if (mListener == null) {
                 return;
