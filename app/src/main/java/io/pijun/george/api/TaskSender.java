@@ -35,7 +35,7 @@ import io.pijun.george.service.OscarJobService;
 import retrofit2.Call;
 import retrofit2.Response;
 
-public class TaskSender {
+public final class TaskSender {
 
     private volatile static TaskSender sSingleton;
     private final Handler mHandler;
@@ -160,7 +160,7 @@ public class TaskSender {
                     L.i("  " + err);
                 }
             } catch (IOException e) {
-                L.w("task exception", e);
+                L.w("task (" + task.apiMethod + ") exception", e);
                 // a connection problem. we'll try again when the connection is back.
                 return;
             } catch (Throwable t) {

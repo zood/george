@@ -25,7 +25,7 @@ import io.pijun.george.event.UserLoggedOut;
 import io.pijun.george.service.FcmTokenRegistrar;
 
 @SuppressWarnings("WeakerAccess")
-public class Utils {
+public final class Utils {
 
     @AnyThread
     public static void logOut(@NonNull Context ctx, @Nullable UiRunnable completion) {
@@ -108,7 +108,7 @@ public class Utils {
         builder.show();
     }
 
-    static class LatLngEvaluator implements TypeEvaluator<LatLng> {
+    final static class LatLngEvaluator implements TypeEvaluator<LatLng> {
         // Method is used to interpolate the marker animation.
         @Override
         public LatLng evaluate(float fraction, LatLng startValue, LatLng endValue) {
@@ -120,7 +120,7 @@ public class Utils {
         }
     }
 
-    static class DoubleEvaluator implements TypeEvaluator<Double> {
+    final static class DoubleEvaluator implements TypeEvaluator<Double> {
         @Override
         public Double evaluate(float fraction, Double startVal, Double endVal) {
             return startVal + ((endVal - startVal) * fraction);
@@ -129,13 +129,13 @@ public class Utils {
 
     interface DrawerSwipesListener {
         void onOpenDrawer(float pixels);
-        void onCloseDrawer(float pixels);
+        void onCloseDrawer(float pixels, float delta);
         void onFlingCloseDrawer();
         void onFlingOpenDrawer();
         boolean onSettleDrawer();
     }
 
-    public static class DrawerActionRecognizer extends GestureDetector.SimpleOnGestureListener {
+    public final static class DrawerActionRecognizer extends GestureDetector.SimpleOnGestureListener {
         private boolean isClosed = true;
         private final float screenWidth;
         private boolean isGesturing = false;
@@ -153,6 +153,10 @@ public class Utils {
 
         @Override
         public boolean onDown(MotionEvent e) {
+            // if we're already gesturing, don't track additional fingers
+            if (isGesturing) {
+                return false;
+            }
             if (isClosed) {
                 // make sure it starts at the edge of the screen
                 if (e.getX() < screenWidth * 0.03) {
@@ -193,7 +197,7 @@ public class Utils {
             } else {
                 float dx = down.getX() - curr.getX();
                 dx = Math.max(0, dx);
-                mListener.onCloseDrawer(dx);
+                mListener.onCloseDrawer(dx, distanceX);
             }
 
             return true;
@@ -201,6 +205,7 @@ public class Utils {
 
         public void onUp() {
             isClosed = !mListener.onSettleDrawer();
+            isGesturing = false;
         }
 
         void setClosed(boolean closed) {

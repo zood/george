@@ -13,7 +13,6 @@ import android.databinding.DataBindingUtil;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
-import android.graphics.Outline;
 import android.location.Location;
 import android.os.Bundle;
 import android.os.Looper;
@@ -23,6 +22,7 @@ import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.annotation.UiThread;
 import android.support.annotation.WorkerThread;
+import android.support.constraint.ConstraintLayout;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AlertDialog;
@@ -32,7 +32,6 @@ import android.text.format.DateUtils;
 import android.view.GestureDetector;
 import android.view.MotionEvent;
 import android.view.View;
-import android.view.ViewOutlineProvider;
 import android.view.ViewTreeObserver;
 import android.widget.EditText;
 import android.widget.Toast;
@@ -85,6 +84,7 @@ import io.pijun.george.event.AvatarUpdated;
 import io.pijun.george.event.FriendRemoved;
 import io.pijun.george.event.LocationSharingGranted;
 import io.pijun.george.event.LocationSharingRevoked;
+import io.pijun.george.interpolator.LinearBezierInterpolator;
 import io.pijun.george.models.FriendLocation;
 import io.pijun.george.models.FriendRecord;
 import io.pijun.george.models.MovementType;
@@ -96,7 +96,7 @@ import io.pijun.george.view.MyLocationView;
 import retrofit2.Call;
 import retrofit2.Response;
 
-public class MapActivity extends AppCompatActivity implements OnMapReadyCallback, GoogleMap.OnMarkerClickListener, AvatarsAdapter.AvatarsAdapterListener, Utils.DrawerSwipesListener {
+public final class MapActivity extends AppCompatActivity implements OnMapReadyCallback, GoogleMap.OnMarkerClickListener, AvatarsAdapter.AvatarsAdapterListener, Utils.DrawerSwipesListener {
 
     private static final int REQUEST_LOCATION_PERMISSION = 18;
     private static final int REQUEST_LOCATION_SETTINGS = 20;
@@ -170,13 +170,6 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
         mMapView = findViewById(R.id.map);
         mMapView.onCreate(savedInstanceState);
         mMapView.getMapAsync(this);
-
-        mBinding.coordinator.setOutlineProvider(new ViewOutlineProvider() {
-            @Override
-            public void getOutline(View view, Outline outline) {
-                outline.setRect(view.getLeft(), view.getTop(), view.getRight(), view.getBottom());
-            }
-        });
 
         final View myLocFab = findViewById(R.id.my_location_fab);
         myLocFab.setOnClickListener(v -> {
@@ -306,7 +299,6 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
 
         if (mGoogMap != null) {
             CameraPosition pos = mGoogMap.getCameraPosition();
-            L.i("onStop cam pos: " + pos);
             Prefs.get(this).setCameraPosition(pos);
         }
 
@@ -971,6 +963,9 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
     @SuppressLint("ClickableViewAccessibility")
     @UiThread
     private void onInitialLayoutDone() {
+        // set pivots
+        mBinding.map.setPivotY(mBinding.map.getHeight()/2);
+
         // translate the drawer components out of view
         mUiHiddenOffset = -(mBinding.location.getX() + Utils.dpsToPix(this, 100));
         mBinding.avatar.setTranslationX(mUiHiddenOffset);
@@ -981,7 +976,6 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
         mBinding.logOut.setTranslationX(mUiHiddenOffset);
 
         // install the gesture listener
-        // move the interceptor to the front
         mDrawerActionRecognizer = new Utils.DrawerActionRecognizer(mBinding.root.getWidth(), this);
         mGestureDetector = new GestureDetector(this, mDrawerActionRecognizer);
         mBinding.touchInterceptor.setOnTouchListener((View v, MotionEvent event) -> {
@@ -996,17 +990,16 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
     }
 
     @Override
-    public void onCloseDrawer(float pixels) {
-        onOpenDrawer(pixels);
+    public void onCloseDrawer(float pixels, float delta) {
         float range = mBinding.root.getWidth() * 0.75f;
         float xOffset = range - pixels;
         xOffset = Math.max(xOffset, 0);
-        mBinding.coordinator.setTranslationX(xOffset);
+        mBinding.map.setTranslationX(xOffset);
 
         float progress = xOffset / range;
         float scale = 1 - 0.25f * progress;
-        mBinding.coordinator.setScaleX(scale);
-        mBinding.coordinator.setScaleY(scale);
+        mBinding.map.setScaleX(scale);
+        mBinding.map.setScaleY(scale);
 
         float uiOffset = Math.max(mUiHiddenOffset, -pixels);
         uiOffset = Math.min(0, uiOffset);
@@ -1016,22 +1009,55 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
         mBinding.settings.setTranslationX(uiOffset);
         mBinding.about.setTranslationX(uiOffset);
         mBinding.logOut.setTranslationX(uiOffset);
+
+        FriendsSheetFragment fragment = mFriendsSheet.get();
+        if (fragment.getView() != null) {
+            ConstraintLayout sheet = (ConstraintLayout) fragment.getView();
+            float sheetOffset = sheet.getTranslationY() - delta;
+            int baseOffset = (int) sheet.getTag();
+            sheetOffset = Math.max(sheetOffset, (float) baseOffset);
+            sheet.setTranslationY(sheetOffset);
+        }
+
+        float friendFABOffset = mBinding.addFriendFab.getTranslationY() - delta;
+        friendFABOffset = Math.max(0, friendFABOffset);
+        mBinding.addFriendFab.setTranslationY(friendFABOffset);
+
+        float locFABOffset = mBinding.myLocationFab.getTranslationY() + delta;
+        locFABOffset = Math.min(0, locFABOffset);
+        mBinding.myLocationFab.setTranslationY(locFABOffset);
     }
 
     @Override
     public void onOpenDrawer(float pixels) {
-        mBinding.coordinator.setPivotY(mBinding.root.getHeight()/2);
-
         float range = mBinding.root.getWidth() * 0.75f;
         float xOffset = Math.max(pixels, 0);
         xOffset = Math.min(xOffset, range);
-        mBinding.coordinator.setTranslationX(xOffset);
+        mBinding.map.setTranslationX(xOffset);
 
         float progress = xOffset / range;
         // the smallest we shrink is 75%
         float scale = 1 - 0.25f * progress;
-        mBinding.coordinator.setScaleX(scale);
-        mBinding.coordinator.setScaleY(scale);
+        mBinding.map.setScaleX(scale);
+        mBinding.map.setScaleY(scale);
+
+        // animate away friends sheet
+        FriendsSheetFragment fragment = mFriendsSheet.get();
+        if (fragment != null && fragment.getView() != null) {
+            ConstraintLayout sheet = (ConstraintLayout) fragment.getView();
+            int transY = (int) sheet.getTag();
+            float friendsOffset = transY + Math.min(range, pixels);
+            sheet.setTranslationY(friendsOffset);
+        }
+
+        // the Add Friends fab
+        float friendFABOffset = Math.max(0, Math.min(range, pixels));
+        mBinding.addFriendFab.setTranslationY(friendFABOffset);
+
+        // and the 'my location' fab
+        float myLocFABOffset = Math.max(0, Math.min(range, pixels));
+        myLocFABOffset *= -1;
+        mBinding.myLocationFab.setTranslationY(myLocFABOffset);
 
         // animate the drawer elements too
         float uiOffset = Math.min(0, mUiHiddenOffset + pixels);
@@ -1045,43 +1071,66 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
 
     @Override
     public void onFlingCloseDrawer() {
-        mBinding.coordinator.animate().x(0);
-        mBinding.coordinator.animate().scaleX(1).scaleY(1);
+        mBinding.map.animate().setInterpolator(new LinearBezierInterpolator()).x(0);
+        mBinding.map.animate().setInterpolator(new LinearBezierInterpolator()).scaleX(1).scaleY(1);
 
-        mBinding.avatar.animate().translationX(mUiHiddenOffset).setDuration(200);
-        mBinding.username.animate().translationX(mUiHiddenOffset).setDuration(200);
-        mBinding.location.animate().translationX(mUiHiddenOffset).setDuration(200);
-        mBinding.settings.animate().translationX(mUiHiddenOffset).setDuration(200);
-        mBinding.about.animate().translationX(mUiHiddenOffset).setDuration(200);
-        mBinding.logOut.animate().translationX(mUiHiddenOffset).setDuration(200);
+        mBinding.avatar.animate().setInterpolator(new LinearBezierInterpolator()).translationX(mUiHiddenOffset).setDuration(200);
+        mBinding.username.animate().setInterpolator(new LinearBezierInterpolator()).translationX(mUiHiddenOffset).setDuration(200);
+        mBinding.location.animate().setInterpolator(new LinearBezierInterpolator()).translationX(mUiHiddenOffset).setDuration(200);
+        mBinding.settings.animate().setInterpolator(new LinearBezierInterpolator()).translationX(mUiHiddenOffset).setDuration(200);
+        mBinding.about.animate().setInterpolator(new LinearBezierInterpolator()).translationX(mUiHiddenOffset).setDuration(200);
+        mBinding.logOut.animate().setInterpolator(new LinearBezierInterpolator()).translationX(mUiHiddenOffset).setDuration(200);
+
+        FriendsSheetFragment fragment = mFriendsSheet.get();
+        if (fragment.getView() != null) {
+            ConstraintLayout sheet = (ConstraintLayout) fragment.getView();
+            float transY = (int)sheet.getTag(); // int cast for unboxing
+            sheet.animate().setInterpolator(new LinearBezierInterpolator()).translationY(transY).setDuration(200);
+        }
+
+        mBinding.myLocationFab.animate().setInterpolator(new LinearBezierInterpolator()).translationY(0).setDuration(200);
+        mBinding.addFriendFab.animate().setInterpolator(new LinearBezierInterpolator()).translationY(0).setDuration(200);
     }
 
     @Override
     public void onFlingOpenDrawer() {
-        mBinding.coordinator.setPivotY(mBinding.root.getHeight()/2);
+        mBinding.map.setPivotY(mBinding.root.getHeight()/2);
 
         float range = mBinding.root.getWidth() * 0.75f;
-        mBinding.coordinator.animate().x(range).setDuration(200);
+        mBinding.map.animate().setInterpolator(new LinearBezierInterpolator()).x(range).setDuration(200);
 
         // the smallest we shrink is 75%
         float scale = 1 - 0.25f;
-        mBinding.coordinator.animate()
+        mBinding.map.animate()
+                .setInterpolator(new LinearBezierInterpolator())
                 .scaleX(scale)
                 .scaleY(scale)
                 .setDuration(200);
 
         // animate the drawer elements too
-        mBinding.avatar.animate().translationX(0).setDuration(200);
-        mBinding.username.animate().translationX(0).setDuration(200);
-        mBinding.location.animate().translationX(0).setDuration(200);
-        mBinding.settings.animate().translationX(0).setDuration(200);
-        mBinding.about.animate().translationX(0).setDuration(200);
-        mBinding.logOut.animate().translationX(0).setDuration(200);
+        mBinding.avatar.animate().setInterpolator(new LinearBezierInterpolator()).translationX(0).setDuration(200);
+        mBinding.username.animate().setInterpolator(new LinearBezierInterpolator()).translationX(0).setDuration(200);
+        mBinding.location.animate().setInterpolator(new LinearBezierInterpolator()).translationX(0).setDuration(200);
+        mBinding.settings.animate().setInterpolator(new LinearBezierInterpolator()).translationX(0).setDuration(200);
+        mBinding.about.animate().setInterpolator(new LinearBezierInterpolator()).translationX(0).setDuration(200);
+        mBinding.logOut.animate().setInterpolator(new LinearBezierInterpolator()).translationX(0).setDuration(200);
+
+        // friends sheet
+        FriendsSheetFragment fragment = mFriendsSheet.get();
+        if (fragment.getView() != null) {
+            ConstraintLayout sheet = (ConstraintLayout) fragment.getView();
+            float transY = (int)sheet.getTag() + range;   // the int cast is for unboxing the tag
+            sheet.animate().translationY(transY).setInterpolator(new LinearBezierInterpolator()).setDuration(200);
+        }
+
+        // the two fabs
+        mBinding.addFriendFab.animate().translationY(range).setInterpolator(new LinearBezierInterpolator()).setDuration(200);
+        mBinding.myLocationFab.animate().translationY(-range).setInterpolator(new LinearBezierInterpolator()).setDuration(200);
     }
 
     @Override
     public boolean onSettleDrawer() {
-        float transX = mBinding.coordinator.getTranslationX();
+        float transX = mBinding.map.getTranslationX();
         float range = mBinding.root.getWidth() * 0.75f;
         float progress = transX / range;
         if (progress >= 0.5) {

@@ -17,6 +17,7 @@ import android.text.TextUtils;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.ViewTreeObserver;
 import android.widget.Toast;
 
 import com.google.firebase.crash.FirebaseCrash;
@@ -44,6 +45,7 @@ public class FriendsSheetFragment extends Fragment implements FriendItemsAdapter
     private BottomSheetBehavior mBehavior;
     private FragmentFriendsSheetBinding mBinding;
     private int mTenDips;
+    private boolean mInitialLayoutDone = false;
 
     @Override
     public void onAttach(Context context) {
@@ -99,7 +101,25 @@ public class FriendsSheetFragment extends Fragment implements FriendItemsAdapter
 
         mBinding.toggle.setOnClickListener(v -> toggleFriendsSheet());
 
-        return mBinding.getRoot();
+        final View root = mBinding.getRoot();
+        root.setElevation(Utils.dpsToPix(getContext(), 36));
+        root.getViewTreeObserver().addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
+            @Override
+            public void onGlobalLayout() {
+                if (!mInitialLayoutDone) {
+                    mInitialLayoutDone = true;
+                    int seventyTwo = Utils.dpsToPix(getContext(), 72);
+                    int transY = root.getHeight() - seventyTwo;
+                    root.setTranslationY(transY);
+                    root.setTag(transY);
+                    root.setVisibility(View.VISIBLE);
+                }
+            }
+        });
+
+        root.setVisibility(View.INVISIBLE);
+
+        return root;
     }
 
     @Override
@@ -200,9 +220,6 @@ public class FriendsSheetFragment extends Fragment implements FriendItemsAdapter
     @Override
     public void onStart() {
         super.onStart();
-
-        mBehavior = BottomSheetBehavior.from(mBinding.getRoot());
-        mBehavior.setBottomSheetCallback(mBottomSheetCallback);
 
         App.registerOnBus(this);
         final DB db = DB.get(getContext());

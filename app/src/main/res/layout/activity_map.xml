@@ -12,12 +12,6 @@
     <io.pijun.george.view.DrawerBackground
         android:layout_width="match_parent"
         android:layout_height="match_parent" />
-    <View
-        android:id="@+id/touch_interceptor"
-        android:elevation="100dp"
-        android:background="#00000000"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent" />
     <ImageButton
         android:id="@+id/close_button"
         android:contentDescription="@string/close_drawer"
@@ -31,7 +25,7 @@
         android:layout_height="wrap_content" />
     <io.pijun.george.view.AvatarView
         android:id="@+id/avatar"
-        android:elevation="10dp"
+        android:elevation="6dp"
         app:borderColor="@android:color/white"
         android:onClick="showProfile"
         app:layout_constraintStart_toStartOf="parent"
@@ -75,7 +69,7 @@
     <Button
         android:id="@+id/settings"
         android:text="@string/settings"
-        android:elevation="110dp"
+        android:elevation="40dp"
         android:onClick="showProfile"
         android:textColor="@color/ui_tint_gray"
         style="@style/Base.Widget.AppCompat.Button.Borderless"
@@ -91,7 +85,7 @@
     <Button
         android:id="@+id/about"
         android:text="@string/about"
-        android:elevation="110dp"
+        android:elevation="40dp"
         android:textColor="@color/ui_tint_gray"
         style="@style/Base.Widget.AppCompat.Button.Borderless"
         android:fontFamily="@font/lato_bold"
@@ -107,7 +101,7 @@
     <Button
         android:id="@+id/log_out"
         android:text="@string/log_out"
-        android:elevation="110dp"
+        android:elevation="40dp"
         android:onClick="onLogOutAction"
         android:textColor="@color/ui_tint_gray"
         style="@style/Base.Widget.AppCompat.Button.Borderless"
@@ -122,43 +116,69 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content" />
 
-    <android.support.design.widget.CoordinatorLayout
-        android:id="@+id/coordinator"
+    <com.google.android.gms.maps.MapView
+        android:id="@+id/map"
+        android:layout_width="0dp"
+        tools:background="@android:color/holo_green_light"
+        android:elevation="32dp"
+        android:outlineProvider="bounds"
         android:transformPivotX="0px"
-        android:elevation="30dp"
-        tools:visibility="invisible"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintHorizontal_bias="1.0"
+        android:layout_height="0dp"
+        app:layout_constraintBottom_toBottomOf="parent" />
+
+    <android.support.design.widget.FloatingActionButton
+        android:id="@+id/my_location_fab"
+        android:transformPivotX="0px"
+        android:src="@drawable/ic_my_location_black_24dp"
+        app:elevation="34dp"
+        app:fabSize="normal"
+        android:tint="@color/my_location_fab_tint"
+        android:backgroundTint="@color/my_location_fab_background"
+        app:borderWidth="0dp"
+        android:layout_marginTop="48dp"
+        android:layout_marginEnd="24dp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        tools:layout_editor_absoluteX="280dp" />
+
+    <android.support.design.widget.FloatingActionButton
+        android:id="@+id/add_friend_fab"
+        android:transformPivotX="0px"
+        android:src="@drawable/ic_person_black_24px"
+        app:elevation="34dp"
+        app:fabSize="normal"
+        app:borderWidth="0dp"
+        android:tint="@color/ui_tint_gray"
+        android:backgroundTint="@color/my_location_fab_background"
+        android:onClick="onAddFriendAction"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_insetEdge="bottom"
+        android:layout_marginEnd="24dp"
+        android:layout_marginBottom="80dp"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content" />
+
+    <!-- It's positioning gets controlled by the fragment -->
+    <fragment
+        android:id="@+id/friends_sheet"
+        android:name="io.pijun.george.FriendsSheetFragment"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
         android:layout_width="match_parent"
-        android:layout_height="match_parent">
-        <include
-            layout="@layout/map_content"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent" />
+        android:layout_height="match_parent" />
 
-        <fragment
-            android:id="@+id/friends_sheet"
-            android:name="io.pijun.george.FriendsSheetFragment"
-            app:layout_behavior="android.support.design.widget.BottomSheetBehavior"
-            app:behavior_peekHeight="72dp"
-            app:behavior_hideable="false"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent" />
-
-        <android.support.design.widget.FloatingActionButton
-            android:id="@+id/add_friend_fab"
-            android:src="@drawable/ic_person_black_24px"
-            app:fabSize="normal"
-            app:borderWidth="0dp"
-            android:tint="@color/ui_tint_gray"
-            android:backgroundTint="@color/my_location_fab_background"
-            android:onClick="onAddFriendAction"
-            app:layout_anchor="@+id/friends_sheet"
-            app:layout_anchorGravity="top|end"
-            app:layout_insetEdge="bottom"
-            android:layout_marginEnd="24dp"
-            app:layout_behavior="android.support.design.widget.FloatingActionButton$Behavior"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content" />
-
-    </android.support.design.widget.CoordinatorLayout>
+    <View
+        android:id="@+id/touch_interceptor"
+        android:elevation="38dp"
+        android:background="#00000000"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent" />
 </android.support.constraint.ConstraintLayout>
 </layout>
