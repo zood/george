@@ -62,13 +62,13 @@ dependencies {
     compile 'com.android.support.constraint:constraint-layout:1.1.0-beta3'
 
     // used for fusion location
-    compile 'com.google.android.gms:play-services-location:11.6.0'
-    // use for Google maps view
-    compile 'com.google.android.gms:play-services-maps:11.6.0'
+    compile 'com.google.android.gms:play-services-location:11.6.2'
+    // used for Google maps view
+    compile 'com.google.android.gms:play-services-maps:11.6.2'
     // cloud messaging
-    compile 'com.google.firebase:firebase-messaging:11.6.0'
+    compile 'com.google.firebase:firebase-messaging:11.6.2'
     // crash reports
-    compile 'com.google.firebase:firebase-crash:11.6.0'
+    compile 'com.google.firebase:firebase-crash:11.6.2'
     
     compile 'com.squareup.retrofit2:retrofit:2.3.0'
     compile 'com.squareup.retrofit2:converter-gson:2.3.0'
