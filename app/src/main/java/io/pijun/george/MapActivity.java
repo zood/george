@@ -585,6 +585,12 @@ public final class MapActivity extends AppCompatActivity implements OnMapReadyCa
         Picasso.with(this).load(myAvatar).into(mBinding.avatar);
     }
 
+    @UiThread
+    public void onCloseDrawerAction(View v) {
+        onFlingCloseDrawer();
+        mDrawerActionRecognizer.setClosed(true);
+    }
+
     @Subscribe
     @Keep
     @UiThread
