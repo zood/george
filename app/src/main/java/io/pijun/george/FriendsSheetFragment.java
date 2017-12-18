@@ -1,5 +1,6 @@
 package io.pijun.george;
 
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.databinding.DataBindingUtil;
@@ -9,7 +10,6 @@ import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.annotation.UiThread;
 import android.support.annotation.WorkerThread;
-import android.support.design.widget.BottomSheetBehavior;
 import android.support.v4.app.Fragment;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.widget.LinearLayoutManager;
@@ -37,13 +37,16 @@ import io.pijun.george.event.LocationSharingGranted;
 import io.pijun.george.event.LocationSharingRevoked;
 import io.pijun.george.models.FriendLocation;
 import io.pijun.george.models.FriendRecord;
+import io.pijun.george.view.FriendsSheetBehavior;
+import io.pijun.george.view.FriendsSheetLayout;
+import io.pijun.george.view.MainLayout;
 
 public class FriendsSheetFragment extends Fragment implements FriendItemsAdapter.FriendItemsListener {
 
     private AvatarsAdapter mAvatarsAdapter = new AvatarsAdapter();
     private FriendItemsAdapter mFriendItemsAdapter = new FriendItemsAdapter();
-    private BottomSheetBehavior mBehavior;
     private FragmentFriendsSheetBinding mBinding;
+    private FriendsSheetBehavior mBehavior;
     private int mTenDips;
     private boolean mInitialLayoutDone = false;
 
@@ -72,9 +75,8 @@ public class FriendsSheetFragment extends Fragment implements FriendItemsAdapter
             return false;
         }
 
-        int state = mBehavior.getState();
-        if (state == BottomSheetBehavior.STATE_EXPANDED) {
-            mBehavior.setState(BottomSheetBehavior.STATE_COLLAPSED);
+        if (mBehavior.isSheetExpanded()) {
+            mBehavior.setSheetState(false);
             return true;
         }
 
@@ -89,6 +91,7 @@ public class FriendsSheetFragment extends Fragment implements FriendItemsAdapter
         mTenDips = Utils.dpsToPix(getContext(), 10);
     }
 
+    @SuppressLint("ClickableViewAccessibility")
     @Nullable
     @Override
     public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
@@ -101,7 +104,7 @@ public class FriendsSheetFragment extends Fragment implements FriendItemsAdapter
 
         mBinding.toggle.setOnClickListener(v -> toggleFriendsSheet());
 
-        final View root = mBinding.getRoot();
+        final FriendsSheetLayout root = (FriendsSheetLayout) mBinding.getRoot();
         root.setElevation(Utils.dpsToPix(getContext(), 36));
         root.getViewTreeObserver().addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
             @Override
@@ -110,6 +113,7 @@ public class FriendsSheetFragment extends Fragment implements FriendItemsAdapter
                     mInitialLayoutDone = true;
                     int seventyTwo = Utils.dpsToPix(getContext(), 72);
                     int transY = root.getHeight() - seventyTwo;
+                    root.hiddenStateTranslationY = transY;
                     root.setTranslationY(transY);
                     root.setTag(transY);
                     root.setVisibility(View.VISIBLE);
@@ -238,12 +242,15 @@ public class FriendsSheetFragment extends Fragment implements FriendItemsAdapter
         if (getActivity() instanceof AvatarsAdapter.AvatarsAdapterListener) {
             mAvatarsAdapter.setListener((AvatarsAdapter.AvatarsAdapterListener) getActivity());
         }
+
+        mBehavior = MainLayout.registerFriendsSheet(this, mBinding.friendsSheet);
     }
 
     @Override
     public void onStop() {
         App.unregisterFromBus(this);
         mAvatarsAdapter.setListener(null);
+        mBehavior = null;
 
         super.onStop();
     }
@@ -361,42 +368,30 @@ public class FriendsSheetFragment extends Fragment implements FriendItemsAdapter
             return;
         }
 
-        int state = mBehavior.getState();
-        if (state == BottomSheetBehavior.STATE_COLLAPSED) {
-            mBehavior.setState(BottomSheetBehavior.STATE_EXPANDED);
-        } else if (state == BottomSheetBehavior.STATE_EXPANDED) {
-            mBehavior.setState(BottomSheetBehavior.STATE_COLLAPSED);
-        }
+        mBehavior.setSheetState(!mBehavior.isSheetExpanded());
     }
 
-    private  BottomSheetBehavior.BottomSheetCallback mBottomSheetCallback = new BottomSheetBehavior.BottomSheetCallback() {
-        @Override
-        public void onStateChanged(@NonNull View bottomSheet, int newState) {}
+    public void onSlide(float slideOffset) {
+        float height = mBinding.avatars.getHeight();
+        mBinding.avatars.setTranslationY(height*slideOffset*-3.0f);
 
-        @Override
-        @UiThread
-        public void onSlide(@NonNull View bottomSheet, float slideOffset) {
-            float height = mBinding.avatars.getHeight();
-            mBinding.avatars.setTranslationY(height*slideOffset*-3.0f);
-
-            float btnRot;
-            float btnTrY;
-            if (slideOffset >= 0.75) {
-                float progress = (slideOffset - 0.75f)*4.0f;
-                btnRot = 180.0f * progress;
-                btnTrY = progress * mTenDips;
-            } else {
-                btnRot = 0;
-                btnTrY = 0;
-            }
-            mBinding.toggle.setRotation(btnRot);
-            mBinding.toggle.setTranslationY(btnTrY);
-
-            float maxTrY = mBinding.toggle.getTop(); // top right of the toggle button
-            maxTrY += mBinding.toggle.getHeight()/2.0f;  // to calculate the center of the toggle
-            maxTrY += mTenDips; // because at the end of the animation the toggle goes down 10dp
-            maxTrY -= mBinding.title.getTop() + mBinding.title.getHeight()/2.0f;    // to calculate the actual difference with the center of the title
-            mBinding.title.setTranslationY(maxTrY * slideOffset);
+        float btnRot;
+        float btnTrY;
+        if (slideOffset >= 0.75) {
+            float progress = (slideOffset - 0.75f)*4.0f;
+            btnRot = 180.0f * progress;
+            btnTrY = progress * mTenDips;
+        } else {
+            btnRot = 0;
+            btnTrY = 0;
         }
-    };
+        mBinding.toggle.setRotation(btnRot);
+        mBinding.toggle.setTranslationY(btnTrY);
+
+        float maxTrY = mBinding.toggle.getTop(); // top right of the toggle button
+        maxTrY += mBinding.toggle.getHeight()/2.0f;  // to calculate the center of the toggle
+        maxTrY += mTenDips; // because at the end of the animation the toggle goes down 10dp
+        maxTrY -= mBinding.title.getTop() + mBinding.title.getHeight()/2.0f;    // to calculate the actual difference with the center of the title
+        mBinding.title.setTranslationY(maxTrY * slideOffset);
+    }
 }

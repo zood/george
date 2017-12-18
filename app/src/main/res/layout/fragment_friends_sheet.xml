@@ -2,7 +2,7 @@
 <layout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto">
-    <android.support.constraint.ConstraintLayout
+    <io.pijun.george.view.FriendsSheetLayout
         android:id="@+id/friends_sheet"
         android:background="@android:color/white"
         app:behavior_peekHeight="72dp"
@@ -47,5 +47,5 @@
             app:layout_constraintEnd_toEndOf="parent"
             android:layout_width="0dp"
             android:layout_height="0dp" />
-    </android.support.constraint.ConstraintLayout>
+    </io.pijun.george.view.FriendsSheetLayout>
 </layout>
