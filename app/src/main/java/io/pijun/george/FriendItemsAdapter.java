@@ -24,6 +24,7 @@ import com.squareup.picasso.Picasso;
 import com.squareup.picasso.Target;
 
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Locale;
 
 import io.pijun.george.models.FriendLocation;
@@ -125,7 +126,7 @@ class FriendItemsAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
                         AreaCache.fetchArea(h.location.getContext(), loc.latitude, loc.longitude, new AreaCache.ReverseGeocodingListener() {
                             @Override
                             public void onReverseGeocodingCompleted(@Nullable String area) {
-                                reloadFriend(friend.id);
+                                onFriendGeocodingUpdated(friend.id);
                             }
                         });
                     }
@@ -172,6 +173,59 @@ class FriendItemsAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
     }
 
     @Override
+    public void onBindViewHolder(RecyclerView.ViewHolder holder, int position, List<Object> payloads) {
+        if (payloads == null || payloads.size() == 0) {
+            onBindViewHolder(holder, position);
+            return;
+        }
+        if (holder instanceof FriendItemViewHolder) {
+            FriendItemViewHolder h = (FriendItemViewHolder) holder;
+            final FriendRecord friend = mFriends.get(position);
+            for (Object payload : payloads) {
+                if (payload.equals("geocoding")) {
+                    FriendLocation loc = mFriendLocations.get(friend.id);
+                    if (loc == null) {
+                        continue;
+                    }
+                    String area = AreaCache.getArea(loc.latitude, loc.longitude);
+                    h.location.setText(area);
+                } else if (payload.equals("location")) {
+                    FriendLocation loc = mFriendLocations.get(friend.id);
+                    if (loc == null) {
+                        continue;
+                    }
+                    String area = AreaCache.getArea(loc.latitude, loc.longitude);
+                    if (area == null) {
+                        AreaCache.fetchArea(h.location.getContext(), loc.latitude, loc.longitude, new AreaCache.ReverseGeocodingListener() {
+                            @Override
+                            public void onReverseGeocodingCompleted(@Nullable String area) {
+                                onFriendGeocodingUpdated(friend.id);
+                            }
+                        });
+                    }
+                    if (area != null) {
+                        h.location.setText(area);
+                    } else {
+                        h.location.setText(h.location.getContext().getString(R.string.loading_ellipsis));
+                    }
+                    long now = System.currentTimeMillis();
+                    final CharSequence relTime;
+                    if (loc.time >= now-60* DateUtils.SECOND_IN_MILLIS) {
+                        relTime = " • " + h.location.getContext().getString(R.string.now);
+                    } else {
+                        relTime = " • " + DateUtils.getRelativeTimeSpanString(
+                                loc.time,
+                                System.currentTimeMillis(),
+                                DateUtils.MINUTE_IN_MILLIS,
+                                DateUtils.FORMAT_ABBREV_RELATIVE);
+                    }
+                    h.updateTime.setText(relTime);
+                }
+            }
+        }
+    }
+
+    @Override
     public RecyclerView.ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
         LayoutInflater inflater = LayoutInflater.from(parent.getContext());
         View view = inflater.inflate(R.layout.friend_item, parent, false);
@@ -185,6 +239,26 @@ class FriendItemsAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
         });
 
         return holder;
+    }
+
+    private void onFriendGeocodingUpdated(long friendId) {
+        for (int i=0; i<mFriends.size(); i++) {
+            FriendRecord friend = mFriends.get(i);
+            if (friend.id == friendId) {
+                notifyItemChanged(i, "geocoding");
+                break;
+            }
+        }
+    }
+
+    private void onFriendLocationUpdated(long friendId) {
+        for (int i=0; i<mFriends.size(); i++) {
+            FriendRecord friend = mFriends.get(i);
+            if (friend.id == friendId) {
+                notifyItemChanged(i, "location");
+                break;
+            }
+        }
     }
 
     private void onShareSwitchCheckedChange(int position, boolean isChecked) {
@@ -228,9 +302,9 @@ class FriendItemsAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
     void setFriendLocation(@NonNull final Context ctx, @NonNull final FriendLocation loc) {
         mFriendLocations.put(loc.friendId, loc);
         if (AreaCache.getArea(loc.latitude, loc.longitude) == null) {
-            AreaCache.fetchArea(ctx, loc.latitude, loc.longitude, area -> reloadFriend(loc.friendId));
+            AreaCache.fetchArea(ctx, loc.latitude, loc.longitude, area -> onFriendGeocodingUpdated(loc.friendId));
         } else {
-            reloadFriend(loc.friendId);
+            onFriendLocationUpdated(loc.friendId);
         }
     }
 
