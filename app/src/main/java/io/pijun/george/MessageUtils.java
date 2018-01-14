@@ -53,8 +53,17 @@ public class MessageUtils {
     public static final int ERROR_DATABASE_INCONSISTENCY = 13;
     public static final int ERROR_ENCRYPTION_FAILED = 14;
 
+    @WorkerThread @Error
     private static int handleAvatarRequest(@NonNull Context ctx, @NonNull UserRecord user) {
         try {
+            // make sure this is somebody that we're sharing our location with
+            FriendRecord friend = DB.get(ctx).getFriendByUserId(user.id);
+            if (friend == null) {
+                return ERROR_NONE;
+            }
+            if (friend.sendingBoxId != null) {
+                return ERROR_NONE;
+            }
             AvatarManager.sendAvatarToUser(ctx, user);
         } catch (IOException ignore) {}
 
