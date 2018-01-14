@@ -145,6 +145,9 @@ public class LocationSeeker {
     }
 
     private LocationCallback mLocationCallbackHelper = new LocationCallback() {
+
+        private long timeOfAccurateLocation = -1;
+
         @Override
         @WorkerThread
         public void onLocationResult(LocationResult result) {
@@ -158,8 +161,14 @@ public class LocationSeeker {
                     L.i("\thasAcc? " + location.hasAccuracy() + ", acc? " + location.getAccuracy() + ", time: " + location.getTime() + ", now: " + System.currentTimeMillis());
                     if (location.hasAccuracy() && location.getAccuracy() <= 10 &&
                             (System.currentTimeMillis() - location.getTime()) < 30000) {
-                        mTimeoutThread.interrupt();
-                        shutdown();
+                        // Give the device an extra 5 seconds to upload this location to the server.
+                        if (timeOfAccurateLocation == -1) {
+                            timeOfAccurateLocation = System.currentTimeMillis();
+                        } else {
+                            if (System.currentTimeMillis() - timeOfAccurateLocation > 5000) {
+                                mTimeoutThread.interrupt();
+                            }
+                        }
                     }
                 }
             } catch (Throwable t) {
