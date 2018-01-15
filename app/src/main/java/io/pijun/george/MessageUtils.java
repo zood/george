@@ -148,7 +148,7 @@ public class MessageUtils {
         }
         // make sure this is actually a friend
         FriendRecord f = DB.get(context).getFriendByUserId(userRecord.id);
-        if (f == null) {
+        if (f == null || f.sendingBoxId == null) {
             L.i("\tyou are not a friend");
             String errMsg = OscarClient.queueSendMessage(context, userRecord,
                     UserComm.newDebug("You are not a friend"), true, false);
@@ -158,7 +158,8 @@ public class MessageUtils {
             return ERROR_NONE;
         }
         L.i("\tok, provide a location update");
-        new LocationSeeker().start(context);
+//        new LocationSeeker().start(context);
+        new LocationUpdateRequestHandler(context, null);
         String errMsg = OscarClient.queueSendMessage(context, userRecord,
                 UserComm.newDebug("started location seeker"), true, false);
         if (errMsg != null) {

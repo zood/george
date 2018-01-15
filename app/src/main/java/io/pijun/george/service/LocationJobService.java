@@ -13,13 +13,15 @@ import android.text.format.DateUtils;
 import io.pijun.george.App;
 import io.pijun.george.L;
 import io.pijun.george.LocationSeeker;
+import io.pijun.george.LocationUpdateRequestHandler;
 import io.pijun.george.Prefs;
 
-public class LocationJobService extends JobService implements LocationSeeker.LocationSeekerListener {
+public class LocationJobService extends JobService implements LocationSeeker.LocationSeekerListener, LocationUpdateRequestHandler.ShutDownListener {
 
     public static final int JOB_ID = 4319; // made up number
 
-    private LocationSeeker mSeeker;
+//    private LocationSeeker mSeeker;
+    private LocationUpdateRequestHandler lurh;
     private JobParameters mParams;
 
     public static JobInfo getJobInfo(Context context) {
@@ -55,20 +57,26 @@ public class LocationJobService extends JobService implements LocationSeeker.Loc
             return false;
         }
 
-        mSeeker = new LocationSeeker().listener(this).start(this);
+        lurh = new LocationUpdateRequestHandler(this, this);
 
         return true;
     }
 
     @Override
     public boolean onStopJob(JobParameters params) {
-        mSeeker.shutdown();
+        lurh.issueCommand(LocationUpdateRequestHandler.COMMAND_SHUT_DOWN);
         return true;
     }
 
     @Override
     @WorkerThread
     public void locationSeekerFinished(@NonNull LocationSeeker seeker) {
+        L.i("LJS.locationSeekerFinished");
+        jobFinished(mParams, false);
+    }
+
+    @Override
+    public void locationUpdateRequestHandlerFinished() {
         L.i("LJS.locationSeekerFinished");
         jobFinished(mParams, false);
     }

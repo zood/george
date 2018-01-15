@@ -68,6 +68,7 @@ class FriendItemsAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
 
     @Override
     public void onBindViewHolder(RecyclerView.ViewHolder holder, int position) {
+        L.i("onBindViewHolder, no payloads");
         if (holder instanceof FriendItemViewHolder) {
             FriendItemViewHolder h = (FriendItemViewHolder) holder;
 
@@ -137,7 +138,7 @@ class FriendItemsAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
                     }
                     long now = System.currentTimeMillis();
                     final CharSequence relTime;
-                    if (loc.time >= now-60* DateUtils.SECOND_IN_MILLIS) {
+                    if (loc.time >= now - (60*DateUtils.SECOND_IN_MILLIS)) {
                         relTime = " • " + h.location.getContext().getString(R.string.now);
                     } else {
                         relTime = " • " + DateUtils.getRelativeTimeSpanString(
@@ -174,6 +175,7 @@ class FriendItemsAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
 
     @Override
     public void onBindViewHolder(RecyclerView.ViewHolder holder, int position, List<Object> payloads) {
+        L.i("onBind payloads: " + payloads);
         if (payloads == null || payloads.size() == 0) {
             onBindViewHolder(holder, position);
             return;
@@ -210,7 +212,7 @@ class FriendItemsAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
                     }
                     long now = System.currentTimeMillis();
                     final CharSequence relTime;
-                    if (loc.time >= now-60* DateUtils.SECOND_IN_MILLIS) {
+                    if (loc.time >= now - (60*DateUtils.SECOND_IN_MILLIS)) {
                         relTime = " • " + h.location.getContext().getString(R.string.now);
                     } else {
                         relTime = " • " + DateUtils.getRelativeTimeSpanString(
@@ -219,6 +221,7 @@ class FriendItemsAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
                                 DateUtils.MINUTE_IN_MILLIS,
                                 DateUtils.FORMAT_ABBREV_RELATIVE);
                     }
+                    L.i("partial reload location time is " + relTime);
                     h.updateTime.setText(relTime);
                 }
             }
@@ -245,6 +248,7 @@ class FriendItemsAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
         for (int i=0; i<mFriends.size(); i++) {
             FriendRecord friend = mFriends.get(i);
             if (friend.id == friendId) {
+                L.i("notify geocoding " + friend.user.username);
                 notifyItemChanged(i, "geocoding");
                 break;
             }
@@ -255,6 +259,7 @@ class FriendItemsAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
         for (int i=0; i<mFriends.size(); i++) {
             FriendRecord friend = mFriends.get(i);
             if (friend.id == friendId) {
+                L.i("notify location " + friend.user.username);
                 notifyItemChanged(i, "location");
                 break;
             }
@@ -271,6 +276,7 @@ class FriendItemsAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
 
     @UiThread
     void reloadFriend(long friendId) {
+        L.i("FIA.reloadFriend " + friendId);
         for (int i=0; i<mFriends.size(); i++) {
             FriendRecord friend = mFriends.get(i);
             if (friend.id == friendId) {
