@@ -6,21 +6,17 @@ import android.app.job.JobScheduler;
 import android.app.job.JobService;
 import android.content.ComponentName;
 import android.content.Context;
-import android.support.annotation.NonNull;
-import android.support.annotation.WorkerThread;
 import android.text.format.DateUtils;
 
 import io.pijun.george.App;
 import io.pijun.george.L;
-import io.pijun.george.LocationSeeker;
 import io.pijun.george.LocationUpdateRequestHandler;
 import io.pijun.george.Prefs;
 
-public class LocationJobService extends JobService implements LocationSeeker.LocationSeekerListener, LocationUpdateRequestHandler.ShutDownListener {
+public class LocationJobService extends JobService implements LocationUpdateRequestHandler.ShutDownListener {
 
     public static final int JOB_ID = 4319; // made up number
 
-//    private LocationSeeker mSeeker;
     private LocationUpdateRequestHandler lurh;
     private JobParameters mParams;
 
@@ -66,13 +62,6 @@ public class LocationJobService extends JobService implements LocationSeeker.Loc
     public boolean onStopJob(JobParameters params) {
         lurh.issueCommand(LocationUpdateRequestHandler.COMMAND_SHUT_DOWN);
         return true;
-    }
-
-    @Override
-    @WorkerThread
-    public void locationSeekerFinished(@NonNull LocationSeeker seeker) {
-        L.i("LJS.locationSeekerFinished");
-        jobFinished(mParams, false);
     }
 
     @Override
