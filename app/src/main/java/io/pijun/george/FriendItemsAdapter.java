@@ -68,7 +68,6 @@ class FriendItemsAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
 
     @Override
     public void onBindViewHolder(RecyclerView.ViewHolder holder, int position) {
-        L.i("onBindViewHolder, no payloads");
         if (holder instanceof FriendItemViewHolder) {
             FriendItemViewHolder h = (FriendItemViewHolder) holder;
 
@@ -175,7 +174,6 @@ class FriendItemsAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
 
     @Override
     public void onBindViewHolder(RecyclerView.ViewHolder holder, int position, List<Object> payloads) {
-        L.i("onBind payloads: " + payloads);
         if (payloads == null || payloads.size() == 0) {
             onBindViewHolder(holder, position);
             return;
@@ -221,7 +219,6 @@ class FriendItemsAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
                                 DateUtils.MINUTE_IN_MILLIS,
                                 DateUtils.FORMAT_ABBREV_RELATIVE);
                     }
-                    L.i("partial reload location time is " + relTime);
                     h.updateTime.setText(relTime);
                 }
             }
@@ -248,7 +245,6 @@ class FriendItemsAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
         for (int i=0; i<mFriends.size(); i++) {
             FriendRecord friend = mFriends.get(i);
             if (friend.id == friendId) {
-                L.i("notify geocoding " + friend.user.username);
                 notifyItemChanged(i, "geocoding");
                 break;
             }
@@ -259,7 +255,6 @@ class FriendItemsAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
         for (int i=0; i<mFriends.size(); i++) {
             FriendRecord friend = mFriends.get(i);
             if (friend.id == friendId) {
-                L.i("notify location " + friend.user.username);
                 notifyItemChanged(i, "location");
                 break;
             }
@@ -276,7 +271,6 @@ class FriendItemsAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
 
     @UiThread
     void reloadFriend(long friendId) {
-        L.i("FIA.reloadFriend " + friendId);
         for (int i=0; i<mFriends.size(); i++) {
             FriendRecord friend = mFriends.get(i);
             if (friend.id == friendId) {
@@ -309,9 +303,8 @@ class FriendItemsAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
         mFriendLocations.put(loc.friendId, loc);
         if (AreaCache.getArea(loc.latitude, loc.longitude) == null) {
             AreaCache.fetchArea(ctx, loc.latitude, loc.longitude, area -> onFriendGeocodingUpdated(loc.friendId));
-        } else {
-            onFriendLocationUpdated(loc.friendId);
         }
+        onFriendLocationUpdated(loc.friendId);
     }
 
     @UiThread
