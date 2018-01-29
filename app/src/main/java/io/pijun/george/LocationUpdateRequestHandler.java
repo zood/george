@@ -42,7 +42,7 @@ public class LocationUpdateRequestHandler {
     private static final String COMMAND_UPLOAD_LOCATION = "upload_location";
 
     private static int HANDLER_COUNT = 1;
-    private static final int MAX_WAIT_SECONDS = 35;
+    private static final int MAX_WAIT_SECONDS = 30;
 
     @Nullable private FusedLocationProviderClient client;
     private final Context context;

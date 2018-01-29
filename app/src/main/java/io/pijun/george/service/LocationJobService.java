@@ -24,6 +24,7 @@ public class LocationJobService extends JobService implements LocationUpdateRequ
         ComponentName compName = new ComponentName(context, LocationJobService.class);
         JobInfo.Builder builder = new JobInfo.Builder(LocationJobService.JOB_ID, compName)
                 .setPeriodic(15 * DateUtils.MINUTE_IN_MILLIS)
+                .setPersisted(true)
                 .setRequiredNetworkType(JobInfo.NETWORK_TYPE_ANY)
                 .setRequiresCharging(false)
                 .setRequiresDeviceIdle(false);
@@ -61,7 +62,7 @@ public class LocationJobService extends JobService implements LocationUpdateRequ
     @Override
     public boolean onStopJob(JobParameters params) {
         lurh.issueCommand(LocationUpdateRequestHandler.COMMAND_SHUT_DOWN);
-        return true;
+        return false;
     }
 
     @Override
