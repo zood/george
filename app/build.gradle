@@ -8,8 +8,8 @@ android {
         applicationId "io.pijun.george"
         minSdkVersion 21
         targetSdkVersion 26
-        versionCode 14
-        versionName "0.14"
+        versionCode 15
+        versionName "0.15"
         multiDexEnabled true
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
         resConfigs "en"
@@ -51,34 +51,34 @@ repositories {
 }
 
 dependencies {
-    compile fileTree(dir: 'libs', include: ['*.jar'])
-    androidTestCompile('com.android.support.test.espresso:espresso-core:2.2.2', {
+    implementation fileTree(dir: 'libs', include: ['*.jar'])
+    androidTestImplementation('com.android.support.test.espresso:espresso-core:2.2.2', {
         exclude group: 'com.android.support', module: 'support-annotations'
     })
 
-    compile 'com.android.support:appcompat-v7:26.1.0'
-    compile 'com.android.support:design:26.1.0'
-    compile 'com.android.support:percent:26.1.0'
-    compile 'com.android.support.constraint:constraint-layout:1.1.0-beta4'
+    implementation 'com.android.support:appcompat-v7:26.1.0'
+    implementation 'com.android.support:design:26.1.0'
+    implementation 'com.android.support:percent:26.1.0'
+    implementation 'com.android.support.constraint:constraint-layout:1.1.0-beta6'
 
     // used for fusion location
-    compile 'com.google.android.gms:play-services-location:11.6.2'
+    implementation 'com.google.android.gms:play-services-location:12.0.1'
     // used for Google maps view
-    compile 'com.google.android.gms:play-services-maps:11.6.2'
+    implementation 'com.google.android.gms:play-services-maps:12.0.1'
     // cloud messaging
-    compile 'com.google.firebase:firebase-messaging:11.6.2'
+    implementation 'com.google.firebase:firebase-messaging:12.0.1'
     // crash reports
-    compile 'com.google.firebase:firebase-crash:11.6.2'
-    
-    compile 'com.squareup.retrofit2:retrofit:2.3.0'
-    compile 'com.squareup.retrofit2:converter-gson:2.3.0'
-    compile 'com.squareup.okhttp3:logging-interceptor:3.9.0'
+    implementation 'com.google.firebase:firebase-crash:12.0.1'
 
-    compile 'com.squareup:otto:1.3.8'
-    compile 'com.squareup.picasso:picasso:2.5.2'
+    implementation 'com.squareup.retrofit2:retrofit:2.3.0'
+    implementation 'com.squareup.retrofit2:converter-gson:2.3.0'
+    implementation 'com.squareup.okhttp3:logging-interceptor:3.9.0'
 
-    testCompile 'junit:junit:4.12'
-    androidTestCompile 'com.android.support.test.espresso:espresso-core:3.0.1'
+    implementation 'com.squareup:otto:1.3.8'
+    implementation 'com.squareup.picasso:picasso:2.5.2'
+
+    testImplementation 'junit:junit:4.12'
+    androidTestImplementation 'com.android.support.test.espresso:espresso-core:3.0.1'
 }
 
 apply plugin: 'com.google.gms.google-services'

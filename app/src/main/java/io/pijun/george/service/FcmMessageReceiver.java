@@ -1,7 +1,10 @@
 package io.pijun.george.service;
 
+import android.content.Context;
+import android.os.PowerManager;
 import android.support.annotation.WorkerThread;
 import android.text.TextUtils;
+import android.text.format.DateUtils;
 import android.util.Base64;
 import android.util.Log;
 
@@ -28,6 +31,12 @@ public class FcmMessageReceiver extends FirebaseMessagingService {
     @Override
     public void onMessageReceived(RemoteMessage remoteMessage) {
         L.i("FcmMessageReceiver.onMessageReceived");
+        PowerManager pwrMgr = (PowerManager) getSystemService(Context.POWER_SERVICE);
+        if (pwrMgr == null) {
+            return;
+        }
+        PowerManager.WakeLock lock = pwrMgr.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "FcmMessageReceiverLock");
+        lock.acquire(5 * DateUtils.SECOND_IN_MILLIS);
         Map<String, String> data = remoteMessage.getData();
         if (data == null) {
             return;
@@ -53,6 +62,7 @@ public class FcmMessageReceiver extends FirebaseMessagingService {
 
     @WorkerThread
     private void handleMessageReceived(Map<String, String> data) {
+        L.i("FcmMessageReceiver.handleMessageReceived");
         Message msg = new Message();
         msg.id = Long.parseLong(data.get("id"));
         msg.cipherText = Base64.decode(data.get("cipher_text"), Base64.NO_WRAP);

@@ -43,6 +43,8 @@ public class LocationUpdateRequestHandler {
 
     private static int HANDLER_COUNT = 1;
     private static final int MAX_WAIT_SECONDS = 30;
+    // The lock stays longer, because we need to give ourselves ample time to clean up
+    private static final int LOCK_SECONDS = MAX_WAIT_SECONDS + 35;
 
     @Nullable private FusedLocationProviderClient client;
     private final Context context;
@@ -126,7 +128,7 @@ public class LocationUpdateRequestHandler {
         }
 
         client = LocationServices.getFusedLocationProviderClient(context);
-        LocationRequest request = new LocationRequest();
+        LocationRequest request = LocationRequest.create();
         request.setInterval(DateUtils.SECOND_IN_MILLIS);
         request.setFastestInterval(DateUtils.SECOND_IN_MILLIS);
         request.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
@@ -144,8 +146,8 @@ public class LocationUpdateRequestHandler {
 
         PowerManager pwrMgr = (PowerManager) context.getSystemService(Context.POWER_SERVICE);
         if (pwrMgr != null) {
-            wakeLock = pwrMgr.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, LocationUpdateRequestHandler.class.getSimpleName()+ "Lock."+HANDLER_COUNT);
-            wakeLock.acquire(MAX_WAIT_SECONDS * DateUtils.SECOND_IN_MILLIS);
+            wakeLock = pwrMgr.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "LocationUpdateRequestHandlerLock");
+            wakeLock.acquire(LOCK_SECONDS * DateUtils.SECOND_IN_MILLIS);
         }
 
         // start the run loop

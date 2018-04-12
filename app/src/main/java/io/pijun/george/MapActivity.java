@@ -180,7 +180,7 @@ public final class MapActivity extends AppCompatActivity implements OnMapReadyCa
 
         mLocationProviderClient = LocationServices.getFusedLocationProviderClient(this);
         mSettingsClient = LocationServices.getSettingsClient(this);
-        mLocationRequest = new LocationRequest();
+        mLocationRequest = LocationRequest.create();
         mLocationRequest.setInterval(5 * DateUtils.SECOND_IN_MILLIS);
         mLocationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
         LocationSettingsRequest.Builder builder = new LocationSettingsRequest.Builder();
@@ -188,7 +188,6 @@ public final class MapActivity extends AppCompatActivity implements OnMapReadyCa
         mLocationSettingsRequest = builder.build();
 
         startService(FcmTokenRegistrar.newIntent(this));
-//        startService(ActivityMonitor.newIntent(this));
 
         App.runOnUiThread(new UiRunnable() {
             @Override
@@ -393,6 +392,13 @@ public final class MapActivity extends AppCompatActivity implements OnMapReadyCa
                     mFriendForCameraToTrack = -1;
                     findViewById(R.id.my_location_fab).setSelected(false);
                 }
+            }
+        });
+        mGoogMap.setOnMapClickListener(new GoogleMap.OnMapClickListener() {
+            @Override
+            public void onMapClick(LatLng latLng) {
+                L.i("onMapClick");
+                mBinding.markerDetails.setVisibility(View.GONE);
             }
         });
 
@@ -765,12 +771,18 @@ public final class MapActivity extends AppCompatActivity implements OnMapReadyCa
     }
 
     @Override
+    @UiThread
     public void onAvatarSelected(FriendRecord fr) {
         L.i("selected: " + fr.user.username);
         Marker marker = mMarkerTracker.getById(fr.id);
         if (marker == null) {
+            mBinding.markerDetails.setVisibility(View.GONE);
             return;
         }
+
+        mBinding.markerDetails.setVisibility(View.VISIBLE);
+        mBinding.markerUsername.setText(fr.user.username);
+        mBinding.markerLocation.setText(R.string.loading_ellipsis);
 
         mFriendForCameraToTrack = fr.id;
         findViewById(R.id.my_location_fab).setSelected(false);
@@ -786,9 +798,15 @@ public final class MapActivity extends AppCompatActivity implements OnMapReadyCa
             @Override
             public void run() {
                 FriendLocation loc = DB.get(MapActivity.this).getFriendLocation(fr.id);
+                if (loc == null) {
+                    // shouldn't happen
+                    return;
+                }
+
                 App.runOnUiThread(new UiRunnable() {
                     @Override
                     public void run() {
+                        showFriendDetails(loc);
                         showFriendErrorCircle(loc);
                     }
                 });
@@ -835,7 +853,49 @@ public final class MapActivity extends AppCompatActivity implements OnMapReadyCa
     }
 
     @UiThread
-    private void showFriendErrorCircle(FriendLocation loc) {
+    private void showFriendDetails(@NonNull FriendLocation loc) {
+        StringBuilder speed = new StringBuilder();
+        if (loc.speed != null) {
+            speed.append(loc.speed).append(" m/s");
+        }
+        mBinding.markerSpeed.setText(speed);
+
+        long now = System.currentTimeMillis();
+        final CharSequence relTime;
+        if (loc.time >= now-60*DateUtils.SECOND_IN_MILLIS) {
+            relTime = getString(R.string.now);
+        } else {
+            relTime = DateUtils.getRelativeTimeSpanString(
+                    loc.time,
+                    System.currentTimeMillis(),
+                    DateUtils.MINUTE_IN_MILLIS,
+                    DateUtils.FORMAT_ABBREV_RELATIVE);
+        }
+        mBinding.markerTime.setText(relTime);
+
+        mBinding.markerDetails.setTag(loc);
+
+        if (loc.bearing != null) {
+            mBinding.markerDirection.setVisibility(View.VISIBLE);
+            mBinding.markerDirection.setRotation(loc.bearing);
+        } else {
+            mBinding.markerDirection.setVisibility(View.GONE);
+        }
+        AreaCache.fetchArea(MapActivity.this, loc.latitude, loc.longitude, new AreaCache.ReverseGeocodingListener() {
+            @Override
+            public void onReverseGeocodingCompleted(@Nullable String area) {
+                FriendLocation savedLoc = (FriendLocation) mBinding.markerDetails.getTag();
+                if (savedLoc != null && savedLoc.latitude == loc.latitude && savedLoc.longitude == loc.longitude) {
+                    if (area != null) {
+                        mBinding.markerLocation.setText(area);
+                    }
+                }
+            }
+        });
+    }
+
+    @UiThread
+    private void showFriendErrorCircle(@NonNull FriendLocation loc) {
         if (mGoogMap == null) {
             return;
         }

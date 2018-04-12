@@ -13,6 +13,7 @@ public class FriendLocation {
     public final long time;
     public final Float accuracy;
     public final Float speed;
+    // The person's bearing, in degrees
     public final Float bearing;
     public final List<MovementType> movements;
 

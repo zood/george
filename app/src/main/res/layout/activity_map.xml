@@ -135,11 +135,14 @@
         android:id="@+id/marker_details"
         android:padding="8dp"
         android:background="@android:color/white"
+        android:visibility="gone"
+        tools:visibility="visible"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintBottom_toBottomOf="parent"
         android:elevation="32dp"
         android:layout_marginStart="16dp"
         android:layout_marginEnd="16dp"
+        android:layout_marginBottom="76dp"
         android:layout_width="match_parent"
         android:layout_height="wrap_content">
         <TextView
@@ -157,7 +160,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content" />
         <TextView
-            android:id="@+id/time"
+            android:id="@+id/marker_time"
             tools:text="now"
             app:layout_constraintStart_toEndOf="@id/marker_location"
             app:layout_constraintTop_toBottomOf="@id/marker_username"
@@ -180,7 +183,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content" />
         <TextView
-            android:id="@+id/speed"
+            android:id="@+id/marker_speed"
             tools:text="29.7 m/s"
             app:layout_constraintStart_toEndOf="@id/marker_direction"
             app:layout_constraintTop_toBottomOf="@id/marker_location"
