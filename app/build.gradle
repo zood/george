@@ -1,15 +1,15 @@
 apply plugin: 'com.android.application'
 
 android {
-    compileSdkVersion 26
+    compileSdkVersion 27
     dataBinding.enabled = true
 
     defaultConfig {
         applicationId "io.pijun.george"
         minSdkVersion 21
-        targetSdkVersion 26
-        versionCode 15
-        versionName "0.15"
+        targetSdkVersion 27
+        versionCode 16
+        versionName "0.16"
         multiDexEnabled true
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
         resConfigs "en"
@@ -56,9 +56,9 @@ dependencies {
         exclude group: 'com.android.support', module: 'support-annotations'
     })
 
-    implementation 'com.android.support:appcompat-v7:26.1.0'
-    implementation 'com.android.support:design:26.1.0'
-    implementation 'com.android.support:percent:26.1.0'
+    implementation 'com.android.support:appcompat-v7:27.1.1'
+    implementation 'com.android.support:design:27.1.1'
+    implementation 'com.android.support:percent:27.1.1'
     implementation 'com.android.support.constraint:constraint-layout:1.1.0-beta6'
 
     // used for fusion location
