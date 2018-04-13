@@ -1,5 +1,7 @@
 package io.pijun.george.models;
 
+import android.support.annotation.NonNull;
+
 import java.util.List;
 
 import io.pijun.george.api.CommType;
@@ -17,7 +19,7 @@ public class FriendLocation {
     public final Float bearing;
     public final List<MovementType> movements;
 
-    public FriendLocation(long friendId, UserComm comm) {
+    public FriendLocation(@NonNull long friendId, @NonNull UserComm comm) {
         this(friendId, comm.latitude, comm.longitude, comm.time, comm.accuracy, comm.speed, comm.bearing, MovementType.deserialize(comm.movements));
 
         if (comm.type != CommType.LocationInfo) {

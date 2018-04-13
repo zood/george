@@ -136,12 +136,9 @@ public class MessageUtils {
         // only perform the update if it's been more than 3 minutes since the last one
         long now = System.currentTimeMillis();
         if (now - updateTime < 3 * DateUtils.MINUTE_IN_MILLIS) {
-            L.i("\talready provided an update at " + updateTime + ". It's " + now +
-                    " now");
-            String errMsg = OscarClient.queueSendMessage(context, userRecord,
-                    UserComm.newDebug("already provided an update at " + updateTime +
-                            ". It's " + now + " now"),
-                    true, false);
+            L.i("\talready provided an update at " + updateTime + ". It's " + now + " now");
+            UserComm tooSoon = UserComm.newLocationUpdateRequestReceived(UserComm.LOCATION_UPDATE_REQUEST_ACTION_TOO_SOON);
+            String errMsg = OscarClient.queueSendMessage(context, userRecord, tooSoon, true, false);
             if (errMsg != null) {
                 L.w(errMsg);
             }
@@ -159,13 +156,20 @@ public class MessageUtils {
             return ERROR_NONE;
         }
         L.i("\tok, provide a location update");
-//        new LocationSeeker().start(context);
         new LocationUpdateRequestHandler(context, null);
-        String errMsg = OscarClient.queueSendMessage(context, userRecord,
-                UserComm.newDebug("started location seeker"), true, false);
+        UserComm started = UserComm.newLocationUpdateRequestReceived(UserComm.LOCATION_UPDATE_REQUEST_ACTION_STARTING);
+        String errMsg = OscarClient.queueSendMessage(context, userRecord, started, true, false);
         if (errMsg != null) {
             L.w(errMsg);
         }
+
+        return ERROR_NONE;
+    }
+
+    @WorkerThread @Error
+    private static int handleLocationUpdateRequestReceived(@NonNull Context context, @NonNull UserRecord user, @NonNull UserComm comm) {
+        L.i("handleLocationUpdateRequestReceived");
+        L.i(user.username + " responded to update request: " + comm.locationUpdateRequestAction);
 
         return ERROR_NONE;
     }
@@ -262,6 +266,8 @@ public class MessageUtils {
                 return handleLocationInfo(context, userRecord, comm);
             case LocationUpdateRequest:
                 return handleLocationUpdateRequest(context, userRecord);
+            case LocationUpdateRequestReceived:
+                return handleLocationUpdateRequestReceived(context, userRecord, comm);
             default:
                 L.i("The invalid comm should have been caught during the isValid() check: " +
                         userRecord.username + " - " + comm);

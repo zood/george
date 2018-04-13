@@ -378,10 +378,7 @@ public final class MapActivity extends AppCompatActivity implements OnMapReadyCa
         mGoogMap = mapboxMap;
         CameraPosition pos = Prefs.get(this).getCameraPosition();
         if (pos != null) {
-            L.i("found a saved camera position");
             mGoogMap.moveCamera(CameraUpdateFactory.newCameraPosition(pos));
-        } else {
-            L.i("camera position is null in restore");
         }
         mGoogMap.setOnMarkerClickListener(this);
         mGoogMap.getUiSettings().setCompassEnabled(false);
@@ -649,6 +646,9 @@ public final class MapActivity extends AppCompatActivity implements OnMapReadyCa
     @Keep
     @UiThread
     public void onFriendLocationUpdated(final FriendLocation loc) {
+        if (mFriendForCameraToTrack == loc.friendId) {
+            setAvatarInfo(loc);
+        }
         // check if we already have a marker for this friend
         Marker marker = mMarkerTracker.getById(loc.friendId);
         if (marker == null) {
@@ -782,7 +782,6 @@ public final class MapActivity extends AppCompatActivity implements OnMapReadyCa
 
         mBinding.markerDetails.setVisibility(View.VISIBLE);
         mBinding.markerUsername.setText(fr.user.username);
-        mBinding.markerLocation.setText(R.string.loading_ellipsis);
 
         mFriendForCameraToTrack = fr.id;
         findViewById(R.id.my_location_fab).setSelected(false);
@@ -806,7 +805,7 @@ public final class MapActivity extends AppCompatActivity implements OnMapReadyCa
                 App.runOnUiThread(new UiRunnable() {
                     @Override
                     public void run() {
-                        showFriendDetails(loc);
+                        setAvatarInfo(loc);
                         showFriendErrorCircle(loc);
                     }
                 });
@@ -853,7 +852,7 @@ public final class MapActivity extends AppCompatActivity implements OnMapReadyCa
     }
 
     @UiThread
-    private void showFriendDetails(@NonNull FriendLocation loc) {
+    private void setAvatarInfo(@NonNull FriendLocation loc) {
         StringBuilder speed = new StringBuilder();
         if (loc.speed != null) {
             speed.append(loc.speed).append(" m/s");
@@ -881,17 +880,23 @@ public final class MapActivity extends AppCompatActivity implements OnMapReadyCa
         } else {
             mBinding.markerDirection.setVisibility(View.GONE);
         }
-        AreaCache.fetchArea(MapActivity.this, loc.latitude, loc.longitude, new AreaCache.ReverseGeocodingListener() {
-            @Override
-            public void onReverseGeocodingCompleted(@Nullable String area) {
-                FriendLocation savedLoc = (FriendLocation) mBinding.markerDetails.getTag();
-                if (savedLoc != null && savedLoc.latitude == loc.latitude && savedLoc.longitude == loc.longitude) {
-                    if (area != null) {
-                        mBinding.markerLocation.setText(area);
+        String area = AreaCache.getArea(loc.latitude, loc.longitude);
+        if (area != null) {
+            mBinding.markerLocation.setText(area);
+        } else {
+            mBinding.markerLocation.setText(R.string.loading_ellipsis);
+            AreaCache.fetchArea(MapActivity.this, loc.latitude, loc.longitude, new AreaCache.ReverseGeocodingListener() {
+                @Override
+                public void onReverseGeocodingCompleted(@Nullable String area) {
+                    FriendLocation savedLoc = (FriendLocation) mBinding.markerDetails.getTag();
+                    if (savedLoc != null && savedLoc.latitude == loc.latitude && savedLoc.longitude == loc.longitude) {
+                        if (area != null) {
+                            mBinding.markerLocation.setText(area);
+                        }
                     }
                 }
-            }
-        });
+            });
+        }
     }
 
     @UiThread

@@ -3,15 +3,19 @@ package io.pijun.george.api;
 import android.location.Location;
 import android.support.annotation.CheckResult;
 import android.support.annotation.NonNull;
+import android.support.annotation.StringDef;
 
 import java.io.ByteArrayInputStream;
 import java.io.InputStreamReader;
+import java.lang.annotation.Retention;
 import java.util.Arrays;
 import java.util.List;
 
 import io.pijun.george.Constants;
 import io.pijun.george.L;
 import io.pijun.george.models.MovementType;
+
+import static java.lang.annotation.RetentionPolicy.SOURCE;
 
 public class UserComm {
 
@@ -29,8 +33,20 @@ public class UserComm {
     public Float bearing;
     public String movements;
 
+    // location_update_request_received
+    @LocationUpdateRequestAction public String locationUpdateRequestAction;
+
     // debug
     public String debugData;
+
+    @Retention(SOURCE)
+    @StringDef({
+            LOCATION_UPDATE_REQUEST_ACTION_TOO_SOON,
+            LOCATION_UPDATE_REQUEST_ACTION_STARTING
+    })
+    @interface LocationUpdateRequestAction {}
+    public static final String LOCATION_UPDATE_REQUEST_ACTION_TOO_SOON = "too_soon";
+    public static final String LOCATION_UPDATE_REQUEST_ACTION_STARTING = "starting";
 
     private UserComm() {}
 
@@ -76,6 +92,13 @@ public class UserComm {
     public static UserComm newLocationUpdateRequest() {
         UserComm c = new UserComm();
         c.type = CommType.LocationUpdateRequest;
+        return c;
+    }
+
+    public static UserComm newLocationUpdateRequestReceived(@LocationUpdateRequestAction String action) {
+        UserComm c = new UserComm();
+        c.type = CommType.LocationUpdateRequestReceived;
+        c.locationUpdateRequestAction = action;
         return c;
     }
 
@@ -139,6 +162,15 @@ public class UserComm {
                 return true;
             case LocationUpdateRequest:
                 return true;
+            case LocationUpdateRequestReceived:
+                if (locationUpdateRequestAction == null) {
+                    return false;
+                }
+                if (!locationUpdateRequestAction.equals(LOCATION_UPDATE_REQUEST_ACTION_STARTING) &&
+                        !locationUpdateRequestAction.equals(LOCATION_UPDATE_REQUEST_ACTION_TOO_SOON)) {
+                    return false;
+                }
+                return true;
             default:
                 L.i("encountered unknown commtype. probably from a different version of Pijun");
                 return false;
@@ -168,6 +200,8 @@ public class UserComm {
                 ", time=" + time +
                 ", accuracy=" + accuracy +
                 ", speed=" + speed +
+                ", bearing=" + bearing +
+                ", locationUpdateRequestAction=" + locationUpdateRequestAction +
                 '}';
     }
 }
