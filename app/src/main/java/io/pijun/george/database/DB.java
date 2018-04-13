@@ -1,4 +1,4 @@
-package io.pijun.george;
+package io.pijun.george.database;
 
 import android.app.job.JobScheduler;
 import android.content.ContentValues;
@@ -27,12 +27,11 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 
-import io.pijun.george.models.FriendLocation;
-import io.pijun.george.models.FriendRecord;
-import io.pijun.george.models.LimitedShare;
-import io.pijun.george.models.MovementType;
-import io.pijun.george.models.Snapshot;
-import io.pijun.george.models.UserRecord;
+import io.pijun.george.App;
+import io.pijun.george.AvatarManager;
+import io.pijun.george.Constants;
+import io.pijun.george.Hex;
+import io.pijun.george.L;
 import io.pijun.george.service.BackupDatabaseJob;
 
 @SuppressWarnings("WeakerAccess")
@@ -173,7 +172,7 @@ public class DB {
         try {
             result = db.insertOrThrow(LIMITED_SHARES_TABLE, null, cv);
         } catch (SQLException ex) {
-            throw new DBException("Error adding limited share {pubKey:"+Hex.toHexString(publicKey) + ", sendingBoxId:"+Hex.toHexString(sendingBoxId) + "}", ex);
+            throw new DBException("Error adding limited share {pubKey:"+ Hex.toHexString(publicKey) + ", sendingBoxId:"+Hex.toHexString(sendingBoxId) + "}", ex);
         }
 
         if (result == -1) {

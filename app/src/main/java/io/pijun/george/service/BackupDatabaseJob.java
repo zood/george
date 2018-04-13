@@ -14,7 +14,7 @@ import com.google.firebase.crash.FirebaseCrash;
 import java.io.IOException;
 
 import io.pijun.george.App;
-import io.pijun.george.DB;
+import io.pijun.george.database.DB;
 import io.pijun.george.L;
 import io.pijun.george.Prefs;
 import io.pijun.george.Sodium;
@@ -22,7 +22,7 @@ import io.pijun.george.WorkerRunnable;
 import io.pijun.george.api.OscarClient;
 import io.pijun.george.api.OscarError;
 import io.pijun.george.crypto.EncryptedData;
-import io.pijun.george.models.Snapshot;
+import io.pijun.george.database.Snapshot;
 import retrofit2.Response;
 
 public class BackupDatabaseJob extends JobService {

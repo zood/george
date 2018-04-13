@@ -10,7 +10,7 @@ import com.google.android.gms.maps.model.Marker;
 import java.util.HashMap;
 import java.util.Set;
 
-import io.pijun.george.models.FriendLocation;
+import io.pijun.george.database.FriendLocation;
 
 public class MarkerTracker {
 

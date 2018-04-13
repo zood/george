@@ -20,12 +20,13 @@ import io.pijun.george.api.OscarClient;
 import io.pijun.george.api.UserComm;
 import io.pijun.george.crypto.EncryptedData;
 import io.pijun.george.crypto.KeyPair;
+import io.pijun.george.database.DB;
 import io.pijun.george.event.MovementsUpdated;
 import io.pijun.george.event.UserLoggedIn;
 import io.pijun.george.event.UserLoggedOut;
-import io.pijun.george.models.FriendRecord;
-import io.pijun.george.models.LimitedShare;
-import io.pijun.george.models.MovementType;
+import io.pijun.george.database.FriendRecord;
+import io.pijun.george.database.LimitedShare;
+import io.pijun.george.database.MovementType;
 import io.pijun.george.service.LimitedShareService;
 import io.pijun.george.service.LocationJobService;
 

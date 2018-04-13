@@ -27,8 +27,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 
-import io.pijun.george.models.FriendLocation;
-import io.pijun.george.models.FriendRecord;
+import io.pijun.george.api.AreaCache;
+import io.pijun.george.database.FriendLocation;
+import io.pijun.george.database.FriendRecord;
 import io.pijun.george.view.AvatarView;
 
 class FriendItemsAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {

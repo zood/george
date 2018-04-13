@@ -18,7 +18,7 @@ import com.squareup.picasso.Target;
 import java.util.ArrayList;
 import java.util.Locale;
 
-import io.pijun.george.models.FriendRecord;
+import io.pijun.george.database.FriendRecord;
 import io.pijun.george.view.AvatarView;
 
 class AvatarsAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {

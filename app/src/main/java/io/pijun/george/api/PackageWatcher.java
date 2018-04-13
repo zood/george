@@ -12,12 +12,12 @@ import java.util.concurrent.TimeUnit;
 
 import io.pijun.george.App;
 import io.pijun.george.Constants;
-import io.pijun.george.DB;
+import io.pijun.george.database.DB;
 import io.pijun.george.L;
 import io.pijun.george.MessageUtils;
 import io.pijun.george.WorkerRunnable;
 import io.pijun.george.crypto.EncryptedData;
-import io.pijun.george.models.FriendRecord;
+import io.pijun.george.database.FriendRecord;
 import okhttp3.Interceptor;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;

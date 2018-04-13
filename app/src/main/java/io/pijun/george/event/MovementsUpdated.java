@@ -2,7 +2,7 @@ package io.pijun.george.event;
 
 import java.util.ArrayList;
 
-import io.pijun.george.models.MovementType;
+import io.pijun.george.database.MovementType;
 
 public class MovementsUpdated {
 

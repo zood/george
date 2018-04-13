@@ -6,7 +6,7 @@ import com.google.gson.JsonParser;
 import java.io.ByteArrayInputStream;
 import java.io.InputStreamReader;
 
-import io.pijun.george.PersistentQueue;
+import io.pijun.george.queue.PersistentQueue;
 import io.pijun.george.api.Message;
 import io.pijun.george.api.OscarClient;
 

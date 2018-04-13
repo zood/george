@@ -13,7 +13,7 @@ import java.util.List;
 
 import io.pijun.george.Constants;
 import io.pijun.george.L;
-import io.pijun.george.models.MovementType;
+import io.pijun.george.database.MovementType;
 
 import static java.lang.annotation.RetentionPolicy.SOURCE;
 

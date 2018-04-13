@@ -1,4 +1,4 @@
-package io.pijun.george;
+package io.pijun.george.queue;
 
 import android.content.ContentValues;
 import android.content.Context;

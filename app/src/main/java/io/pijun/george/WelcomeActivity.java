@@ -42,10 +42,11 @@ import io.pijun.george.api.User;
 import io.pijun.george.api.UserComm;
 import io.pijun.george.crypto.EncryptedData;
 import io.pijun.george.crypto.KeyPair;
+import io.pijun.george.database.DB;
 import io.pijun.george.event.UserLoggedIn;
 import io.pijun.george.interpolator.Bezier65Interpolator;
-import io.pijun.george.models.FriendRecord;
-import io.pijun.george.models.Snapshot;
+import io.pijun.george.database.FriendRecord;
+import io.pijun.george.database.Snapshot;
 import retrofit2.Response;
 
 public class WelcomeActivity extends AppCompatActivity implements WelcomeLayout.FocusListener {

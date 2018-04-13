@@ -11,7 +11,9 @@ import com.google.firebase.crash.FirebaseCrash;
 import io.pijun.george.api.Message;
 import io.pijun.george.api.OscarClient;
 import io.pijun.george.api.task.MessageConverter;
-import io.pijun.george.models.UserRecord;
+import io.pijun.george.database.DB;
+import io.pijun.george.database.UserRecord;
+import io.pijun.george.queue.PersistentQueue;
 
 public class MessageProcessor {
 

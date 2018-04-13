@@ -39,7 +39,7 @@ import java.security.SecureRandom;
 
 import io.pijun.george.App;
 import io.pijun.george.Constants;
-import io.pijun.george.DB;
+import io.pijun.george.database.DB;
 import io.pijun.george.Hex;
 import io.pijun.george.L;
 import io.pijun.george.Prefs;

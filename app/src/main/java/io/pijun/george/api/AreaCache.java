@@ -1,4 +1,4 @@
-package io.pijun.george;
+package io.pijun.george.api;
 
 import android.content.Context;
 import android.support.annotation.AnyThread;
@@ -12,13 +12,14 @@ import com.google.firebase.crash.FirebaseCrash;
 import java.io.IOException;
 import java.util.concurrent.ConcurrentHashMap;
 
-import io.pijun.george.api.LocationIQClient;
-import io.pijun.george.api.OscarClient;
-import io.pijun.george.api.RevGeocoding;
+import io.pijun.george.App;
+import io.pijun.george.L;
+import io.pijun.george.UiRunnable;
+import io.pijun.george.WorkerRunnable;
 import okhttp3.ResponseBody;
 import retrofit2.Response;
 
-class AreaCache {
+public class AreaCache {
 
     private static ConcurrentHashMap<LatLng, String> mCachedAreas = new ConcurrentHashMap<>();
     private static ConcurrentHashMap<LatLng, Boolean> mOngoingRequests = new ConcurrentHashMap<>();
@@ -46,11 +47,13 @@ class AreaCache {
                 return;
             }
 
-            str = response.body().string();
-//            L.i("geo string: " + str);
-//            bytes = response.raw().body().bytes();
+            ResponseBody body = response.body();
+            if (body == null) {
+                notifyListener(l, null);
+                return;
+            }
+            str = body.string();
             RevGeocoding rg = OscarClient.sGson.fromJson(str, RevGeocoding.class);
-//            RevGeocoding rg = response.body();
             if (rg == null) {
                 notifyListener(l, null);
                 return;
@@ -76,7 +79,7 @@ class AreaCache {
     }
 
     @AnyThread
-    static void fetchArea(@NonNull Context ctx, final double lat, final double lng, @Nullable final ReverseGeocodingListener l) {
+    public static void fetchArea(@NonNull Context ctx, final double lat, final double lng, @Nullable final ReverseGeocodingListener l) {
         final LatLng latLng = new LatLng(lat, lng);
         if (mOngoingRequests.get(latLng) != null) {
             return;
@@ -92,7 +95,7 @@ class AreaCache {
 
     @AnyThread
     @Nullable
-    static String getArea(double lat, double lng) {
+    public static String getArea(double lat, double lng) {
         LatLng ll = new LatLng(lat, lng);
         return mCachedAreas.get(ll);
     }
@@ -108,7 +111,7 @@ class AreaCache {
         }
     }
 
-    interface ReverseGeocodingListener {
+    public interface ReverseGeocodingListener {
         @UiThread
         void onReverseGeocodingCompleted(@Nullable String area);
     }

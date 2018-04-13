@@ -1,4 +1,4 @@
-package io.pijun.george.models;
+package io.pijun.george.database;
 
 import io.pijun.george.Hex;
 

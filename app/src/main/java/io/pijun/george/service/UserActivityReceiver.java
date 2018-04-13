@@ -14,7 +14,7 @@ import java.util.List;
 import io.pijun.george.App;
 import io.pijun.george.L;
 import io.pijun.george.event.MovementsUpdated;
-import io.pijun.george.models.MovementType;
+import io.pijun.george.database.MovementType;
 
 public class UserActivityReceiver extends IntentService {
 

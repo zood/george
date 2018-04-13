@@ -1,4 +1,4 @@
-package io.pijun.george.models;
+package io.pijun.george.database;
 
 public class LimitedShare {
 

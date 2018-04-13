@@ -12,7 +12,8 @@ import java.util.Locale;
 
 import io.pijun.george.api.GMapsClient;
 import io.pijun.george.api.ReverseGeocoding;
-import io.pijun.george.models.FriendLocation;
+import io.pijun.george.database.DB;
+import io.pijun.george.database.FriendLocation;
 import retrofit2.Call;
 import retrofit2.Response;
 

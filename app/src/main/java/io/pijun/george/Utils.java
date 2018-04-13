@@ -21,6 +21,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.regex.Pattern;
 
+import io.pijun.george.database.DB;
 import io.pijun.george.event.UserLoggedOut;
 import io.pijun.george.service.FcmTokenRegistrar;
 

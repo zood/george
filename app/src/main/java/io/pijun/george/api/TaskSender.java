@@ -29,7 +29,7 @@ import io.pijun.george.api.task.DeleteMessageTask;
 import io.pijun.george.api.task.DropMultiplePackagesTask;
 import io.pijun.george.api.task.DropPackageTask;
 import io.pijun.george.api.task.OscarTask;
-import io.pijun.george.PersistentQueue;
+import io.pijun.george.queue.PersistentQueue;
 import io.pijun.george.api.task.SendMessageTask;
 import io.pijun.george.service.OscarJobService;
 import retrofit2.Call;

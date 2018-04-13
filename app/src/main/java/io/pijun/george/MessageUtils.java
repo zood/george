@@ -19,11 +19,12 @@ import io.pijun.george.api.OscarError;
 import io.pijun.george.api.User;
 import io.pijun.george.api.UserComm;
 import io.pijun.george.crypto.KeyPair;
+import io.pijun.george.database.DB;
 import io.pijun.george.event.LocationSharingGranted;
 import io.pijun.george.event.LocationSharingRevoked;
-import io.pijun.george.models.FriendLocation;
-import io.pijun.george.models.FriendRecord;
-import io.pijun.george.models.UserRecord;
+import io.pijun.george.database.FriendLocation;
+import io.pijun.george.database.FriendRecord;
+import io.pijun.george.database.UserRecord;
 import retrofit2.Response;
 
 public class MessageUtils {

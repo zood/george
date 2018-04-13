@@ -24,14 +24,15 @@ import io.pijun.george.api.OscarClient;
 import io.pijun.george.api.UserComm;
 import io.pijun.george.crypto.EncryptedData;
 import io.pijun.george.crypto.KeyPair;
+import io.pijun.george.database.DB;
 import io.pijun.george.event.AvatarUpdated;
-import io.pijun.george.models.FriendRecord;
-import io.pijun.george.models.UserRecord;
+import io.pijun.george.database.FriendRecord;
+import io.pijun.george.database.UserRecord;
 
-class AvatarManager {
+public class AvatarManager {
 
     private static final String AVATAR_DIR = "avatars";
-    static final String MY_AVATAR = "me";
+    public static final String MY_AVATAR = "me";
 
     @CheckResult @NonNull @AnyThread
     static File getAvatar(@NonNull Context ctx, @NonNull String username) {
@@ -41,12 +42,12 @@ class AvatarManager {
     }
 
     @CheckResult @NonNull @AnyThread
-    static File getMyAvatar(@NonNull Context ctx) {
+    public static File getMyAvatar(@NonNull Context ctx) {
         return getAvatar(ctx, MY_AVATAR);
     }
 
     @WorkerThread @CheckResult
-    static boolean saveAvatar(@NonNull Context ctx, @NonNull String username, @NonNull byte[] imgData) throws IOException {
+    public static boolean saveAvatar(@NonNull Context ctx, @NonNull String username, @NonNull byte[] imgData) throws IOException {
         L.i("AvatarManager.saveAvatar for " + username);
         username = username.toLowerCase(Locale.US);
         File filesDir = ctx.getFilesDir();
