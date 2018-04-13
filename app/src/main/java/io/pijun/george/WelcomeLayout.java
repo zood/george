@@ -43,7 +43,7 @@ public class WelcomeLayout extends ViewGroup implements View.OnFocusChangeListen
     @interface State {}
 
     private boolean mHasInited = false;
-    private Integer mOriginalHeight = null;
+//    private Integer mOriginalHeight = null;
     private float mDensity = 0;
     @State private int mState = STATE_ANIMATED_INTRO;
     private boolean mCloudsMoving = true;
@@ -110,19 +110,19 @@ public class WelcomeLayout extends ViewGroup implements View.OnFocusChangeListen
                     break;
                 case R.id.reg_username_container:
                     regViews.usernameC = (TextInputLayout) child;
-                    regViews.username = (TextInputEditText) child.findViewById(R.id.reg_username);
+                    regViews.username = child.findViewById(R.id.reg_username);
                     regViews.username.setOnFocusChangeListener(this);
                     regViews.username.setCompoundDrawablesRelativeWithIntrinsicBounds(getTintedDrawable(R.drawable.ic_user), null, null, null);
                     break;
                 case R.id.reg_password_container:
                     regViews.passwordC = (TextInputLayout) child;
-                    regViews.password = (TextInputEditText) child.findViewById(R.id.reg_password);
+                    regViews.password = child.findViewById(R.id.reg_password);
                     regViews.password.setOnFocusChangeListener(this);
                     regViews.password.setCompoundDrawablesRelativeWithIntrinsicBounds(getTintedDrawable(R.drawable.ic_padlock), null, null, null);
                     break;
                 case R.id.reg_email_container:
                     regViews.emailC = (TextInputLayout) child;
-                    regViews.email = (TextInputEditText) child.findViewById(R.id.reg_email);
+                    regViews.email = child.findViewById(R.id.reg_email);
                     regViews.email.setOnFocusChangeListener(this);
                     regViews.email.setCompoundDrawablesRelativeWithIntrinsicBounds(getTintedDrawable(R.drawable.ic_email_black_22dp), null, null, null);
                     break;
@@ -131,13 +131,13 @@ public class WelcomeLayout extends ViewGroup implements View.OnFocusChangeListen
                     break;
                 case R.id.si_username_container:
                     siViews.usernameC = (TextInputLayout) child;
-                    siViews.username = (TextInputEditText) child.findViewById(R.id.si_username);
+                    siViews.username = child.findViewById(R.id.si_username);
                     siViews.username.setOnFocusChangeListener(this);
                     siViews.username.setCompoundDrawablesRelativeWithIntrinsicBounds(getTintedDrawable(R.drawable.ic_user), null, null, null);
                     break;
                 case R.id.si_password_container:
                     siViews.passwordC = (TextInputLayout) child;
-                    siViews.password = (TextInputEditText) child.findViewById(R.id.si_password);
+                    siViews.password = child.findViewById(R.id.si_password);
                     siViews.password.setOnFocusChangeListener(this);
                     siViews.password.setCompoundDrawablesRelativeWithIntrinsicBounds(getTintedDrawable(R.drawable.ic_padlock), null, null, null);
                     break;
@@ -373,7 +373,7 @@ public class WelcomeLayout extends ViewGroup implements View.OnFocusChangeListen
         int regL, regT, regR, regB;
         LayoutParams regParams = (LayoutParams) regViews.button.getLayoutParams();
         regL = width - regParams.getMarginEnd() - regViews.button.getMeasuredWidth();
-        regT = height - regParams.bottomMargin - regViews.button.getMeasuredHeight();
+        regT = emailB + regParams.topMargin;
         regR = regL + regViews.button.getMeasuredWidth();
         regB = regT + regViews.button.getMeasuredHeight();
         regViews.button.layout(regL, regT, regR, regB);
@@ -451,7 +451,7 @@ public class WelcomeLayout extends ViewGroup implements View.OnFocusChangeListen
         int siL, siT, siR, siB;
         LayoutParams siParams = (LayoutParams) siViews.button.getLayoutParams();
         siL = width - siParams.getMarginEnd() - siViews.button.getMeasuredWidth();
-        siT = height - siParams.bottomMargin - siViews.button.getMeasuredHeight();
+        siT = passwordB + siParams.topMargin;
         siR = siL + siViews.button.getMeasuredWidth();
         siB = siT + siViews.button.getMeasuredHeight();
         siViews.button.layout(siL, siT, siR, siB);
@@ -496,15 +496,11 @@ public class WelcomeLayout extends ViewGroup implements View.OnFocusChangeListen
 
     @Override
     protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
-        // When the keyboard is shown, we don't want our size to be smaller, so we store the largest
-        // size we've encountered and always use that for our layout.
-        if (mOriginalHeight == null || MeasureSpec.getSize(heightMeasureSpec) > mOriginalHeight) {
-            mOriginalHeight = MeasureSpec.getSize(heightMeasureSpec);
-        }
+        int measuredHeight = MeasureSpec.getSize(heightMeasureSpec);
 
         int width = MeasureSpec.getSize(widthMeasureSpec);
         int wSpec = MeasureSpec.makeMeasureSpec(width, MeasureSpec.EXACTLY);
-        int hSpec = MeasureSpec.makeMeasureSpec(mOriginalHeight, MeasureSpec.EXACTLY);
+        int hSpec = MeasureSpec.makeMeasureSpec(measuredHeight, MeasureSpec.EXACTLY);
         int count = getChildCount();
         for (int i=0; i<count; i++) {
             View v = getChildAt(i);
@@ -520,7 +516,8 @@ public class WelcomeLayout extends ViewGroup implements View.OnFocusChangeListen
             }
         }
 
-        setMeasuredDimension(MeasureSpec.getSize(widthMeasureSpec), mOriginalHeight);
+        setMeasuredDimension(width, measuredHeight);
+        L.i("onMeasure " + width + ", " + measuredHeight);
     }
 
     @SuppressWarnings("unused")
