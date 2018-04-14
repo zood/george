@@ -11,6 +11,7 @@ import com.google.firebase.crash.FirebaseCrash;
 
 import java.io.IOException;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 import io.pijun.george.App;
 import io.pijun.george.L;
@@ -22,13 +23,13 @@ import retrofit2.Response;
 public class AreaCache {
 
     private static ConcurrentHashMap<LatLng, String> mCachedAreas = new ConcurrentHashMap<>();
-    private static ConcurrentHashMap<LatLng, Boolean> mOngoingRequests = new ConcurrentHashMap<>();
+    private static ConcurrentHashMap<LatLng, CopyOnWriteArrayList<ReverseGeocodingListener>> mOngoingRequests = new ConcurrentHashMap<>();
 
     @WorkerThread
-    private static void _fetchArea(@NonNull Context ctx, double lat, double lng, @Nullable ReverseGeocodingListener l) {
+    private static void _fetchArea(@NonNull Context ctx, @NonNull LatLng ll) {
         String str = null;  // for debugging a crash
         try {
-            Response<ResponseBody> response = LocationIQClient.get(ctx).getReverseGeocoding2("" + lat, "" + lng).execute();
+            Response<ResponseBody> response = LocationIQClient.get(ctx).getReverseGeocoding2("" + ll.lat, "" + ll.lng).execute();
             if (!response.isSuccessful()) {
                 ResponseBody body = response.errorBody();
                 if (body == null) {
@@ -36,33 +37,26 @@ public class AreaCache {
                 } else {
                     L.w("Error retrieving reverse geocoding: " + body.string());
                 }
-                if (l != null) {
-                    App.runOnUiThread(new UiRunnable() {
-                        @Override
-                        public void run() {
-                            l.onReverseGeocodingCompleted(null);
-                        }
-                    });
-                }
+                notifyListeners(ll, null);
                 return;
             }
 
             ResponseBody body = response.body();
             if (body == null) {
-                notifyListener(l, null);
+                notifyListeners(ll, null);
                 return;
             }
             str = body.string();
             RevGeocoding rg = OscarClient.sGson.fromJson(str, RevGeocoding.class);
             if (rg == null) {
-                notifyListener(l, null);
+                notifyListeners(ll, null);
                 return;
             }
             String area = rg.getArea();
-            mCachedAreas.put(new LatLng(lat, lng), area);
-            notifyListener(l, area);
+            mCachedAreas.put(ll, area);
+            notifyListeners(ll, area);
         } catch (IOException e) {
-            notifyListener(l, null);
+            notifyListeners(ll, null);
         } catch (Throwable t) {
             if (str == null) {
                 FirebaseCrash.log("the string was null, so you're on your own");
@@ -71,24 +65,34 @@ public class AreaCache {
                 FirebaseCrash.log("the string was: " + str);
                 FirebaseCrash.report(t);
             }
-            notifyListener(l, null);
+            notifyListeners(ll, null);
         } finally {
-            LatLng latLng = new LatLng(lat, lng);
-            mOngoingRequests.remove(latLng);
+            mOngoingRequests.remove(ll);
         }
     }
 
     @AnyThread
     public static void fetchArea(@NonNull Context ctx, final double lat, final double lng, @Nullable final ReverseGeocodingListener l) {
         final LatLng latLng = new LatLng(lat, lng);
-        if (mOngoingRequests.get(latLng) != null) {
+        CopyOnWriteArrayList<ReverseGeocodingListener> listeners = mOngoingRequests.get(latLng);
+        // Is there already a listener for this LatLng? If so, just add this new listener and get out of here
+        if (listeners != null) {
+            if (l != null) {
+                listeners.add(l);
+            }
             return;
         }
-        mOngoingRequests.put(latLng, true);
+
+        listeners = new CopyOnWriteArrayList<>();
+        if (l != null) {
+            listeners.add(l);
+        }
+        mOngoingRequests.put(latLng, listeners);
+
         App.runInBackground(new WorkerRunnable() {
             @Override
             public void run() {
-                _fetchArea(ctx, lat, lng, l);
+                _fetchArea(ctx, latLng);
             }
         });
     }
@@ -100,8 +104,9 @@ public class AreaCache {
         return mCachedAreas.get(ll);
     }
 
-    private static void notifyListener(@Nullable ReverseGeocodingListener l, @Nullable String area) {
-        if (l != null) {
+    private static void notifyListeners(@NonNull LatLng ll, @Nullable String area) {
+        CopyOnWriteArrayList<ReverseGeocodingListener> listeners = mOngoingRequests.get(ll);
+        for (ReverseGeocodingListener l : listeners) {
             App.runOnUiThread(new UiRunnable() {
                 @Override
                 public void run() {

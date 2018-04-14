@@ -775,7 +775,6 @@ public final class MapActivity extends AppCompatActivity implements OnMapReadyCa
     @Override
     @UiThread
     public void onAvatarSelected(FriendRecord fr) {
-        L.i("selected: " + fr.user.username);
         Marker marker = mMarkerTracker.getById(fr.id);
         if (marker == null) {
             mBinding.markerDetails.setVisibility(View.GONE);
@@ -891,10 +890,17 @@ public final class MapActivity extends AppCompatActivity implements OnMapReadyCa
                 @Override
                 public void onReverseGeocodingCompleted(@Nullable String area) {
                     FriendLocation savedLoc = (FriendLocation) mBinding.markerDetails.getTag();
+                    if (savedLoc == null) {
+                        L.i("How was savedLoc null?");
+                    }
                     if (savedLoc != null && savedLoc.latitude == loc.latitude && savedLoc.longitude == loc.longitude) {
                         if (area != null) {
                             mBinding.markerLocation.setText(area);
+                        } else {
+                            L.i("I guess the area is just null");
                         }
+                    } else {
+                        L.i("FriendLocation doesn't match anymore. Requested loc time was " + loc.time + ", curr loc time is " + (savedLoc == null ? "null" : savedLoc.time));
                     }
                 }
             });

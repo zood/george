@@ -22,6 +22,7 @@ import com.google.firebase.crash.FirebaseCrash;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.concurrent.ConcurrentHashMap;
@@ -35,6 +36,7 @@ import io.pijun.george.crypto.EncryptedData;
 import io.pijun.george.crypto.KeyPair;
 import io.pijun.george.database.DB;
 import io.pijun.george.database.FriendRecord;
+import io.pijun.george.database.UserRecord;
 import retrofit2.Response;
 
 public class LocationUpdateRequestHandler {
@@ -103,7 +105,16 @@ public class LocationUpdateRequestHandler {
         }
     }
 
+    @WorkerThread
     private void shutDown() {
+        UserRecord arash = DB.get(context).getUser("arash");
+        if (arash != null) {
+            String dbgMsg = "Shutting down LURH at " + new Date().toString();
+            String errMsg = OscarClient.queueSendMessage(context, arash, UserComm.newDebug(dbgMsg), true, false);
+            if (errMsg != null) {
+                L.w("problem sending debug: " + errMsg);
+            }
+        }
         if (client != null) {
             client.removeLocationUpdates(mLocationCallbackHelper);
         }
