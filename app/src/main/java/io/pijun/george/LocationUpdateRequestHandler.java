@@ -37,6 +37,7 @@ import io.pijun.george.crypto.KeyPair;
 import io.pijun.george.database.DB;
 import io.pijun.george.database.FriendRecord;
 import io.pijun.george.database.UserRecord;
+import io.pijun.george.service.ActivityTransitionHandler;
 import retrofit2.Response;
 
 public class LocationUpdateRequestHandler {
@@ -199,7 +200,7 @@ public class LocationUpdateRequestHandler {
             return;
         }
 
-        UserComm locMsg = UserComm.newLocationInfo(l, null);
+        UserComm locMsg = UserComm.newLocationInfo(l, ActivityTransitionHandler.getCurrentMovement());
         byte[] msgBytes = locMsg.toJSON();
         // share to our friends
         ArrayList<FriendRecord> friends = DB.get(context).getFriendsToShareWith();

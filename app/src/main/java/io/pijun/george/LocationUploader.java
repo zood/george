@@ -21,12 +21,11 @@ import io.pijun.george.api.UserComm;
 import io.pijun.george.crypto.EncryptedData;
 import io.pijun.george.crypto.KeyPair;
 import io.pijun.george.database.DB;
-import io.pijun.george.event.MovementsUpdated;
-import io.pijun.george.event.UserLoggedIn;
-import io.pijun.george.event.UserLoggedOut;
 import io.pijun.george.database.FriendRecord;
 import io.pijun.george.database.LimitedShare;
-import io.pijun.george.database.MovementType;
+import io.pijun.george.event.UserLoggedIn;
+import io.pijun.george.event.UserLoggedOut;
+import io.pijun.george.service.ActivityTransitionHandler;
 import io.pijun.george.service.LimitedShareService;
 import io.pijun.george.service.LocationJobService;
 
@@ -34,7 +33,6 @@ public class LocationUploader {
 
     private volatile static LocationUploader sSingleton;
     private LinkedBlockingQueue<Location> mLocations = new LinkedBlockingQueue<>();
-    private ArrayList<MovementType> mMovements = new ArrayList<>();
 
     private LocationUploader() {
         // Put this on a background thread, because Pref.isLoggedIn() might hit the disk.
@@ -83,7 +81,7 @@ public class LocationUploader {
             // another call to flush could have raced us to the last location
             return;
         }
-        UserComm locMsg = UserComm.newLocationInfo(location, mMovements);
+        UserComm locMsg = UserComm.newLocationInfo(location, ActivityTransitionHandler.getCurrentMovement());
         byte[] msgBytes = locMsg.toJSON();
         // share to our friends
         ArrayList<FriendRecord> friends = DB.get(ctx).getFriendsToShareWith();
@@ -149,13 +147,6 @@ public class LocationUploader {
                 flush();
             }
         });
-    }
-
-    @Subscribe
-    @Keep
-    @UiThread
-    public void onMovementsUpdated(MovementsUpdated mu) {
-        this.mMovements = mu.movements;
     }
 
     @Subscribe

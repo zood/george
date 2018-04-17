@@ -177,7 +177,7 @@ public class MessageUtils {
 
     @WorkerThread @Error
     public static int unwrapAndProcess(@NonNull Context context, @NonNull byte[] senderId, @NonNull byte[] cipherText, @NonNull byte[] nonce) {
-        L.i("MessageUtils.unwrapAndProcess");
+//        L.i("MessageUtils.unwrapAndProcess");
         //noinspection ConstantConditions
         if (senderId == null || senderId.length != Constants.USER_ID_LENGTH) {
             L.i("senderId: " + Hex.toHexString(senderId));

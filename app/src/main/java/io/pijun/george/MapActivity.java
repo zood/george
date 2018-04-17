@@ -69,6 +69,8 @@ import java.lang.ref.WeakReference;
 import java.security.SecureRandom;
 import java.util.ArrayList;
 
+import io.pijun.george.animation.DoubleEvaluator;
+import io.pijun.george.animation.LatLngEvaluator;
 import io.pijun.george.api.AreaCache;
 import io.pijun.george.api.LocationIQClient;
 import io.pijun.george.api.Message;
@@ -81,24 +83,26 @@ import io.pijun.george.api.User;
 import io.pijun.george.api.UserComm;
 import io.pijun.george.crypto.KeyPair;
 import io.pijun.george.database.DB;
+import io.pijun.george.database.FriendLocation;
+import io.pijun.george.database.FriendRecord;
+import io.pijun.george.database.UserRecord;
 import io.pijun.george.databinding.ActivityMapBinding;
 import io.pijun.george.event.AvatarUpdated;
 import io.pijun.george.event.FriendRemoved;
 import io.pijun.george.event.LocationSharingGranted;
 import io.pijun.george.event.LocationSharingRevoked;
 import io.pijun.george.interpolator.LinearBezierInterpolator;
-import io.pijun.george.database.FriendLocation;
-import io.pijun.george.database.FriendRecord;
-import io.pijun.george.database.MovementType;
-import io.pijun.george.database.UserRecord;
+import io.pijun.george.service.ActivityTransitionHandler;
 import io.pijun.george.service.FcmTokenRegistrar;
 import io.pijun.george.service.LimitedShareService;
 import io.pijun.george.view.AvatarView;
+import io.pijun.george.view.DrawerActionRecognizer;
+import io.pijun.george.view.DrawerSwipesListener;
 import io.pijun.george.view.MyLocationView;
 import retrofit2.Call;
 import retrofit2.Response;
 
-public final class MapActivity extends AppCompatActivity implements OnMapReadyCallback, GoogleMap.OnMarkerClickListener, AvatarsAdapter.AvatarsAdapterListener, Utils.DrawerSwipesListener {
+public final class MapActivity extends AppCompatActivity implements OnMapReadyCallback, GoogleMap.OnMarkerClickListener, AvatarsAdapter.AvatarsAdapterListener, DrawerSwipesListener {
 
     private static final int REQUEST_LOCATION_PERMISSION = 18;
     private static final int REQUEST_LOCATION_SETTINGS = 20;
@@ -121,7 +125,7 @@ public final class MapActivity extends AppCompatActivity implements OnMapReadyCa
     private boolean mInitialLayoutDone = false;
     private float mUiHiddenOffset;
     private GestureDetector mGestureDetector;
-    private Utils.DrawerActionRecognizer mDrawerActionRecognizer;
+    private DrawerActionRecognizer mDrawerActionRecognizer;
 
     public static Intent newIntent(Context ctx) {
         return new Intent(ctx, MapActivity.class);
@@ -698,12 +702,14 @@ public final class MapActivity extends AppCompatActivity implements OnMapReadyCa
         builder.setPositiveButton(R.string.log_out, new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int which) {
+                ActivityTransitionHandler.stopUpdates(MapActivity.this);
                 Utils.logOut(MapActivity.this, new UiRunnable() {
                     @Override
                     public void run() {
                         Intent welcomeIntent = WelcomeActivity.newIntent(MapActivity.this);
                         startActivity(welcomeIntent);
                         finish();
+
                     }
                 });
             }
@@ -743,9 +749,8 @@ public final class MapActivity extends AppCompatActivity implements OnMapReadyCa
         if (loc.accuracy != null) {
             snippetBuilder.append("±").append(loc.accuracy).append(" m, ");
         }
-        String movements = MovementType.serialize(loc.movements);
-        if (movements.length() > 0) {
-            snippetBuilder.append(movements).append(", ");
+        if (loc.movement != null) {
+            snippetBuilder.append(loc.movement.val).append(", ");
         }
         final String snippet = snippetBuilder.toString();
         marker.setSnippet(snippet);
@@ -890,17 +895,10 @@ public final class MapActivity extends AppCompatActivity implements OnMapReadyCa
                 @Override
                 public void onReverseGeocodingCompleted(@Nullable String area) {
                     FriendLocation savedLoc = (FriendLocation) mBinding.markerDetails.getTag();
-                    if (savedLoc == null) {
-                        L.i("How was savedLoc null?");
-                    }
                     if (savedLoc != null && savedLoc.latitude == loc.latitude && savedLoc.longitude == loc.longitude) {
                         if (area != null) {
                             mBinding.markerLocation.setText(area);
-                        } else {
-                            L.i("I guess the area is just null");
                         }
-                    } else {
-                        L.i("FriendLocation doesn't match anymore. Requested loc time was " + loc.time + ", curr loc time is " + (savedLoc == null ? "null" : savedLoc.time));
                     }
                 }
             });
@@ -1055,7 +1053,7 @@ public final class MapActivity extends AppCompatActivity implements OnMapReadyCa
         mBinding.logOut.setTranslationX(mUiHiddenOffset);
 
         // install the gesture listener
-        mDrawerActionRecognizer = new Utils.DrawerActionRecognizer(mBinding.root.getWidth(), this);
+        mDrawerActionRecognizer = new DrawerActionRecognizer(mBinding.root.getWidth(), this);
         mGestureDetector = new GestureDetector(this, mDrawerActionRecognizer);
         mBinding.touchInterceptor.setOnTouchListener((View v, MotionEvent event) -> {
             boolean onUp = event.getAction() == MotionEvent.ACTION_UP;
@@ -1233,7 +1231,7 @@ public final class MapActivity extends AppCompatActivity implements OnMapReadyCa
                 ValueAnimator posAnimator = ObjectAnimator.ofObject(
                         mMeMarker,
                         "position",
-                        new Utils.LatLngEvaluator(),
+                        new LatLngEvaluator(),
                         mMeMarker.getPosition(),
                         ll);
                 posAnimator.setDuration(500);
@@ -1251,14 +1249,14 @@ public final class MapActivity extends AppCompatActivity implements OnMapReadyCa
                     ValueAnimator posAnimator = ObjectAnimator.ofObject(
                             mMyCircle,
                             "center",
-                            new Utils.LatLngEvaluator(),
+                            new LatLngEvaluator(),
                             mMyCircle.getCenter(),
                             new LatLng(location.getLatitude(), location.getLongitude()));
                     posAnimator.setDuration(500);
                     ValueAnimator errAnimator = ObjectAnimator.ofObject(
                             mMyCircle,
                             "radius",
-                            new Utils.DoubleEvaluator(),
+                            new DoubleEvaluator(),
                             mMyCircle.getRadius(),
                             (double)location.getAccuracy());
                     errAnimator.setDuration(500);

@@ -127,7 +127,7 @@ public class MainLayout extends ConstraintLayout {
 
     @CheckResult
     public static FriendsSheetBehavior registerFriendsSheet(@NonNull FriendsSheetFragment sheetFragment, @NonNull FriendsSheetLayout sheetView) {
-        FragmentActivity activity = sheetFragment.getActivity();
+        FragmentActivity activity = sheetFragment.requireActivity();
         View view = activity.findViewById(R.id.root);
         if (view == null) {
             throw new IllegalArgumentException("Unable to find the MainLayout view. Found null.");

@@ -2,8 +2,6 @@ package io.pijun.george.database;
 
 import android.support.annotation.NonNull;
 
-import java.util.List;
-
 import io.pijun.george.api.CommType;
 import io.pijun.george.api.UserComm;
 
@@ -17,17 +15,17 @@ public class FriendLocation {
     public final Float speed;
     // The person's bearing, in degrees
     public final Float bearing;
-    public final List<MovementType> movements;
+    public final MovementType movement;
 
-    public FriendLocation(@NonNull long friendId, @NonNull UserComm comm) {
-        this(friendId, comm.latitude, comm.longitude, comm.time, comm.accuracy, comm.speed, comm.bearing, MovementType.deserialize(comm.movements));
+    public FriendLocation(long friendId, @NonNull UserComm comm) {
+        this(friendId, comm.latitude, comm.longitude, comm.time, comm.accuracy, comm.speed, comm.bearing, MovementType.get(comm.movement));
 
         if (comm.type != CommType.LocationInfo) {
             throw new IllegalArgumentException("Comm must be a LocationInfo message");
         }
     }
 
-    public FriendLocation(long id, double lat, double lng, long time, Float accuracy, Float speed, Float bearing, List<MovementType> movements) {
+    FriendLocation(long id, double lat, double lng, long time, Float accuracy, Float speed, Float bearing, MovementType movement) {
         this.friendId = id;
         this.latitude = lat;
         this.longitude = lng;
@@ -35,7 +33,7 @@ public class FriendLocation {
         this.accuracy = accuracy;
         this.speed = speed;
         this.bearing = bearing;
-        this.movements = movements;
+        this.movement = movement;
     }
 
     @Override
@@ -48,7 +46,7 @@ public class FriendLocation {
                 ", accuracy=" + accuracy +
                 ", speed=" + speed +
                 ", bearing=" + bearing +
-                ", movements='" + movements + '\'' +
+                ", movement='" + movement + '\'' +
                 '}';
     }
 

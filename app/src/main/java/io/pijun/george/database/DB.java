@@ -24,7 +24,6 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.List;
 import java.util.Locale;
 
 import io.pijun.george.App;
@@ -104,12 +103,12 @@ public class DB {
     }
 
     private final DBHelper mDbHelper;
-    private final Context mContext;
+    @NonNull private final Context context;
 
     @WorkerThread
     private DB(@NonNull Context context) {
-        mContext = context.getApplicationContext();
-        mDbHelper = new DBHelper(mContext);
+        this.context = context.getApplicationContext();
+        mDbHelper = new DBHelper(this.context);
     }
 
     @NonNull
@@ -307,10 +306,9 @@ public class DB {
                 if (!c.isNull(bearingColIdx)) {
                     bearing = c.getFloat(bearingColIdx);
                 }
-                List<MovementType> movements;
                 int movementsColIdx = c.getColumnIndexOrThrow(LOCATIONS_COL_MOVEMENTS);
-                movements = MovementType.deserialize(c.getString(movementsColIdx));
-                fl = new FriendLocation(friendRecordId, lat, lng, time, acc, speed, bearing, movements);
+                MovementType movement = MovementType.get(c.getString(movementsColIdx));
+                fl = new FriendLocation(friendRecordId, lat, lng, time, acc, speed, bearing, movement);
             }
         }
 
@@ -624,9 +622,9 @@ public class DB {
 
     @WorkerThread
     public void scheduleBackup() {
-        JobScheduler scheduler = (JobScheduler) mContext.getSystemService(Context.JOB_SCHEDULER_SERVICE);
+        JobScheduler scheduler = (JobScheduler) context.getSystemService(Context.JOB_SCHEDULER_SERVICE);
         if (scheduler != null) {    // it will never be null
-            scheduler.schedule(BackupDatabaseJob.getJobInfo(mContext));
+            scheduler.schedule(BackupDatabaseJob.getJobInfo(context));
         }
     }
 

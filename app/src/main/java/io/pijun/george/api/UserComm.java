@@ -3,13 +3,13 @@ package io.pijun.george.api;
 import android.location.Location;
 import android.support.annotation.CheckResult;
 import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 import android.support.annotation.StringDef;
 
 import java.io.ByteArrayInputStream;
 import java.io.InputStreamReader;
 import java.lang.annotation.Retention;
 import java.util.Arrays;
-import java.util.List;
 
 import io.pijun.george.Constants;
 import io.pijun.george.L;
@@ -31,7 +31,7 @@ public class UserComm {
     public Float accuracy;
     public Float speed;
     public Float bearing;
-    public String movements;
+    public String movement;
 
     // location_update_request_received
     @LocationUpdateRequestAction public String locationUpdateRequestAction;
@@ -103,7 +103,7 @@ public class UserComm {
     }
 
     @NonNull @CheckResult
-    public static UserComm newLocationInfo(@NonNull Location l, List<MovementType> movements) {
+    public static UserComm newLocationInfo(@NonNull Location l, @Nullable MovementType movement) {
         UserComm c = new UserComm();
         c.type = CommType.LocationInfo;
         c.latitude = l.getLatitude();
@@ -118,7 +118,7 @@ public class UserComm {
         if (l.hasBearing() && l.getBearing() != 0.0f) {
             c.bearing = l.getBearing();
         }
-        c.movements = MovementType.serialize(movements);
+        c.movement = movement == null ? null : movement.val;
 
         return c;
     }

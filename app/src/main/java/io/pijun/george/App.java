@@ -12,6 +12,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 import io.pijun.george.api.TaskSender;
+import io.pijun.george.service.ActivityTransitionHandler;
 
 public class App extends Application {
 
@@ -38,6 +39,9 @@ public class App extends Application {
         LocationUploader lu = LocationUploader.get();
         registerOnBus(lu);
         TaskSender.get().start(this);
+        if (Prefs.get(this).isLoggedIn()) {
+            ActivityTransitionHandler.requestUpdates(this);
+        }
     }
 
     public static App getApp() {

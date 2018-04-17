@@ -47,6 +47,7 @@ import io.pijun.george.event.UserLoggedIn;
 import io.pijun.george.interpolator.Bezier65Interpolator;
 import io.pijun.george.database.FriendRecord;
 import io.pijun.george.database.Snapshot;
+import io.pijun.george.service.ActivityTransitionHandler;
 import retrofit2.Response;
 
 public class WelcomeActivity extends AppCompatActivity implements WelcomeLayout.FocusListener {
@@ -421,6 +422,7 @@ public class WelcomeActivity extends AppCompatActivity implements WelcomeLayout.
         prefs.setUsername(username);
         prefs.setAccessToken(loginResponse.accessToken);
 
+        ActivityTransitionHandler.requestUpdates(this);
         App.postOnBus(new UserLoggedIn());
         App.runOnUiThread(new UiRunnable() {
             @Override
