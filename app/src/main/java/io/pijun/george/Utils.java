@@ -1,11 +1,9 @@
 package io.pijun.george;
 
 import android.annotation.SuppressLint;
-import android.app.job.JobScheduler;
 import android.content.Context;
 import android.os.Looper;
 import android.support.annotation.AnyThread;
-import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.annotation.StringRes;
 import android.support.annotation.UiThread;
@@ -16,34 +14,8 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.regex.Pattern;
 
-import io.pijun.george.database.DB;
-import io.pijun.george.event.UserLoggedOut;
-import io.pijun.george.service.FcmTokenRegistrar;
-
 @SuppressWarnings("WeakerAccess")
 public final class Utils {
-
-    @AnyThread
-    public static void logOut(@NonNull Context ctx, @Nullable UiRunnable completion) {
-        App.runInBackground(new WorkerRunnable() {
-            @Override
-            public void run() {
-                String fcmToken = Prefs.get(ctx).getFcmToken();
-                ctx.startService(FcmTokenRegistrar.newIntent(ctx, true, fcmToken));
-                Prefs.get(ctx).clearAll();
-                DB.get(ctx).deleteUserData();
-                JobScheduler jobScheduler = (JobScheduler) ctx.getSystemService(Context.JOB_SCHEDULER_SERVICE);
-                if (jobScheduler != null) { // it will never be null
-                    jobScheduler.cancelAll();
-                }
-
-                App.postOnBus(new UserLoggedOut());
-                if (completion != null) {
-                    App.runOnUiThread(completion);
-                }
-            }
-        });
-    }
 
     public static Map<String, Object> map(Object... args) {
         if (args.length % 2 != 0) {

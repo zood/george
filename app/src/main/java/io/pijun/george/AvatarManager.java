@@ -25,9 +25,9 @@ import io.pijun.george.api.UserComm;
 import io.pijun.george.crypto.EncryptedData;
 import io.pijun.george.crypto.KeyPair;
 import io.pijun.george.database.DB;
-import io.pijun.george.event.AvatarUpdated;
 import io.pijun.george.database.FriendRecord;
 import io.pijun.george.database.UserRecord;
+import io.pijun.george.event.AvatarUpdated;
 
 public class AvatarManager {
 

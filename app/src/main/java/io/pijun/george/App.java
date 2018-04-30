@@ -4,6 +4,7 @@ import android.app.Application;
 import android.os.Handler;
 import android.os.Looper;
 import android.support.annotation.AnyThread;
+import android.support.annotation.NonNull;
 import android.support.v7.app.AppCompatDelegate;
 
 import com.squareup.otto.Bus;
@@ -13,6 +14,7 @@ import java.util.concurrent.Executors;
 
 import io.pijun.george.api.TaskSender;
 import io.pijun.george.service.ActivityTransitionHandler;
+import io.pijun.george.service.LocationJobService;
 
 public class App extends Application {
 
@@ -36,12 +38,18 @@ public class App extends Application {
         mExecutor = Executors.newCachedThreadPool();
         mBus = new Bus();
 
-        LocationUploader lu = LocationUploader.get();
-        registerOnBus(lu);
+        registerOnBus(LocationUploader.get());
         TaskSender.get().start(this);
-        if (Prefs.get(this).isLoggedIn()) {
-            ActivityTransitionHandler.requestUpdates(this);
-        }
+        // perform this in the background because loading Prefs will hit the disk
+        runInBackground(new WorkerRunnable() {
+            @Override
+            public void run() {
+                if (AuthenticationManager.isLoggedIn(App.this)) {
+                    ActivityTransitionHandler.requestUpdates(App.this);
+                    LocationJobService.scheduleLocationJobService(App.this);
+                }
+            }
+        });
     }
 
     public static App getApp() {
@@ -49,7 +57,7 @@ public class App extends Application {
     }
 
     @AnyThread
-    public static void postOnBus(final Object passenger) {
+    public static void postOnBus(@NonNull final Object passenger) {
         if (Looper.myLooper() == Looper.getMainLooper()) {
             sApp.mBus.post(passenger);
         } else {
@@ -58,7 +66,7 @@ public class App extends Application {
     }
 
     @AnyThread
-    public static void registerOnBus(final Object busStop) {
+    public static void registerOnBus(@NonNull final Object busStop) {
         if (Looper.myLooper() == Looper.getMainLooper()) {
             sApp.mBus.register(busStop);
         } else {
@@ -67,7 +75,7 @@ public class App extends Application {
     }
 
     @AnyThread
-    public static void unregisterFromBus(final Object busStop) {
+    public static void unregisterFromBus(@NonNull final Object busStop) {
         if (Looper.myLooper() == Looper.getMainLooper()) {
             App.sApp.mBus.unregister(busStop);
         } else {
@@ -76,16 +84,16 @@ public class App extends Application {
     }
 
     @AnyThread
-    public static void runOnUiThread(UiRunnable r) {
+    public static void runOnUiThread(@NonNull UiRunnable r) {
         sApp.mUiThreadHandler.post(r);
     }
 
-    public static void runOnUiThread(UiRunnable r, long delay) {
+    public static void runOnUiThread(@NonNull UiRunnable r, long delay) {
         sApp.mUiThreadHandler.postDelayed(r, delay);
     }
 
     @AnyThread
-    public static void runInBackground(WorkerRunnable r) {
+    public static void runInBackground(@NonNull WorkerRunnable r) {
         sApp.mExecutor.execute(r);
     }
 }

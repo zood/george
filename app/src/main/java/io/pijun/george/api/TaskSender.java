@@ -29,8 +29,8 @@ import io.pijun.george.api.task.DeleteMessageTask;
 import io.pijun.george.api.task.DropMultiplePackagesTask;
 import io.pijun.george.api.task.DropPackageTask;
 import io.pijun.george.api.task.OscarTask;
-import io.pijun.george.queue.PersistentQueue;
 import io.pijun.george.api.task.SendMessageTask;
+import io.pijun.george.queue.PersistentQueue;
 import io.pijun.george.service.OscarJobService;
 import retrofit2.Call;
 import retrofit2.Response;
@@ -195,7 +195,6 @@ public final class TaskSender {
             public void run() {
                 try {
                     processQueue(ctx);
-                    notifyListeners();
                     JobScheduler scheduler = (JobScheduler) ctx.getSystemService(Context.JOB_SCHEDULER_SERVICE);
                     if (scheduler == null) {
                         FirebaseCrash.log("JobScheduler is null");
@@ -210,6 +209,7 @@ public final class TaskSender {
         });
     }
 
+    // A listener that gets removed once it's been notified.
     public interface OneTimeListener {
         void taskSenderPaused();
     }

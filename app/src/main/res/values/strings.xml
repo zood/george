@@ -52,7 +52,7 @@
     <string name="unknown_username">Unknown username</string>
     <string name="unexpected_error">Unexpected error</string>
     <string name="null_password_hash_msg">We don\'t know why the login failed, but the bug has been reported. It may work if you just try again.</string>
-    <string name="server_key_retrieval_network_error_msg">There was a network problem. Make sure you\'re internet connection works then try again.</string>
+    <string name="server_key_retrieval_network_error_msg">There was a network problem. Make sure your internet connection works then try again.</string>
     <string name="server_key_retrieval_unknown_error_msg">There was an unknown error retrieving the server\'s public key.</string>
     <string name="network_error">Network error</string>
     <string name="login_failure_network_msg">Check your connection then try again.</string>

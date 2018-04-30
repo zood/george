@@ -14,6 +14,7 @@ import com.google.firebase.crash.FirebaseCrash;
 import java.io.IOException;
 
 import io.pijun.george.App;
+import io.pijun.george.AuthenticationManager;
 import io.pijun.george.database.DB;
 import io.pijun.george.L;
 import io.pijun.george.Prefs;
@@ -46,7 +47,7 @@ public class BackupDatabaseJob extends JobService {
     @Override
     public boolean onStartJob(JobParameters params) {
         L.i("BackupDatabaseJob.onStartJob");
-        if (!Prefs.get(this).isLoggedIn()) {
+        if (!AuthenticationManager.isLoggedIn(this)) {
             jobFinished(params, false);
             return false;
         }

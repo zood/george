@@ -151,7 +151,7 @@ public final class MapActivity extends AppCompatActivity implements OnMapReadyCa
         super.onCreate(savedInstanceState);
 
         // Is there a user account here? If not, send them to the login/sign up screen
-        if (!Prefs.get(this).isLoggedIn()) {
+        if (!AuthenticationManager.isLoggedIn(this)) {
             Intent welcomeIntent = WelcomeActivity.newIntent(this);
             startActivity(welcomeIntent);
             finish();
@@ -703,13 +703,12 @@ public final class MapActivity extends AppCompatActivity implements OnMapReadyCa
             @Override
             public void onClick(DialogInterface dialog, int which) {
                 ActivityTransitionHandler.stopUpdates(MapActivity.this);
-                Utils.logOut(MapActivity.this, new UiRunnable() {
+                AuthenticationManager.get().logOut(MapActivity.this, new AuthenticationManager.LogoutWatcher() {
                     @Override
-                    public void run() {
+                    public void onUserLoggedOut() {
                         Intent welcomeIntent = WelcomeActivity.newIntent(MapActivity.this);
                         startActivity(welcomeIntent);
                         finish();
-
                     }
                 });
             }

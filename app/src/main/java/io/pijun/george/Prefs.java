@@ -38,7 +38,7 @@ public class Prefs {
     }
 
     @NonNull
-    public static Prefs get(Context context) {
+    public static Prefs get(@NonNull Context context) {
         if (sPrefs == null) {
             synchronized (Prefs.class) {
                 if (sPrefs == null) {
@@ -53,22 +53,6 @@ public class Prefs {
     @AnyThread
     void clearAll() {
         mPrefs.edit().clear().apply();
-    }
-
-    @AnyThread
-    public boolean isLoggedIn() {
-        String token = getAccessToken();
-        KeyPair keyPair = getKeyPair();
-        byte[] passwordSalt = getPasswordSalt();
-        byte[] symmetricKey = getSymmetricKey();
-        byte[] userId = getUserId();
-
-        //noinspection RedundantIfStatement
-        if (token != null && keyPair != null && passwordSalt != null && symmetricKey != null && userId != null) {
-            return true;
-        }
-
-        return false;
     }
 
     @Nullable
@@ -116,7 +100,7 @@ public class Prefs {
     }
 
     @Nullable
-    private byte[] getPasswordSalt() {
+    byte[] getPasswordSalt() {
         return getBytes(KEY_PASSWORD_SALT);
     }
 

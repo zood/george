@@ -1,6 +1,5 @@
 package io.pijun.george;
 
-import android.app.job.JobScheduler;
 import android.content.Context;
 import android.location.Location;
 import android.support.annotation.AnyThread;
@@ -9,7 +8,6 @@ import android.support.annotation.NonNull;
 import android.support.annotation.UiThread;
 import android.support.annotation.WorkerThread;
 
-import com.google.firebase.crash.FirebaseCrash;
 import com.squareup.otto.Subscribe;
 
 import java.util.ArrayList;
@@ -23,11 +21,8 @@ import io.pijun.george.crypto.KeyPair;
 import io.pijun.george.database.DB;
 import io.pijun.george.database.FriendRecord;
 import io.pijun.george.database.LimitedShare;
-import io.pijun.george.event.UserLoggedIn;
-import io.pijun.george.event.UserLoggedOut;
 import io.pijun.george.service.ActivityTransitionHandler;
 import io.pijun.george.service.LimitedShareService;
-import io.pijun.george.service.LocationJobService;
 
 public class LocationUploader {
 
@@ -35,24 +30,6 @@ public class LocationUploader {
     private LinkedBlockingQueue<Location> mLocations = new LinkedBlockingQueue<>();
 
     private LocationUploader() {
-        // Put this on a background thread, because Pref.isLoggedIn() might hit the disk.
-        App.runInBackground(new WorkerRunnable() {
-            @Override
-            public void run() {
-                // check if the user is already logged in. If so, schedule the LocationJobService
-                App app = App.getApp();
-                if (Prefs.get(App.getApp()).isLoggedIn()) {
-                    JobScheduler scheduler = (JobScheduler) app.getSystemService(Context.JOB_SCHEDULER_SERVICE);
-                    if (scheduler == null) {
-                        // should never happen
-                        FirebaseCrash.log("JobScheduler was null");
-                        return;
-                    }
-                    L.i("Scheduling LocationJobService");
-                    scheduler.schedule(LocationJobService.getJobInfo(app));
-                }
-            }
-        });
     }
 
     /**
@@ -147,33 +124,5 @@ public class LocationUploader {
                 flush();
             }
         });
-    }
-
-    @Subscribe
-    @Keep
-    @UiThread
-    public void onUserLoggedIn(UserLoggedIn evt) {
-        App app = App.getApp();
-        JobScheduler scheduler = (JobScheduler) app.getSystemService(Context.JOB_SCHEDULER_SERVICE);
-        if (scheduler == null) {
-            // should never happen
-            FirebaseCrash.log("JobScheduler was null");
-            return;
-        }
-        scheduler.schedule(LocationJobService.getJobInfo(app));
-    }
-
-    @Subscribe
-    @Keep
-    @UiThread
-    public void onUserLoggedOut(UserLoggedOut evt) {
-        App app = App.getApp();
-        JobScheduler scheduler = (JobScheduler) app.getSystemService(Context.JOB_SCHEDULER_SERVICE);
-        if (scheduler == null) {
-            // should never happen
-            FirebaseCrash.log("JobScheduler was null");
-            return;
-        }
-        scheduler.cancelAll();
     }
 }

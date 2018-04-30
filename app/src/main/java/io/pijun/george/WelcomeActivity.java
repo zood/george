@@ -28,25 +28,15 @@ import com.google.firebase.crash.FirebaseCrash;
 
 import java.io.IOException;
 import java.security.SecureRandom;
-import java.util.ArrayList;
 
-import io.pijun.george.api.AuthenticationChallenge;
 import io.pijun.george.api.CreateUserResponse;
-import io.pijun.george.api.FinishedAuthenticationChallenge;
-import io.pijun.george.api.LoginResponse;
 import io.pijun.george.api.OscarAPI;
 import io.pijun.george.api.OscarClient;
 import io.pijun.george.api.OscarError;
-import io.pijun.george.api.ServerPublicKeyResponse;
 import io.pijun.george.api.User;
-import io.pijun.george.api.UserComm;
 import io.pijun.george.crypto.EncryptedData;
 import io.pijun.george.crypto.KeyPair;
-import io.pijun.george.database.DB;
-import io.pijun.george.event.UserLoggedIn;
 import io.pijun.george.interpolator.Bezier65Interpolator;
-import io.pijun.george.database.FriendRecord;
-import io.pijun.george.database.Snapshot;
 import io.pijun.george.service.ActivityTransitionHandler;
 import retrofit2.Response;
 
@@ -243,205 +233,84 @@ public class WelcomeActivity extends AppCompatActivity implements WelcomeLayout.
 
     @WorkerThread
     private void login(final String username, final String password) {
-        L.i("logging in");
-        OscarAPI api = OscarClient.newInstance(null);
-        Response<AuthenticationChallenge> startChallengeResp;
-        try {
-            startChallengeResp = api.getAuthenticationChallenge(username).execute();
-        } catch (IOException ex) {
-            setBusy(false);
-            Utils.showStringAlert(this, null, "Unable to start log in process: " + ex.getLocalizedMessage());
-            return;
-        }
-
-        if (!startChallengeResp.isSuccessful()) {
-            setBusy(false);
-            OscarError err = OscarError.fromResponse(startChallengeResp);
-            if (err != null && err.code == OscarError.ERROR_USER_NOT_FOUND) {
-                setLoginError(R.id.si_username_container, R.string.unknown_username);
-            } else {
-                Utils.showStringAlert(WelcomeActivity.this, null, "Unknown error");
-            }
-            return;
-        }
-        AuthenticationChallenge authChallenge = startChallengeResp.body();
-        if (authChallenge == null) {
-            setBusy(false);
-            Utils.showStringAlert(this, null, "Server returned a malformed authentication challenge. Try again later, and contact support if the problem persists.");
-            return;
-        }
-        final byte[] passwordHash = Sodium.createHashFromPassword(
-                Sodium.getSymmetricKeyLength(),
-                password.getBytes(),
-                authChallenge.user.passwordSalt,
-                authChallenge.user.passwordHashOperationsLimit,
-                authChallenge.user.passwordHashMemoryLimit);
-        if (passwordHash == null) {
-            setBusy(false);
-            FirebaseCrash.log("Password was null");
-            Utils.showAlert(this, R.string.unexpected_error, R.string.null_password_hash_msg);
-            return;
-        }
-
-        // now try to decrypt the private key
-        final byte[] secretKey = Sodium.symmetricKeyDecrypt(
-                authChallenge.user.wrappedSecretKey,
-                authChallenge.user.wrappedSecretKeyNonce,
-                passwordHash);
-        if (secretKey == null) {
-            setBusy(false);
-            setLoginError(R.id.si_password_container, R.string.incorrect_password);
-            return;
-        }
-
-        // grab the server's public key
-        Response<ServerPublicKeyResponse> pubKeyResp;
-        try {
-            pubKeyResp = api.getServerPublicKey().execute();
-        } catch (IOException ex) {
-            setBusy(false);
-            Utils.showAlert(this, 0, R.string.server_key_retrieval_network_error_msg);
-            return;
-        }
-        if (!pubKeyResp.isSuccessful()) {
-            setBusy(false);
-            Utils.showAlert(this, 0, R.string.server_key_retrieval_unknown_error_msg);
-            return;
-        }
-        ServerPublicKeyResponse srvrPubKeyResp = pubKeyResp.body();
-        if (srvrPubKeyResp == null) {
-            setBusy(false);
-            Utils.showAlert(this, 0, R.string.server_key_retrieval_bad_response_msg);
-            return;
-        }
-        byte[] pubKey = srvrPubKeyResp.publicKey;
-
-        FinishedAuthenticationChallenge finishedChallenge = new FinishedAuthenticationChallenge();
-        finishedChallenge.challenge = Sodium.publicKeyEncrypt(authChallenge.challenge, pubKey, secretKey);
-        finishedChallenge.creationDate = Sodium.publicKeyEncrypt(authChallenge.creationDate, pubKey, secretKey);
-
-        Response<LoginResponse> completeChallengeResp;
-        try {
-            completeChallengeResp = api.completeAuthenticationChallenge(username, finishedChallenge).execute();
-        } catch (IOException ex) {
-            setBusy(false);
-            Utils.showAlert(this, R.string.network_error, R.string.login_failure_network_msg);
-            return;
-        }
-        if (!completeChallengeResp.isSuccessful()) {
-            setBusy(false);
-            OscarError err = OscarError.fromResponse(completeChallengeResp);
-            String errMsg;
-            if (err != null) {
-                errMsg = err.toString();
-            } else {
-                errMsg = getString(R.string.unknown_error_completing_challenge_response_msg);
-            }
-            Utils.showStringAlert(this, getString(R.string.login_failed), errMsg);
-            return;
-        }
-
-        final LoginResponse loginResponse = completeChallengeResp.body();
-        if (loginResponse == null) {
-            setBusy(false);
-            Utils.showStringAlert(this, null, "The server returned a malformed login response. Try again later, and if it continues, contact support.");
-            return;
-        }
-        byte[] symmetricKey = Sodium.symmetricKeyDecrypt(loginResponse.wrappedSymmetricKey,
-                loginResponse.wrappedSymmetricKeyNonce,
-                passwordHash);
-        if (symmetricKey == null) {
-            setBusy(false);
-            Utils.showAlert(this, R.string.login_failed, R.string.symmetric_key_unwrap_failure_msg);
-            return;
-        }
-
-        // retrieve and restore the database backup
-        api = OscarClient.newInstance(loginResponse.accessToken);
-        Response<EncryptedData> dbResponse;
-        try {
-            dbResponse = api.getDatabaseBackup().execute();
-        } catch (IOException ex) {
-            setBusy(false);
-            Utils.showAlert(this, R.string.login_failed, R.string.network_failure_profile_restore_msg);
-            return;
-        }
-        if (!dbResponse.isSuccessful()) {
-            OscarError err = OscarError.fromResponse(dbResponse);
-            if (err == null || err.code != OscarError.ERROR_BACKUP_NOT_FOUND) {
-                setBusy(false);
-                Utils.showAlert(this, R.string.login_failed, R.string.unknown_failure_profile_restore_msg);
-                return;
-            }
-            // If we get here, that means no backup was found. It's weird, but not strictly wrong.
-        } else {
-            EncryptedData encSnapshot = dbResponse.body();
-            if (encSnapshot == null) {
-                setBusy(false);
-                Utils.showStringAlert(this, null, "The server returned a malformed response when retrieving your profile. Try again later, and if it still fails, contact support.");
-                return;
-            }
-            byte[] jsonDb = Sodium.symmetricKeyDecrypt(encSnapshot.cipherText, encSnapshot.nonce, symmetricKey);
-            if (jsonDb == null) {
-                setBusy(false);
-                Utils.showStringAlert(this, null, "Unable to restore profile. Did your symmetric key change?");
-                return;
-            }
-            Snapshot snapshot = Snapshot.fromJson(jsonDb);
-            // restore the database
-            if (snapshot == null) {
-                setBusy(false);
-                Utils.showStringAlert(this, null, "Unable to decode your profile");
-                return;
-            }
-
-            if (snapshot.schemaVersion > DB.get(this).getSchemaVersion()) {
-                setBusy(false);
-                Utils.showStringAlert(this, null, "This version of Pijun is too old. Update to the latest version then try logging in again.");
-                return;
-            }
-
-            try {
-                DB.get(this).restoreDatabase(this, snapshot);
-            } catch (DB.DBException ex) {
-                setBusy(false);
-                FirebaseCrash.report(ex);
-                Utils.showStringAlert(this, null, "Unable to rebuild your profile. This is a bug.");
-                return;
-            }
-        }
-
-        Prefs prefs = Prefs.get(this);
-        prefs.setSymmetricKey(symmetricKey);
-        prefs.setPasswordSalt(authChallenge.user.passwordSalt);
-        KeyPair kp = new KeyPair();
-        kp.publicKey = authChallenge.user.publicKey;
-        kp.secretKey = secretKey;
-        prefs.setKeyPair(kp);
-        prefs.setUserId(loginResponse.id);
-        prefs.setUsername(username);
-        prefs.setAccessToken(loginResponse.accessToken);
-
-        ActivityTransitionHandler.requestUpdates(this);
-        App.postOnBus(new UserLoggedIn());
-        App.runOnUiThread(new UiRunnable() {
+        AuthenticationManager.get().logIn(this, username, password, new AuthenticationManager.LoginWatcher() {
             @Override
-            public void run() {
-                showMapActivity();
+            public void onUserLoggedIn(@NonNull AuthenticationManager.Error err, @Nullable String detail) {
+                setBusy(false);
+                switch (err) {
+                    case None:
+                        ActivityTransitionHandler.requestUpdates(WelcomeActivity.this);
+                        showMapActivity();
+                        break;
+                    case AuthenticationChallengeFailed:
+                        Utils.showStringAlert(WelcomeActivity.this,
+                                getString(R.string.login_failed),
+                                detail != null ? detail : getString(R.string.unknown_error_completing_challenge_response_msg));
+                        break;
+                    case DatabaseBackupDecryptionFailed:
+                        Utils.showStringAlert(WelcomeActivity.this, null, "Unable to restore profile. Did your symmetric key change?");
+                        break;
+                    case DatabaseBackupParsingFailed:
+                        Utils.showStringAlert(WelcomeActivity.this, null, "Unable to decode your profile");
+                        break;
+                    case DatabaseRestoreFailed:
+                        Utils.showStringAlert(WelcomeActivity.this, null, "Unable to rebuild your profile. This is a bug and it has been reported to our engineers.");
+                        break;
+                    case AuthenticationChallengeCreationFailed:
+                        Utils.showStringAlert(WelcomeActivity.this, null, "Unable to start log in process: " + detail);
+                        break;
+                    case IncorrectPassword:
+                        setLoginError(R.id.si_password_container, R.string.incorrect_password);
+                        break;
+                    case MalformedAuthenticationChallengeResponse:
+                        Utils.showStringAlert(WelcomeActivity.this, null, "Server returned a malformed authentication challenge. Try again later, and contact support if the problem persists.");
+                        break;
+                    case MalformedDatabaseBackupResponse:
+                        Utils.showStringAlert(WelcomeActivity.this, null, "The server returned a malformed response when retrieving your profile. Try again later, and if it still fails, contact support.");
+                        break;
+                    case MalformedLoginResponse:
+                        Utils.showStringAlert(WelcomeActivity.this,
+                                null,
+                                "The server returned a malformed login response. Try again later, and if it continues, contact support.");
+                        break;
+                    case MalformedServerKeyResponse:
+                        Utils.showAlert(WelcomeActivity.this, 0, R.string.server_key_retrieval_bad_response_msg);
+                        break;
+                    case NetworkErrorCompletingAuthenticationChallenge:
+                        Utils.showAlert(WelcomeActivity.this, R.string.network_error, R.string.login_failure_network_msg);
+                        break;
+                    case NetworkErrorRetrievingDatabaseBackup:
+                        Utils.showAlert(WelcomeActivity.this, R.string.login_failed, R.string.network_failure_profile_restore_msg);
+                        break;
+                    case NetworkErrorRetrievingServerKey:
+                        Utils.showAlert(WelcomeActivity.this, 0, R.string.server_key_retrieval_network_error_msg);
+                        break;
+                    case NullPasswordHash:
+                        FirebaseCrash.log("Password was null");
+                        Utils.showAlert(WelcomeActivity.this, R.string.unexpected_error, R.string.null_password_hash_msg);
+                        break;
+                    case OutdatedClient:
+                        Utils.showStringAlert(WelcomeActivity.this, null, "This version of Pijun is too old. Update to the latest version then try logging in again.");
+                        break;
+                    case UserNotFound:
+                        setLoginError(R.id.si_username_container, R.string.unknown_username);
+                        break;
+                    case UnknownErrorRetrievingDatabaseBackup:
+                        Utils.showAlert(WelcomeActivity.this, R.string.login_failed, R.string.unknown_failure_profile_restore_msg);
+                        break;
+                    case UnknownErrorRetrievingServerKey:
+                        Utils.showAlert(WelcomeActivity.this, 0, R.string.server_key_retrieval_unknown_error_msg);
+                        break;
+                    case SymmetricKeyDecryptionFailed:
+                        Utils.showAlert(WelcomeActivity.this, R.string.login_failed, R.string.symmetric_key_unwrap_failure_msg);
+                        break;
+                    case Unknown:
+                        default:
+                            Utils.showStringAlert(WelcomeActivity.this, null, "Unknown error");
+                            break;
+                }
             }
         });
-        setBusy(false);
-
-        // request avatars from all friends
-        UserComm avatarReq = UserComm.newAvatarRequest();
-        byte[] reqJson = avatarReq.toJSON();
-        ArrayList<FriendRecord> friends = DB.get(this).getFriends();
-        for (FriendRecord f : friends) {
-            String err = OscarClient.queueSendMessage(this, f.user, reqJson, false, false);
-            if (err != null) {
-                L.w("Error queue avatar request to friend " + f.user.username + ": " + err);
-            }
-        }
     }
 
     @WorkerThread

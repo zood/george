@@ -196,7 +196,7 @@ public class MessageUtils {
         Prefs prefs = Prefs.get(context);
         String token = prefs.getAccessToken();
         KeyPair keyPair = prefs.getKeyPair();
-        if (!prefs.isLoggedIn()) {
+        if (!AuthenticationManager.isLoggedIn(context)) {
             return ERROR_NOT_LOGGED_IN;
         }
         if (TextUtils.isEmpty(token) || keyPair == null) {
