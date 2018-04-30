@@ -887,7 +887,11 @@ public final class MapActivity extends AppCompatActivity implements OnMapReadyCa
         }
         String area = AreaCache.getArea(loc.latitude, loc.longitude);
         if (area != null) {
-            mBinding.markerLocation.setText(area);
+            StringBuilder s = new StringBuilder(area);
+            if (loc.accuracy != null) {
+                s.append(" (±").append(loc.accuracy).append(" m)");
+            }
+            mBinding.markerLocation.setText(s);
         } else {
             mBinding.markerLocation.setText(R.string.loading_ellipsis);
             AreaCache.fetchArea(MapActivity.this, loc.latitude, loc.longitude, new AreaCache.ReverseGeocodingListener() {
