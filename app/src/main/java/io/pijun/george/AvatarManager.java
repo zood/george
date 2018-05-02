@@ -130,6 +130,7 @@ public class AvatarManager {
 
     @WorkerThread
     static void sendAvatarToUser(@NonNull Context ctx, @NonNull UserRecord user) throws IOException {
+        L.i("sendAvatarToUser: " + user.username);
         File avatarFile = getMyAvatar(ctx);
         if (!avatarFile.exists()) {
             return;

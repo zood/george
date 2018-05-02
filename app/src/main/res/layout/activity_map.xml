@@ -133,7 +133,7 @@
 
     <android.support.constraint.ConstraintLayout
         android:id="@+id/marker_details"
-        android:padding="8dp"
+        android:paddingBottom="8dp"
         android:background="@android:color/white"
         android:visibility="gone"
         tools:visibility="visible"
@@ -145,17 +145,34 @@
         android:layout_marginBottom="76dp"
         android:layout_width="match_parent"
         android:layout_height="wrap_content">
+        <android.support.constraint.Guideline
+            android:id="@+id/marker_top_guideline"
+            android:orientation="horizontal"
+            app:layout_constraintGuide_begin="9dp"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content" />
+        <ProgressBar
+            android:id="@+id/marker_progress_bar"
+            android:indeterminate="true"
+            style="@style/Base.Widget.AppCompat.ProgressBar.Horizontal"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintBottom_toTopOf="@id/marker_top_guideline"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content" />
         <TextView
             android:id="@+id/marker_username"
             tools:text="kanoong"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent"
+            android:layout_marginTop="8dp"
+            android:layout_marginStart="8dp"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content" />
         <TextView
             android:id="@+id/marker_location"
             tools:text="Thousand Oaks"
-            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintStart_toStartOf="@id/marker_username"
             app:layout_constraintTop_toBottomOf="@id/marker_username"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content" />
@@ -170,7 +187,7 @@
         <TextView
             android:id="@+id/activity"
             tools:text="Driving"
-            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintStart_toStartOf="@id/marker_username"
             app:layout_constraintTop_toBottomOf="@+id/marker_location"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content" />

@@ -108,14 +108,6 @@ public class LocationUpdateRequestHandler {
 
     @WorkerThread
     private void shutDown() {
-        UserRecord arash = DB.get(context).getUser("arash");
-        if (arash != null) {
-            String dbgMsg = "Shutting down LURH at " + new Date().toString();
-            String errMsg = OscarClient.queueSendMessage(context, arash, UserComm.newDebug(dbgMsg), true, false);
-            if (errMsg != null) {
-                L.w("problem sending debug: " + errMsg);
-            }
-        }
         if (client != null) {
             client.removeLocationUpdates(mLocationCallbackHelper);
         }

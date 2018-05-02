@@ -58,7 +58,7 @@ public class L {
             stream.write(msg);
             stream.write('\n');
         } catch (IOException e) {
-            Log.e(TAG, "unable to write a message to the log file", e);
+            Log.e(TAG, "unable to write a action to the log file", e);
         } finally {
             sLogLock.writeLock().unlock();
         }
@@ -78,7 +78,7 @@ public class L {
             PrintStream ps = new PrintStream(stream);
             t.printStackTrace(ps);
         } catch (IOException e) {
-            Log.e(TAG, "unable to write a message to the log file", e);
+            Log.e(TAG, "unable to write a action to the log file", e);
         } finally {
             sLogLock.writeLock().unlock();
         }

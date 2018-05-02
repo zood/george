@@ -17,7 +17,7 @@ import io.pijun.george.queue.PersistentQueue;
 
 public class MessageProcessor {
 
-    private static final String QUEUE_FILENAME = "message.queue";
+    private static final String QUEUE_FILENAME = "action.queue";
     private static volatile MessageProcessor sSingleton;
     private final PersistentQueue<Message> mQueue;
 
@@ -56,14 +56,14 @@ public class MessageProcessor {
                 switch (result) {
                     case MessageUtils.ERROR_NONE:
                         mQueue.poll();
-                        // delete the message from the server
+                        // delete the action from the server
                         if (msg.id != 0 && !TextUtils.isEmpty(token)) {
                             OscarClient.queueDeleteMessage(App.getApp(), token, msg.id);
                         }
                         break;
                     case MessageUtils.ERROR_NO_NETWORK:
                     case MessageUtils.ERROR_REMOTE_INTERNAL:
-                        L.w("reschedulable message processing error");
+                        L.w("reschedulable action processing error");
                         // sleep for 60 seconds, then try again
                         Thread.sleep(60 * DateUtils.SECOND_IN_MILLIS);
                         break;
@@ -73,9 +73,9 @@ public class MessageProcessor {
                     case MessageUtils.ERROR_MISSING_CIPHER_TEXT:
                     case MessageUtils.ERROR_MISSING_NONCE:
                     case MessageUtils.ERROR_INVALID_COMMUNICATION:
-                        // just remove the invalid message
+                        // just remove the invalid action
                     case MessageUtils.ERROR_NOT_LOGGED_IN:
-                        // if we're not logged in, toss the message
+                        // if we're not logged in, toss the action
                     case MessageUtils.ERROR_DATABASE_EXCEPTION:
                     case MessageUtils.ERROR_DATABASE_INCONSISTENCY:
                     case MessageUtils.ERROR_ENCRYPTION_FAILED:
@@ -84,11 +84,11 @@ public class MessageProcessor {
                     case MessageUtils.ERROR_UNKNOWN:
                     default:
                         mQueue.poll();
-                        // delete the message from the server
+                        // delete the action from the server
                         if (msg.id != 0 && !TextUtils.isEmpty(token)) {
                             OscarClient.queueDeleteMessage(App.getApp(), token, msg.id);
                         }
-                        L.w("error processing message: " + result);
+                        L.w("error processing action: " + result);
                         UserRecord user = DB.get(App.getApp()).getUser(msg.senderId);
                         if (user != null) {
                             L.w("\tfrom " + user.username);

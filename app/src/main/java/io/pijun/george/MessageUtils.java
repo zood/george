@@ -5,7 +5,6 @@ import android.support.annotation.IntDef;
 import android.support.annotation.NonNull;
 import android.support.annotation.WorkerThread;
 import android.text.TextUtils;
-import android.text.format.DateUtils;
 
 import com.google.firebase.crash.FirebaseCrash;
 
@@ -56,17 +55,24 @@ public class MessageUtils {
 
     @WorkerThread @Error
     private static int handleAvatarRequest(@NonNull Context ctx, @NonNull UserRecord user) {
+        L.i("handleAvatarRequest: " + user.username);
         try {
             // make sure this is somebody that we're sharing our location with
             FriendRecord friend = DB.get(ctx).getFriendByUserId(user.id);
+            L.i("\tfriendrecord: " + friend);
             if (friend == null) {
+                L.i("\tnot a friend");
                 return ERROR_NONE;
             }
-            if (friend.sendingBoxId != null) {
+            if (friend.sendingBoxId == null) {
+                L.i("\tno sending box id");
                 return ERROR_NONE;
             }
             AvatarManager.sendAvatarToUser(ctx, user);
-        } catch (IOException ignore) {}
+        } catch (IOException ex) {
+            FirebaseCrash.report(ex);
+            L.w("Error handling avatar request", ex);
+        }
 
         return ERROR_NONE;
     }
@@ -134,28 +140,25 @@ public class MessageUtils {
         L.i("handleLocationUpdateRequest");
         Prefs prefs = Prefs.get(context);
         long updateTime = prefs.getLastLocationUpdateTime();
-        // only perform the update if it's been more than 3 minutes since the last one
-        long now = System.currentTimeMillis();
-        if (now - updateTime < 3 * DateUtils.MINUTE_IN_MILLIS) {
-            L.i("\talready provided an update at " + updateTime + ". It's " + now + " now");
-            UserComm tooSoon = UserComm.newLocationUpdateRequestReceived(UserComm.LOCATION_UPDATE_REQUEST_ACTION_TOO_SOON);
-            String errMsg = OscarClient.queueSendMessage(context, userRecord, tooSoon, true, false);
-            if (errMsg != null) {
-                L.w(errMsg);
-            }
-            return ERROR_NONE;
-        }
+
         // make sure this is actually a friend
         FriendRecord f = DB.get(context).getFriendByUserId(userRecord.id);
         if (f == null || f.sendingBoxId == null) {
-            L.i("\tyou are not a friend");
-            String errMsg = OscarClient.queueSendMessage(context, userRecord,
-                    UserComm.newDebug("You are not a friend"), true, false);
-            if (errMsg != null) {
-                L.w(errMsg);
-            }
             return ERROR_NONE;
         }
+
+        // only perform the update if it's been more than 3 minutes since the last one
+        long now = System.currentTimeMillis();
+//        if (now - updateTime < 3 * DateUtils.MINUTE_IN_MILLIS) {
+//            L.i("\talready provided an update at " + updateTime + ". It's " + now + " now");
+//            UserComm tooSoon = UserComm.newLocationUpdateRequestReceived(UserComm.LOCATION_UPDATE_REQUEST_ACTION_TOO_SOON);
+//            String errMsg = OscarClient.queueSendMessage(context, userRecord, tooSoon, true, true);
+//            if (errMsg != null) {
+//                L.w(errMsg);
+//            }
+//            return ERROR_NONE;
+//        }
+
         L.i("\tok, provide a location update");
         new LocationUpdateRequestHandler(context, null);
         UserComm started = UserComm.newLocationUpdateRequestReceived(UserComm.LOCATION_UPDATE_REQUEST_ACTION_STARTING);
@@ -171,6 +174,11 @@ public class MessageUtils {
     private static int handleLocationUpdateRequestReceived(@NonNull Context context, @NonNull UserRecord user, @NonNull UserComm comm) {
         L.i("handleLocationUpdateRequestReceived");
         L.i(user.username + " responded to update request: " + comm.locationUpdateRequestAction);
+        FriendRecord friend = DB.get(context).getFriendByUserId(user.id);
+        if (friend == null) {
+            return ERROR_NONE;
+        }
+        UpdateStatusTracker.setUpdateRequestResponse(friend.id, System.currentTimeMillis(), comm.locationUpdateRequestAction);
 
         return ERROR_NONE;
     }

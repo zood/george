@@ -44,7 +44,7 @@ public class UserComm {
             LOCATION_UPDATE_REQUEST_ACTION_TOO_SOON,
             LOCATION_UPDATE_REQUEST_ACTION_STARTING
     })
-    @interface LocationUpdateRequestAction {}
+    public @interface LocationUpdateRequestAction {}
     public static final String LOCATION_UPDATE_REQUEST_ACTION_TOO_SOON = "too_soon";
     public static final String LOCATION_UPDATE_REQUEST_ACTION_STARTING = "starting";
 

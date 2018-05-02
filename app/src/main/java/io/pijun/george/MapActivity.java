@@ -9,6 +9,7 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentSender;
 import android.content.pm.PackageManager;
+import android.content.res.ColorStateList;
 import android.databinding.DataBindingUtil;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
@@ -107,7 +108,7 @@ public final class MapActivity extends AppCompatActivity implements OnMapReadyCa
     private static final int REQUEST_LOCATION_PERMISSION = 18;
     private static final int REQUEST_LOCATION_SETTINGS = 20;
 
-    private ActivityMapBinding mBinding;
+    private ActivityMapBinding binding;
     private MapView mMapView;
     private GoogleMap mGoogMap;
     private volatile PackageWatcher mPkgWatcher;
@@ -118,7 +119,7 @@ public final class MapActivity extends AppCompatActivity implements OnMapReadyCa
     private LocationSettingsRequest mLocationSettingsRequest;
     private Marker mMeMarker;
     private Circle mMyCircle;
-    private long mFriendForCameraToTrack = -1;
+    private long friendForCameraToTrack = -1;
     private EditText mUsernameField;
     private Circle mCurrentCircle;
     private WeakReference<FriendsSheetFragment> mFriendsSheet;
@@ -160,9 +161,9 @@ public final class MapActivity extends AppCompatActivity implements OnMapReadyCa
 
         getWindow().getDecorView().setBackground(null);
         getWindow().setStatusBarColor(Color.TRANSPARENT);
-        mBinding = DataBindingUtil.setContentView(this, R.layout.activity_map);
+        binding = DataBindingUtil.setContentView(this, R.layout.activity_map);
 
-        mBinding.root.getViewTreeObserver().addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
+        binding.root.getViewTreeObserver().addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
             @Override
             public void onGlobalLayout() {
                 if (mInitialLayoutDone) {
@@ -180,7 +181,7 @@ public final class MapActivity extends AppCompatActivity implements OnMapReadyCa
         final View myLocFab = findViewById(R.id.my_location_fab);
         myLocFab.setOnClickListener(v -> {
             myLocFab.setSelected(true);
-            mFriendForCameraToTrack = 0;
+            friendForCameraToTrack = 0;
             flyCameraToMyLocation();
         });
 
@@ -199,10 +200,10 @@ public final class MapActivity extends AppCompatActivity implements OnMapReadyCa
             @Override
             public void run() {
                 String username = Prefs.get(MapActivity.this).getUsername();
-                mBinding.username.setText(username);
-                mBinding.avatar.username = username;
+                binding.username.setText(username);
+                binding.avatar.username = username;
                 File myAvatar = AvatarManager.getMyAvatar(MapActivity.this);
-                Picasso.with(MapActivity.this).load(myAvatar).into(mBinding.avatar);
+                Picasso.with(MapActivity.this).load(myAvatar).into(binding.avatar);
             }
         });
     }
@@ -216,6 +217,7 @@ public final class MapActivity extends AppCompatActivity implements OnMapReadyCa
         checkForLocationPermission();
         App.registerOnBus(this);
         mMapView.onStart();
+        UpdateStatusTracker.addListener(updateStatusTrackerListener);
 
         App.runInBackground(new WorkerRunnable() {
             @Override
@@ -250,6 +252,7 @@ public final class MapActivity extends AppCompatActivity implements OnMapReadyCa
                     }
                     FriendLocation loc = DB.get(MapActivity.this).getFriendLocation(fr.id);
                     if (loc == null || (now-loc.time) > 180 * DateUtils.SECOND_IN_MILLIS) {
+                        UpdateStatusTracker.setLastRequestTime(fr.id, System.currentTimeMillis());
                         String errMsg = OscarClient.queueSendMessage(MapActivity.this, fr.user, comm, true, true);
                         if (errMsg != null) {
                             L.w("failed to queue location_update_request: " + errMsg);
@@ -300,6 +303,7 @@ public final class MapActivity extends AppCompatActivity implements OnMapReadyCa
     protected void onStop() {
         super.onStop();
 
+        UpdateStatusTracker.removeListener(updateStatusTrackerListener);
         mMapView.onStop();
 
         if (mGoogMap != null) {
@@ -392,7 +396,7 @@ public final class MapActivity extends AppCompatActivity implements OnMapReadyCa
             @Override
             public void onCameraMoveStarted(int reason) {
                 if (reason == REASON_GESTURE) {
-                    mFriendForCameraToTrack = -1;
+                    friendForCameraToTrack = -1;
                     findViewById(R.id.my_location_fab).setSelected(false);
                 }
             }
@@ -401,7 +405,7 @@ public final class MapActivity extends AppCompatActivity implements OnMapReadyCa
             @Override
             public void onMapClick(LatLng latLng) {
                 L.i("onMapClick");
-                mBinding.markerDetails.setVisibility(View.GONE);
+                binding.markerDetails.setVisibility(View.GONE);
             }
         });
 
@@ -581,7 +585,7 @@ public final class MapActivity extends AppCompatActivity implements OnMapReadyCa
     @Keep
     @UiThread
     public void onAvatarUpdated(AvatarUpdated evt) {
-        if (mBinding == null) {
+        if (binding == null) {
             // UI isn't loaded, so get outta here
             return;
         }
@@ -591,7 +595,7 @@ public final class MapActivity extends AppCompatActivity implements OnMapReadyCa
         }
         // Update it
         File myAvatar = AvatarManager.getMyAvatar(this);
-        Picasso.with(this).load(myAvatar).into(mBinding.avatar);
+        Picasso.with(this).load(myAvatar).into(binding.avatar);
     }
 
     @UiThread
@@ -652,7 +656,7 @@ public final class MapActivity extends AppCompatActivity implements OnMapReadyCa
     @Keep
     @UiThread
     public void onFriendLocationUpdated(final FriendLocation loc) {
-        if (mFriendForCameraToTrack == loc.friendId) {
+        if (friendForCameraToTrack == loc.friendId) {
             setAvatarInfo(loc);
         }
         // check if we already have a marker for this friend
@@ -686,7 +690,7 @@ public final class MapActivity extends AppCompatActivity implements OnMapReadyCa
             }
         }
 
-        if (mFriendForCameraToTrack == loc.friendId && mGoogMap != null) {
+        if (friendForCameraToTrack == loc.friendId && mGoogMap != null) {
             CameraUpdate update = CameraUpdateFactory.newLatLng(new LatLng(loc.latitude, loc.longitude));
             mGoogMap.animateCamera(update);
         }
@@ -781,14 +785,14 @@ public final class MapActivity extends AppCompatActivity implements OnMapReadyCa
     public void onAvatarSelected(FriendRecord fr) {
         Marker marker = mMarkerTracker.getById(fr.id);
         if (marker == null) {
-            mBinding.markerDetails.setVisibility(View.GONE);
+            binding.markerDetails.setVisibility(View.GONE);
             return;
         }
 
-        mBinding.markerDetails.setVisibility(View.VISIBLE);
-        mBinding.markerUsername.setText(fr.user.username);
+        binding.markerDetails.setVisibility(View.VISIBLE);
+        binding.markerUsername.setText(fr.user.username);
 
-        mFriendForCameraToTrack = fr.id;
+        friendForCameraToTrack = fr.id;
         findViewById(R.id.my_location_fab).setSelected(false);
         CameraPosition cp = new CameraPosition.Builder()
                 .target(marker.getPosition())
@@ -862,7 +866,7 @@ public final class MapActivity extends AppCompatActivity implements OnMapReadyCa
         if (loc.speed != null) {
             speed.append(loc.speed).append(" m/s");
         }
-        mBinding.markerSpeed.setText(speed);
+        binding.markerSpeed.setText(speed);
 
         long now = System.currentTimeMillis();
         final CharSequence relTime;
@@ -875,15 +879,15 @@ public final class MapActivity extends AppCompatActivity implements OnMapReadyCa
                     DateUtils.MINUTE_IN_MILLIS,
                     DateUtils.FORMAT_ABBREV_RELATIVE);
         }
-        mBinding.markerTime.setText(relTime);
+        binding.markerTime.setText(relTime);
 
-        mBinding.markerDetails.setTag(loc);
+        binding.markerDetails.setTag(loc);
 
         if (loc.bearing != null) {
-            mBinding.markerDirection.setVisibility(View.VISIBLE);
-            mBinding.markerDirection.setRotation(loc.bearing);
+            binding.markerDirection.setVisibility(View.VISIBLE);
+            binding.markerDirection.setRotation(loc.bearing);
         } else {
-            mBinding.markerDirection.setVisibility(View.GONE);
+            binding.markerDirection.setVisibility(View.GONE);
         }
         String area = AreaCache.getArea(loc.latitude, loc.longitude);
         if (area != null) {
@@ -891,16 +895,16 @@ public final class MapActivity extends AppCompatActivity implements OnMapReadyCa
             if (loc.accuracy != null) {
                 s.append(" (±").append(loc.accuracy).append(" m)");
             }
-            mBinding.markerLocation.setText(s);
+            binding.markerLocation.setText(s);
         } else {
-            mBinding.markerLocation.setText(R.string.loading_ellipsis);
+            binding.markerLocation.setText(R.string.loading_ellipsis);
             AreaCache.fetchArea(MapActivity.this, loc.latitude, loc.longitude, new AreaCache.ReverseGeocodingListener() {
                 @Override
                 public void onReverseGeocodingCompleted(@Nullable String area) {
-                    FriendLocation savedLoc = (FriendLocation) mBinding.markerDetails.getTag();
+                    FriendLocation savedLoc = (FriendLocation) binding.markerDetails.getTag();
                     if (savedLoc != null && savedLoc.latitude == loc.latitude && savedLoc.longitude == loc.longitude) {
                         if (area != null) {
-                            mBinding.markerLocation.setText(area);
+                            binding.markerLocation.setText(area);
                         }
                     }
                 }
@@ -1044,21 +1048,21 @@ public final class MapActivity extends AppCompatActivity implements OnMapReadyCa
     @UiThread
     private void onInitialLayoutDone() {
         // set pivots
-        mBinding.map.setPivotY(mBinding.map.getHeight()/2);
+        binding.map.setPivotY(binding.map.getHeight()/2);
 
         // translate the drawer components out of view
-        mUiHiddenOffset = -(mBinding.location.getX() + Utils.dpsToPix(this, 100));
-        mBinding.avatar.setTranslationX(mUiHiddenOffset);
-        mBinding.username.setTranslationX(mUiHiddenOffset);
-        mBinding.location.setTranslationX(mUiHiddenOffset);
-        mBinding.settings.setTranslationX(mUiHiddenOffset);
-        mBinding.about.setTranslationX(mUiHiddenOffset);
-        mBinding.logOut.setTranslationX(mUiHiddenOffset);
+        mUiHiddenOffset = -(binding.location.getX() + Utils.dpsToPix(this, 100));
+        binding.avatar.setTranslationX(mUiHiddenOffset);
+        binding.username.setTranslationX(mUiHiddenOffset);
+        binding.location.setTranslationX(mUiHiddenOffset);
+        binding.settings.setTranslationX(mUiHiddenOffset);
+        binding.about.setTranslationX(mUiHiddenOffset);
+        binding.logOut.setTranslationX(mUiHiddenOffset);
 
         // install the gesture listener
-        mDrawerActionRecognizer = new DrawerActionRecognizer(mBinding.root.getWidth(), this);
+        mDrawerActionRecognizer = new DrawerActionRecognizer(binding.root.getWidth(), this);
         mGestureDetector = new GestureDetector(this, mDrawerActionRecognizer);
-        mBinding.touchInterceptor.setOnTouchListener((View v, MotionEvent event) -> {
+        binding.touchInterceptor.setOnTouchListener((View v, MotionEvent event) -> {
             boolean onUp = event.getAction() == MotionEvent.ACTION_UP;
             boolean detectorConsumed = mGestureDetector.onTouchEvent(event);
             if (!detectorConsumed && onUp && mDrawerActionRecognizer.isGesturing()) {
@@ -1071,24 +1075,24 @@ public final class MapActivity extends AppCompatActivity implements OnMapReadyCa
 
     @Override
     public void onCloseDrawer(float pixels, float delta) {
-        float range = mBinding.root.getWidth() * 0.75f;
+        float range = binding.root.getWidth() * 0.75f;
         float xOffset = range - pixels;
         xOffset = Math.max(xOffset, 0);
-        mBinding.map.setTranslationX(xOffset);
+        binding.map.setTranslationX(xOffset);
 
         float progress = xOffset / range;
         float scale = 1 - 0.25f * progress;
-        mBinding.map.setScaleX(scale);
-        mBinding.map.setScaleY(scale);
+        binding.map.setScaleX(scale);
+        binding.map.setScaleY(scale);
 
         float uiOffset = Math.max(mUiHiddenOffset, -pixels);
         uiOffset = Math.min(0, uiOffset);
-        mBinding.avatar.setTranslationX(uiOffset);
-        mBinding.username.setTranslationX(uiOffset);
-        mBinding.location.setTranslationX(uiOffset);
-        mBinding.settings.setTranslationX(uiOffset);
-        mBinding.about.setTranslationX(uiOffset);
-        mBinding.logOut.setTranslationX(uiOffset);
+        binding.avatar.setTranslationX(uiOffset);
+        binding.username.setTranslationX(uiOffset);
+        binding.location.setTranslationX(uiOffset);
+        binding.settings.setTranslationX(uiOffset);
+        binding.about.setTranslationX(uiOffset);
+        binding.logOut.setTranslationX(uiOffset);
 
         FriendsSheetFragment fragment = mFriendsSheet.get();
         if (fragment.getView() != null) {
@@ -1099,27 +1103,27 @@ public final class MapActivity extends AppCompatActivity implements OnMapReadyCa
             sheet.setTranslationY(sheetOffset);
         }
 
-        float friendFABOffset = mBinding.addFriendFab.getTranslationY() - delta;
+        float friendFABOffset = binding.addFriendFab.getTranslationY() - delta;
         friendFABOffset = Math.max(0, friendFABOffset);
-        mBinding.addFriendFab.setTranslationY(friendFABOffset);
+        binding.addFriendFab.setTranslationY(friendFABOffset);
 
-        float locFABOffset = mBinding.myLocationFab.getTranslationY() + delta;
+        float locFABOffset = binding.myLocationFab.getTranslationY() + delta;
         locFABOffset = Math.min(0, locFABOffset);
-        mBinding.myLocationFab.setTranslationY(locFABOffset);
+        binding.myLocationFab.setTranslationY(locFABOffset);
     }
 
     @Override
     public void onOpenDrawer(float pixels) {
-        float range = mBinding.root.getWidth() * 0.75f;
+        float range = binding.root.getWidth() * 0.75f;
         float xOffset = Math.max(pixels, 0);
         xOffset = Math.min(xOffset, range);
-        mBinding.map.setTranslationX(xOffset);
+        binding.map.setTranslationX(xOffset);
 
         float progress = xOffset / range;
         // the smallest we shrink is 75%
         float scale = 1 - 0.25f * progress;
-        mBinding.map.setScaleX(scale);
-        mBinding.map.setScaleY(scale);
+        binding.map.setScaleX(scale);
+        binding.map.setScaleY(scale);
 
         // animate away friends sheet
         FriendsSheetFragment fragment = mFriendsSheet.get();
@@ -1132,34 +1136,34 @@ public final class MapActivity extends AppCompatActivity implements OnMapReadyCa
 
         // the Add Friends fab
         float friendFABOffset = Math.max(0, Math.min(range, pixels));
-        mBinding.addFriendFab.setTranslationY(friendFABOffset);
+        binding.addFriendFab.setTranslationY(friendFABOffset);
 
         // and the 'my location' fab
         float myLocFABOffset = Math.max(0, Math.min(range, pixels));
         myLocFABOffset *= -1;
-        mBinding.myLocationFab.setTranslationY(myLocFABOffset);
+        binding.myLocationFab.setTranslationY(myLocFABOffset);
 
         // animate the drawer elements too
         float uiOffset = Math.min(0, mUiHiddenOffset + pixels);
-        mBinding.avatar.setTranslationX(uiOffset);
-        mBinding.username.setTranslationX(uiOffset);
-        mBinding.location.setTranslationX(uiOffset);
-        mBinding.settings.setTranslationX(uiOffset);
-        mBinding.about.setTranslationX(uiOffset);
-        mBinding.logOut.setTranslationX(uiOffset);
+        binding.avatar.setTranslationX(uiOffset);
+        binding.username.setTranslationX(uiOffset);
+        binding.location.setTranslationX(uiOffset);
+        binding.settings.setTranslationX(uiOffset);
+        binding.about.setTranslationX(uiOffset);
+        binding.logOut.setTranslationX(uiOffset);
     }
 
     @Override
     public void onFlingCloseDrawer() {
-        mBinding.map.animate().setInterpolator(new LinearBezierInterpolator()).x(0);
-        mBinding.map.animate().setInterpolator(new LinearBezierInterpolator()).scaleX(1).scaleY(1);
+        binding.map.animate().setInterpolator(new LinearBezierInterpolator()).x(0);
+        binding.map.animate().setInterpolator(new LinearBezierInterpolator()).scaleX(1).scaleY(1);
 
-        mBinding.avatar.animate().setInterpolator(new LinearBezierInterpolator()).translationX(mUiHiddenOffset).setDuration(200);
-        mBinding.username.animate().setInterpolator(new LinearBezierInterpolator()).translationX(mUiHiddenOffset).setDuration(200);
-        mBinding.location.animate().setInterpolator(new LinearBezierInterpolator()).translationX(mUiHiddenOffset).setDuration(200);
-        mBinding.settings.animate().setInterpolator(new LinearBezierInterpolator()).translationX(mUiHiddenOffset).setDuration(200);
-        mBinding.about.animate().setInterpolator(new LinearBezierInterpolator()).translationX(mUiHiddenOffset).setDuration(200);
-        mBinding.logOut.animate().setInterpolator(new LinearBezierInterpolator()).translationX(mUiHiddenOffset).setDuration(200);
+        binding.avatar.animate().setInterpolator(new LinearBezierInterpolator()).translationX(mUiHiddenOffset).setDuration(200);
+        binding.username.animate().setInterpolator(new LinearBezierInterpolator()).translationX(mUiHiddenOffset).setDuration(200);
+        binding.location.animate().setInterpolator(new LinearBezierInterpolator()).translationX(mUiHiddenOffset).setDuration(200);
+        binding.settings.animate().setInterpolator(new LinearBezierInterpolator()).translationX(mUiHiddenOffset).setDuration(200);
+        binding.about.animate().setInterpolator(new LinearBezierInterpolator()).translationX(mUiHiddenOffset).setDuration(200);
+        binding.logOut.animate().setInterpolator(new LinearBezierInterpolator()).translationX(mUiHiddenOffset).setDuration(200);
 
         FriendsSheetFragment fragment = mFriendsSheet.get();
         if (fragment.getView() != null) {
@@ -1168,32 +1172,32 @@ public final class MapActivity extends AppCompatActivity implements OnMapReadyCa
             sheet.animate().setInterpolator(new LinearBezierInterpolator()).translationY(transY).setDuration(200);
         }
 
-        mBinding.myLocationFab.animate().setInterpolator(new LinearBezierInterpolator()).translationY(0).setDuration(200);
-        mBinding.addFriendFab.animate().setInterpolator(new LinearBezierInterpolator()).translationY(0).setDuration(200);
+        binding.myLocationFab.animate().setInterpolator(new LinearBezierInterpolator()).translationY(0).setDuration(200);
+        binding.addFriendFab.animate().setInterpolator(new LinearBezierInterpolator()).translationY(0).setDuration(200);
     }
 
     @Override
     public void onFlingOpenDrawer() {
-        mBinding.map.setPivotY(mBinding.root.getHeight()/2);
+        binding.map.setPivotY(binding.root.getHeight()/2);
 
-        float range = mBinding.root.getWidth() * 0.75f;
-        mBinding.map.animate().setInterpolator(new LinearBezierInterpolator()).x(range).setDuration(200);
+        float range = binding.root.getWidth() * 0.75f;
+        binding.map.animate().setInterpolator(new LinearBezierInterpolator()).x(range).setDuration(200);
 
         // the smallest we shrink is 75%
         float scale = 1 - 0.25f;
-        mBinding.map.animate()
+        binding.map.animate()
                 .setInterpolator(new LinearBezierInterpolator())
                 .scaleX(scale)
                 .scaleY(scale)
                 .setDuration(200);
 
         // animate the drawer elements too
-        mBinding.avatar.animate().setInterpolator(new LinearBezierInterpolator()).translationX(0).setDuration(200);
-        mBinding.username.animate().setInterpolator(new LinearBezierInterpolator()).translationX(0).setDuration(200);
-        mBinding.location.animate().setInterpolator(new LinearBezierInterpolator()).translationX(0).setDuration(200);
-        mBinding.settings.animate().setInterpolator(new LinearBezierInterpolator()).translationX(0).setDuration(200);
-        mBinding.about.animate().setInterpolator(new LinearBezierInterpolator()).translationX(0).setDuration(200);
-        mBinding.logOut.animate().setInterpolator(new LinearBezierInterpolator()).translationX(0).setDuration(200);
+        binding.avatar.animate().setInterpolator(new LinearBezierInterpolator()).translationX(0).setDuration(200);
+        binding.username.animate().setInterpolator(new LinearBezierInterpolator()).translationX(0).setDuration(200);
+        binding.location.animate().setInterpolator(new LinearBezierInterpolator()).translationX(0).setDuration(200);
+        binding.settings.animate().setInterpolator(new LinearBezierInterpolator()).translationX(0).setDuration(200);
+        binding.about.animate().setInterpolator(new LinearBezierInterpolator()).translationX(0).setDuration(200);
+        binding.logOut.animate().setInterpolator(new LinearBezierInterpolator()).translationX(0).setDuration(200);
 
         // friends sheet
         FriendsSheetFragment fragment = mFriendsSheet.get();
@@ -1204,14 +1208,14 @@ public final class MapActivity extends AppCompatActivity implements OnMapReadyCa
         }
 
         // the two fabs
-        mBinding.addFriendFab.animate().translationY(range).setInterpolator(new LinearBezierInterpolator()).setDuration(200);
-        mBinding.myLocationFab.animate().translationY(-range).setInterpolator(new LinearBezierInterpolator()).setDuration(200);
+        binding.addFriendFab.animate().translationY(range).setInterpolator(new LinearBezierInterpolator()).setDuration(200);
+        binding.myLocationFab.animate().translationY(-range).setInterpolator(new LinearBezierInterpolator()).setDuration(200);
     }
 
     @Override
     public boolean onSettleDrawer() {
-        float transX = mBinding.map.getTranslationX();
-        float range = mBinding.root.getWidth() * 0.75f;
+        float transX = binding.map.getTranslationX();
+        float range = binding.root.getWidth() * 0.75f;
         float progress = transX / range;
         if (progress >= 0.5) {
             onFlingOpenDrawer();
@@ -1221,6 +1225,48 @@ public final class MapActivity extends AppCompatActivity implements OnMapReadyCa
             return false;
         }
     }
+
+    private UpdateStatusTracker.Listener updateStatusTrackerListener = new UpdateStatusTracker.Listener() {
+        @Override
+        public void onUpdateStatusChanged(long friendId) {
+            if (friendId != friendForCameraToTrack || binding == null) {
+                return;
+            }
+            UpdateStatusTracker.State status = UpdateStatusTracker.getFriendState(friendId);
+            int vis;
+            ColorStateList color = null;
+//            binding.markerProgressBar.settint
+            switch (status) {
+                case NotRequested:
+                    vis = View.GONE;
+                    break;
+                case Requested:
+                    vis = View.VISIBLE;
+                    color = ContextCompat.getColorStateList(MapActivity.this, R.color.csl_amber);
+                    break;
+                case RequestedAndUnresponsive:
+                    vis = View.VISIBLE;
+                    color = ContextCompat.getColorStateList(MapActivity.this, R.color.csl_gray);
+                    break;
+                case RequestDenied:
+                    vis = View.VISIBLE;
+                    color = ContextCompat.getColorStateList(MapActivity.this, R.color.csl_red);
+                    break;
+                case RequestAcknowledged:
+                    vis = View.VISIBLE;
+                    color = ContextCompat.getColorStateList(MapActivity.this, R.color.csl_primary);
+                    break;
+                case RequestFulfilled:
+                    vis = View.GONE;
+                    break;
+                default:
+                    vis = View.GONE;
+                    break;
+            }
+            binding.markerProgressBar.setIndeterminateTintList(color);
+            binding.markerProgressBar.setVisibility(vis);
+        }
+    };
 
     private LocationCallback mLocationCallbackHelper = new LocationCallback() {
         @Override
@@ -1269,7 +1315,7 @@ public final class MapActivity extends AppCompatActivity implements OnMapReadyCa
                 }
             }
 
-            if (mFriendForCameraToTrack == 0) {
+            if (friendForCameraToTrack == 0) {
                 if (mGoogMap != null) {
                     CameraUpdate update = CameraUpdateFactory.newLatLng(new LatLng(location.getLatitude(), location.getLongitude()));
                     mGoogMap.animateCamera(update);
