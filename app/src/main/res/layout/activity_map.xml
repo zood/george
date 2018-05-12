@@ -160,11 +160,20 @@
             app:layout_constraintBottom_toTopOf="@id/marker_top_guideline"
             android:layout_width="0dp"
             android:layout_height="wrap_content" />
+        <Button
+            android:id="@+id/marker_request_location"
+            android:text="Request Location"
+            android:onClick="onRequestLocation"
+            android:visibility="gone"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content" />
         <TextView
             android:id="@+id/marker_username"
             tools:text="kanoong"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/marker_request_location"
             android:layout_marginTop="8dp"
             android:layout_marginStart="8dp"
             android:layout_width="wrap_content"

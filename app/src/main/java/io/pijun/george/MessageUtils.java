@@ -5,6 +5,7 @@ import android.support.annotation.IntDef;
 import android.support.annotation.NonNull;
 import android.support.annotation.WorkerThread;
 import android.text.TextUtils;
+import android.text.format.DateUtils;
 
 import com.google.firebase.crash.FirebaseCrash;
 
@@ -149,20 +150,36 @@ public class MessageUtils {
 
         // only perform the update if it's been more than 3 minutes since the last one
         long now = System.currentTimeMillis();
-//        if (now - updateTime < 3 * DateUtils.MINUTE_IN_MILLIS) {
-//            L.i("\talready provided an update at " + updateTime + ". It's " + now + " now");
-//            UserComm tooSoon = UserComm.newLocationUpdateRequestReceived(UserComm.LOCATION_UPDATE_REQUEST_ACTION_TOO_SOON);
-//            String errMsg = OscarClient.queueSendMessage(context, userRecord, tooSoon, true, true);
-//            if (errMsg != null) {
-//                L.w(errMsg);
-//            }
-//            return ERROR_NONE;
-//        }
+        if (now - updateTime < 3 * DateUtils.MINUTE_IN_MILLIS) {
+            L.i("\talready provided an update at " + updateTime + ". It's " + now + " now");
+            UserComm tooSoon = UserComm.newLocationUpdateRequestReceived(UserComm.LOCATION_UPDATE_REQUEST_ACTION_TOO_SOON);
+            String errMsg = OscarClient.queueSendMessage(context, userRecord, tooSoon, true, true);
+            if (errMsg != null) {
+                L.w(errMsg);
+            }
+            return ERROR_NONE;
+        }
 
-        L.i("\tok, provide a location update");
-        new LocationUpdateRequestHandler(context, null);
+        new LocationUpdateRequestHandler(context, new LocationUpdateRequestHandler.Listener() {
+            @Override
+            public void locationUpdateRequestHandlerFinished() {
+                UserComm done = UserComm.newLocationUpdateRequestReceived(UserComm.LOCATION_UPDATE_REQUEST_ACTION_FINISHED);
+
+                App.runInBackground(new WorkerRunnable() {
+                    @Override
+                    public void run() {
+                        L.i("Queueing 'location_update_request_action_finished' to " + userRecord.username);
+                        String errMsg = OscarClient.queueSendMessage(context, userRecord, done, true, true);
+                        if (errMsg != null) {
+                            L.w(errMsg);
+                        }
+                    }
+                });
+
+            }
+        });
         UserComm started = UserComm.newLocationUpdateRequestReceived(UserComm.LOCATION_UPDATE_REQUEST_ACTION_STARTING);
-        String errMsg = OscarClient.queueSendMessage(context, userRecord, started, true, false);
+        String errMsg = OscarClient.queueSendMessage(context, userRecord, started, true, true);
         if (errMsg != null) {
             L.w(errMsg);
         }

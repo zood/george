@@ -42,11 +42,13 @@ public class UserComm {
     @Retention(SOURCE)
     @StringDef({
             LOCATION_UPDATE_REQUEST_ACTION_TOO_SOON,
-            LOCATION_UPDATE_REQUEST_ACTION_STARTING
+            LOCATION_UPDATE_REQUEST_ACTION_STARTING,
+            LOCATION_UPDATE_REQUEST_ACTION_FINISHED
     })
     public @interface LocationUpdateRequestAction {}
     public static final String LOCATION_UPDATE_REQUEST_ACTION_TOO_SOON = "too_soon";
     public static final String LOCATION_UPDATE_REQUEST_ACTION_STARTING = "starting";
+    public static final String LOCATION_UPDATE_REQUEST_ACTION_FINISHED = "finished";
 
     private UserComm() {}
 
@@ -167,7 +169,8 @@ public class UserComm {
                     return false;
                 }
                 if (!locationUpdateRequestAction.equals(LOCATION_UPDATE_REQUEST_ACTION_STARTING) &&
-                        !locationUpdateRequestAction.equals(LOCATION_UPDATE_REQUEST_ACTION_TOO_SOON)) {
+                        !locationUpdateRequestAction.equals(LOCATION_UPDATE_REQUEST_ACTION_TOO_SOON) &&
+                        !locationUpdateRequestAction.equals(LOCATION_UPDATE_REQUEST_ACTION_FINISHED)) {
                     return false;
                 }
                 return true;

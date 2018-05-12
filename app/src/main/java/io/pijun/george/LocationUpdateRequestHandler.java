@@ -22,7 +22,6 @@ import com.google.firebase.crash.FirebaseCrash;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.concurrent.ConcurrentHashMap;
@@ -36,7 +35,6 @@ import io.pijun.george.crypto.EncryptedData;
 import io.pijun.george.crypto.KeyPair;
 import io.pijun.george.database.DB;
 import io.pijun.george.database.FriendRecord;
-import io.pijun.george.database.UserRecord;
 import io.pijun.george.service.ActivityTransitionHandler;
 import retrofit2.Response;
 
@@ -56,11 +54,12 @@ public class LocationUpdateRequestHandler {
     private final LinkedBlockingQueue<String> cmdsQueue = new LinkedBlockingQueue<>();
     private HandlerThread thread;
     private PowerManager.WakeLock wakeLock;
-    private ShutDownListener listener;
+    private Listener listener;
     @SuppressWarnings("MismatchedQueryAndUpdateOfCollection")
     private static ConcurrentHashMap<LocationUpdateRequestHandler, Boolean> activeHandlers = new ConcurrentHashMap<>();
 
-    public LocationUpdateRequestHandler(@NonNull Context context, @Nullable ShutDownListener l) {
+    @AnyThread
+    public LocationUpdateRequestHandler(@NonNull Context context, @Nullable Listener l) {
         this.context = context;
         this.listener = l;
         start();
@@ -71,8 +70,19 @@ public class LocationUpdateRequestHandler {
         cmdsQueue.add(cmd);
     }
 
+    private void notifyListener() {
+        if (listener != null) {
+            try {
+                listener.locationUpdateRequestHandlerFinished();
+            } catch (Throwable t) {
+                FirebaseCrash.report(t);
+            }
+        }
+    }
+
     @WorkerThread
     private void run() {
+        L.i("LURH.run()");
         activeHandlers.put(this, true);
         try {
             String cmd;
@@ -85,7 +95,6 @@ public class LocationUpdateRequestHandler {
                     continue;
                 }
 
-                L.i("took command "+cmd);
                 switch (cmd) {
                     case COMMAND_SHUT_DOWN:
                         L.i("cmd - shut down");
@@ -111,24 +120,19 @@ public class LocationUpdateRequestHandler {
         if (client != null) {
             client.removeLocationUpdates(mLocationCallbackHelper);
         }
+        notifyListener();
         try {
             wakeLock.release();
         } catch (Throwable ignore) {}
         try {
             thread.quitSafely();
         } catch (Throwable ignore) {}
-
-        if (listener != null) {
-            listener.locationUpdateRequestHandlerFinished();
-        }
     }
 
     @AnyThread
     private void start() {
         if (ContextCompat.checkSelfPermission(context, android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-            if (listener != null) {
-                listener.locationUpdateRequestHandlerFinished();
-            }
+            notifyListener();
             return;
         }
 
@@ -137,7 +141,7 @@ public class LocationUpdateRequestHandler {
         request.setInterval(DateUtils.SECOND_IN_MILLIS);
         request.setFastestInterval(DateUtils.SECOND_IN_MILLIS);
         request.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
-        thread = new HandlerThread(LocationUpdateRequestHandler.class.getSimpleName() + "_" + HANDLER_COUNT++);
+        thread = new HandlerThread("LocationUpdateRequestHandler_" + HANDLER_COUNT++);
         thread.start();
         Task<Void> task = client.requestLocationUpdates(request, mLocationCallbackHelper, thread.getLooper());
         if (!task.isSuccessful()) {
@@ -152,6 +156,7 @@ public class LocationUpdateRequestHandler {
         PowerManager pwrMgr = (PowerManager) context.getSystemService(Context.POWER_SERVICE);
         if (pwrMgr != null) {
             wakeLock = pwrMgr.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "LocationUpdateRequestHandlerLock");
+            wakeLock.setReferenceCounted(false);
             wakeLock.acquire(LOCK_SECONDS * DateUtils.SECOND_IN_MILLIS);
         }
 
@@ -176,6 +181,7 @@ public class LocationUpdateRequestHandler {
         });
     }
 
+    @WorkerThread
     private void uploadLatestLocation() {
         LinkedList<Location> locations = new LinkedList<>();
         locationsQueue.drainTo(locations);
@@ -245,7 +251,7 @@ public class LocationUpdateRequestHandler {
         }
     };
 
-    public interface ShutDownListener {
+    public interface Listener {
         @AnyThread
         void locationUpdateRequestHandlerFinished();
     }

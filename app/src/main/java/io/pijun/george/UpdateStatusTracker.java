@@ -78,6 +78,8 @@ public class UpdateStatusTracker {
 
         if (resp.action.equals(UserComm.LOCATION_UPDATE_REQUEST_ACTION_STARTING)) {
             return State.RequestAcknowledged;
+        } else if (resp.action.equals(UserComm.LOCATION_UPDATE_REQUEST_ACTION_FINISHED)) {
+            return State.RequestFulfilled;
         }
         if (!resp.action.equals(UserComm.LOCATION_UPDATE_REQUEST_ACTION_TOO_SOON)) {
             L.i("Returning friendstate denied, but response action is " + resp.action);

@@ -17,7 +17,7 @@ import io.pijun.george.AuthenticationManager;
 import io.pijun.george.L;
 import io.pijun.george.LocationUpdateRequestHandler;
 
-public class LocationJobService extends JobService implements LocationUpdateRequestHandler.ShutDownListener {
+public class LocationJobService extends JobService implements LocationUpdateRequestHandler.Listener {
 
     public static final int JOB_ID = 4319; // made up number
 

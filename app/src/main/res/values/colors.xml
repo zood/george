@@ -1,9 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!--<color name="colorPrimary">#009688</color> &lt;!&ndash; teal &ndash;&gt;-->
-    <!--<color name="colorPrimaryDark">#00796b</color>-->
-    <!--<color name="colorAccent">#64ffda</color>-->
-
     <color name="colorPrimary">#34cc54</color> <!-- teal -->
     <color name="colorPrimaryDark">#2ebd46</color>
     <color name="colorAccent">#32b6f4</color>
@@ -17,4 +13,6 @@
     <color name="shade">#A0000000</color>
     <color name="error_circle_fill">#3032b6f4</color>
     <color name="drawer_gradient_end">#8fe163</color>
+    <color name="amber">#ffc107</color>
+    <color name="red">#ffff0000</color>
 </resources>

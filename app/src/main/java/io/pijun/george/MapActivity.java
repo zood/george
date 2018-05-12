@@ -9,7 +9,6 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentSender;
 import android.content.pm.PackageManager;
-import android.content.res.ColorStateList;
 import android.databinding.DataBindingUtil;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
@@ -18,6 +17,7 @@ import android.location.Location;
 import android.os.Bundle;
 import android.os.Looper;
 import android.support.annotation.AnyThread;
+import android.support.annotation.ColorRes;
 import android.support.annotation.Keep;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
@@ -26,6 +26,7 @@ import android.support.annotation.WorkerThread;
 import android.support.constraint.ConstraintLayout;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
+import android.support.v4.graphics.drawable.DrawableCompat;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.text.TextUtils;
@@ -120,6 +121,7 @@ public final class MapActivity extends AppCompatActivity implements OnMapReadyCa
     private Marker mMeMarker;
     private Circle mMyCircle;
     private long friendForCameraToTrack = -1;
+    private long selectedAvatarFriendId = -1;
     private EditText mUsernameField;
     private Circle mCurrentCircle;
     private WeakReference<FriendsSheetFragment> mFriendsSheet;
@@ -127,6 +129,7 @@ public final class MapActivity extends AppCompatActivity implements OnMapReadyCa
     private float mUiHiddenOffset;
     private GestureDetector mGestureDetector;
     private DrawerActionRecognizer mDrawerActionRecognizer;
+    private boolean requestLocationOnStart = true;
 
     public static Intent newIntent(Context ctx) {
         return new Intent(ctx, MapActivity.class);
@@ -183,6 +186,12 @@ public final class MapActivity extends AppCompatActivity implements OnMapReadyCa
             myLocFab.setSelected(true);
             friendForCameraToTrack = 0;
             flyCameraToMyLocation();
+
+            // if we're showing the avatar info, hide it
+            selectedAvatarFriendId = -1;
+            if (binding != null) {
+                binding.markerDetails.setVisibility(View.GONE);
+            }
         });
 
         mLocationProviderClient = LocationServices.getFusedLocationProviderClient(this);
@@ -208,6 +217,35 @@ public final class MapActivity extends AppCompatActivity implements OnMapReadyCa
         });
     }
 
+    public void onRequestLocation(View v) {
+        L.i("onRequestLocation " + selectedAvatarFriendId + " (manual)");
+        if (selectedAvatarFriendId < 1) {
+            return;
+        }
+        long friendId = selectedAvatarFriendId;
+        App.runInBackground(new WorkerRunnable() {
+            @Override
+            public void run() {
+                FriendRecord friend = DB.get(MapActivity.this).getFriendById(friendId);
+                if (friend == null) {
+                    L.w("no friend found with id " + friendId);
+                    return;
+                }
+                if (friend.receivingBoxId == null) {
+                    L.w(friend.user.username + " doesn't share their location with us");
+                    return;
+                }
+                L.i("requesting location from " + friend.user.username);
+                UserComm comm = UserComm.newLocationUpdateRequest();
+                UpdateStatusTracker.setLastRequestTime(friendId, System.currentTimeMillis());
+                String errMsg = OscarClient.queueSendMessage(MapActivity.this, friend.user, comm, true, true);
+                if (errMsg != null) {
+                    L.w("manual location request failed: " + errMsg);
+                }
+            }
+        });
+    }
+
     @Override
     @UiThread
     protected void onStart() {
@@ -218,7 +256,6 @@ public final class MapActivity extends AppCompatActivity implements OnMapReadyCa
         App.registerOnBus(this);
         mMapView.onStart();
         UpdateStatusTracker.addListener(updateStatusTrackerListener);
-
         App.runInBackground(new WorkerRunnable() {
             @Override
             public void run() {
@@ -241,21 +278,25 @@ public final class MapActivity extends AppCompatActivity implements OnMapReadyCa
                     }
                 }
 
-                // Request a location update from any friend that hasn't given us an update for
-                // 3 minutes
-                long now = System.currentTimeMillis();
-                UserComm comm = UserComm.newLocationUpdateRequest();
-                for (FriendRecord fr : friends) {
-                    // check if this friend shares location with us
-                    if (fr.receivingBoxId == null) {
-                        continue;
-                    }
-                    FriendLocation loc = DB.get(MapActivity.this).getFriendLocation(fr.id);
-                    if (loc == null || (now-loc.time) > 180 * DateUtils.SECOND_IN_MILLIS) {
-                        UpdateStatusTracker.setLastRequestTime(fr.id, System.currentTimeMillis());
-                        String errMsg = OscarClient.queueSendMessage(MapActivity.this, fr.user, comm, true, true);
-                        if (errMsg != null) {
-                            L.w("failed to queue location_update_request: " + errMsg);
+                if (requestLocationOnStart) {
+                    // Request a location update from any friend that hasn't given us an update for
+                    // 3 minutes
+                    long now = System.currentTimeMillis();
+                    UserComm comm = UserComm.newLocationUpdateRequest();
+                    final float DELAY = 1;
+                    for (FriendRecord fr : friends) {
+                        // check if this friend shares location with us
+                        if (fr.receivingBoxId == null) {
+                            continue;
+                        }
+                        FriendLocation loc = DB.get(MapActivity.this).getFriendLocation(fr.id);
+                        if (loc == null || (now - loc.time) > DELAY * DateUtils.SECOND_IN_MILLIS) {
+                            UpdateStatusTracker.setLastRequestTime(fr.id, System.currentTimeMillis());
+                            L.i("queue location request");
+                            String errMsg = OscarClient.queueSendMessage(MapActivity.this, fr.user, comm, true, true);
+                            if (errMsg != null) {
+                                L.w("failed to queue location_update_request: " + errMsg);
+                            }
                         }
                     }
                 }
@@ -656,7 +697,7 @@ public final class MapActivity extends AppCompatActivity implements OnMapReadyCa
     @Keep
     @UiThread
     public void onFriendLocationUpdated(final FriendLocation loc) {
-        if (friendForCameraToTrack == loc.friendId) {
+        if (selectedAvatarFriendId == loc.friendId) {
             setAvatarInfo(loc);
         }
         // check if we already have a marker for this friend
@@ -793,6 +834,7 @@ public final class MapActivity extends AppCompatActivity implements OnMapReadyCa
         binding.markerUsername.setText(fr.user.username);
 
         friendForCameraToTrack = fr.id;
+        selectedAvatarFriendId = fr.id;
         findViewById(R.id.my_location_fab).setSelected(false);
         CameraPosition cp = new CameraPosition.Builder()
                 .target(marker.getPosition())
@@ -882,6 +924,8 @@ public final class MapActivity extends AppCompatActivity implements OnMapReadyCa
         binding.markerTime.setText(relTime);
 
         binding.markerDetails.setTag(loc);
+
+        updateStatusTrackerListener.onUpdateStatusChanged(loc.friendId);
 
         if (loc.bearing != null) {
             binding.markerDirection.setVisibility(View.VISIBLE);
@@ -1229,32 +1273,33 @@ public final class MapActivity extends AppCompatActivity implements OnMapReadyCa
     private UpdateStatusTracker.Listener updateStatusTrackerListener = new UpdateStatusTracker.Listener() {
         @Override
         public void onUpdateStatusChanged(long friendId) {
-            if (friendId != friendForCameraToTrack || binding == null) {
+            L.i("updatestatuschanged - friendId: " + friendId + ", trackingId: " + selectedAvatarFriendId);
+            if (friendId != selectedAvatarFriendId || binding == null) {
                 return;
             }
             UpdateStatusTracker.State status = UpdateStatusTracker.getFriendState(friendId);
+            L.i("updatestatuschanged " + friendId + ", state: " + status);
             int vis;
-            ColorStateList color = null;
-//            binding.markerProgressBar.settint
+            @ColorRes int colorId = 0;
             switch (status) {
                 case NotRequested:
                     vis = View.GONE;
                     break;
                 case Requested:
                     vis = View.VISIBLE;
-                    color = ContextCompat.getColorStateList(MapActivity.this, R.color.csl_amber);
+                    colorId = R.color.colorPrimary;
                     break;
                 case RequestedAndUnresponsive:
                     vis = View.VISIBLE;
-                    color = ContextCompat.getColorStateList(MapActivity.this, R.color.csl_gray);
+                    colorId = R.color.common_gray;
                     break;
                 case RequestDenied:
                     vis = View.VISIBLE;
-                    color = ContextCompat.getColorStateList(MapActivity.this, R.color.csl_red);
+                    colorId = R.color.red;
                     break;
                 case RequestAcknowledged:
                     vis = View.VISIBLE;
-                    color = ContextCompat.getColorStateList(MapActivity.this, R.color.csl_primary);
+                    colorId = R.color.colorAccent;
                     break;
                 case RequestFulfilled:
                     vis = View.GONE;
@@ -1263,7 +1308,10 @@ public final class MapActivity extends AppCompatActivity implements OnMapReadyCa
                     vis = View.GONE;
                     break;
             }
-            binding.markerProgressBar.setIndeterminateTintList(color);
+            if (colorId != 0) {
+                DrawableCompat.setTint(binding.markerProgressBar.getIndeterminateDrawable(),
+                        ContextCompat.getColor(MapActivity.this, colorId));
+            }
             binding.markerProgressBar.setVisibility(vis);
         }
     };
