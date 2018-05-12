@@ -55,6 +55,7 @@ public class LocationUpdateRequestHandler {
     private HandlerThread thread;
     private PowerManager.WakeLock wakeLock;
     private Listener listener;
+    // We put handlers in this map, so they don't get GC'ed
     @SuppressWarnings("MismatchedQueryAndUpdateOfCollection")
     private static ConcurrentHashMap<LocationUpdateRequestHandler, Boolean> activeHandlers = new ConcurrentHashMap<>();
 

@@ -30,6 +30,7 @@ import io.pijun.george.database.FriendRecord;
 import io.pijun.george.database.Snapshot;
 import io.pijun.george.service.FcmTokenRegistrar;
 import io.pijun.george.service.LocationJobService;
+import io.pijun.george.service.PassiveLocationService;
 import retrofit2.Response;
 
 public class AuthenticationManager {
@@ -280,6 +281,7 @@ public class AuthenticationManager {
 
         // schedule periodic location updates
         LocationJobService.scheduleLocationJobService(ctx);
+        PassiveLocationService.register(ctx);
     }
 
     @AnyThread
@@ -292,6 +294,7 @@ public class AuthenticationManager {
                 Prefs.get(ctx).clearAll();
                 DB.get(ctx).deleteUserData();
                 LocationJobService.cancelLocationJobService(ctx);
+                PassiveLocationService.unregister(ctx);
 
                 App.runOnUiThread(new UiRunnable() {
                     @Override

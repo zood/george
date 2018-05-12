@@ -15,6 +15,7 @@ import java.util.concurrent.Executors;
 import io.pijun.george.api.TaskSender;
 import io.pijun.george.service.ActivityTransitionHandler;
 import io.pijun.george.service.LocationJobService;
+import io.pijun.george.service.PassiveLocationService;
 
 public class App extends Application {
 
@@ -40,13 +41,15 @@ public class App extends Application {
 
         registerOnBus(LocationUploader.get());
         TaskSender.get().start(this);
-        // perform this in the background because loading Prefs will hit the disk
+        // perform this in the background because querying the AuthenticationManager the first time
+        // will load the Prefs from disk
         runInBackground(new WorkerRunnable() {
             @Override
             public void run() {
                 if (AuthenticationManager.isLoggedIn(App.this)) {
                     ActivityTransitionHandler.requestUpdates(App.this);
                     LocationJobService.scheduleLocationJobService(App.this);
+                    PassiveLocationService.register(App.this);
                 }
             }
         });

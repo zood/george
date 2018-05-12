@@ -74,6 +74,7 @@
         <service android:name=".service.BackupDatabaseJob" android:permission="android.permission.BIND_JOB_SERVICE" />
         <service android:name=".service.OscarJobService" android:permission="android.permission.BIND_JOB_SERVICE" />
         <service android:name=".service.ActivityTransitionHandler" />
+        <service android:name=".service.PassiveLocationService" />
         <!-- END SERVICES -->
 
         <!-- BEGIN RECEIVERS -->

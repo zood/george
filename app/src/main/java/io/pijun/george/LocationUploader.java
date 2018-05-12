@@ -21,6 +21,7 @@ import io.pijun.george.crypto.KeyPair;
 import io.pijun.george.database.DB;
 import io.pijun.george.database.FriendRecord;
 import io.pijun.george.database.LimitedShare;
+import io.pijun.george.network.Network;
 import io.pijun.george.service.ActivityTransitionHandler;
 import io.pijun.george.service.LimitedShareService;
 
@@ -44,6 +45,10 @@ public class LocationUploader {
         }
 
         Context ctx = App.getApp();
+        if (!Network.isConnected(ctx)) {
+            return;
+        }
+
         Prefs prefs = Prefs.get(ctx);
         String token = prefs.getAccessToken();
         KeyPair keyPair = prefs.getKeyPair();
