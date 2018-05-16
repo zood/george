@@ -29,7 +29,6 @@ import android.widget.Toast;
 
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationCallback;
-import com.google.android.gms.location.LocationListener;
 import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationResult;
 import com.google.android.gms.location.LocationServices;
@@ -39,7 +38,6 @@ import java.security.SecureRandom;
 
 import io.pijun.george.App;
 import io.pijun.george.Constants;
-import io.pijun.george.database.DB;
 import io.pijun.george.Hex;
 import io.pijun.george.L;
 import io.pijun.george.Prefs;
@@ -47,8 +45,9 @@ import io.pijun.george.R;
 import io.pijun.george.Sodium;
 import io.pijun.george.WorkerRunnable;
 import io.pijun.george.crypto.KeyPair;
+import io.pijun.george.database.DB;
 
-public class LimitedShareService extends Service implements LocationListener {
+public class LimitedShareService extends Service /* implements LocationListener */ {
 
     private static final String ARG_SERVICE_ACTION = "service_action";
     private static final int NOTIFICATION_ID = 22;  // arbitrary number
@@ -57,8 +56,8 @@ public class LimitedShareService extends Service implements LocationListener {
     public static final String ACTION_COPY_LINK = "copy_link";
     public static final String LIMITED_SHARE_CHANNEL_ID = "limited_share_01";
     /**
-     * IsRunning is checked by LocationUploadService. In the event that the process is cleaned
-     * up without notice, the record of this limited share will still exist in the database
+     * IsRunning is checked by LocationUploader. In the event that the process is cleaned
+     * up without notice, the record of this limited share would still exist in the database
      * when the app comes back, and location data will continue to be shared with the limited share.
      * That's bad, so LocationUploader checks this to see if the service is actually running,
      * and if it's not, it will wipe the limited share data from the db.
@@ -73,7 +72,7 @@ public class LimitedShareService extends Service implements LocationListener {
     private static Looper sServiceLooper;
     private static Handler sServiceHandler;
     static {
-        HandlerThread thread = new HandlerThread(LimitedShareService.class.getSimpleName());
+        HandlerThread thread = new HandlerThread("LimitedShareService");
         thread.start();
 
         sServiceLooper = thread.getLooper();
@@ -260,7 +259,7 @@ public class LimitedShareService extends Service implements LocationListener {
         LimitedShareService.IsRunning = true;
 
         mLocationProviderClient = LocationServices.getFusedLocationProviderClient(this);
-        LocationRequest request = new LocationRequest();
+        LocationRequest request = LocationRequest.create();
         request.setInterval(30 * DateUtils.SECOND_IN_MILLIS);
         request.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
         mLocationProviderClient.requestLocationUpdates(request, mLocationCallbackHelper, sServiceLooper);
@@ -293,13 +292,6 @@ public class LimitedShareService extends Service implements LocationListener {
 
         if (userStopped) {
             stopSelf();
-        }
-    }
-
-    @Override
-    public void onLocationChanged(Location location) {
-        if (location != null) {
-            App.postOnBus(location);
         }
     }
 

@@ -4,6 +4,7 @@ import android.content.Context;
 import android.support.annotation.IntDef;
 import android.support.annotation.NonNull;
 import android.support.annotation.WorkerThread;
+import android.support.v4.content.ContextCompat;
 import android.text.TextUtils;
 import android.text.format.DateUtils;
 
@@ -25,6 +26,7 @@ import io.pijun.george.event.LocationSharingRevoked;
 import io.pijun.george.database.FriendLocation;
 import io.pijun.george.database.FriendRecord;
 import io.pijun.george.database.UserRecord;
+import io.pijun.george.service.PositionService;
 import retrofit2.Response;
 
 public class MessageUtils {
@@ -148,10 +150,11 @@ public class MessageUtils {
             return ERROR_NONE;
         }
 
-        // only perform the update if it's been more than 3 minutes since the last one
-        long now = System.currentTimeMillis();
-        if (now - updateTime < 3 * DateUtils.MINUTE_IN_MILLIS) {
-            L.i("\talready provided an update at " + updateTime + ". It's " + now + " now");
+        // Only perform the update if it's been more than 3 minutes since the last one
+        // and the app isn't in the foreground
+        long timeSinceUpdate = System.currentTimeMillis() - updateTime;
+        if (!App.isInForeground && timeSinceUpdate < 3 * DateUtils.MINUTE_IN_MILLIS) {
+            L.i("\talready provided an update at " + updateTime);
             UserComm tooSoon = UserComm.newLocationUpdateRequestReceived(UserComm.LOCATION_UPDATE_REQUEST_ACTION_TOO_SOON);
             String errMsg = OscarClient.queueSendMessage(context, userRecord, tooSoon, true, true);
             if (errMsg != null) {
@@ -160,22 +163,23 @@ public class MessageUtils {
             return ERROR_NONE;
         }
 
-        new LocationUpdateRequestHandler(context, new LocationUpdateRequestHandler.Listener() {
+        L.i("MU attempting to start the position service");
+        ContextCompat.startForegroundService(context, PositionService.newIntent(context));
+        App.runInBackground(new WorkerRunnable() {
             @Override
-            public void locationUpdateRequestHandlerFinished() {
+            public void run() {
+                long maxWait = PositionService.MAX_WAIT_SECONDS * DateUtils.SECOND_IN_MILLIS;
+                try {
+                    PositionService.class.wait(maxWait);
+                } catch (InterruptedException ie) {
+                    L.w("Interrupted waiting for PositionService", ie);
+                }
                 UserComm done = UserComm.newLocationUpdateRequestReceived(UserComm.LOCATION_UPDATE_REQUEST_ACTION_FINISHED);
-
-                App.runInBackground(new WorkerRunnable() {
-                    @Override
-                    public void run() {
-                        L.i("Queueing 'location_update_request_action_finished' to " + userRecord.username);
-                        String errMsg = OscarClient.queueSendMessage(context, userRecord, done, true, true);
-                        if (errMsg != null) {
-                            L.w(errMsg);
-                        }
-                    }
-                });
-
+                L.i("Queueing 'location_update_request_action_finished' to " + userRecord.username);
+                String errMsg = OscarClient.queueSendMessage(context, userRecord, done, true, true);
+                if (errMsg != null) {
+                    L.w(errMsg);
+                }
             }
         });
         UserComm started = UserComm.newLocationUpdateRequestReceived(UserComm.LOCATION_UPDATE_REQUEST_ACTION_STARTING);

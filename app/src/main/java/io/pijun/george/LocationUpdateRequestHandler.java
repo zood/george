@@ -20,23 +20,9 @@ import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.crash.FirebaseCrash;
 
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.LinkedBlockingQueue;
-
-import io.pijun.george.api.OscarAPI;
-import io.pijun.george.api.OscarClient;
-import io.pijun.george.api.OscarError;
-import io.pijun.george.api.UserComm;
-import io.pijun.george.crypto.EncryptedData;
-import io.pijun.george.crypto.KeyPair;
-import io.pijun.george.database.DB;
-import io.pijun.george.database.FriendRecord;
-import io.pijun.george.service.ActivityTransitionHandler;
-import retrofit2.Response;
 
 public class LocationUpdateRequestHandler {
 
@@ -191,38 +177,9 @@ public class LocationUpdateRequestHandler {
         }
         Location l = locations.getLast();
 
-        Prefs prefs = Prefs.get(context);
-        String token = prefs.getAccessToken();
-        KeyPair keyPair = prefs.getKeyPair();
-        if (token == null || keyPair == null) {
-            L.i("LURH.flush: token or keypair was null, so skipping upload");
-            return;
-        }
-
-        UserComm locMsg = UserComm.newLocationInfo(l, ActivityTransitionHandler.getCurrentMovement());
-        byte[] msgBytes = locMsg.toJSON();
-        // share to our friends
-        ArrayList<FriendRecord> friends = DB.get(context).getFriendsToShareWith();
-        HashMap<String, EncryptedData> pkgs = new HashMap<>(friends.size());
-        for (FriendRecord f : friends) {
-            EncryptedData encMsg = Sodium.publicKeyEncrypt(msgBytes, f.user.publicKey, keyPair.secretKey);
-            if (encMsg == null) {
-                L.w("LURH encryption failed for " + f.user.username);
-                continue;
-            }
-            pkgs.put(Hex.toHexString(f.sendingBoxId), encMsg);
-        }
-        if (pkgs.size() > 0) {
-            OscarAPI api = OscarClient.newInstance(token);
-            try {
-                Response<Void> response = api.dropMultiplePackages(pkgs).execute();
-                if (!response.isSuccessful()) {
-                    OscarError err = OscarError.fromResponse(response);
-                    L.i("LURH error uploading location: " + err);
-                }
-            } catch (IOException ex) {
-                L.w("LURH network problem uploading location from LURH", ex);
-            }
+        boolean success = LocationUtils.upload(context, l, true);
+        if (!success) {
+            L.w("LURH failed to upload location");
         }
     }
 

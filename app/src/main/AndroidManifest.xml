@@ -75,6 +75,7 @@
         <service android:name=".service.OscarJobService" android:permission="android.permission.BIND_JOB_SERVICE" />
         <service android:name=".service.ActivityTransitionHandler" />
         <service android:name=".service.PassiveLocationService" />
+        <service android:name=".service.PositionService" />
         <!-- END SERVICES -->
 
         <!-- BEGIN RECEIVERS -->

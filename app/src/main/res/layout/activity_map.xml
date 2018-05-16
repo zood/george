@@ -164,7 +164,7 @@
             android:id="@+id/marker_request_location"
             android:text="Request Location"
             android:onClick="onRequestLocation"
-            android:visibility="gone"
+            android:visibility="visible"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent"
             android:layout_width="wrap_content"

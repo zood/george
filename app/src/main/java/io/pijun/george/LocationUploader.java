@@ -10,20 +10,7 @@ import android.support.annotation.WorkerThread;
 
 import com.squareup.otto.Subscribe;
 
-import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.concurrent.LinkedBlockingQueue;
-
-import io.pijun.george.api.OscarClient;
-import io.pijun.george.api.UserComm;
-import io.pijun.george.crypto.EncryptedData;
-import io.pijun.george.crypto.KeyPair;
-import io.pijun.george.database.DB;
-import io.pijun.george.database.FriendRecord;
-import io.pijun.george.database.LimitedShare;
-import io.pijun.george.network.Network;
-import io.pijun.george.service.ActivityTransitionHandler;
-import io.pijun.george.service.LimitedShareService;
 
 public class LocationUploader {
 
@@ -45,15 +32,7 @@ public class LocationUploader {
         }
 
         Context ctx = App.getApp();
-        if (!Network.isConnected(ctx)) {
-            return;
-        }
-
-        Prefs prefs = Prefs.get(ctx);
-        String token = prefs.getAccessToken();
-        KeyPair keyPair = prefs.getKeyPair();
-        if (token == null || keyPair == null) {
-            L.i("LU.flush: token or keypair was null, so skipping upload");
+        if (!AuthenticationManager.isLoggedIn(ctx)) {
             mLocations.clear();
             return;
         }
@@ -63,39 +42,8 @@ public class LocationUploader {
             // another call to flush could have raced us to the last location
             return;
         }
-        UserComm locMsg = UserComm.newLocationInfo(location, ActivityTransitionHandler.getCurrentMovement());
-        byte[] msgBytes = locMsg.toJSON();
-        // share to our friends
-        ArrayList<FriendRecord> friends = DB.get(ctx).getFriendsToShareWith();
-        HashMap<String, EncryptedData> pkgs = new HashMap<>(friends.size());
-        for (FriendRecord f : friends) {
-            EncryptedData encMsg = Sodium.publicKeyEncrypt(msgBytes, f.user.publicKey, keyPair.secretKey);
-            if (encMsg == null) {
-                L.w("LU.flush encryption failed for " + f.user.username);
-                continue;
-            }
-            pkgs.put(Hex.toHexString(f.sendingBoxId), encMsg);
-        }
-        LimitedShare ls = DB.get(ctx).getLimitedShare();
-        if (ls != null) {
-            L.i("LU.flush: to limited share");
-            if (LimitedShareService.IsRunning) {
-                EncryptedData encMsg = Sodium.publicKeyEncrypt(msgBytes, ls.publicKey, keyPair.secretKey);
-                if (encMsg != null) {
-                    pkgs.put(Hex.toHexString(ls.sendingBoxId), encMsg);
-                } else {
-                    L.w("LU.flush: limited share encryption failed");
-                }
-            } else {
-                L.i("LU.flush: oops. the limited share isn't running. we'll delete it.");
-                DB.get(ctx).deleteLimitedShares();
-            }
-        }
-        if (pkgs.size() > 0) {
-            OscarClient.queueDropMultiplePackages(ctx, token, pkgs);
-            Prefs.get(ctx).setLastLocationUpdateTime(System.currentTimeMillis());
-        }
 
+        LocationUtils.upload(ctx, location, false);
         mLocations.clear();
     }
 

@@ -59,16 +59,16 @@ dependencies {
     implementation 'com.android.support:appcompat-v7:27.1.1'
     implementation 'com.android.support:design:27.1.1'
     implementation 'com.android.support:percent:27.1.1'
-    implementation 'com.android.support.constraint:constraint-layout:1.1.0-beta6'
+    implementation 'com.android.support.constraint:constraint-layout:1.1.0'
 
     // used for fusion location
-    implementation 'com.google.android.gms:play-services-location:12.0.1'
+    implementation 'com.google.android.gms:play-services-location:15.0.1'
     // used for Google maps view
-    implementation 'com.google.android.gms:play-services-maps:12.0.1'
+    implementation 'com.google.android.gms:play-services-maps:15.0.1'
     // cloud messaging
-    implementation 'com.google.firebase:firebase-messaging:12.0.1'
+    implementation 'com.google.firebase:firebase-messaging:15.0.2'
     // crash reports
-    implementation 'com.google.firebase:firebase-crash:12.0.1'
+    implementation 'com.google.firebase:firebase-crash:15.0.2'
 
     implementation 'com.squareup.retrofit2:retrofit:2.3.0'
     implementation 'com.squareup.retrofit2:converter-gson:2.3.0'
@@ -77,8 +77,10 @@ dependencies {
     implementation 'com.squareup:otto:1.3.8'
     implementation 'com.squareup.picasso:picasso:2.5.2'
 
+    implementation 'android.arch.work:work-runtime:1.0.0-alpha01'
+
     testImplementation 'junit:junit:4.12'
-    androidTestImplementation 'com.android.support.test.espresso:espresso-core:3.0.1'
+    androidTestImplementation 'com.android.support.test.espresso:espresso-core:3.0.2'
 }
 
 apply plugin: 'com.google.gms.google-services'

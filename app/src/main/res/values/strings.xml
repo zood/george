@@ -90,4 +90,6 @@
     <string name="error_loading_key">Error loading key</string>
     <string name="close_drawer">Close drawer</string>
     <string name="dismiss">Dismiss</string>
+    <string name="finding_location">Finding location</string>
+    <string name="finding_your_location">Finding your location</string>
 </resources>
