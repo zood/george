@@ -10,8 +10,6 @@ import android.support.annotation.AnyThread;
 import android.support.annotation.NonNull;
 import android.text.format.DateUtils;
 
-import com.google.firebase.crash.FirebaseCrash;
-
 import io.pijun.george.App;
 import io.pijun.george.AuthenticationManager;
 import io.pijun.george.L;
@@ -29,7 +27,7 @@ public class LocationJobService extends JobService implements LocationUpdateRequ
         JobScheduler scheduler = (JobScheduler) ctx.getSystemService(Context.JOB_SCHEDULER_SERVICE);
         if (scheduler == null) {
             // should never happen
-            FirebaseCrash.log("JobScheduler was null");
+            L.w("JobScheduler was null");
             return;
         }
         scheduler.cancel(LocationJobService.JOB_ID);
@@ -91,7 +89,7 @@ public class LocationJobService extends JobService implements LocationUpdateRequ
         JobScheduler scheduler = (JobScheduler) ctx.getSystemService(Context.JOB_SCHEDULER_SERVICE);
         if (scheduler == null) {
             // should never happen
-            FirebaseCrash.log("JobScheduler was null");
+            L.w("JobScheduler was null");
             return;
         }
         L.i("Scheduling LocationJobService");

@@ -6,9 +6,7 @@ import android.support.annotation.WorkerThread;
 import android.text.TextUtils;
 import android.text.format.DateUtils;
 import android.util.Base64;
-import android.util.Log;
 
-import com.google.firebase.crash.FirebaseCrash;
 import com.google.firebase.messaging.FirebaseMessagingService;
 import com.google.firebase.messaging.RemoteMessage;
 
@@ -93,7 +91,7 @@ public class FcmMessageReceiver extends FirebaseMessagingService {
             if (response.isSuccessful()) {
                 Message msg = response.body();
                 if (msg == null) {
-                    FirebaseCrash.logcat(Log.ERROR, L.TAG, "unable to decode message from body");
+                    L.w("unable to decode message from body");
                     return;
                 }
                 MessageProcessor.get().queue(msg);

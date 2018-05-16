@@ -8,7 +8,7 @@ import android.support.annotation.Nullable;
 import android.support.annotation.UiThread;
 import android.support.annotation.WorkerThread;
 
-import com.google.firebase.crash.FirebaseCrash;
+import com.crashlytics.android.Crashlytics;
 
 import java.io.IOException;
 import java.lang.ref.WeakReference;
@@ -249,7 +249,7 @@ public class AuthenticationManager {
             try {
                 DB.get(ctx).restoreDatabase(ctx, snapshot);
             } catch (DB.DBException ex) {
-                FirebaseCrash.report(ex);
+                Crashlytics.logException(ex);
                 notifyLoginWatchers(Error.DatabaseRestoreFailed, null, watcher);
                 return;
             }

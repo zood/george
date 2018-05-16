@@ -12,7 +12,7 @@ import android.support.annotation.WorkerThread;
 import android.text.TextUtils;
 import android.text.format.DateUtils;
 
-import com.google.firebase.crash.FirebaseCrash;
+import com.crashlytics.android.Crashlytics;
 
 import java.io.IOException;
 import java.lang.ref.WeakReference;
@@ -74,7 +74,7 @@ public final class TaskSender {
                 try {
                     listener.taskSenderPaused();
                 } catch (Throwable t) {
-                    FirebaseCrash.report(t);
+                    Crashlytics.logException(t);
                 }
             }
         }
@@ -87,7 +87,7 @@ public final class TaskSender {
         Prefs prefs = Prefs.get(ctx);
         PowerManager pwrMgr = (PowerManager) ctx.getSystemService(Context.POWER_SERVICE);
         if (pwrMgr == null) {
-            FirebaseCrash.log("PowerManager is null");
+            Crashlytics.log("PowerManager is null");
             return;
         }
 
@@ -96,7 +96,7 @@ public final class TaskSender {
             try {
                 task = queue.blockingPeek();
             } catch (InterruptedException ex) {
-                FirebaseCrash.report(ex);
+                Crashlytics.logException(ex);
                 L.w("Unable to take task", ex);
                 return;
             }
@@ -152,7 +152,7 @@ public final class TaskSender {
                         queue.take();
                     } catch (InterruptedException ie) {
                         // shouldn't happen
-                        FirebaseCrash.report(ie);
+                        Crashlytics.logException(ie);
                         L.w("take() after successful response interrupted", ie);
                     }
                 } else {
@@ -165,12 +165,12 @@ public final class TaskSender {
                 // a connection problem. we'll try again when the connection is back.
                 return;
             } catch (Throwable t) {
-                FirebaseCrash.report(t);
+                Crashlytics.logException(t);
                 try {
                     queue.take();
                 } catch (InterruptedException ie) {
                     // shouldn't happen
-                    FirebaseCrash.report(ie);
+                    Crashlytics.logException(ie);
                     L.w("take() after failed task execution was interrupted", ie);
                 }
             } finally {
@@ -198,12 +198,12 @@ public final class TaskSender {
                     processQueue(ctx);
                     JobScheduler scheduler = (JobScheduler) ctx.getSystemService(Context.JOB_SCHEDULER_SERVICE);
                     if (scheduler == null) {
-                        FirebaseCrash.log("JobScheduler is null");
+                        Crashlytics.log("JobScheduler is null");
                         return;
                     }
                     scheduler.schedule(OscarJobService.getJobInfo(ctx));
                 } catch (Throwable t) {
-                    FirebaseCrash.report(t);
+                    Crashlytics.logException(t);
                     L.w("Exception processing queue", t);
                 }
             }

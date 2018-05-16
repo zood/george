@@ -18,7 +18,7 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.PopupMenu;
 
-import com.google.firebase.crash.FirebaseCrash;
+import com.crashlytics.android.Crashlytics;
 import com.squareup.picasso.Picasso;
 import com.squareup.picasso.Target;
 
@@ -161,7 +161,7 @@ public class ProfileActivity extends AppCompatActivity {
             }
         } catch (Throwable t) {
             L.w("unable to start camera", t);
-            FirebaseCrash.report(t);
+            Crashlytics.logException(t);
         }
     }
 

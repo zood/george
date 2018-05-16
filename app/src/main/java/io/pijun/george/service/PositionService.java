@@ -20,12 +20,12 @@ import android.support.v4.app.NotificationCompat;
 import android.support.v4.content.ContextCompat;
 import android.text.format.DateUtils;
 
+import com.crashlytics.android.Crashlytics;
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationCallback;
 import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationResult;
 import com.google.android.gms.location.LocationServices;
-import com.google.firebase.crash.FirebaseCrash;
 
 import java.util.LinkedList;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -98,7 +98,7 @@ public class PositionService extends Service {
                     cmd = cmdsQueue.take();
                 } catch (InterruptedException ex) {
                     L.e("Error taking command", ex);
-                    FirebaseCrash.report(ex);
+                    Crashlytics.logException(ex);
                     continue;
                 }
 
@@ -116,7 +116,7 @@ public class PositionService extends Service {
                 }
             }
         } catch (Throwable t) {
-            FirebaseCrash.report(t);
+            Crashlytics.logException(t);
         }
     }
 
@@ -146,10 +146,10 @@ public class PositionService extends Service {
         client.removeLocationUpdates(callback);
 
         try { wakeLock.release(); }
-        catch (Throwable t) {}
+        catch (Throwable ignore) {}
 
         try { thread.quitSafely(); }
-        catch (Throwable t) {}
+        catch (Throwable ignore) {}
 
         stopSelf();
     }
@@ -235,7 +235,7 @@ public class PositionService extends Service {
                 }
             } catch (Throwable t) {
                 L.w("Exception in PS.onLocationResult");
-                FirebaseCrash.report(t);
+                Crashlytics.logException(t);
             }
         }
     };

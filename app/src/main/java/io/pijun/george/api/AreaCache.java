@@ -7,7 +7,7 @@ import android.support.annotation.Nullable;
 import android.support.annotation.UiThread;
 import android.support.annotation.WorkerThread;
 
-import com.google.firebase.crash.FirebaseCrash;
+import com.crashlytics.android.Crashlytics;
 
 import java.io.IOException;
 import java.util.concurrent.ConcurrentHashMap;
@@ -59,11 +59,11 @@ public class AreaCache {
             notifyListeners(ll, null);
         } catch (Throwable t) {
             if (str == null) {
-                FirebaseCrash.log("the string was null, so you're on your own");
-                FirebaseCrash.report(t);
+                L.w("the string was null, so you're on your own");
+                Crashlytics.logException(t);
             } else {
-                FirebaseCrash.log("the string was: " + str);
-                FirebaseCrash.report(t);
+                L.w("the string was: " + str);
+                Crashlytics.logException(t);
             }
             notifyListeners(ll, null);
         } finally {

@@ -27,12 +27,12 @@ import android.support.v4.content.ContextCompat;
 import android.text.format.DateUtils;
 import android.widget.Toast;
 
+import com.crashlytics.android.Crashlytics;
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationCallback;
 import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationResult;
 import com.google.android.gms.location.LocationServices;
-import com.google.firebase.crash.FirebaseCrash;
 
 import java.security.SecureRandom;
 
@@ -251,7 +251,7 @@ public class LimitedShareService extends Service /* implements LocationListener 
             DB.get(this).addLimitedShare(mKeyPair.publicKey, mSendingBoxId);
         } catch (DB.DBException dbe) {
             L.e("Unable to add limited share to db", dbe);
-            FirebaseCrash.report(dbe);
+            Crashlytics.logException(dbe);
             // TODO: handle this
             return;
         }

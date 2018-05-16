@@ -38,6 +38,7 @@ import android.view.ViewTreeObserver;
 import android.widget.EditText;
 import android.widget.Toast;
 
+import com.crashlytics.android.Crashlytics;
 import com.google.android.gms.common.api.ApiException;
 import com.google.android.gms.common.api.ResolvableApiException;
 import com.google.android.gms.location.FusedLocationProviderClient;
@@ -61,7 +62,6 @@ import com.google.android.gms.maps.model.CircleOptions;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
-import com.google.firebase.crash.FirebaseCrash;
 import com.squareup.otto.Subscribe;
 import com.squareup.picasso.Picasso;
 
@@ -218,6 +218,7 @@ public final class MapActivity extends AppCompatActivity implements OnMapReadyCa
     }
 
     public void onRequestLocation(View v) {
+        Crashlytics.getInstance().crash();
         L.i("onRequestLocation " + selectedAvatarFriendId + " (manual)");
         if (selectedAvatarFriendId < 1) {
             return;
@@ -423,7 +424,6 @@ public final class MapActivity extends AppCompatActivity implements OnMapReadyCa
     public void onMapReady(GoogleMap mapboxMap ) {
         if (mapboxMap == null) {
             L.i("onMapReady has a null map arg");
-            FirebaseCrash.log("MapboxMap is null");
             return;
         }
         mGoogMap = mapboxMap;
@@ -469,7 +469,7 @@ public final class MapActivity extends AppCompatActivity implements OnMapReadyCa
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
             // This should never happen. Nobody should be calling this method before permission has been obtained.
             L.w("MapActivity.beginLocationUpdates was called before obtaining location permission");
-            FirebaseCrash.report(new Exception("Location updates requested before acquiring permission"));
+            Crashlytics.logException(new Exception("Location updates requested before acquiring permission"));
             return;
         }
 
@@ -1049,7 +1049,7 @@ public final class MapActivity extends AppCompatActivity implements OnMapReadyCa
                     UserComm comm = UserComm.newLocationSharingGrant(friend.sendingBoxId);
                     String errMsg = OscarClient.queueSendMessage(this, userRecord, comm, false, false);
                     if (errMsg != null) {
-                        FirebaseCrash.report(new RuntimeException(errMsg));
+                        Crashlytics.logException(new RuntimeException(errMsg));
                     }
                     Utils.showStringAlert(this, null, "You're already sharing your location with " + username);
                     return;
@@ -1068,14 +1068,14 @@ public final class MapActivity extends AppCompatActivity implements OnMapReadyCa
             db.startSharingWith(userRecord, sendingBoxId);
             try { AvatarManager.sendAvatarToUser(this, userRecord); }
             catch (IOException ex) {
-                FirebaseCrash.report(ex);
+                Crashlytics.logException(ex);
             }
             Utils.showStringAlert(this, null, "You're now sharing with " + username);
         } catch (IOException ex) {
             Utils.showStringAlert(this, null, "Network problem trying to share your location. Check your connection then try again.");
         } catch (DB.DBException dbe) {
             Utils.showStringAlert(this, null, "Error adding friend into database");
-            FirebaseCrash.report(dbe);
+            Crashlytics.logException(dbe);
         }
     }
 

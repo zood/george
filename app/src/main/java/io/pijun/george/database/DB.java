@@ -17,7 +17,7 @@ import android.support.annotation.Size;
 import android.support.annotation.WorkerThread;
 import android.support.v4.util.LongSparseArray;
 
-import com.google.firebase.crash.FirebaseCrash;
+import com.crashlytics.android.Crashlytics;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -427,7 +427,7 @@ public class DB {
                     Snapshot.Friend f = new Snapshot.Friend();
                     friendRecord.user = getUserById(friendRecord.userId);
                     if (friendRecord.user == null) {
-                        FirebaseCrash.report(new DBException("unable to find a user record for a friend"));
+                        Crashlytics.logException(new DBException("unable to find a user record for a friend"));
                         continue;
                     }
                     f.userId = friendRecord.user.userId;

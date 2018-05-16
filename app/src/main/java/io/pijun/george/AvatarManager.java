@@ -7,9 +7,8 @@ import android.support.annotation.AnyThread;
 import android.support.annotation.CheckResult;
 import android.support.annotation.NonNull;
 import android.support.annotation.WorkerThread;
-import android.util.Log;
 
-import com.google.firebase.crash.FirebaseCrash;
+import com.crashlytics.android.Crashlytics;
 import com.squareup.picasso.Picasso;
 
 import java.io.File;
@@ -55,7 +54,7 @@ public class AvatarManager {
         if (!avatarsDir.exists()) {
             boolean success = avatarsDir.mkdir();
             if (!success) {
-                FirebaseCrash.logcat(Log.ERROR, L.TAG, "Unable to create the avatars directory");
+                L.w("Unable to create the avatars directory");
                 return false;
             }
         }
@@ -70,7 +69,7 @@ public class AvatarManager {
         try {
             fos = new FileOutputStream(imgFile);
         } catch (FileNotFoundException ex) {
-            FirebaseCrash.report(ex);
+            Crashlytics.logException(ex);
             return false;
         }
 
@@ -90,7 +89,7 @@ public class AvatarManager {
         if (!avatarsDir.exists()) {
             boolean success = avatarsDir.mkdir();
             if (!success) {
-                FirebaseCrash.logcat(Log.ERROR, L.TAG, "Unable to create the avatars directory to save personal avatar");
+                L.w("Unable to create the avatars directory to save personal avatar");
                 return false;
             }
         }
@@ -99,12 +98,12 @@ public class AvatarManager {
         try {
             fos = new FileOutputStream(imgFile);
         } catch (FileNotFoundException ex) {
-            FirebaseCrash.report(ex);
+            Crashlytics.logException(ex);
             return false;
         }
         boolean success = img.compress(Bitmap.CompressFormat.JPEG, 80, fos);
         if (!success) {
-            FirebaseCrash.logcat(Log.ERROR, L.TAG, "Failed to compress avatar image to file");
+            L.w("Failed to compress avatar image to file");
             return false;
         }
         fos.flush();
@@ -120,7 +119,7 @@ public class AvatarManager {
                     sendAvatarToFriends();
                     DB.get(ctx).scheduleBackup();
                 } catch (IOException ex) {
-                    FirebaseCrash.report(ex);
+                    Crashlytics.logException(ex);
                 }
             }
         });

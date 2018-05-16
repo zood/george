@@ -3,7 +3,7 @@ package io.pijun.george.database;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 
-import com.google.firebase.crash.FirebaseCrash;
+import com.crashlytics.android.Crashlytics;
 
 import java.io.ByteArrayInputStream;
 import java.io.InputStreamReader;
@@ -48,7 +48,7 @@ public class Snapshot {
         try {
             snapshot = OscarClient.sGson.fromJson(isr, Snapshot.class);
         } catch (Throwable t) {
-            FirebaseCrash.report(t);
+            Crashlytics.logException(t);
             return null;
         }
         return snapshot;

@@ -24,7 +24,7 @@ import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
 import android.widget.ScrollView;
 
-import com.google.firebase.crash.FirebaseCrash;
+import com.crashlytics.android.Crashlytics;
 
 import java.io.IOException;
 import java.security.SecureRandom;
@@ -286,7 +286,7 @@ public class WelcomeActivity extends AppCompatActivity implements WelcomeLayout.
                         Utils.showAlert(WelcomeActivity.this, 0, R.string.server_key_retrieval_network_error_msg);
                         break;
                     case NullPasswordHash:
-                        FirebaseCrash.log("Password was null");
+                        Crashlytics.log("Password was null");
                         Utils.showAlert(WelcomeActivity.this, R.string.unexpected_error, R.string.null_password_hash_msg);
                         break;
                     case OutdatedClient:

@@ -11,7 +11,7 @@ import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.annotation.WorkerThread;
 
-import com.google.firebase.crash.FirebaseCrash;
+import com.crashlytics.android.Crashlytics;
 
 import java.util.concurrent.Semaphore;
 
@@ -94,7 +94,7 @@ public class PersistentQueue<E> {
             mHelper.getWritableDatabase().insertOrThrow(TASKS_TABLE, null, cv);
         } catch (SQLException ex) {
             L.w("Error offering", ex);
-            FirebaseCrash.report(ex);
+            Crashlytics.logException(ex);
             return;
         }
         mSemaphore.release();

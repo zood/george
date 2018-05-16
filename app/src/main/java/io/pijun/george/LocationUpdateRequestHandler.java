@@ -12,13 +12,13 @@ import android.support.annotation.WorkerThread;
 import android.support.v4.content.ContextCompat;
 import android.text.format.DateUtils;
 
+import com.crashlytics.android.Crashlytics;
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationCallback;
 import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationResult;
 import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.tasks.Task;
-import com.google.firebase.crash.FirebaseCrash;
 
 import java.util.LinkedList;
 import java.util.concurrent.ConcurrentHashMap;
@@ -62,7 +62,7 @@ public class LocationUpdateRequestHandler {
             try {
                 listener.locationUpdateRequestHandlerFinished();
             } catch (Throwable t) {
-                FirebaseCrash.report(t);
+                Crashlytics.logException(t);
             }
         }
     }
@@ -78,7 +78,7 @@ public class LocationUpdateRequestHandler {
                     cmd = cmdsQueue.take();
                 } catch (InterruptedException ex) {
                     L.e("Error taking command", ex);
-                    FirebaseCrash.report(ex);
+                    Crashlytics.logException(ex);
                     continue;
                 }
 
@@ -96,7 +96,7 @@ public class LocationUpdateRequestHandler {
                 }
             }
         } catch (Throwable t) {
-            FirebaseCrash.report(t);
+            Crashlytics.logException(t);
         } finally {
             activeHandlers.remove(this);
         }
@@ -134,9 +134,9 @@ public class LocationUpdateRequestHandler {
         if (!task.isSuccessful()) {
             Exception ex = task.getException();
             if (ex == null) {
-                FirebaseCrash.report(new RuntimeException("Unable to request location updates"));
+                Crashlytics.logException(new RuntimeException("Unable to request location updates"));
             } else {
-                FirebaseCrash.report(new RuntimeException("Unable to request location updates because of exception", ex));
+                Crashlytics.logException(new RuntimeException("Unable to request location updates because of exception", ex));
             }
         }
 
@@ -204,7 +204,7 @@ public class LocationUpdateRequestHandler {
                 }
             } catch (Throwable t) {
                 L.w("Exception in onLocationResult", t);
-                FirebaseCrash.report(t);
+                Crashlytics.logException(t);
             }
         }
     };

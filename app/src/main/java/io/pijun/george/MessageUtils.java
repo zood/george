@@ -8,7 +8,7 @@ import android.support.v4.content.ContextCompat;
 import android.text.TextUtils;
 import android.text.format.DateUtils;
 
-import com.google.firebase.crash.FirebaseCrash;
+import com.crashlytics.android.Crashlytics;
 
 import java.io.IOException;
 import java.lang.annotation.Retention;
@@ -73,7 +73,7 @@ public class MessageUtils {
             }
             AvatarManager.sendAvatarToUser(ctx, user);
         } catch (IOException ex) {
-            FirebaseCrash.report(ex);
+            Crashlytics.logException(ex);
             L.w("Error handling avatar request", ex);
         }
 
@@ -88,7 +88,7 @@ public class MessageUtils {
                 L.w("Failed to save avatar from " + user.username);
             }
         } catch (IOException ex) {
-            FirebaseCrash.report(ex);
+            Crashlytics.logException(ex);
         }
         return ERROR_NONE;
     }
@@ -105,7 +105,7 @@ public class MessageUtils {
             db.setFriendLocation(fr.id, comm.latitude, comm.longitude, comm.time, comm.accuracy, comm.speed, comm.bearing);
         } catch (DB.DBException ex) {
             L.w("error setting location info for friend", ex);
-            FirebaseCrash.report(ex);
+            Crashlytics.logException(ex);
             return ERROR_DATABASE_EXCEPTION;
         }
         App.postOnBus(new FriendLocation(fr.id, comm));
@@ -121,7 +121,7 @@ public class MessageUtils {
             db.sharingGrantedBy(user, comm.dropBox);
         } catch (DB.DBException ex) {
             L.w("error recording location grant", ex);
-            FirebaseCrash.report(ex);
+            Crashlytics.logException(ex);
             return ERROR_DATABASE_EXCEPTION;
         }
         App.postOnBus(new LocationSharingGranted(user.id));
@@ -256,7 +256,7 @@ public class MessageUtils {
                 }
                 User user = response.body();
                 if (user == null) {
-                    FirebaseCrash.log("Unable to decode user " + Hex.toHexString(senderId) + " from response");
+                    L.w("Unable to decode user " + Hex.toHexString(senderId) + " from response");
                     return ERROR_UNKNOWN;
                 }
                 // now that we've encountered a new user, add them to the database (because of TOFU)
@@ -265,7 +265,7 @@ public class MessageUtils {
             } catch (IOException ioe) {
                 return ERROR_NO_NETWORK;
             } catch (DB.DBException dbe) {
-                FirebaseCrash.report(dbe);
+                Crashlytics.logException(dbe);
                 return ERROR_DATABASE_EXCEPTION;
             }
         }

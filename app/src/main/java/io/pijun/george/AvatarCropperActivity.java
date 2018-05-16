@@ -13,7 +13,6 @@ import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.annotation.UiThread;
 import android.support.v7.app.AppCompatActivity;
-import android.util.Log;
 import android.view.MotionEvent;
 import android.view.ScaleGestureDetector;
 import android.view.View;
@@ -21,7 +20,6 @@ import android.view.ViewTreeObserver;
 import android.widget.AbsoluteLayout;
 
 import com.arashpayan.gesture.MoveGestureRecognizer;
-import com.google.firebase.crash.FirebaseCrash;
 import com.squareup.picasso.Picasso;
 import com.squareup.picasso.Target;
 
@@ -68,6 +66,7 @@ public class AvatarCropperActivity extends AppCompatActivity implements MoveGest
         finish();
     }
 
+    @SuppressLint("ClickableViewAccessibility")
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -92,7 +91,7 @@ public class AvatarCropperActivity extends AppCompatActivity implements MoveGest
 
             @Override
             public void onBitmapFailed(Drawable errorDrawable) {
-                FirebaseCrash.logcat(Log.WARN, L.TAG, "Unable to open bitmap for cropping");
+                L.w("Unable to open bitmap for cropping");
                 finish();
             }
             @Override

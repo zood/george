@@ -6,7 +6,7 @@ import android.support.annotation.WorkerThread;
 import android.text.TextUtils;
 import android.text.format.DateUtils;
 
-import com.google.firebase.crash.FirebaseCrash;
+import com.crashlytics.android.Crashlytics;
 
 import io.pijun.george.api.Message;
 import io.pijun.george.api.OscarClient;
@@ -99,7 +99,7 @@ public class MessageProcessor {
                 }
             } catch (Throwable t) {
                 L.w("MessageProcessor.processQueue exception", t);
-                FirebaseCrash.report(t);
+                Crashlytics.logException(t);
             }
         }
     }

@@ -9,8 +9,6 @@ import android.support.annotation.WorkerThread;
 import android.text.TextUtils;
 import android.text.format.DateUtils;
 
-import com.google.firebase.crash.FirebaseCrash;
-
 import java.io.IOException;
 
 import io.pijun.george.App;
@@ -96,7 +94,7 @@ public class BackupDatabaseJob extends JobService {
 
             if (!response.isSuccessful()) {
                 OscarError err = OscarError.fromResponse(response);
-                FirebaseCrash.log("Encrypted db backup failed: " + err);
+                L.w("Encrypted db backup failed: " + err);
                 L.w("\terror from server: " + err);
                 jobFinished(mJobParams, true);
             } else {

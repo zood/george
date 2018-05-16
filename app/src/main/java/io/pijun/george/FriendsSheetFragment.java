@@ -20,7 +20,7 @@ import android.view.ViewGroup;
 import android.view.ViewTreeObserver;
 import android.widget.Toast;
 
-import com.google.firebase.crash.FirebaseCrash;
+import com.crashlytics.android.Crashlytics;
 import com.squareup.otto.Subscribe;
 
 import java.io.IOException;
@@ -31,13 +31,13 @@ import io.pijun.george.api.OscarClient;
 import io.pijun.george.api.UserComm;
 import io.pijun.george.crypto.KeyPair;
 import io.pijun.george.database.DB;
+import io.pijun.george.database.FriendLocation;
+import io.pijun.george.database.FriendRecord;
 import io.pijun.george.databinding.FragmentFriendsSheetBinding;
 import io.pijun.george.event.AvatarUpdated;
 import io.pijun.george.event.FriendRemoved;
 import io.pijun.george.event.LocationSharingGranted;
 import io.pijun.george.event.LocationSharingRevoked;
-import io.pijun.george.database.FriendLocation;
-import io.pijun.george.database.FriendRecord;
 import io.pijun.george.view.FriendsSheetBehavior;
 import io.pijun.george.view.FriendsSheetLayout;
 import io.pijun.george.view.MainLayout;
@@ -89,13 +89,13 @@ public class FriendsSheetFragment extends Fragment implements FriendItemsAdapter
         super.onCreate(savedInstanceState);
 
         mFriendItemsAdapter.setListener(this);
-        mTenDips = Utils.dpsToPix(getContext(), 10);
+        mTenDips = Utils.dpsToPix(requireContext(), 10);
     }
 
     @SuppressLint("ClickableViewAccessibility")
     @Nullable
     @Override
-    public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
+    public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         mBinding = DataBindingUtil.inflate(inflater, R.layout.fragment_friends_sheet, container, false);
         LinearLayoutManager llm = new LinearLayoutManager(getContext(), LinearLayoutManager.HORIZONTAL, false);
         mBinding.avatars.setLayoutManager(llm);
@@ -106,13 +106,13 @@ public class FriendsSheetFragment extends Fragment implements FriendItemsAdapter
         mBinding.toggle.setOnClickListener(v -> toggleFriendsSheet());
 
         final FriendsSheetLayout root = (FriendsSheetLayout) mBinding.getRoot();
-        root.setElevation(Utils.dpsToPix(getContext(), 36));
+        root.setElevation(Utils.dpsToPix(requireContext(), 36));
         root.getViewTreeObserver().addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
             @Override
             public void onGlobalLayout() {
                 if (!mInitialLayoutDone) {
                     mInitialLayoutDone = true;
-                    int seventyTwo = Utils.dpsToPix(getContext(), 72);
+                    int seventyTwo = Utils.dpsToPix(requireContext(), 72);
                     int transY = root.getHeight() - seventyTwo;
                     root.hiddenStateTranslationY = transY;
                     root.setTranslationY(transY);
@@ -138,7 +138,7 @@ public class FriendsSheetFragment extends Fragment implements FriendItemsAdapter
     @Subscribe
     @Keep
     public void onFriendLocationUpdated(final FriendLocation loc) {
-        mFriendItemsAdapter.setFriendLocation(getContext(), loc);
+        mFriendItemsAdapter.setFriendLocation(requireContext(), loc);
     }
 
     @Subscribe
@@ -146,7 +146,7 @@ public class FriendsSheetFragment extends Fragment implements FriendItemsAdapter
     @UiThread
     public void onLocationSharingGranted(LocationSharingGranted grant) {
         App.runInBackground(() -> {
-            FriendRecord friend = DB.get(getContext()).getFriendByUserId(grant.userId);
+            FriendRecord friend = DB.get(requireContext()).getFriendByUserId(grant.userId);
             if (friend != null) {
                 mAvatarsAdapter.addFriend(friend);
                 App.runOnUiThread(() -> mFriendItemsAdapter.updateFriend(friend));
@@ -159,7 +159,7 @@ public class FriendsSheetFragment extends Fragment implements FriendItemsAdapter
     @UiThread
     public void onLocationSharingRevoked(LocationSharingRevoked revoked) {
         App.runInBackground(() -> {
-            DB db = DB.get(getContext());
+            DB db = DB.get(requireContext());
             // check if this is a known friend
             FriendRecord friend = db.getFriendByUserId(revoked.userId);
             if (friend == null) {
@@ -174,7 +174,7 @@ public class FriendsSheetFragment extends Fragment implements FriendItemsAdapter
 
     @UiThread
     private void promptToRemoveFriend(@NonNull final FriendRecord friend) {
-        AlertDialog.Builder bldr = new AlertDialog.Builder(getContext(), R.style.AlertDialogTheme);
+        AlertDialog.Builder bldr = new AlertDialog.Builder(requireContext(), R.style.AlertDialogTheme);
         String msg = getString(R.string.remove_friend_prompt_msg, friend.user.username);
         bldr.setMessage(msg);
         bldr.setCancelable(true);
@@ -208,7 +208,7 @@ public class FriendsSheetFragment extends Fragment implements FriendItemsAdapter
 
     @Override
     public void onShowFriendInfoAction(@NonNull FriendRecord friend) {
-        AlertDialog.Builder bldr = new AlertDialog.Builder(getContext(), R.style.AlertDialogTheme);
+        AlertDialog.Builder bldr = new AlertDialog.Builder(requireContext(), R.style.AlertDialogTheme);
         bldr.setTitle(friend.user.username);
         bldr.setMessage("Key:\n" + Hex.toHexString(friend.user.publicKey));
         bldr.setPositiveButton(R.string.ok, null);
@@ -227,7 +227,7 @@ public class FriendsSheetFragment extends Fragment implements FriendItemsAdapter
         super.onStart();
 
         App.registerOnBus(this);
-        final DB db = DB.get(getContext());
+        final DB db = DB.get(requireContext());
         App.runInBackground(() -> {
             ArrayList<FriendRecord> friends = db.getFriends();
             mAvatarsAdapter.setFriends(friends);
@@ -235,7 +235,7 @@ public class FriendsSheetFragment extends Fragment implements FriendItemsAdapter
             for (FriendRecord record : friends) {
                 FriendLocation loc = db.getFriendLocation(record.id);
                 if (loc != null) {
-                    App.runOnUiThread(() -> mFriendItemsAdapter.setFriendLocation(getContext(), loc));
+                    App.runOnUiThread(() -> mFriendItemsAdapter.setFriendLocation(requireContext(), loc));
                 }
             }
         });
@@ -258,23 +258,23 @@ public class FriendsSheetFragment extends Fragment implements FriendItemsAdapter
 
     @WorkerThread
     private void removeFriend(@NonNull FriendRecord friend) {
-        Prefs prefs = Prefs.get(getContext());
+        Prefs prefs = Prefs.get(requireContext());
         String accessToken = prefs.getAccessToken();
         if (TextUtils.isEmpty(accessToken)) {
-            Utils.showStringAlert(getContext(), null, "How are you not logged in right now? (missing access token)");
+            Utils.showStringAlert(requireContext(), null, "How are you not logged in right now? (missing access token)");
             return;
         }
         KeyPair keyPair = prefs.getKeyPair();
         if (keyPair == null) {
-            Utils.showStringAlert(getContext(), null, "How are you not logged in right now? (missing key pair)");
+            Utils.showStringAlert(requireContext(), null, "How are you not logged in right now? (missing key pair)");
             return;
         }
 
         try {
-            DB.get(getContext()).removeFriend(friend);
+            DB.get(requireContext()).removeFriend(friend);
         } catch (DB.DBException ex) {
             L.w("Error removing friend", ex);
-            FirebaseCrash.report(ex);
+            Crashlytics.logException(ex);
             Utils.showStringAlert(getContext(), null, "There was a problem removing this friend. Try again, and if it still fails, contact support.");
             return;
         }
@@ -288,19 +288,19 @@ public class FriendsSheetFragment extends Fragment implements FriendItemsAdapter
         new SecureRandom().nextBytes(sendingBoxId);
         // send the sending box id to the friend
         UserComm comm = UserComm.newLocationSharingGrant(sendingBoxId);
-        String errMsg = OscarClient.queueSendMessage(getContext(), friend.user, comm, false, false);
+        String errMsg = OscarClient.queueSendMessage(requireContext(), friend.user, comm, false, false);
         if (errMsg != null) {
-            FirebaseCrash.report(new RuntimeException(errMsg));
+            Crashlytics.logException(new RuntimeException(errMsg));
             return;
         }
 
         // add this to our database
-        DB db = DB.get(getContext());
+        DB db = DB.get(requireContext());
         try {
             db.startSharingWith(friend.user, sendingBoxId);
-            AvatarManager.sendAvatarToUser(getContext(), friend.user);
+            AvatarManager.sendAvatarToUser(requireContext(), friend.user);
         } catch (DB.DBException ex) {
-            FirebaseCrash.report(ex);
+            Crashlytics.logException(ex);
             App.runOnUiThread(new UiRunnable() {
                 @Override
                 public void run() {
@@ -309,7 +309,7 @@ public class FriendsSheetFragment extends Fragment implements FriendItemsAdapter
                 }
             });
         } catch (IOException ex) {
-            FirebaseCrash.report(ex);
+            Crashlytics.logException(ex);
         }
 
         FriendRecord updatedFriend = db.getFriendById(friend.id);
@@ -328,11 +328,11 @@ public class FriendsSheetFragment extends Fragment implements FriendItemsAdapter
     @WorkerThread
     private void stopSharingWith(@NonNull FriendRecord friend) {
         // remove the sending box id from the database
-        DB db = DB.get(getContext());
+        DB db = DB.get(requireContext());
         try {
             db.stopSharingWith(friend.user);
         } catch (DB.DBException ex) {
-            FirebaseCrash.report(ex);
+            Crashlytics.logException(ex);
             App.runOnUiThread(new UiRunnable() {
                 @Override
                 public void run() {
@@ -343,9 +343,9 @@ public class FriendsSheetFragment extends Fragment implements FriendItemsAdapter
         }
 
         UserComm comm = UserComm.newLocationSharingRevocation();
-        String errMsg = OscarClient.queueSendMessage(getContext(), friend.user, comm, false, false);
+        String errMsg = OscarClient.queueSendMessage(requireContext(), friend.user, comm, false, false);
         if (errMsg != null) {
-            FirebaseCrash.report(new RuntimeException(errMsg));
+            Crashlytics.logException(new RuntimeException(errMsg));
         }
 
         // grab the updated friend record, and apply it on our adapter
