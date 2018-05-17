@@ -10,6 +10,7 @@ import java.io.ByteArrayInputStream;
 import java.io.InputStreamReader;
 import java.lang.annotation.Retention;
 import java.util.Arrays;
+import java.util.Objects;
 
 import io.pijun.george.Constants;
 import io.pijun.george.L;
@@ -191,6 +192,34 @@ public class UserComm {
     public byte[] toJSON() {
         String s = OscarClient.sGson.toJson(this);
         return s.getBytes();
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        UserComm userComm = (UserComm) o;
+        return Double.compare(userComm.latitude, latitude) == 0 &&
+                Double.compare(userComm.longitude, longitude) == 0 &&
+                time == userComm.time &&
+                type == userComm.type &&
+                Arrays.equals(dropBox, userComm.dropBox) &&
+                Arrays.equals(avatar, userComm.avatar) &&
+                Objects.equals(accuracy, userComm.accuracy) &&
+                Objects.equals(speed, userComm.speed) &&
+                Objects.equals(bearing, userComm.bearing) &&
+                Objects.equals(movement, userComm.movement) &&
+                Objects.equals(locationUpdateRequestAction, userComm.locationUpdateRequestAction) &&
+                Objects.equals(debugData, userComm.debugData);
+    }
+
+    @Override
+    public int hashCode() {
+
+        int result = Objects.hash(type, latitude, longitude, time, accuracy, speed, bearing, movement, locationUpdateRequestAction, debugData);
+        result = 31 * result + Arrays.hashCode(dropBox);
+        result = 31 * result + Arrays.hashCode(avatar);
+        return result;
     }
 
     @Override

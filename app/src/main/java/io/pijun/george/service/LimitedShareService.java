@@ -40,6 +40,7 @@ import io.pijun.george.App;
 import io.pijun.george.Constants;
 import io.pijun.george.Hex;
 import io.pijun.george.L;
+import io.pijun.george.LocationUtils;
 import io.pijun.george.Prefs;
 import io.pijun.george.R;
 import io.pijun.george.Sodium;
@@ -234,6 +235,7 @@ public class LimitedShareService extends Service /* implements LocationListener 
             return;
         }
 
+        App.isLimitedShareRunning = true;
         showNotification();
         // create a user
         mKeyPair = new KeyPair();
@@ -278,6 +280,7 @@ public class LimitedShareService extends Service /* implements LocationListener 
 
     @AnyThread
     private void stopLimitedShare(boolean userStopped) {
+        App.isLimitedShareRunning = false;
         stopForeground(true);
 
         mLocationProviderClient.removeLocationUpdates(mLocationCallbackHelper);
@@ -301,9 +304,10 @@ public class LimitedShareService extends Service /* implements LocationListener 
         public void onLocationResult(LocationResult result) {
             L.i("LSS.onLocationChanged");
             Location location = result.getLastLocation();
-            if (location != null) {
-                App.postOnBus(location);
+            if (location == null) {
+                return;
             }
+            LocationUtils.upload(LimitedShareService.this, location, false);
         }
     };
 }

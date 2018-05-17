@@ -74,7 +74,6 @@
         <service android:name=".service.BackupDatabaseJob" android:permission="android.permission.BIND_JOB_SERVICE" />
         <service android:name=".service.OscarJobService" android:permission="android.permission.BIND_JOB_SERVICE" />
         <service android:name=".service.ActivityTransitionHandler" />
-        <service android:name=".service.PassiveLocationService" />
         <service android:name=".service.PositionService" />
         <!-- END SERVICES -->
 
@@ -84,6 +83,7 @@
                 <action android:name="android.intent.action.BOOT_COMPLETED" />
             </intent-filter>
         </receiver>
+        <receiver android:name=".receiver.PassiveLocationReceiver" />
         <!-- END RECEIVERS -->
 
         <!-- BEGIN PROVIDERS -->

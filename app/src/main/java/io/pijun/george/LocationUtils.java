@@ -24,6 +24,8 @@ import retrofit2.Response;
 
 public class LocationUtils {
 
+    private static UserComm lastLocationMessage = null;
+
     public static boolean upload(@NonNull Context ctx, @NonNull Location location, boolean immediately) {
         if (!Network.isConnected(ctx)) {
             return false;
@@ -38,6 +40,10 @@ public class LocationUtils {
         }
 
         UserComm locMsg = UserComm.newLocationInfo(location, ActivityTransitionHandler.getCurrentMovement());
+        // if this is the same message as before, skip sending it
+        if (lastLocationMessage != null && lastLocationMessage.equals(locMsg)) {
+            return true;
+        }
         byte[] msgBytes = locMsg.toJSON();
         // share to our friends
         ArrayList<FriendRecord> friends = DB.get(ctx).getFriendsToShareWith();
@@ -73,6 +79,7 @@ public class LocationUtils {
                     if (response.isSuccessful()) {
                         L.i("LUtils successfully uploaded a location");
                         prefs.setLastLocationUpdateTime(System.currentTimeMillis());
+                        lastLocationMessage = locMsg;
                         return true;
                     }
                     OscarError err = OscarError.fromResponse(response);
@@ -85,6 +92,7 @@ public class LocationUtils {
             } else {
                 OscarClient.queueDropMultiplePackages(ctx, token, pkgs);
                 prefs.setLastLocationUpdateTime(System.currentTimeMillis());
+                lastLocationMessage = locMsg;
                 L.i("LUtils successfully queued a location");
             }
         }

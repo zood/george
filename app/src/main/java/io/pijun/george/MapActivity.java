@@ -129,7 +129,7 @@ public final class MapActivity extends AppCompatActivity implements OnMapReadyCa
     private float mUiHiddenOffset;
     private GestureDetector mGestureDetector;
     private DrawerActionRecognizer mDrawerActionRecognizer;
-    private boolean requestLocationOnStart = true;
+    private boolean requestLocationOnStart = false;
 
     public static Intent newIntent(Context ctx) {
         return new Intent(ctx, MapActivity.class);
@@ -1368,7 +1368,7 @@ public final class MapActivity extends AppCompatActivity implements OnMapReadyCa
                     mGoogMap.animateCamera(update);
                 }
             }
-            App.postOnBus(location);
+            LocationUtils.upload(MapActivity.this, location, false);
         }
     };
 }

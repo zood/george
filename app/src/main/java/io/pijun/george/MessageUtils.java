@@ -140,7 +140,7 @@ public class MessageUtils {
 
     @WorkerThread @Error
     private static int handleLocationUpdateRequest(@NonNull Context context, @NonNull UserRecord userRecord) {
-        L.i("handleLocationUpdateRequest");
+        L.i("handleLocationUpdateRequest from " + userRecord.username);
         Prefs prefs = Prefs.get(context);
         long updateTime = prefs.getLastLocationUpdateTime();
 

@@ -13,14 +13,15 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 import io.pijun.george.api.TaskSender;
+import io.pijun.george.receiver.PassiveLocationReceiver;
 import io.pijun.george.service.ActivityTransitionHandler;
 import io.pijun.george.service.LocationJobService;
-import io.pijun.george.service.PassiveLocationService;
 
 public class App extends Application {
 
     private static volatile App sApp;
     public static boolean isInForeground = false;
+    public static boolean isLimitedShareRunning = false;
     private Handler mUiThreadHandler;
     private ExecutorService mExecutor;
     private Bus mBus;
@@ -49,7 +50,7 @@ public class App extends Application {
                 if (AuthenticationManager.isLoggedIn(App.this)) {
                     ActivityTransitionHandler.requestUpdates(App.this);
                     LocationJobService.scheduleLocationJobService(App.this);
-                    PassiveLocationService.register(App.this);
+                    PassiveLocationReceiver.register(App.this);
                 }
             }
         });

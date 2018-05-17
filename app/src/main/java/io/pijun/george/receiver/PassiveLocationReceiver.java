@@ -1,14 +1,13 @@
-package io.pijun.george.service;
+package io.pijun.george.receiver;
 
-import android.app.IntentService;
 import android.app.PendingIntent;
+import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.location.Location;
 import android.support.annotation.AnyThread;
 import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
 import android.support.v4.content.ContextCompat;
 import android.text.format.DateUtils;
 
@@ -18,31 +17,30 @@ import com.google.android.gms.location.LocationResult;
 import com.google.android.gms.location.LocationServices;
 
 import io.pijun.george.App;
+import io.pijun.george.L;
+import io.pijun.george.LocationUtils;
 
-public class PassiveLocationService extends IntentService {
+public class PassiveLocationReceiver extends BroadcastReceiver {
 
     private static final int LOCATION_REQUEST_CODE = 788;
 
-    public PassiveLocationService() {
-        super("PassiveLocationService");
-    }
-
-    @AnyThread
     private static Intent newIntent(@NonNull Context context) {
-        return new Intent(context, PassiveLocationService.class);
+        return new Intent(context, PassiveLocationReceiver.class);
     }
 
     @AnyThread
     private static PendingIntent newPendingIntent(@NonNull Context context) {
-        return PendingIntent.getService(context,
+        return PendingIntent.getBroadcast(context,
                 LOCATION_REQUEST_CODE,
                 newIntent(context),
                 PendingIntent.FLAG_UPDATE_CURRENT);
     }
 
     @Override
-    protected void onHandleIntent(@Nullable Intent intent) {
+    public void onReceive(Context context, Intent intent) {
+        L.i("PLR onReceive");
         if (!LocationResult.hasResult(intent)) {
+            L.i("PLR intent had no location");
             return;
         }
 
@@ -53,9 +51,11 @@ public class PassiveLocationService extends IntentService {
         }
 
         // Don't report the location if we're in the foreground, because they'll just be duplicates
-        if (!App.isInForeground) {
-            App.postOnBus(loc);
+        if (App.isInForeground || App.isLimitedShareRunning) {
+            return;
         }
+
+        LocationUtils.upload(context, loc, false);
     }
 
     public static void register(@NonNull Context context) {
@@ -74,5 +74,4 @@ public class PassiveLocationService extends IntentService {
         FusedLocationProviderClient client = LocationServices.getFusedLocationProviderClient(context);
         client.removeLocationUpdates(newPendingIntent(context));
     }
-
 }
