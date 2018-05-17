@@ -40,7 +40,6 @@ public class App extends Application {
         mExecutor = Executors.newCachedThreadPool();
         mBus = new Bus();
 
-        registerOnBus(LocationUploader.get());
         TaskSender.get().start(this);
         // perform this in the background because querying the AuthenticationManager the first time
         // will load the Prefs from disk

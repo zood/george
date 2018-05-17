@@ -12,7 +12,9 @@ import android.os.Build;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.IBinder;
+
 import android.os.PowerManager;
+import android.support.annotation.AnyThread;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.annotation.WorkerThread;
@@ -225,6 +227,7 @@ public class PositionService extends Service {
         });
     }
 
+    @AnyThread
     private void uploadLatestLocation() {
         LinkedList<Location> locations = new LinkedList<>();
         locationsQueue.drainTo(locations);
@@ -233,10 +236,7 @@ public class PositionService extends Service {
         }
         Location l = locations.getLast();
 
-        boolean success = LocationUtils.upload(this, l, true);
-        if (!success) {
-            L.w("PS failed to upload location");
-        }
+        LocationUtils.upload(this, l, true);
     }
 
     private LocationCallback callback = new LocationCallback() {

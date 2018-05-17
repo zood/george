@@ -8,18 +8,18 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.support.annotation.AnyThread;
 import android.support.annotation.NonNull;
+import android.support.v4.content.ContextCompat;
 import android.text.format.DateUtils;
 
 import io.pijun.george.App;
 import io.pijun.george.AuthenticationManager;
 import io.pijun.george.L;
-import io.pijun.george.LocationUpdateRequestHandler;
+import io.pijun.george.WorkerRunnable;
 
-public class LocationJobService extends JobService implements LocationUpdateRequestHandler.Listener {
+public class LocationJobService extends JobService {
 
     public static final int JOB_ID = 4319; // made up number
 
-    private LocationUpdateRequestHandler lurh;
     private JobParameters mParams;
 
     @AnyThread
@@ -62,26 +62,27 @@ public class LocationJobService extends JobService implements LocationUpdateRequ
         }
 
         // only launch the service if the app isn't already in the foreground
-        if (App.isInForeground) {
-            L.i("  skipping LocationSeeker start, because app is in foreground");
+        if (App.isInForeground || App.isLimitedShareRunning) {
+            L.i("  skipping PositionService start, because App.isInForeground || App.isLimitedShareRunning");
             return false;
         }
 
-        lurh = new LocationUpdateRequestHandler(this, this);
+        ContextCompat.startForegroundService(this, PositionService.newIntent(this));
+        App.runInBackground(new WorkerRunnable() {
+            @Override
+            public void run() {
+                PositionService.await();
+                L.i("LJS.locationSeekerFinished");
+                jobFinished(mParams, false);
+            }
+        });
 
         return true;
     }
 
     @Override
     public boolean onStopJob(JobParameters params) {
-        lurh.issueCommand(LocationUpdateRequestHandler.COMMAND_SHUT_DOWN);
         return false;
-    }
-
-    @Override
-    public void locationUpdateRequestHandlerFinished() {
-        L.i("LJS.locationSeekerFinished");
-        jobFinished(mParams, false);
     }
 
     @AnyThread

@@ -1,8 +1,12 @@
 package io.pijun.george;
 
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.location.Location;
+import android.os.Looper;
+import android.support.annotation.AnyThread;
 import android.support.annotation.NonNull;
+import android.support.annotation.WorkerThread;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -26,9 +30,10 @@ public class LocationUtils {
 
     private static UserComm lastLocationMessage = null;
 
-    public static boolean upload(@NonNull Context ctx, @NonNull Location location, boolean immediately) {
+    @WorkerThread
+    private synchronized static void _upload(@NonNull Context ctx, @NonNull Location location, boolean immediately) {
         if (!Network.isConnected(ctx)) {
-            return false;
+            return;
         }
 
         Prefs prefs = Prefs.get(ctx);
@@ -36,13 +41,14 @@ public class LocationUtils {
         KeyPair keyPair = prefs.getKeyPair();
         if (token == null || keyPair == null) {
             L.i("LM.upload: token or keypair was null, so skipping upload");
-            return false;
+            return;
         }
 
         UserComm locMsg = UserComm.newLocationInfo(location, ActivityTransitionHandler.getCurrentMovement());
         // if this is the same message as before, skip sending it
         if (lastLocationMessage != null && lastLocationMessage.equals(locMsg)) {
-            return true;
+            L.i("LUtils found duplicate location");
+            return;
         }
         byte[] msgBytes = locMsg.toJSON();
         // share to our friends
@@ -80,14 +86,12 @@ public class LocationUtils {
                         L.i("LUtils successfully uploaded a location");
                         prefs.setLastLocationUpdateTime(System.currentTimeMillis());
                         lastLocationMessage = locMsg;
-                        return true;
+                        return;
                     }
                     OscarError err = OscarError.fromResponse(response);
                     L.w("LM.upload error dropping packages - " + err);
-                    return false;
                 } catch (IOException ex) {
                     L.w("Failed to upload location because " + ex.getLocalizedMessage());
-                    return false;
                 }
             } else {
                 OscarClient.queueDropMultiplePackages(ctx, token, pkgs);
@@ -96,8 +100,21 @@ public class LocationUtils {
                 L.i("LUtils successfully queued a location");
             }
         }
+    }
 
-        return true;
+    @SuppressLint("WrongThread")
+    @AnyThread
+    public static void upload(@NonNull Context ctx, @NonNull Location location, boolean immediately) {
+        if (Looper.myLooper() == Looper.getMainLooper()) {
+            App.runInBackground(new WorkerRunnable() {
+                @Override
+                public void run() {
+                    _upload(ctx, location, immediately);
+                }
+            });
+        } else {
+            _upload(ctx, location, immediately);
+        }
     }
 
 }

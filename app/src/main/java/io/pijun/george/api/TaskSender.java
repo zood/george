@@ -111,7 +111,6 @@ public final class TaskSender {
 
             OscarAPI api = OscarClient.newInstance(task.accessToken);
             Call call;
-            L.i("TaskSender method: " + task.apiMethod);
             switch (task.apiMethod) {
                 case AddFcmTokenTask.NAME:
                     AddFcmTokenTask aftt = (AddFcmTokenTask) task;

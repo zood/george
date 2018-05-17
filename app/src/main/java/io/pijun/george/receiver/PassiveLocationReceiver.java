@@ -8,6 +8,7 @@ import android.content.pm.PackageManager;
 import android.location.Location;
 import android.support.annotation.AnyThread;
 import android.support.annotation.NonNull;
+import android.support.annotation.UiThread;
 import android.support.v4.content.ContextCompat;
 import android.text.format.DateUtils;
 
@@ -24,6 +25,7 @@ public class PassiveLocationReceiver extends BroadcastReceiver {
 
     private static final int LOCATION_REQUEST_CODE = 788;
 
+    @AnyThread
     private static Intent newIntent(@NonNull Context context) {
         return new Intent(context, PassiveLocationReceiver.class);
     }
@@ -37,6 +39,7 @@ public class PassiveLocationReceiver extends BroadcastReceiver {
     }
 
     @Override
+    @UiThread
     public void onReceive(Context context, Intent intent) {
         L.i("PLR onReceive");
         if (!LocationResult.hasResult(intent)) {
@@ -58,6 +61,7 @@ public class PassiveLocationReceiver extends BroadcastReceiver {
         LocationUtils.upload(context, loc, false);
     }
 
+    @AnyThread
     public static void register(@NonNull Context context) {
         if (ContextCompat.checkSelfPermission(context, android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
             return;
@@ -70,6 +74,7 @@ public class PassiveLocationReceiver extends BroadcastReceiver {
         client.requestLocationUpdates(request, newPendingIntent(context));
     }
 
+    @AnyThread
     public static void unregister(@NonNull Context context) {
         FusedLocationProviderClient client = LocationServices.getFusedLocationProviderClient(context);
         client.removeLocationUpdates(newPendingIntent(context));
