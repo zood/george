@@ -168,12 +168,7 @@ public class MessageUtils {
         App.runInBackground(new WorkerRunnable() {
             @Override
             public void run() {
-                long maxWait = PositionService.MAX_WAIT_SECONDS * DateUtils.SECOND_IN_MILLIS;
-                try {
-                    PositionService.class.wait(maxWait);
-                } catch (InterruptedException ie) {
-                    L.w("Interrupted waiting for PositionService", ie);
-                }
+                PositionService.await();
                 UserComm done = UserComm.newLocationUpdateRequestReceived(UserComm.LOCATION_UPDATE_REQUEST_ACTION_FINISHED);
                 L.i("Queueing 'location_update_request_action_finished' to " + userRecord.username);
                 String errMsg = OscarClient.queueSendMessage(context, userRecord, done, true, true);

@@ -218,7 +218,6 @@ public final class MapActivity extends AppCompatActivity implements OnMapReadyCa
     }
 
     public void onRequestLocation(View v) {
-        Crashlytics.getInstance().crash();
         L.i("onRequestLocation " + selectedAvatarFriendId + " (manual)");
         if (selectedAvatarFriendId < 1) {
             return;

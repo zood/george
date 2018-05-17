@@ -28,7 +28,9 @@ import com.google.android.gms.location.LocationResult;
 import com.google.android.gms.location.LocationServices;
 
 import java.util.LinkedList;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.TimeUnit;
 
 import io.pijun.george.App;
 import io.pijun.george.L;
@@ -62,6 +64,20 @@ public class PositionService extends Service {
         thread.start();
         serviceHandler = new Handler(thread.getLooper());
     }
+    private static CountDownLatch waitLatch = new CountDownLatch(1);
+
+    public static void await() {
+        // Still technically racey, but it's ok. We have a timeout.
+        CountDownLatch localRef = waitLatch;
+        if (localRef == null) {
+            return;
+        }
+        try {
+            localRef.await(MAX_WAIT_SECONDS, TimeUnit.SECONDS);
+        } catch (InterruptedException ie) {
+            L.w("PS.await interrupted", ie);
+        }
+    }
 
     private void issueCommand(Command cmd) {
         cmdsQueue.add(cmd);
@@ -69,6 +85,12 @@ public class PositionService extends Service {
 
     public static Intent newIntent(@NonNull Context context) {
         return new Intent(context, PositionService.class);
+    }
+
+    private void notifyWaiters() {
+        // I know this is racey, but because all the waiting threads have a timeout it's not big deal
+        waitLatch.countDown();
+        waitLatch = new CountDownLatch(1);
     }
 
     @Nullable
@@ -152,6 +174,8 @@ public class PositionService extends Service {
         catch (Throwable ignore) {}
 
         stopSelf();
+
+        notifyWaiters();
     }
 
     @WorkerThread
@@ -159,6 +183,7 @@ public class PositionService extends Service {
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
             // should never happen
             stopSelf();
+            notifyWaiters();
             return;
         }
 
