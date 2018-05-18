@@ -262,7 +262,7 @@ public class LimitedShareService extends Service /* implements LocationListener 
 
         mLocationProviderClient = LocationServices.getFusedLocationProviderClient(this);
         LocationRequest request = LocationRequest.create();
-        request.setInterval(30 * DateUtils.SECOND_IN_MILLIS);
+        request.setInterval(15 * DateUtils.SECOND_IN_MILLIS);
         request.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
         mLocationProviderClient.requestLocationUpdates(request, mLocationCallbackHelper, sServiceLooper);
 
