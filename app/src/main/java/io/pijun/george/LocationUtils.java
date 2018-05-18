@@ -22,7 +22,6 @@ import io.pijun.george.database.DB;
 import io.pijun.george.database.FriendRecord;
 import io.pijun.george.database.LimitedShare;
 import io.pijun.george.network.Network;
-import io.pijun.george.service.ActivityTransitionHandler;
 import io.pijun.george.service.LimitedShareService;
 import retrofit2.Response;
 
@@ -44,7 +43,7 @@ public class LocationUtils {
             return;
         }
 
-        UserComm locMsg = UserComm.newLocationInfo(location, ActivityTransitionHandler.getCurrentMovement());
+        UserComm locMsg = UserComm.newLocationInfo(location, Prefs.get(ctx).getCurrentMovement());
         // if this is the same message as before, skip sending it
         if (lastLocationMessage != null && lastLocationMessage.equals(locMsg)) {
             L.i("LUtils found duplicate location");

@@ -1,5 +1,8 @@
 package io.pijun.george.database;
 
+import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
+
 import com.google.android.gms.location.DetectedActivity;
 
 public enum MovementType {
@@ -14,11 +17,12 @@ public enum MovementType {
 
     public final String val;
 
-    MovementType(String val) {
+    MovementType(@NonNull String val) {
         this.val = val;
     }
 
-    public static MovementType get(String val) {
+    @NonNull
+    public static MovementType get(@Nullable String val) {
         if (val == null) {
             return Unknown;
         }
@@ -32,6 +36,7 @@ public enum MovementType {
         return Unknown;
     }
 
+    @NonNull
     public static MovementType getByDetectedActivity(int activityId) {
         switch (activityId) {
             case DetectedActivity.IN_VEHICLE:

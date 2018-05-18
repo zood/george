@@ -10,6 +10,7 @@ import com.google.android.gms.maps.model.CameraPosition;
 import com.google.android.gms.maps.model.LatLng;
 
 import io.pijun.george.crypto.KeyPair;
+import io.pijun.george.database.MovementType;
 
 public class Prefs {
 
@@ -32,6 +33,7 @@ public class Prefs {
     private final static String KEY_CAMERA_POSITION_TILT = "camera_position_tilt";
     private final static String KEY_CAMERA_POSITION_ZOOM = "camera_position_zoom";
     private final static String KEY_LAST_LOCATION_UPDATE_TIME = "last_location_update_time";
+    private final static String KEY_CURRENT_MOVEMENT = "current_movement";
 
     private Prefs(Context context) {
         mPrefs = context.getSharedPreferences("secrets", Context.MODE_PRIVATE);
@@ -199,6 +201,15 @@ public class Prefs {
 
     void setLastLocationUpdateTime(long time) {
         mPrefs.edit().putLong(KEY_LAST_LOCATION_UPDATE_TIME, time).apply();
+    }
+
+    @NonNull
+    public MovementType getCurrentMovement() {
+        return MovementType.get(mPrefs.getString(KEY_CURRENT_MOVEMENT, null));
+    }
+
+    public void setCurrentMovement(@NonNull MovementType mvmt) {
+        mPrefs.edit().putString(KEY_CURRENT_MOVEMENT, mvmt.val).apply();
     }
 
 }

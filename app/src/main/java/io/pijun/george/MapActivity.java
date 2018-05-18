@@ -94,7 +94,6 @@ import io.pijun.george.event.FriendRemoved;
 import io.pijun.george.event.LocationSharingGranted;
 import io.pijun.george.event.LocationSharingRevoked;
 import io.pijun.george.interpolator.LinearBezierInterpolator;
-import io.pijun.george.service.ActivityTransitionHandler;
 import io.pijun.george.service.FcmTokenRegistrar;
 import io.pijun.george.service.LimitedShareService;
 import io.pijun.george.view.AvatarView;
@@ -746,7 +745,6 @@ public final class MapActivity extends AppCompatActivity implements OnMapReadyCa
         builder.setPositiveButton(R.string.log_out, new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int which) {
-                ActivityTransitionHandler.stopUpdates(MapActivity.this);
                 AuthenticationManager.get().logOut(MapActivity.this, new AuthenticationManager.LogoutWatcher() {
                     @Override
                     public void onUserLoggedOut() {
@@ -932,6 +930,37 @@ public final class MapActivity extends AppCompatActivity implements OnMapReadyCa
         } else {
             binding.markerDirection.setVisibility(View.GONE);
         }
+        String movement;
+        switch (loc.movement) {
+            case Bicycle:
+                movement = getString(R.string.biking);
+                break;
+            case OnFoot:
+                movement = getString(R.string.on_foot);
+                break;
+            case Running:
+                movement = getString(R.string.running);
+                break;
+            case Vehicle:
+                movement = getString(R.string.in_the_car);
+                break;
+            case Walking:
+                movement = getString(R.string.walking);
+                break;
+            case Stationary:
+                movement = "stationary";
+                break;
+            case Tilting:
+                movement = "tilting";
+                break;
+            case Unknown:
+                movement = "unknown";
+                break;
+            default:
+                movement = "";
+                break;
+        }
+        binding.markerActivity.setText(movement);
         String area = AreaCache.getArea(loc.latitude, loc.longitude);
         if (area != null) {
             StringBuilder s = new StringBuilder(area);

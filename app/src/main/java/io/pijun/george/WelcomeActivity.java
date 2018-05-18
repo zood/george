@@ -37,7 +37,6 @@ import io.pijun.george.api.User;
 import io.pijun.george.crypto.EncryptedData;
 import io.pijun.george.crypto.KeyPair;
 import io.pijun.george.interpolator.Bezier65Interpolator;
-import io.pijun.george.service.ActivityTransitionHandler;
 import retrofit2.Response;
 
 public class WelcomeActivity extends AppCompatActivity implements WelcomeLayout.FocusListener {
@@ -239,7 +238,6 @@ public class WelcomeActivity extends AppCompatActivity implements WelcomeLayout.
                 setBusy(false);
                 switch (err) {
                     case None:
-                        ActivityTransitionHandler.requestUpdates(WelcomeActivity.this);
                         showMapActivity();
                         break;
                     case AuthenticationChallengeFailed:

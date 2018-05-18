@@ -1,12 +1,12 @@
-package io.pijun.george.service;
+package io.pijun.george.receiver;
 
-import android.app.IntentService;
 import android.app.PendingIntent;
+import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.support.annotation.AnyThread;
 import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
+import android.support.annotation.UiThread;
 
 import com.google.android.gms.location.ActivityRecognition;
 import com.google.android.gms.location.ActivityTransition;
@@ -22,20 +22,12 @@ import java.util.ArrayList;
 import java.util.List;
 
 import io.pijun.george.L;
+import io.pijun.george.Prefs;
 import io.pijun.george.database.MovementType;
 
-public class ActivityTransitionHandler extends IntentService {
+public class UserActivityReceiver extends BroadcastReceiver {
 
     private static final int TRANSITION_REQUEST_CODE = 3971;
-    @Nullable private static MovementType currentMovement = MovementType.Unknown;
-
-    private static Intent newIntent(@NonNull Context context) {
-        return new Intent(context, ActivityTransitionHandler.class);
-    }
-
-    public ActivityTransitionHandler() {
-        super("ActivityTransitionServiceThread");
-    }
 
     private static ActivityTransition createTransition(int activity, int transition) {
         return new ActivityTransition.Builder()
@@ -64,35 +56,33 @@ public class ActivityTransitionHandler extends IntentService {
         return transitions;
     }
 
-    @Nullable @AnyThread
-    public static MovementType getCurrentMovement() {
-        return currentMovement;
-    }
-
-    @AnyThread @NonNull
+    @AnyThread
+    @NonNull
     private static PendingIntent getPendingIntent(@NonNull Context context) {
-        return PendingIntent.getService(context,
+        return PendingIntent.getBroadcast(context,
                 TRANSITION_REQUEST_CODE,
-                newIntent(context),
+                new Intent(context, UserActivityReceiver.class),
                 PendingIntent.FLAG_UPDATE_CURRENT);
     }
 
     @Override
-    protected void onHandleIntent(@Nullable Intent intent) {
-        L.i("movement changed");
+    @UiThread
+    public void onReceive(Context context, Intent intent) {
         if (ActivityTransitionResult.hasResult(intent)) {
             ActivityTransitionResult result = ActivityTransitionResult.extractResult(intent);
             if (result != null) {
                 for (ActivityTransitionEvent evt : result.getTransitionEvents()) {
                     MovementType m = MovementType.getByDetectedActivity(evt.getActivityType());
                     int transition = evt.getTransitionType();
-                    L.i("\t" + transition + " " + m.val);
+                    L.i("UAR: " + transition + " " + m.val);
+                    Prefs prefs = Prefs.get(context);
+                    MovementType currMovement = prefs.getCurrentMovement();
                     if (transition == ActivityTransition.ACTIVITY_TRANSITION_EXIT) {
-                        if (currentMovement == m) {
-                            currentMovement = MovementType.Unknown;
+                        if (currMovement == m) {
+                            prefs.setCurrentMovement(MovementType.Unknown);
                         }
                     } else if (transition == ActivityTransition.ACTIVITY_TRANSITION_ENTER) {
-                        currentMovement = m;
+                        prefs.setCurrentMovement(m);
                     }
                 }
             }
@@ -133,4 +123,5 @@ public class ActivityTransitionHandler extends IntentService {
             }
         });
     }
+
 }

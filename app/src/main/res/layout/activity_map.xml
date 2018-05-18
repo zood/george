@@ -194,7 +194,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content" />
         <TextView
-            android:id="@+id/activity"
+            android:id="@+id/marker_activity"
             tools:text="Driving"
             app:layout_constraintStart_toStartOf="@id/marker_username"
             app:layout_constraintTop_toBottomOf="@+id/marker_location"
@@ -204,7 +204,7 @@
             android:id="@+id/marker_direction"
             android:contentDescription="@null"
             android:src="@drawable/ic_navigation_black_24dp"
-            app:layout_constraintStart_toEndOf="@id/activity"
+            app:layout_constraintStart_toEndOf="@id/marker_activity"
             app:layout_constraintTop_toBottomOf="@id/marker_location"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content" />

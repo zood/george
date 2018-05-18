@@ -92,4 +92,9 @@
     <string name="dismiss">Dismiss</string>
     <string name="finding_location">Finding location</string>
     <string name="finding_your_location">Finding your location</string>
+    <string name="biking">Biking</string>
+    <string name="on_foot">On foot</string>
+    <string name="running">Running</string>
+    <string name="in_the_car">In the car</string>
+    <string name="walking">Walking</string>
 </resources>
