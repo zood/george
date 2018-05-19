@@ -87,6 +87,7 @@
         android:id="@+id/about"
         android:text="@string/about"
         android:elevation="40dp"
+        android:onClick="onShowLogs"
         android:textColor="@color/ui_tint_gray"
         style="@style/Base.Widget.AppCompat.Button.Borderless"
         android:fontFamily="@font/lato_bold"

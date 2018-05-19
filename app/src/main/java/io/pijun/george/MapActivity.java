@@ -1300,6 +1300,11 @@ public final class MapActivity extends AppCompatActivity implements OnMapReadyCa
         }
     }
 
+    public void onShowLogs(View v) {
+        Intent i = LogActivity.newIntent(this);
+        startActivity(i);
+    }
+
     private UpdateStatusTracker.Listener updateStatusTrackerListener = new UpdateStatusTracker.Listener() {
         @Override
         public void onUpdateStatusChanged(long friendId) {
