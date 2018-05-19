@@ -1,4 +1,4 @@
-package io.pijun.george.api;
+package io.pijun.george.api.locationiq;
 
 import android.support.annotation.NonNull;
 
@@ -7,8 +7,8 @@ public class RevGeocoding {
     Address address;
 
     public static class Address {
-        // String houseNumber;
-        // String road;
+        String houseNumber;
+        String road;
         String neighbourhood;
         String suburb;
         String city;
@@ -17,6 +17,17 @@ public class RevGeocoding {
 //        String postcode;
         String country;
 //        String countryCode;
+    }
+
+    @NonNull
+    public String getAddress() {
+        if (address.houseNumber != null && address.road != null && address.city != null) {
+            return String.format("%s %s, %s", address.houseNumber, address.road, address.city);
+        } else if (address.road != null && address.city != null) {
+            return String.format("%s, %s", address.road, address.city);
+        }
+
+        return getArea();
     }
 
     @NonNull

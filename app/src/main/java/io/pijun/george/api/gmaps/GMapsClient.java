@@ -1,5 +1,6 @@
-package io.pijun.george.api;
+package io.pijun.george.api.gmaps;
 
+import io.pijun.george.api.OscarClient;
 import retrofit2.Retrofit;
 import retrofit2.converter.gson.GsonConverterFactory;
 

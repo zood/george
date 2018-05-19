@@ -1,4 +1,4 @@
-package io.pijun.george.api;
+package io.pijun.george.api.locationiq;
 
 import android.content.Context;
 import android.support.annotation.AnyThread;
@@ -7,6 +7,7 @@ import android.support.annotation.NonNull;
 import java.io.IOException;
 
 import io.pijun.george.R;
+import io.pijun.george.api.OscarClient;
 import okhttp3.HttpUrl;
 import okhttp3.Interceptor;
 import okhttp3.OkHttpClient;
@@ -32,7 +33,7 @@ public class LocationIQClient {
 
         httpBuilder.addInterceptor(new Interceptor() {
             @Override
-            public Response intercept(Chain chain) throws IOException {
+            public Response intercept(@NonNull Chain chain) throws IOException {
                 Request request = chain.request();
                 HttpUrl origUrl = request.url();
                 HttpUrl url = origUrl.newBuilder()

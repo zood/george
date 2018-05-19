@@ -1,4 +1,4 @@
-package io.pijun.george.api;
+package io.pijun.george.api.gmaps;
 
 import android.support.annotation.Nullable;
 

@@ -27,7 +27,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 
-import io.pijun.george.api.AreaCache;
+import io.pijun.george.api.locationiq.RevGeocoding;
+import io.pijun.george.api.locationiq.ReverseGeocodingCache;
 import io.pijun.george.database.FriendLocation;
 import io.pijun.george.database.FriendRecord;
 import io.pijun.george.view.AvatarView;
@@ -68,7 +69,7 @@ class FriendItemsAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
     }
 
     @Override
-    public void onBindViewHolder(RecyclerView.ViewHolder holder, int position) {
+    public void onBindViewHolder(@NonNull RecyclerView.ViewHolder holder, int position) {
         if (holder instanceof FriendItemViewHolder) {
             FriendItemViewHolder h = (FriendItemViewHolder) holder;
 
@@ -122,17 +123,17 @@ class FriendItemsAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
                     h.location.setText("");
                     h.updateTime.setText(R.string.unknown);
                 } else {
-                    String area = AreaCache.getArea(loc.latitude, loc.longitude);
-                    if (area == null) {
-                        AreaCache.fetchArea(h.location.getContext(), loc.latitude, loc.longitude, new AreaCache.ReverseGeocodingListener() {
+                    RevGeocoding rg = ReverseGeocodingCache.get(loc.latitude, loc.longitude);
+                    if (rg == null) {
+                        ReverseGeocodingCache.fetch(h.location.getContext(), loc.latitude, loc.longitude, new ReverseGeocodingCache.OnCachedListener() {
                             @Override
-                            public void onReverseGeocodingCompleted(@Nullable String area) {
+                            public void onReverseGeocodingCached(@Nullable RevGeocoding rg) {
                                 onFriendGeocodingUpdated(friend.id);
                             }
                         });
                     }
-                    if (area != null) {
-                        h.location.setText(area);
+                    if (rg != null) {
+                        h.location.setText(rg.getArea());
                     } else {
                         h.location.setText(h.location.getContext().getString(R.string.loading_ellipsis));
                     }
@@ -174,8 +175,8 @@ class FriendItemsAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
     }
 
     @Override
-    public void onBindViewHolder(RecyclerView.ViewHolder holder, int position, List<Object> payloads) {
-        if (payloads == null || payloads.size() == 0) {
+    public void onBindViewHolder(@NonNull RecyclerView.ViewHolder holder, int position, @NonNull List<Object> payloads) {
+        if (payloads.size() == 0) {
             onBindViewHolder(holder, position);
             return;
         }
@@ -188,24 +189,28 @@ class FriendItemsAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
                     if (loc == null) {
                         continue;
                     }
-                    String area = AreaCache.getArea(loc.latitude, loc.longitude);
-                    h.location.setText(area);
+                    RevGeocoding rg = ReverseGeocodingCache.get(loc.latitude, loc.longitude);
+                    if (rg != null) {
+                        h.location.setText(rg.getArea());
+                    } else {
+                        h.location.setText(null);
+                    }
                 } else if (payload.equals("location")) {
                     FriendLocation loc = mFriendLocations.get(friend.id);
                     if (loc == null) {
                         continue;
                     }
-                    String area = AreaCache.getArea(loc.latitude, loc.longitude);
-                    if (area == null) {
-                        AreaCache.fetchArea(h.location.getContext(), loc.latitude, loc.longitude, new AreaCache.ReverseGeocodingListener() {
+                    RevGeocoding rg = ReverseGeocodingCache.get(loc.latitude, loc.longitude);
+                    if (rg == null) {
+                        ReverseGeocodingCache.fetch(h.location.getContext(), loc.latitude, loc.longitude, new ReverseGeocodingCache.OnCachedListener() {
                             @Override
-                            public void onReverseGeocodingCompleted(@Nullable String area) {
+                            public void onReverseGeocodingCached(@Nullable RevGeocoding addr) {
                                 onFriendGeocodingUpdated(friend.id);
                             }
                         });
                     }
-                    if (area != null) {
-                        h.location.setText(area);
+                    if (rg != null) {
+                        h.location.setText(rg.getArea());
                     } else {
                         h.location.setText(h.location.getContext().getString(R.string.loading_ellipsis));
                     }
@@ -227,7 +232,8 @@ class FriendItemsAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
     }
 
     @Override
-    public RecyclerView.ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
+    @NonNull
+    public RecyclerView.ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
         LayoutInflater inflater = LayoutInflater.from(parent.getContext());
         View view = inflater.inflate(R.layout.friend_item, parent, false);
         final FriendItemViewHolder holder = new FriendItemViewHolder(view);
@@ -302,8 +308,13 @@ class FriendItemsAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
     @UiThread
     void setFriendLocation(@NonNull final Context ctx, @NonNull final FriendLocation loc) {
         mFriendLocations.put(loc.friendId, loc);
-        if (AreaCache.getArea(loc.latitude, loc.longitude) == null) {
-            AreaCache.fetchArea(ctx, loc.latitude, loc.longitude, area -> onFriendGeocodingUpdated(loc.friendId));
+        if (ReverseGeocodingCache.get(loc.latitude, loc.longitude) == null) {
+            ReverseGeocodingCache.fetch(ctx, loc.latitude, loc.longitude, new ReverseGeocodingCache.OnCachedListener() {
+                @Override
+                public void onReverseGeocodingCached(@Nullable RevGeocoding addr) {
+                    onFriendGeocodingUpdated(loc.friendId);
+                }
+            });
         }
         onFriendLocationUpdated(loc.friendId);
     }

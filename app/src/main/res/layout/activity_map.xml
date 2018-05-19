@@ -180,16 +180,19 @@
             android:layout_height="wrap_content" />
         <TextView
             android:id="@+id/marker_location"
-            tools:text="Thousand Oaks"
-            app:layout_constraintStart_toStartOf="@id/marker_username"
+            tools:text="Townsgate Road, Westlake Village"
+            android:layout_marginEnd="8dp"
+            android:layout_marginStart="8dp"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintTop_toBottomOf="@id/marker_username"
-            android:layout_width="wrap_content"
+            android:layout_width="0dp"
             android:layout_height="wrap_content" />
         <TextView
             android:id="@+id/marker_time"
             tools:text="now"
-            app:layout_constraintStart_toEndOf="@id/marker_location"
-            app:layout_constraintTop_toBottomOf="@id/marker_username"
+            app:layout_constraintStart_toEndOf="@id/marker_username"
+            app:layout_constraintTop_toTopOf="@id/marker_username"
             android:layout_marginStart="4dp"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content" />

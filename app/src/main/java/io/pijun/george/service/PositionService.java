@@ -51,7 +51,7 @@ public class PositionService extends Service {
     private static final int NOTIFICATION_ID = 44;  // arbitrary number
 
     private static int HANDLER_COUNT = 1;
-    public static final int MAX_WAIT_SECONDS = 15;
+    public static final int MAX_WAIT_SECONDS = 30;
     // The lock stays longer, because we need to give ourselves ample time to clean up
     private static final int LOCK_SECONDS = MAX_WAIT_SECONDS + 35;
 
@@ -193,7 +193,7 @@ public class PositionService extends Service {
 
         FusedLocationProviderClient client = LocationServices.getFusedLocationProviderClient(this);
         LocationRequest request = LocationRequest.create();
-        request.setInterval(5 * DateUtils.SECOND_IN_MILLIS);
+        request.setInterval(DateUtils.SECOND_IN_MILLIS);
         request.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
         thread = new HandlerThread("PositionService_" + HANDLER_COUNT++);
         thread.start();

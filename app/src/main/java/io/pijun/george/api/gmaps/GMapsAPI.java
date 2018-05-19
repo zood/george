@@ -1,4 +1,4 @@
-package io.pijun.george.api;
+package io.pijun.george.api.gmaps;
 
 import retrofit2.Call;
 import retrofit2.http.GET;

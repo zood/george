@@ -73,14 +73,14 @@ import java.util.ArrayList;
 
 import io.pijun.george.animation.DoubleEvaluator;
 import io.pijun.george.animation.LatLngEvaluator;
-import io.pijun.george.api.AreaCache;
-import io.pijun.george.api.LocationIQClient;
+import io.pijun.george.api.locationiq.ReverseGeocodingCache;
+import io.pijun.george.api.locationiq.LocationIQClient;
 import io.pijun.george.api.Message;
 import io.pijun.george.api.OscarAPI;
 import io.pijun.george.api.OscarClient;
 import io.pijun.george.api.OscarError;
 import io.pijun.george.api.PackageWatcher;
-import io.pijun.george.api.RevGeocoding;
+import io.pijun.george.api.locationiq.RevGeocoding;
 import io.pijun.george.api.User;
 import io.pijun.george.api.UserComm;
 import io.pijun.george.crypto.KeyPair;
@@ -196,7 +196,7 @@ public final class MapActivity extends AppCompatActivity implements OnMapReadyCa
         mLocationProviderClient = LocationServices.getFusedLocationProviderClient(this);
         mSettingsClient = LocationServices.getSettingsClient(this);
         mLocationRequest = LocationRequest.create();
-        mLocationRequest.setInterval(5 * DateUtils.SECOND_IN_MILLIS);
+        mLocationRequest.setInterval(3 * DateUtils.SECOND_IN_MILLIS);
         mLocationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
         LocationSettingsRequest.Builder builder = new LocationSettingsRequest.Builder();
         builder.addLocationRequest(mLocationRequest);
@@ -918,7 +918,7 @@ public final class MapActivity extends AppCompatActivity implements OnMapReadyCa
                     DateUtils.MINUTE_IN_MILLIS,
                     DateUtils.FORMAT_ABBREV_RELATIVE);
         }
-        binding.markerTime.setText(relTime);
+        binding.markerTime.setText(String.format("(%s)", relTime));
 
         binding.markerDetails.setTag(loc);
 
@@ -954,29 +954,31 @@ public final class MapActivity extends AppCompatActivity implements OnMapReadyCa
                 movement = "tilting";
                 break;
             case Unknown:
-                movement = "unknown";
-                break;
             default:
-                movement = "";
+                movement = null;
                 break;
         }
         binding.markerActivity.setText(movement);
-        String area = AreaCache.getArea(loc.latitude, loc.longitude);
-        if (area != null) {
-            StringBuilder s = new StringBuilder(area);
+        RevGeocoding rg = ReverseGeocodingCache.get(loc.latitude, loc.longitude);
+        if (rg != null) {
+            StringBuilder s = new StringBuilder(rg.getAddress());
             if (loc.accuracy != null) {
-                s.append(" (±").append(loc.accuracy).append(" m)");
+                s.append(" (±").append(loc.accuracy.intValue()).append(" m)");
             }
             binding.markerLocation.setText(s);
         } else {
             binding.markerLocation.setText(R.string.loading_ellipsis);
-            AreaCache.fetchArea(MapActivity.this, loc.latitude, loc.longitude, new AreaCache.ReverseGeocodingListener() {
+            ReverseGeocodingCache.fetch(MapActivity.this, loc.latitude, loc.longitude, new ReverseGeocodingCache.OnCachedListener() {
                 @Override
-                public void onReverseGeocodingCompleted(@Nullable String area) {
+                public void onReverseGeocodingCached(@Nullable RevGeocoding rg) {
                     FriendLocation savedLoc = (FriendLocation) binding.markerDetails.getTag();
                     if (savedLoc != null && savedLoc.latitude == loc.latitude && savedLoc.longitude == loc.longitude) {
-                        if (area != null) {
-                            binding.markerLocation.setText(area);
+                        if (rg != null) {
+                            StringBuilder s = new StringBuilder(rg.getAddress());
+                            if (loc.accuracy != null) {
+                                s.append(" (±").append(loc.accuracy.intValue()).append(" m)");
+                            }
+                            binding.markerLocation.setText(s);
                         }
                     }
                 }

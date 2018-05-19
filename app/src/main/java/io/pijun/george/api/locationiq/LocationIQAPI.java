@@ -1,4 +1,4 @@
-package io.pijun.george.api;
+package io.pijun.george.api.locationiq;
 
 import okhttp3.ResponseBody;
 import retrofit2.Call;
