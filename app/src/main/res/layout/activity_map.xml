@@ -208,6 +208,7 @@
             android:id="@+id/marker_direction"
             android:contentDescription="@null"
             android:src="@drawable/ic_navigation_black_24dp"
+            android:layout_marginStart="4dp"
             app:layout_constraintStart_toEndOf="@id/marker_activity"
             app:layout_constraintTop_toBottomOf="@id/marker_location"
             android:layout_width="wrap_content"
@@ -217,6 +218,7 @@
             tools:text="29.7 m/s"
             app:layout_constraintStart_toEndOf="@id/marker_direction"
             app:layout_constraintTop_toBottomOf="@id/marker_location"
+            android:layout_marginStart="4dp"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content" />
     </android.support.constraint.ConstraintLayout>
