@@ -82,7 +82,6 @@ public class LocationUtils {
                 try {
                     Response<Void> response = api.dropMultiplePackages(pkgs).execute();
                     if (response.isSuccessful()) {
-                        L.i("LUtils successfully uploaded a location");
                         prefs.setLastLocationUpdateTime(System.currentTimeMillis());
                         lastLocationMessage = locMsg;
                         return;
@@ -96,7 +95,6 @@ public class LocationUtils {
                 OscarClient.queueDropMultiplePackages(ctx, token, pkgs);
                 prefs.setLastLocationUpdateTime(System.currentTimeMillis());
                 lastLocationMessage = locMsg;
-                L.i("LUtils successfully queued a location");
             }
         }
     }

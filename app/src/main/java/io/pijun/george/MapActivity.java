@@ -73,16 +73,15 @@ import java.util.ArrayList;
 
 import io.pijun.george.animation.DoubleEvaluator;
 import io.pijun.george.animation.LatLngEvaluator;
-import io.pijun.george.api.locationiq.ReverseGeocodingCache;
-import io.pijun.george.api.locationiq.LocationIQClient;
 import io.pijun.george.api.Message;
 import io.pijun.george.api.OscarAPI;
 import io.pijun.george.api.OscarClient;
 import io.pijun.george.api.OscarError;
 import io.pijun.george.api.PackageWatcher;
-import io.pijun.george.api.locationiq.RevGeocoding;
 import io.pijun.george.api.User;
 import io.pijun.george.api.UserComm;
+import io.pijun.george.api.locationiq.RevGeocoding;
+import io.pijun.george.api.locationiq.ReverseGeocodingCache;
 import io.pijun.george.crypto.KeyPair;
 import io.pijun.george.database.DB;
 import io.pijun.george.database.FriendLocation;
@@ -100,7 +99,6 @@ import io.pijun.george.view.AvatarView;
 import io.pijun.george.view.DrawerActionRecognizer;
 import io.pijun.george.view.DrawerSwipesListener;
 import io.pijun.george.view.MyLocationView;
-import retrofit2.Call;
 import retrofit2.Response;
 
 public final class MapActivity extends AppCompatActivity implements OnMapReadyCallback, GoogleMap.OnMarkerClickListener, AvatarsAdapter.AvatarsAdapterListener, DrawerSwipesListener {
@@ -765,57 +763,46 @@ public final class MapActivity extends AppCompatActivity implements OnMapReadyCa
     @UiThread
     public boolean onMarkerClick(@NonNull final Marker marker) {
         if (marker.equals(mMeMarker)) {
+            binding.markerDetails.setVisibility(View.GONE);
             return true;
         }
 
         final FriendLocation loc = mMarkerTracker.getLocation(marker);
-        long now = System.currentTimeMillis();
-        final CharSequence relTime;
-        if (loc.time >= now-60*DateUtils.SECOND_IN_MILLIS) {
-            relTime = getString(R.string.now);
-        } else {
-            relTime = DateUtils.getRelativeTimeSpanString(
-                    loc.time,
-                    System.currentTimeMillis(),
-                    DateUtils.MINUTE_IN_MILLIS,
-                    DateUtils.FORMAT_ABBREV_RELATIVE);
+        if (loc == null) {
+            binding.markerDetails.setVisibility(View.GONE);
+            return true;
         }
-        StringBuilder snippetBuilder = new StringBuilder(relTime.toString() + ", ");
-        if (loc.speed != null) {
-            snippetBuilder.append(loc.speed).append(" m/s, ");
-        }
-        if (loc.bearing != null) {
-            snippetBuilder.append(loc.bearing).append("°, ");
-        }
-        if (loc.accuracy != null) {
-            snippetBuilder.append("±").append(loc.accuracy).append(" m, ");
-        }
-        if (loc.movement != null) {
-            snippetBuilder.append(loc.movement.val).append(", ");
-        }
-        final String snippet = snippetBuilder.toString();
-        marker.setSnippet(snippet);
-
-        showFriendErrorCircle(loc);
-
-        App.runInBackground(() -> {
-            try {
-                Call<RevGeocoding> call = LocationIQClient.get(MapActivity.this).getReverseGeocoding("" + loc.latitude, "" + loc.longitude);
-                Response<RevGeocoding> response = call.execute();
-                if (response.isSuccessful()) {
-                    final RevGeocoding revGeocoding = response.body();
-                    if (revGeocoding == null) {
-                        return;
-                    }
-                    App.runOnUiThread(() -> marker.setSnippet(snippet + revGeocoding.getArea()));
-                } else {
-                    L.w("error calling locationiq");
+        L.i("onMarkerClick found friend " + loc.friendId);
+        App.runInBackground(new WorkerRunnable() {
+            @Override
+            public void run() {
+                FriendRecord friend = DB.get(MapActivity.this).getFriendById(loc.friendId);
+                if (friend == null) {
+                    return;
                 }
-            } catch (Exception ex) {
-                L.w("network error obtaining reverse geocoding", ex);
+                App.runOnUiThread(new UiRunnable() {
+                    @Override
+                    public void run() {
+                        if (binding != null) {
+                            binding.markerUsername.setText(friend.user.username);
+                        }
+                    }
+                });
             }
         });
-        return false;
+        selectedAvatarFriendId = loc.friendId;
+        friendForCameraToTrack = loc.friendId;
+        setAvatarInfo(loc);
+
+        binding.markerDetails.setVisibility(View.VISIBLE);
+
+        if (mGoogMap != null) {
+            CameraUpdate update = CameraUpdateFactory.newLatLng(new LatLng(loc.latitude, loc.longitude));
+            mGoogMap.animateCamera(update);
+        }
+
+        showFriendErrorCircle(loc);
+        return true;
     }
 
     @Override
