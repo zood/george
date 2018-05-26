@@ -817,6 +817,14 @@ public final class MapActivity extends AppCompatActivity implements OnMapReadyCa
         binding.markerDetails.setVisibility(View.VISIBLE);
         binding.markerUsername.setText(fr.user.username);
 
+        // Is the avatar info already showing for this user? If so, just center the camera and follow
+        if (selectedAvatarFriendId == fr.id) {
+            friendForCameraToTrack = fr.id;
+            CameraUpdate update = CameraUpdateFactory.newLatLng(marker.getPosition());
+            mGoogMap.animateCamera(update);
+            return;
+        }
+
         friendForCameraToTrack = fr.id;
         selectedAvatarFriendId = fr.id;
         findViewById(R.id.my_location_fab).setSelected(false);
