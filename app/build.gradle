@@ -68,6 +68,7 @@ dependencies {
     implementation 'com.google.android.gms:play-services-maps:15.0.1'
     // cloud messaging
     implementation 'com.google.firebase:firebase-messaging:17.0.0'
+    implementation 'com.google.firebase:firebase-core:16.0.0'
 
     implementation 'com.squareup.retrofit2:retrofit:2.4.0'
     implementation 'com.squareup.retrofit2:converter-gson:2.4.0'
@@ -77,6 +78,8 @@ dependencies {
     implementation 'com.squareup.picasso:picasso:2.5.2'
 
     implementation 'com.crashlytics.sdk.android:crashlytics:2.9.3'
+
+    implementation 'com.airbnb.android:lottie:2.5.4'
 
     testImplementation 'junit:junit:4.12'
     androidTestImplementation 'com.android.support.test.espresso:espresso-core:3.0.2'
