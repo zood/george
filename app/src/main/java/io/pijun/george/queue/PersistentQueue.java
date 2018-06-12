@@ -27,9 +27,15 @@ public class PersistentQueue<E> {
     private final Converter<E> mConverter;
     private final Semaphore mSemaphore;
 
-    public PersistentQueue(@NonNull Context context, @NonNull String queueName, @NonNull Converter<E> converter) {
+    public PersistentQueue(@NonNull Context context, @Nullable String queueName, @NonNull Converter<E> converter) {
         mConverter = converter;
-        mHelper = new QueueHelper(context, queueName);
+        String name = null;
+        if (queueName != null) {
+            name = "queue_"+queueName;
+        }
+        mHelper = new QueueHelper(context, name);
+
+        // This has to be initialized after mHelper, because it relies on size(), which needs mHelper
         mSemaphore = new Semaphore(size(), true);
     }
 
@@ -51,9 +57,12 @@ public class PersistentQueue<E> {
 
     @WorkerThread
     public void clear() {
-        mSemaphore.drainPermits();
-        SQLiteDatabase db = mHelper.getWritableDatabase();
-        db.delete(TASKS_TABLE, null, null);
+        while (true) {
+            if (!mSemaphore.tryAcquire()) {
+                return;
+            }
+            getHead(true);
+        }
     }
 
     private void deleteRow(int itemId) {
@@ -164,8 +173,8 @@ public class PersistentQueue<E> {
 
     private static class QueueHelper extends SQLiteOpenHelper {
 
-        private QueueHelper(Context context, String queueName) {
-            super(context, "queue_" + queueName, null, 1);
+        private QueueHelper(@NonNull Context context, @Nullable String queueName) {
+            super(context, queueName, null, 1);
         }
 
         public void onCreate(SQLiteDatabase db) {

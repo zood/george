@@ -4,6 +4,8 @@ import android.content.Context;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.runner.AndroidJUnit4;
 
+import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -26,60 +28,83 @@ public class PersistentQueueTest {
         }
     };
 
-    private static PersistentQueue<String> mQueue;
+    private static PersistentQueue<String> queue;
     private static final String element1 = "Hello, world";
     private static final String element2 = "Goodbye, world";
     private static final String element3 = "Allah-u-Abha, Abha Kingdom!";
 
-    @Test
-    public void testCreation() throws Exception {
-        // Context of the app under test.
+    @BeforeClass
+    public static void setUp() {
         Context appContext = InstrumentationRegistry.getTargetContext();
 
-        mQueue = new PersistentQueue<>(appContext, "testQueue", mConverter);
-        assertNotNull(mQueue);
+        queue = new PersistentQueue<>(appContext, null, mConverter);
+    }
+
+    @Before
+    public void clearBeforeTest() {
+        queue.clear();
     }
 
     @Test
-    public void testOffer() throws Exception {
-        mQueue.offer(element1);
-        assertEquals(mQueue.size(), 1);
+    public void testOffer() {
+        queue.offer(element1);
+        assertEquals(queue.size(), 1);
     }
 
     @Test
-    public void testPeek() throws Exception {
-        String peeked = mQueue.peek();
+    public void testPeek() {
+        queue.offer(element1);
+        String peeked = queue.peek();
         assertEquals(peeked, element1);
+
+        // the queue should still contain the element after the peek
+        assertEquals(queue.size(), 1);
     }
 
     @Test
-    public void testPoll() throws Exception {
-        String polled = mQueue.poll();
+    public void testPoll() {
+        queue.offer(element1);
+
+        String polled = queue.poll();
         assertEquals(polled, element1);
-        assertEquals(mQueue.size(), 0);
+        assertEquals(queue.size(), 0);
     }
 
     @Test
-    public void testOrdering() throws Exception {
-        mQueue.offer(element1);
-        mQueue.offer(element2);
-        mQueue.offer(element3);
+    public void testOrdering() {
+        queue.offer(element1);
+        queue.offer(element2);
+        queue.offer(element3);
 
-        assertEquals(mQueue.size(), 3);
+        assertEquals(queue.size(), 3);
 
-        assertEquals(mQueue.poll(), element1);
-        assertEquals(mQueue.poll(), element2);
-        assertEquals(mQueue.poll(), element3);
+        assertEquals(queue.poll(), element1);
+        assertEquals(queue.poll(), element2);
+        assertEquals(queue.poll(), element3);
 
-        assertEquals(mQueue.size(), 0);
+        assertEquals(queue.size(), 0);
     }
 
     @Test
     public void testTake() throws Exception {
-        mQueue.offer(element1);
-        mQueue.offer(element2);
+        queue.offer(element1);
+        queue.offer(element2);
 
-        assertEquals(mQueue.take(), element1);
-        assertEquals(mQueue.take(), element2);
+        assertEquals(queue.take(), element1);
+        assertEquals(queue.take(), element2);
+        assertEquals(queue.size(), 0);
+    }
+
+    @Test
+    public void testBlockingPeek() throws Exception {
+        queue.offer(element1);
+        assertEquals(queue.blockingPeek(), element1);
+        assertEquals(queue.size(), 1);
+    }
+
+    @Test
+    public void testNullPoll() {
+        String e = queue.poll();
+        assertNull(e);
     }
 }
