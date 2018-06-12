@@ -103,7 +103,7 @@ public final class TaskSender {
 
             // make sure we're still logged in
             if (TextUtils.isEmpty(prefs.getAccessToken())) {
-                L.i("OscarTasksService.onHandleIntent - we're not logged in. Clearing the queue.");
+                L.i("TaskSender - we're not logged in. Clearing the queue.");
                 // not logged in, so empty the queue and get out of here
                 queue.clear();
                 return;
