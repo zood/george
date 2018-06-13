@@ -581,7 +581,6 @@ public class DB {
 
     @WorkerThread
     public void restoreDatabase(@NonNull Context ctx, @NonNull Snapshot snapshot) throws DBException {
-        L.i("snapshot: " + new String(snapshot.toJson()));
         SQLiteDatabase db = mDbHelper.getWritableDatabase();
         if (snapshot.schemaVersion > db.getVersion()) {
             throw new DBException("Snapshot is from a newer database format");
