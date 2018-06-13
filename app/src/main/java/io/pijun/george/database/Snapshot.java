@@ -9,6 +9,7 @@ import java.io.ByteArrayInputStream;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
 
+import io.pijun.george.Constants;
 import io.pijun.george.api.OscarClient;
 
 public class Snapshot {
@@ -38,7 +39,7 @@ public class Snapshot {
     @NonNull
     public byte[] toJson() {
         String s = OscarClient.sGson.toJson(this);
-        return s.getBytes();
+        return s.getBytes(Constants.utf8);
     }
 
     @Nullable

@@ -335,7 +335,7 @@ public class WelcomeActivity extends AppCompatActivity implements WelcomeLayout.
         // We need a key with which to encrypt our data, so we'll use the hash of our password
         byte[] passwordHash = Sodium.createHashFromPassword(
                 Sodium.getSymmetricKeyLength(),
-                password.getBytes(),
+                password.getBytes(Constants.utf8),
                 u.passwordSalt,
                 u.passwordHashOperationsLimit,
                 u.passwordHashMemoryLimit);

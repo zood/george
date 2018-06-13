@@ -19,12 +19,12 @@ public class PersistentQueueTest {
     private static PersistentQueue.Converter<String> mConverter = new PersistentQueue.Converter<String>() {
         @Override
         public String deserialize(byte[] bytes) {
-            return new String(bytes);
+            return new String(bytes, Constants.utf8);
         }
 
         @Override
         public byte[] serialize(String t) {
-            return t.getBytes();
+            return t.getBytes(Constants.utf8);
         }
     };
 

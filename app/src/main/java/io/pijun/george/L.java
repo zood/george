@@ -23,27 +23,27 @@ public class L {
 
     public static void i(@NonNull String msg) {
         Log.i(TAG, msg);
-        write(msg.getBytes());
+        write(msg.getBytes(Constants.utf8));
     }
 
     public static void d(@NonNull String msg) {
         Log.d(TAG, msg);
-        write(msg.getBytes());
+        write(msg.getBytes(Constants.utf8));
     }
 
     public static void w(@NonNull String msg) {
         Log.w(TAG, msg);
-        write(msg.getBytes());
+        write(msg.getBytes(Constants.utf8));
     }
 
     public static void w(@NonNull String msg, @NonNull Throwable t) {
         Log.w(TAG, msg, t);
-        write(msg.getBytes(), t);
+        write(msg.getBytes(Constants.utf8), t);
     }
 
     public static void e(@NonNull String msg, @NonNull Throwable t) {
         Log.e(TAG, msg, t);
-        write(msg.getBytes(), t);
+        write(msg.getBytes(Constants.utf8), t);
     }
 
     private static void write(@NonNull byte[] msg) {
@@ -51,8 +51,8 @@ public class L {
         sLogLock.writeLock().lock();
         try {
             String time = sDateFormat.format(new Date());
-            stream.write(time.getBytes());
-            stream.write(": ".getBytes());
+            stream.write(time.getBytes(Constants.utf8));
+            stream.write(": ".getBytes(Constants.utf8));
             stream.write(msg);
             stream.write('\n');
         } catch (IOException e) {
@@ -67,8 +67,8 @@ public class L {
         sLogLock.writeLock().lock();
         try {
             String time = sDateFormat.format(new Date());
-            stream.write(time.getBytes());
-            stream.write(": ".getBytes());
+            stream.write(time.getBytes(Constants.utf8));
+            stream.write(": ".getBytes(Constants.utf8));
             stream.write(msg);
             stream.write('\n');
             PrintStream ps = new PrintStream(stream);

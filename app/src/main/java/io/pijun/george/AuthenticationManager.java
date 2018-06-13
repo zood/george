@@ -136,7 +136,7 @@ public class AuthenticationManager {
         }
         final byte[] passwordHash = Sodium.createHashFromPassword(
                 Sodium.getSymmetricKeyLength(),
-                password.getBytes(),
+                password.getBytes(Constants.utf8),
                 authChallenge.user.passwordSalt,
                 authChallenge.user.passwordHashOperationsLimit,
                 authChallenge.user.passwordHashMemoryLimit);

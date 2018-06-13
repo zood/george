@@ -43,7 +43,7 @@ public class Identicon {
     private static byte[] getHash(@NonNull String data) {
         try {
             MessageDigest digest = MessageDigest.getInstance("MD5");
-            digest.update(data.getBytes());
+            digest.update(data.getBytes(Constants.utf8));
             return digest.digest();
         } catch (NoSuchAlgorithmException ex) {
             throw new RuntimeException("MD5 algo not found", ex);

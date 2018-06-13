@@ -191,7 +191,7 @@ public class UserComm {
     @NonNull
     public byte[] toJSON() {
         String s = OscarClient.sGson.toJson(this);
-        return s.getBytes();
+        return s.getBytes(Constants.utf8);
     }
 
     @Override

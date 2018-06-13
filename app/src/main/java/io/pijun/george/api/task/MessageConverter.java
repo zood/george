@@ -6,6 +6,7 @@ import com.google.gson.JsonParser;
 import java.io.ByteArrayInputStream;
 import java.io.InputStreamReader;
 
+import io.pijun.george.Constants;
 import io.pijun.george.queue.PersistentQueue;
 import io.pijun.george.api.Message;
 import io.pijun.george.api.OscarClient;
@@ -21,6 +22,6 @@ public class MessageConverter implements PersistentQueue.Converter<Message> {
 
     @Override
     public byte[] serialize(Message msg) {
-        return OscarClient.sGson.toJson(msg).getBytes();
+        return OscarClient.sGson.toJson(msg).getBytes(Constants.utf8);
     }
 }
