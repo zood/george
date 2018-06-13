@@ -223,7 +223,7 @@ public final class MapActivity extends AppCompatActivity implements OnMapReadyCa
         App.runInBackground(new WorkerRunnable() {
             @Override
             public void run() {
-                FriendRecord friend = DB.get(MapActivity.this).getFriendById(friendId);
+                FriendRecord friend = DB.get().getFriendById(friendId);
                 if (friend == null) {
                     L.w("no friend found with id " + friendId);
                     return;
@@ -267,7 +267,7 @@ public final class MapActivity extends AppCompatActivity implements OnMapReadyCa
                     return;
                 }
 
-                ArrayList<FriendRecord> friends = DB.get(MapActivity.this).getFriends();
+                ArrayList<FriendRecord> friends = DB.get().getFriends();
                 for (FriendRecord fr: friends) {
                     if (fr.receivingBoxId != null) {
                         L.i("\twatching " + Hex.toHexString(fr.receivingBoxId));
@@ -286,7 +286,7 @@ public final class MapActivity extends AppCompatActivity implements OnMapReadyCa
                         if (fr.receivingBoxId == null) {
                             continue;
                         }
-                        FriendLocation loc = DB.get(MapActivity.this).getFriendLocation(fr.id);
+                        FriendLocation loc = DB.get().getFriendLocation(fr.id);
                         if (loc == null || (now - loc.time) > DELAY * DateUtils.SECOND_IN_MILLIS) {
                             UpdateStatusTracker.setLastRequestTime(fr.id, System.currentTimeMillis());
                             L.i("queue location request");
@@ -448,7 +448,7 @@ public final class MapActivity extends AppCompatActivity implements OnMapReadyCa
 
         // add markers for all friends
         App.runInBackground(() -> {
-            DB db = DB.get(MapActivity.this);
+            DB db = DB.get();
             ArrayList<FriendRecord> friends = db.getFriends();
             for (final FriendRecord f : friends) {
                 final FriendLocation location = db.getFriendLocation(f.id);
@@ -653,7 +653,7 @@ public final class MapActivity extends AppCompatActivity implements OnMapReadyCa
         App.runInBackground(new WorkerRunnable() {
             @Override
             public void run() {
-                final FriendRecord friend = DB.get(MapActivity.this).getFriendByUserId(grant.userId);
+                final FriendRecord friend = DB.get().getFriendByUserId(grant.userId);
                 if (friend == null) {
                     L.w("MapActivity.onLocationSharingGranted didn't find friend record");
                     return;
@@ -674,7 +674,7 @@ public final class MapActivity extends AppCompatActivity implements OnMapReadyCa
     public void onLocationSharingRevoked(final LocationSharingRevoked revoked) {
         // remove the map marker, if there is one
         App.runInBackground(() -> {
-            DB db = DB.get(this);
+            DB db = DB.get();
             FriendRecord friend = db.getFriendByUserId(revoked.userId);
             if (friend == null) {
                 return;
@@ -700,7 +700,7 @@ public final class MapActivity extends AppCompatActivity implements OnMapReadyCa
         Marker marker = mMarkerTracker.getById(loc.friendId);
         if (marker == null) {
             App.runInBackground(() -> {
-                final FriendRecord friend = DB.get(MapActivity.this).getFriendById(loc.friendId);
+                final FriendRecord friend = DB.get().getFriendById(loc.friendId);
                 if (friend != null) {
                     addMapMarker(friend, loc);
                 }
@@ -776,7 +776,7 @@ public final class MapActivity extends AppCompatActivity implements OnMapReadyCa
         App.runInBackground(new WorkerRunnable() {
             @Override
             public void run() {
-                FriendRecord friend = DB.get(MapActivity.this).getFriendById(loc.friendId);
+                FriendRecord friend = DB.get().getFriendById(loc.friendId);
                 if (friend == null) {
                     return;
                 }
@@ -839,7 +839,7 @@ public final class MapActivity extends AppCompatActivity implements OnMapReadyCa
         App.runInBackground(new WorkerRunnable() {
             @Override
             public void run() {
-                FriendLocation loc = DB.get(MapActivity.this).getFriendLocation(fr.id);
+                FriendLocation loc = DB.get().getFriendLocation(fr.id);
                 if (loc == null) {
                     // shouldn't happen
                     return;
@@ -1049,7 +1049,7 @@ public final class MapActivity extends AppCompatActivity implements OnMapReadyCa
         }
         OscarAPI api = OscarClient.newInstance(accessToken);
         try {
-            DB db = DB.get(this);
+            DB db = DB.get();
             UserRecord userRecord = db.getUser(username);
             if (userRecord == null) {
                 Response<User> searchResponse = api.searchForUser(username).execute();
@@ -1063,7 +1063,7 @@ public final class MapActivity extends AppCompatActivity implements OnMapReadyCa
                     Utils.showStringAlert(this, null, "Unknown error while retrieving info about username");
                     return;
                 }
-                userRecord = db.addUser(userToRequest.id, userToRequest.username, userToRequest.publicKey);
+                userRecord = db.addUser(userToRequest.id, userToRequest.username, userToRequest.publicKey, true, this);
             }
 
             // check if we already have this user as a friend, and if we're already sharing with them
@@ -1090,7 +1090,7 @@ public final class MapActivity extends AppCompatActivity implements OnMapReadyCa
                 return;
             }
 
-            db.startSharingWith(userRecord, sendingBoxId);
+            db.startSharingWith(userRecord, sendingBoxId, this);
             try { AvatarManager.sendAvatarToUser(this, userRecord); }
             catch (IOException ex) {
                 Crashlytics.logException(ex);

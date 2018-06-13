@@ -242,13 +242,13 @@ public class AuthenticationManager {
                 return;
             }
 
-            if (snapshot.schemaVersion > DB.get(ctx).getSchemaVersion()) {
+            if (snapshot.schemaVersion > DB.get().getSchemaVersion()) {
                 notifyLoginWatchers(Error.OutdatedClient, null, watcher);
                 return;
             }
 
             try {
-                DB.get(ctx).restoreDatabase(ctx, snapshot);
+                DB.get().restoreDatabase(ctx, snapshot);
             } catch (DB.DBException ex) {
                 Crashlytics.logException(ex);
                 notifyLoginWatchers(Error.DatabaseRestoreFailed, null, watcher);
@@ -272,7 +272,7 @@ public class AuthenticationManager {
         // request avatars from all friends
         UserComm avatarReq = UserComm.newAvatarRequest();
         byte[] reqJson = avatarReq.toJSON();
-        ArrayList<FriendRecord> friends = DB.get(ctx).getFriends();
+        ArrayList<FriendRecord> friends = DB.get().getFriends();
         for (FriendRecord f : friends) {
             String err = OscarClient.queueSendMessage(ctx, f.user, reqJson, false, false);
             if (err != null) {
@@ -294,7 +294,7 @@ public class AuthenticationManager {
                 String fcmToken = Prefs.get(ctx).getFcmToken();
                 ctx.startService(FcmTokenRegistrar.newIntent(ctx, true, fcmToken));
                 Prefs.get(ctx).clearAll();
-                DB.get(ctx).deleteUserData();
+                DB.get().deleteAllData();
                 LocationJobService.cancelLocationJobService(ctx);
                 PassiveLocationReceiver.unregister(ctx);
                 UserActivityReceiver.stopUpdates(ctx);

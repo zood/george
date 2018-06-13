@@ -250,7 +250,7 @@ public class LimitedShareService extends Service /* implements LocationListener 
 
         // add the user to the db for LocationUploadService to use
         try {
-            DB.get(this).addLimitedShare(mKeyPair.publicKey, mSendingBoxId);
+            DB.get().addLimitedShare(mKeyPair.publicKey, mSendingBoxId);
         } catch (DB.DBException dbe) {
             L.e("Unable to add limited share to db", dbe);
             Crashlytics.logException(dbe);
@@ -288,7 +288,7 @@ public class LimitedShareService extends Service /* implements LocationListener 
         App.runInBackground(new WorkerRunnable() {
             @Override
             public void run() {
-                DB.get(App.getApp()).deleteLimitedShares();
+                DB.get().deleteLimitedShares();
             }
         });
         LimitedShareService.IsRunning = false;

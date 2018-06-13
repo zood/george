@@ -61,7 +61,7 @@ public class MessageUtils {
         L.i("handleAvatarRequest: " + user.username);
         try {
             // make sure this is somebody that we're sharing our location with
-            FriendRecord friend = DB.get(ctx).getFriendByUserId(user.id);
+            FriendRecord friend = DB.get().getFriendByUserId(user.id);
             L.i("\tfriendrecord: " + friend);
             if (friend == null) {
                 L.i("\tnot a friend");
@@ -94,8 +94,8 @@ public class MessageUtils {
     }
 
     @WorkerThread @Error
-    private static int handleLocationInfo(@NonNull Context context, @NonNull UserRecord user, @NonNull UserComm comm) {
-        DB db = DB.get(context);
+    private static int handleLocationInfo(@NonNull UserRecord user, @NonNull UserComm comm) {
+        DB db = DB.get();
         FriendRecord fr = db.getFriendByUserId(user.id);
         if (fr == null) {
             // there should be a friend record for any locations that we receive
@@ -116,9 +116,9 @@ public class MessageUtils {
     @WorkerThread @Error
     private static int handleLocationSharingGrant(@NonNull Context context, @NonNull UserRecord user, @NonNull UserComm comm) {
         L.i("LocationSharingGrant");
-        DB db = DB.get(context);
+        DB db = DB.get();
         try {
-            db.sharingGrantedBy(user, comm.dropBox);
+            db.sharingGrantedBy(user, comm.dropBox, context);
         } catch (DB.DBException ex) {
             L.w("error recording location grant", ex);
             Crashlytics.logException(ex);
@@ -132,8 +132,8 @@ public class MessageUtils {
     @WorkerThread @Error
     private static int handleLocationSharingRevocation(@NonNull Context context, @NonNull UserRecord user) {
         L.i("LocationSharingRevocation");
-        DB db = DB.get(context);
-        db.sharingRevokedBy(user);
+        DB db = DB.get();
+        db.sharingRevokedBy(user, context);
         App.postOnBus(new LocationSharingRevoked(user.id));
         return ERROR_NONE;
     }
@@ -145,7 +145,7 @@ public class MessageUtils {
         long updateTime = prefs.getLastLocationUpdateTime();
 
         // make sure this is actually a friend
-        FriendRecord f = DB.get(context).getFriendByUserId(userRecord.id);
+        FriendRecord f = DB.get().getFriendByUserId(userRecord.id);
         if (f == null || f.sendingBoxId == null) {
             return ERROR_NONE;
         }
@@ -187,10 +187,10 @@ public class MessageUtils {
     }
 
     @WorkerThread @Error
-    private static int handleLocationUpdateRequestReceived(@NonNull Context context, @NonNull UserRecord user, @NonNull UserComm comm) {
+    private static int handleLocationUpdateRequestReceived(@NonNull UserRecord user, @NonNull UserComm comm) {
         L.i("handleLocationUpdateRequestReceived");
         L.i(user.username + " responded to update request: " + comm.locationUpdateRequestAction);
-        FriendRecord friend = DB.get(context).getFriendByUserId(user.id);
+        FriendRecord friend = DB.get().getFriendByUserId(user.id);
         if (friend == null) {
             return ERROR_NONE;
         }
@@ -215,7 +215,7 @@ public class MessageUtils {
         if (nonce == null) {
             return ERROR_MISSING_NONCE;
         }
-        DB db = DB.get(context);
+        DB db = DB.get();
         UserRecord userRecord = db.getUser(senderId);
         Prefs prefs = Prefs.get(context);
         String token = prefs.getAccessToken();
@@ -255,7 +255,7 @@ public class MessageUtils {
                     return ERROR_UNKNOWN;
                 }
                 // now that we've encountered a new user, add them to the database (because of TOFU)
-                userRecord = db.addUser(senderId, user.username, user.publicKey);
+                userRecord = db.addUser(senderId, user.username, user.publicKey, true, context);
                 L.i("  added user: " + userRecord);
             } catch (IOException ioe) {
                 return ERROR_NO_NETWORK;
@@ -288,11 +288,11 @@ public class MessageUtils {
             case LocationSharingRevocation:
                 return handleLocationSharingRevocation(context, userRecord);
             case LocationInfo:
-                return handleLocationInfo(context, userRecord, comm);
+                return handleLocationInfo(userRecord, comm);
             case LocationUpdateRequest:
                 return handleLocationUpdateRequest(context, userRecord);
             case LocationUpdateRequestReceived:
-                return handleLocationUpdateRequestReceived(context, userRecord, comm);
+                return handleLocationUpdateRequestReceived(userRecord, comm);
             default:
                 L.i("The invalid comm should have been caught during the isValid() check: " +
                         userRecord.username + " - " + comm);

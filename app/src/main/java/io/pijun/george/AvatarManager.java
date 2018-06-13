@@ -117,7 +117,7 @@ public class AvatarManager {
             public void run() {
                 try {
                     sendAvatarToFriends();
-                    DB.get(ctx).scheduleBackup();
+                    DB.get().scheduleBackup(ctx);
                 } catch (IOException ex) {
                     Crashlytics.logException(ex);
                 }
@@ -169,7 +169,7 @@ public class AvatarManager {
         if (!avatarFile.exists()) {
             return;
         }
-        ArrayList<FriendRecord> friends = DB.get(ctx).getFriendsToShareWith();
+        ArrayList<FriendRecord> friends = DB.get().getFriendsToShareWith();
         if (friends.size() == 0) {
             return;
         }

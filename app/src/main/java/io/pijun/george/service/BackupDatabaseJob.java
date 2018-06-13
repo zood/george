@@ -70,7 +70,7 @@ public class BackupDatabaseJob extends JobService {
     @WorkerThread
     private void uploadSnapshot() {
         L.i("BackupDatabaseJob.uploadSnapshot");
-        Snapshot snapshot = DB.get(this).getSnapshot();
+        Snapshot snapshot = DB.get().getSnapshot();
         if (mShouldStop) {
             return;
         }

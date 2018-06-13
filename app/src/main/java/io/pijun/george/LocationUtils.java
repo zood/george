@@ -51,7 +51,7 @@ public class LocationUtils {
         }
         byte[] msgBytes = locMsg.toJSON();
         // share to our friends
-        ArrayList<FriendRecord> friends = DB.get(ctx).getFriendsToShareWith();
+        ArrayList<FriendRecord> friends = DB.get().getFriendsToShareWith();
         HashMap<String, EncryptedData> pkgs = new HashMap<>(friends.size());
         for (FriendRecord f : friends) {
             EncryptedData encMsg = Sodium.publicKeyEncrypt(msgBytes, f.user.publicKey, keyPair.secretKey);
@@ -61,7 +61,7 @@ public class LocationUtils {
             }
             pkgs.put(Hex.toHexString(f.sendingBoxId), encMsg);
         }
-        LimitedShare ls = DB.get(ctx).getLimitedShare();
+        LimitedShare ls = DB.get().getLimitedShare();
         if (ls != null) {
             L.i("LM.upload: to limited share");
             if (LimitedShareService.IsRunning) {
@@ -73,7 +73,7 @@ public class LocationUtils {
                 }
             } else {
                 L.i("LM.upload: oops. the limited share isn't running. we'll delete it.");
-                DB.get(ctx).deleteLimitedShares();
+                DB.get().deleteLimitedShares();
             }
         }
         if (pkgs.size() > 0) {

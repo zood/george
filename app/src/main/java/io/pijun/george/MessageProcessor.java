@@ -89,7 +89,7 @@ public class MessageProcessor {
                             OscarClient.queueDeleteMessage(App.getApp(), token, msg.id);
                         }
                         L.w("error processing action: " + result);
-                        UserRecord user = DB.get(App.getApp()).getUser(msg.senderId);
+                        UserRecord user = DB.get().getUser(msg.senderId);
                         if (user != null) {
                             L.w("\tfrom " + user.username);
                         } else {

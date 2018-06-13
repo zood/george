@@ -33,7 +33,7 @@ public class PackageWatcher {
     private Context mContext;
 
     private PackageWatcher(@NonNull Context c) {
-        mContext = c;
+        mContext = c.getApplicationContext();
     }
 
     @WorkerThread
@@ -122,7 +122,7 @@ public class PackageWatcher {
                 App.runInBackground(new WorkerRunnable() {
                     @Override
                     public void run() {
-                        FriendRecord friend = DB.get(mContext).getFriendByReceivingBoxId(boxId);
+                        FriendRecord friend = DB.get().getFriendByReceivingBoxId(boxId);
                         if (friend == null) {
                             L.i("  can't find user associated with receiving box id");
                             return;

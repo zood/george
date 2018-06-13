@@ -146,7 +146,7 @@ public class FriendsSheetFragment extends Fragment implements FriendItemsAdapter
     @UiThread
     public void onLocationSharingGranted(LocationSharingGranted grant) {
         App.runInBackground(() -> {
-            FriendRecord friend = DB.get(requireContext()).getFriendByUserId(grant.userId);
+            FriendRecord friend = DB.get().getFriendByUserId(grant.userId);
             if (friend != null) {
                 mAvatarsAdapter.addFriend(friend);
                 App.runOnUiThread(() -> mFriendItemsAdapter.updateFriend(friend));
@@ -159,7 +159,7 @@ public class FriendsSheetFragment extends Fragment implements FriendItemsAdapter
     @UiThread
     public void onLocationSharingRevoked(LocationSharingRevoked revoked) {
         App.runInBackground(() -> {
-            DB db = DB.get(requireContext());
+            DB db = DB.get();
             // check if this is a known friend
             FriendRecord friend = db.getFriendByUserId(revoked.userId);
             if (friend == null) {
@@ -227,7 +227,7 @@ public class FriendsSheetFragment extends Fragment implements FriendItemsAdapter
         super.onStart();
 
         App.registerOnBus(this);
-        final DB db = DB.get(requireContext());
+        final DB db = DB.get();
         App.runInBackground(() -> {
             ArrayList<FriendRecord> friends = db.getFriends();
             mAvatarsAdapter.setFriends(friends);
@@ -271,7 +271,7 @@ public class FriendsSheetFragment extends Fragment implements FriendItemsAdapter
         }
 
         try {
-            DB.get(requireContext()).removeFriend(friend);
+            DB.get().removeFriend(friend, requireContext());
         } catch (DB.DBException ex) {
             L.w("Error removing friend", ex);
             Crashlytics.logException(ex);
@@ -295,9 +295,9 @@ public class FriendsSheetFragment extends Fragment implements FriendItemsAdapter
         }
 
         // add this to our database
-        DB db = DB.get(requireContext());
+        DB db = DB.get();
         try {
-            db.startSharingWith(friend.user, sendingBoxId);
+            db.startSharingWith(friend.user, sendingBoxId, requireContext());
             AvatarManager.sendAvatarToUser(requireContext(), friend.user);
         } catch (DB.DBException ex) {
             Crashlytics.logException(ex);
@@ -328,9 +328,9 @@ public class FriendsSheetFragment extends Fragment implements FriendItemsAdapter
     @WorkerThread
     private void stopSharingWith(@NonNull FriendRecord friend) {
         // remove the sending box id from the database
-        DB db = DB.get(requireContext());
+        DB db = DB.get();
         try {
-            db.stopSharingWith(friend.user);
+            db.stopSharingWith(friend.user, requireContext());
         } catch (DB.DBException ex) {
             Crashlytics.logException(ex);
             App.runOnUiThread(new UiRunnable() {

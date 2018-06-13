@@ -90,7 +90,7 @@ public class DB {
             USERS_COL_PUBLIC_KEY
     };
 
-    private static volatile DB sDb;
+    private static DB sDb = new DB();
 
     public static class DBException extends Exception {
         DBException(String msg) {
@@ -102,41 +102,31 @@ public class DB {
         }
     }
 
-    private final DBHelper mDbHelper;
-    @NonNull private final Context context;
+    private DBHelper mDbHelper;
 
     @WorkerThread
-    private DB(@NonNull Context context) {
-        this.context = context.getApplicationContext();
-        mDbHelper = new DBHelper(this.context);
-    }
+    private DB() {}
 
     @NonNull
     @WorkerThread
-    public static DB get(@NonNull Context context) {
-        if (sDb == null) {
-            synchronized (DB.class) {
-                if (sDb == null) {
-                    sDb = new DB(context);
-                }
-            }
+    public static DB get() {
+        if (sDb.mDbHelper == null) {
+            throw new RuntimeException("You have to call DB.init before using the DB");
         }
 
         return sDb;
     }
 
-    @WorkerThread
-    public void addFriend(long userId,
-                          @Nullable @Size(Constants.DROP_BOX_ID_LENGTH) byte[] sendingBoxId,
-                          @Nullable @Size(Constants.DROP_BOX_ID_LENGTH) byte[] receivingBoxId) throws DBException {
-        addFriend(userId, sendingBoxId, receivingBoxId, true);
+    public static void init(@NonNull Context context, boolean inMemory) {
+        sDb.mDbHelper = new DBHelper(context, inMemory ? null : "thedata2");
     }
 
     @WorkerThread
     private void addFriend(long userId,
                           @Nullable @Size(Constants.DROP_BOX_ID_LENGTH) byte[] sendingBoxId,
                           @Nullable @Size(Constants.DROP_BOX_ID_LENGTH) byte[] receivingBoxId,
-                          boolean triggerBackup) throws DBException {
+                          boolean triggerBackup,
+                          @NonNull Context ctx) throws DBException {
         SQLiteDatabase db = mDbHelper.getWritableDatabase();
         ContentValues cv = new ContentValues();
         cv.put(FRIENDS_COL_USER_ID, userId);
@@ -154,7 +144,7 @@ public class DB {
         }
 
         if (triggerBackup) {
-            scheduleBackup();
+            scheduleBackup(ctx);
         }
     }
 
@@ -186,16 +176,9 @@ public class DB {
     @NonNull
     public UserRecord addUser(@NonNull @Size(Constants.USER_ID_LENGTH) final byte[] userId,
                               @NonNull String username,
-                              @NonNull @Size(Constants.PUBLIC_KEY_LENGTH) byte[] publicKey) throws DBException {
-        return addUser(userId, username, publicKey, true);
-    }
-
-    @WorkerThread
-    @NonNull
-    public UserRecord addUser(@NonNull @Size(Constants.USER_ID_LENGTH) final byte[] userId,
-                              @NonNull String username,
                               @NonNull @Size(Constants.PUBLIC_KEY_LENGTH) byte[] publicKey,
-                              boolean triggerBackup) throws DBException {
+                              boolean triggerBackup,
+                              @NonNull Context ctx) throws DBException {
         SQLiteDatabase db = mDbHelper.getWritableDatabase();
         ContentValues cv = new ContentValues();
         cv.put(USERS_COL_USER_ID, userId);
@@ -215,7 +198,7 @@ public class DB {
         user.publicKey = publicKey;
 
         if (triggerBackup) {
-            scheduleBackup();
+            scheduleBackup(ctx);
         }
 
         return user;
@@ -228,7 +211,7 @@ public class DB {
     }
 
     @WorkerThread
-    public void deleteUserData() {
+    public void deleteAllData() {
         SQLiteDatabase db = mDbHelper.getWritableDatabase();
         db.delete(FRIENDS_TABLE, null, null);
         db.delete(LOCATIONS_TABLE, null, null);
@@ -248,7 +231,7 @@ public class DB {
         try (Cursor c = db.query(FRIENDS_TABLE, FRIENDS_COLUMNS, selection, selectionArgs, null, null, null)) {
             if (c.moveToNext()) {
                 friend = readFriend(c);
-                friend.user = getUserById(friend.userId);
+                friend.user = getUser(friend.userId);
             }
         }
         return friend;
@@ -272,7 +255,7 @@ public class DB {
         try (Cursor c = db.query(FRIENDS_TABLE, FRIENDS_COLUMNS, selection, args, null, null, null)) {
             if (c.moveToNext()) {
                 friend = readFriend(c);
-                friend.user = getUserById(userId);
+                friend.user = getUser(userId);
             }
         }
 
@@ -339,7 +322,7 @@ public class DB {
             if (c.moveToNext()) {
                 fr = readFriend(c);
                 // obtain the UserRecord for this friend
-                fr.user = getUserById(fr.userId);
+                fr.user = getUser(fr.userId);
             }
         }
 
@@ -355,7 +338,7 @@ public class DB {
         try (Cursor cursor = db.query(FRIENDS_TABLE, FRIENDS_COLUMNS, null, null, null, null, null)) {
             while (cursor.moveToNext()) {
                 FriendRecord fr = readFriend(cursor);
-                fr.user = getUserById(fr.userId);
+                fr.user = getUser(fr.userId);
                 records.add(fr);
             }
         }
@@ -373,7 +356,7 @@ public class DB {
         try (Cursor cursor = db.query(FRIENDS_TABLE, FRIENDS_COLUMNS, selection, null, null, null, null)) {
             while (cursor.moveToNext()) {
                 FriendRecord fr = readFriend(cursor);
-                fr.user = getUserById(fr.userId);
+                fr.user = getUser(fr.userId);
                 records.add(fr);
             }
         }
@@ -425,7 +408,7 @@ public class DB {
                 while (c.moveToNext()) {
                     FriendRecord friendRecord = readFriend(c);
                     Snapshot.Friend f = new Snapshot.Friend();
-                    friendRecord.user = getUserById(friendRecord.userId);
+                    friendRecord.user = getUser(friendRecord.userId);
                     if (friendRecord.user == null) {
                         Crashlytics.logException(new DBException("unable to find a user record for a friend"));
                         continue;
@@ -508,7 +491,7 @@ public class DB {
     @WorkerThread
     @Nullable
     @CheckResult
-    public UserRecord getUserById(long id) {
+    public UserRecord getUser(long id) {
         UserRecord ur = null;
         SQLiteDatabase db = mDbHelper.getReadableDatabase();
         String selection = USERS_COL_ID + "=?";
@@ -560,7 +543,7 @@ public class DB {
     }
 
     @WorkerThread
-    public void removeFriend(@NonNull FriendRecord friend) throws DBException {
+    public void removeFriend(@NonNull FriendRecord friend, @NonNull Context ctx) throws DBException {
         SQLiteDatabase db = mDbHelper.getWritableDatabase();
         int result;
         try {
@@ -576,7 +559,7 @@ public class DB {
             throw new DBException(msg);
         }
 
-        scheduleBackup();
+        scheduleBackup(ctx);
     }
 
     @WorkerThread
@@ -588,17 +571,17 @@ public class DB {
 
         try {
             db.beginTransaction();
-            deleteUserData();
+            deleteAllData();
 
             for (Snapshot.User u : snapshot.users) {
-                addUser(u.userId, u.username, u.publicKey, false);
+                addUser(u.userId, u.username, u.publicKey, false, ctx);
             }
             for (Snapshot.Friend f : snapshot.friends) {
                 UserRecord user = getUser(f.userId);
                 if (user == null) {
                     throw new DBException("Found friend without corresponding user");
                 }
-                addFriend(user.id, f.sendingBoxId, f.receivingBoxId, false);
+                addFriend(user.id, f.sendingBoxId, f.receivingBoxId, false, ctx);
             }
 
             db.setTransactionSuccessful();
@@ -620,10 +603,12 @@ public class DB {
     }
 
     @WorkerThread
-    public void scheduleBackup() {
+    public void scheduleBackup(@NonNull Context context) {
         JobScheduler scheduler = (JobScheduler) context.getSystemService(Context.JOB_SCHEDULER_SERVICE);
         if (scheduler != null) {    // it will never be null
             scheduler.schedule(BackupDatabaseJob.getJobInfo(context));
+        } else {
+            L.i("jobscheduler is null");
         }
     }
 
@@ -651,11 +636,13 @@ public class DB {
     }
 
     @WorkerThread
-    public void sharingGrantedBy(@NonNull UserRecord user, @NonNull @Size(Constants.DROP_BOX_ID_LENGTH) byte[] boxId) throws DBException {
+    public void sharingGrantedBy(@NonNull UserRecord user,
+                                 @NonNull @Size(Constants.DROP_BOX_ID_LENGTH) byte[] boxId,
+                                 @NonNull Context ctx) throws DBException {
         FriendRecord friend = getFriendByUserId(user.id);
         if (friend == null) {
             // add a friend record including the drop box id
-            addFriend(user.id, null, boxId);
+            addFriend(user.id, null, boxId, true, ctx);
         } else {
             // add the drop box id to the existing friend record
             SQLiteDatabase db = mDbHelper.getWritableDatabase();
@@ -669,25 +656,25 @@ public class DB {
             }
         }
 
-        scheduleBackup();
+        scheduleBackup(ctx);
     }
 
     @WorkerThread
-    public void sharingRevokedBy(@NonNull UserRecord user) {
+    public void sharingRevokedBy(@NonNull UserRecord user, @NonNull Context ctx) {
         SQLiteDatabase db = mDbHelper.getWritableDatabase();
         ContentValues cv = new ContentValues();
         cv.put(FRIENDS_COL_RECEIVING_BOX_ID, (byte[]) null);
         String whereClause = FRIENDS_COL_USER_ID + "=?";
         String[] args = new String[]{String.valueOf(user.id)};
         db.update(FRIENDS_TABLE, cv, whereClause, args);
-        scheduleBackup();
+        scheduleBackup(ctx);
     }
 
     @WorkerThread
-    public void startSharingWith(@NonNull UserRecord user, @NonNull byte[] sendingBoxId) throws DBException {
+    public void startSharingWith(@NonNull UserRecord user, @NonNull byte[] sendingBoxId, @NonNull Context ctx) throws DBException {
         FriendRecord fr = getFriendByUserId(user.id);
         if (fr == null) {
-            addFriend(user.id, sendingBoxId, null);
+            addFriend(user.id, sendingBoxId, null, true, ctx);
         } else {
             // if we already have a friend record, just add the sending box id
             SQLiteDatabase db = mDbHelper.getWritableDatabase();
@@ -700,11 +687,11 @@ public class DB {
                 throw new DBException("Num affected rows was " + result + " for username '" + user.username + "'");
             }
         }
-        scheduleBackup();
+        scheduleBackup(ctx);
     }
 
     @WorkerThread
-    public void stopSharingWith(@NonNull UserRecord user) throws DBException {
+    public void stopSharingWith(@NonNull UserRecord user, @NonNull Context ctx) throws DBException {
         SQLiteDatabase db = mDbHelper.getWritableDatabase();
         ContentValues cv = new ContentValues();
         cv.put(FRIENDS_COL_SENDING_BOX_ID, (byte[]) null);
@@ -714,13 +701,13 @@ public class DB {
         if (result != 1) {
             throw new DBException("Num affected rows was " + result + " for username '" + user.username + "'");
         }
-        scheduleBackup();
+        scheduleBackup(ctx);
     }
 
     private static class DBHelper extends SQLiteOpenHelper {
 
-        private DBHelper(Context context) {
-            super(context, "thedata2", null, 1);
+        private DBHelper(@NonNull Context context, @Nullable String dbName) {
+            super(context, dbName, null, 1);
         }
 
         @Override

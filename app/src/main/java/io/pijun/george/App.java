@@ -13,6 +13,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 import io.pijun.george.api.TaskSender;
+import io.pijun.george.database.DB;
 import io.pijun.george.receiver.PassiveLocationReceiver;
 import io.pijun.george.receiver.UserActivityReceiver;
 import io.pijun.george.service.LocationJobService;
@@ -34,12 +35,16 @@ public class App extends Application {
         L.i("========================");
         super.onCreate();
         AppCompatDelegate.setCompatVectorFromResourcesEnabled(true);
-        Sodium.init();
+        int result = Sodium.init();
+        if (result != 0 && result != 1) {
+            throw new RuntimeException("sodium_init failed. Unsafe to proceed in this state.");
+        }
 
         mUiThreadHandler = new Handler();
         mExecutor = Executors.newCachedThreadPool();
         mBus = new Bus();
 
+        DB.init(this, false);
         TaskSender.get().start(this);
         // perform this in the background because querying the AuthenticationManager the first time
         // will load the Prefs from disk
