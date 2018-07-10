@@ -14,18 +14,18 @@ import java.io.IOException;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 
+import io.pijun.george.api.LimitedUserInfo;
 import io.pijun.george.api.OscarAPI;
 import io.pijun.george.api.OscarClient;
 import io.pijun.george.api.OscarError;
-import io.pijun.george.api.User;
 import io.pijun.george.api.UserComm;
 import io.pijun.george.crypto.KeyPair;
 import io.pijun.george.database.DB;
-import io.pijun.george.event.LocationSharingGranted;
-import io.pijun.george.event.LocationSharingRevoked;
 import io.pijun.george.database.FriendLocation;
 import io.pijun.george.database.FriendRecord;
 import io.pijun.george.database.UserRecord;
+import io.pijun.george.event.LocationSharingGranted;
+import io.pijun.george.event.LocationSharingRevoked;
 import io.pijun.george.service.PositionService;
 import retrofit2.Response;
 
@@ -216,7 +216,7 @@ public class MessageUtils {
             return ERROR_MISSING_NONCE;
         }
         DB db = DB.get();
-        UserRecord userRecord = db.getUser(senderId);
+        UserRecord user = db.getUser(senderId);
         Prefs prefs = Prefs.get(context);
         String token = prefs.getAccessToken();
         KeyPair keyPair = prefs.getKeyPair();
@@ -227,12 +227,12 @@ public class MessageUtils {
             return ERROR_NOT_LOGGED_IN;
         }
 
-        if (userRecord == null) {
+        if (user == null) {
             L.i("  need to download user");
             // we need to retrieve it from the server
             OscarAPI api = OscarClient.newInstance(token);
             try {
-                Response<User> response = api.getUser(Hex.toHexString(senderId)).execute();
+                Response<LimitedUserInfo> response = api.getUser(Hex.toHexString(senderId)).execute();
                 if (!response.isSuccessful()) {
                     OscarError apiErr = OscarError.fromResponse(response);
                     if (apiErr == null) {
@@ -249,14 +249,14 @@ public class MessageUtils {
                             return ERROR_UNKNOWN;
                     }
                 }
-                User user = response.body();
-                if (user == null) {
+                LimitedUserInfo lui = response.body();
+                if (lui == null) {
                     L.w("Unable to decode user " + Hex.toHexString(senderId) + " from response");
                     return ERROR_UNKNOWN;
                 }
                 // now that we've encountered a new user, add them to the database (because of TOFU)
-                userRecord = db.addUser(senderId, user.username, user.publicKey, true, context);
-                L.i("  added user: " + userRecord);
+                user = db.addUser(senderId, lui.username, lui.publicKey, true, context);
+                L.i("  added user: " + user);
             } catch (IOException ioe) {
                 return ERROR_NO_NETWORK;
             } catch (DB.DBException dbe) {
@@ -265,37 +265,37 @@ public class MessageUtils {
             }
         }
 
-        byte[] unwrappedBytes = Sodium.publicKeyDecrypt(cipherText, nonce, userRecord.publicKey, keyPair.secretKey);
+        byte[] unwrappedBytes = Sodium.publicKeyDecrypt(cipherText, nonce, user.publicKey, keyPair.secretKey);
         if (unwrappedBytes == null) {
             return ERROR_DECRYPTION_FAILED;
         }
         UserComm comm = UserComm.fromJSON(unwrappedBytes);
         if (!comm.isValid()) {
-            L.i("usercomm from " + userRecord.username + " was invalid. here it is: " + comm);
+            L.i("usercomm from " + user.username + " was invalid. here it is: " + comm);
             return ERROR_INVALID_COMMUNICATION;
         }
 //        L.i("  comm type: " + comm.type);
         switch (comm.type) {
             case AvatarRequest:
-                return handleAvatarRequest(context, userRecord);
+                return handleAvatarRequest(context, user);
             case AvatarUpdate:
-                return handleAvatarUpdate(context, userRecord, comm);
+                return handleAvatarUpdate(context, user, comm);
             case Debug:
-                L.i("debug from " + userRecord.username + ": " + comm.debugData);
+                L.i("debug from " + user.username + ": " + comm.debugData);
                 return ERROR_NONE;
             case LocationSharingGrant:
-                return handleLocationSharingGrant(context, userRecord, comm);
+                return handleLocationSharingGrant(context, user, comm);
             case LocationSharingRevocation:
-                return handleLocationSharingRevocation(context, userRecord);
+                return handleLocationSharingRevocation(context, user);
             case LocationInfo:
-                return handleLocationInfo(userRecord, comm);
+                return handleLocationInfo(user, comm);
             case LocationUpdateRequest:
-                return handleLocationUpdateRequest(context, userRecord);
+                return handleLocationUpdateRequest(context, user);
             case LocationUpdateRequestReceived:
-                return handleLocationUpdateRequestReceived(userRecord, comm);
+                return handleLocationUpdateRequestReceived(user, comm);
             default:
                 L.i("The invalid comm should have been caught during the isValid() check: " +
-                        userRecord.username + " - " + comm);
+                        user.username + " - " + comm);
                 return ERROR_INVALID_COMMUNICATION;
         }
     }

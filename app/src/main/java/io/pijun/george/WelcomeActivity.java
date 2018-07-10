@@ -37,6 +37,7 @@ import io.pijun.george.api.User;
 import io.pijun.george.crypto.EncryptedData;
 import io.pijun.george.crypto.KeyPair;
 import io.pijun.george.interpolator.Bezier65Interpolator;
+import io.pijun.george.sodium.HashConfig;
 import retrofit2.Response;
 
 public class WelcomeActivity extends AppCompatActivity implements WelcomeLayout.FocusListener {
@@ -299,6 +300,9 @@ public class WelcomeActivity extends AppCompatActivity implements WelcomeLayout.
                     case UnknownErrorRetrievingServerKey:
                         Utils.showAlert(WelcomeActivity.this, 0, R.string.server_key_retrieval_unknown_error_msg);
                         break;
+                    case UnknownPasswordHashAlgorithm:
+                        Utils.showAlert(WelcomeActivity.this, 0, R.string.unknown_password_hash_algorithm_msg);
+                        break;
                     case SymmetricKeyDecryptionFailed:
                         Utils.showAlert(WelcomeActivity.this, R.string.login_failed, R.string.symmetric_key_unwrap_failure_msg);
                         break;
@@ -330,17 +334,20 @@ public class WelcomeActivity extends AppCompatActivity implements WelcomeLayout.
 
         u.passwordSalt = new byte[Sodium.getPasswordHashSaltLength()];
         new SecureRandom().nextBytes(u.passwordSalt);
-        u.passwordHashMemoryLimit = Sodium.PASSWORDHASH_MEMLIMIT_INTERACTIVE;
-        u.passwordHashOperationsLimit = Sodium.PASSWORDHASH_OPSLIMIT_MODERATE;
+
+        HashConfig hashCfg = new HashConfig(HashConfig.Algorithm.Argon2id13, HashConfig.OpsSecurity.Sensitive, HashConfig.MemSecurity.Moderate);
+        u.passwordHashAlgorithm = hashCfg.alg.name;
+        u.passwordHashOperationsLimit = hashCfg.getOpsLimit();
+        u.passwordHashMemoryLimit = hashCfg.getMemLimit();
         // We need a key with which to encrypt our data, so we'll use the hash of our password
-        byte[] passwordHash = Sodium.createHashFromPassword(
-                Sodium.getSymmetricKeyLength(),
+        byte[] passwordHash = Sodium.stretchPassword(Sodium.getSymmetricKeyLength(),
                 password.getBytes(Constants.utf8),
                 u.passwordSalt,
-                u.passwordHashOperationsLimit,
-                u.passwordHashMemoryLimit);
+                hashCfg.alg.sodiumId,
+                hashCfg.getOpsLimit(),
+                hashCfg.getMemLimit());
         if (passwordHash == null) {
-            L.i("password has null when generating user");
+            L.i("password was null when generating user");
             return null;
         }
         prefs.setPasswordSalt(u.passwordSalt);

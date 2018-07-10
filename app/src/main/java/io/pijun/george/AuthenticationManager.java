@@ -32,6 +32,7 @@ import io.pijun.george.receiver.PassiveLocationReceiver;
 import io.pijun.george.receiver.UserActivityReceiver;
 import io.pijun.george.service.FcmTokenRegistrar;
 import io.pijun.george.service.LocationJobService;
+import io.pijun.george.sodium.HashConfig;
 import retrofit2.Response;
 
 public class AuthenticationManager {
@@ -56,6 +57,7 @@ public class AuthenticationManager {
         Unknown,
         UnknownErrorRetrievingDatabaseBackup,
         UnknownErrorRetrievingServerKey,
+        UnknownPasswordHashAlgorithm,
         UserNotFound,
         SymmetricKeyDecryptionFailed,
     }
@@ -134,12 +136,20 @@ public class AuthenticationManager {
             notifyLoginWatchers(Error.MalformedAuthenticationChallengeResponse, null, watcher);
             return;
         }
-        final byte[] passwordHash = Sodium.createHashFromPassword(
-                Sodium.getSymmetricKeyLength(),
-                password.getBytes(Constants.utf8),
-                authChallenge.user.passwordSalt,
+
+        HashConfig hashCfg = HashConfig.create(authChallenge.user.passwordHashAlgorithm,
                 authChallenge.user.passwordHashOperationsLimit,
                 authChallenge.user.passwordHashMemoryLimit);
+        if (hashCfg == null) {
+            notifyLoginWatchers(Error.UnknownPasswordHashAlgorithm, null, watcher);
+            return;
+        }
+        final byte[] passwordHash = Sodium.stretchPassword(Sodium.getSymmetricKeyLength(),
+                password.getBytes(Constants.utf8),
+                authChallenge.user.passwordSalt,
+                hashCfg.alg.sodiumId,
+                hashCfg.getOpsLimit(),
+                hashCfg.getMemLimit());
         if (passwordHash == null) {
             notifyLoginWatchers(Error.NullPasswordHash, null, watcher);
             return;
@@ -177,6 +187,7 @@ public class AuthenticationManager {
         FinishedAuthenticationChallenge finishedChallenge = new FinishedAuthenticationChallenge();
         finishedChallenge.challenge = Sodium.publicKeyEncrypt(authChallenge.challenge, pubKey, secretKey);
         finishedChallenge.creationDate = Sodium.publicKeyEncrypt(authChallenge.creationDate, pubKey, secretKey);
+        L.i(finishedChallenge.toString());
 
         Response<LoginResponse> completeChallengeResp;
         try {

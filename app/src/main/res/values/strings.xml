@@ -97,4 +97,5 @@
     <string name="running">Running</string>
     <string name="in_the_car">In the car</string>
     <string name="walking">Walking</string>
+    <string name="unknown_password_hash_algorithm_msg">The password hash algorithm on your account isn\'t one this version of Pijun knows about. Make sure you have the latest version of Pijun, then try again.</string>
 </resources>

@@ -54,7 +54,7 @@ public interface OscarAPI {
     Call<ServerPublicKeyResponse> getServerPublicKey();
 
     @GET("users/{id}")
-    Call<User> getUser(@Path("id") String hexId);
+    Call<LimitedUserInfo> getUser(@Path("id") String hexId);
 
     @GET("drop-boxes/{boxId}")
     Call<EncryptedData> pickUpPackage(@Path("boxId") String hexId);
@@ -63,7 +63,7 @@ public interface OscarAPI {
     Call<Void> saveDatabaseBackup(@Body EncryptedData snapshot);
 
     @GET("users")
-    Call<User> searchForUser(@Query("username") String username);
+    Call<SearchUserResult> searchForUser(@Query("username") String username);
 
     @POST("users/{userId}/messages")
     Call<Void> sendMessage(@Path("userId") String hexUserId, @Body Map<String, Object> body);

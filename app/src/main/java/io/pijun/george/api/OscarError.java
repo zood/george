@@ -3,14 +3,12 @@ package io.pijun.george.api;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 
-import com.google.gson.FieldNamingPolicy;
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
 import com.google.gson.annotations.SerializedName;
 
 import java.io.Reader;
 
 import io.pijun.george.L;
+import okhttp3.ResponseBody;
 import retrofit2.Response;
 
 @SuppressWarnings("unused")
@@ -37,6 +35,9 @@ public class OscarError {
     public static final int ERROR_CHALLENGE_EXPIRED = 18;
     public static final int ERROR_LOGIN_FAILED = 19;
     public static final int ERROR_BACKUP_NOT_FOUND = 20;
+    public static final int ERROR_INVALID_EMAIL = 21;
+    public static final int ERROR_MISSING_VERIFICATION_TOKEN = 22;
+    public static final int ERROR_INVALID_PASSWORD_HASH_ALGORITHM = 23;
 
     @SerializedName("error_message")
     public String message;
@@ -53,7 +54,7 @@ public class OscarError {
     }
 
     @Nullable
-    private static OscarError fromReader(Reader r) {
+    private static OscarError fromReader(@NonNull Reader r) {
         OscarError err = null;
         try {
             err = OscarClient.sGson.fromJson(r, OscarError.class);
@@ -65,7 +66,11 @@ public class OscarError {
 
     @Nullable
     public static OscarError fromResponse(Response r) {
-        return fromReader(r.errorBody().charStream());
+        ResponseBody errBody = r.errorBody();
+        if (errBody == null) {
+            return null;
+        }
+        return fromReader(errBody.charStream());
     }
 
 }

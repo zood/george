@@ -22,15 +22,15 @@ JNIEXPORT jint Java_io_pijun_george_Sodium_init(JNIEnv *env, jclass cls) {
     return sodium_init();
 }
 
-// Sodium.createHashFromPassword(int keySizeBytes, byte[] password, byte[] salt)
-JNIEXPORT jbyteArray JNICALL Java_io_pijun_george_Sodium_createHashFromPassword(
-    JNIEnv *env, jclass cls, jint hashSizeBytes, jbyteArray password, jbyteArray salt, jlong opsLimit, jlong memLimit) {
+// Sodium.stretchPassword(int hashSizeBytes, byte[] password, byte[] salt, int algId, long opsLimit, long memLimit)
+JNIEXPORT jbyteArray  JNICALL Java_io_pijun_george_Sodium_stretchPassword(
+        JNIEnv *env, jclass cls, jint hashSizeBytes, jbyteArray password, jbyteArray salt, jint algId, jlong opsLimit, jlong memLimit) {
     if (password == NULL) {
-        __android_log_print(ANDROID_LOG_INFO, "Pijun", "createHashFromPassword: password is NULL. returning");
+        __android_log_print(ANDROID_LOG_INFO, "Pijun", "stretchPassword: password is NULL. returning");
         return NULL;
     }
     if (salt == NULL) {
-        __android_log_print(ANDROID_LOG_INFO, "Pijun", "createHashFromPassword: salt is NULL. returning");
+        __android_log_print(ANDROID_LOG_INFO, "Pijun", "stretchPassword: salt is NULL. returning");
         return NULL;
     }
 
@@ -44,7 +44,7 @@ JNIEXPORT jbyteArray JNICALL Java_io_pijun_george_Sodium_createHashFromPassword(
                                saltUChar,
                                (unsigned long long)opsLimit,
                                (unsigned long long)memLimit,
-                               crypto_pwhash_ALG_DEFAULT);
+                               algId);
     free(passwordUChar);
     free(saltUChar);
     if (result != 0) {
@@ -52,7 +52,7 @@ JNIEXPORT jbyteArray JNICALL Java_io_pijun_george_Sodium_createHashFromPassword(
         return NULL;
     }
 
-    jbyteArray keyBytes = byteArray(env, key, crypto_box_SEEDBYTES);
+    jbyteArray keyBytes = byteArray(env, key, hashSizeBytes);
 
     return keyBytes;
 }
@@ -115,7 +115,7 @@ JNIEXPORT jobject JNICALL Java_io_pijun_george_Sodium_symmetricKeyEncrypt(
     jobject skem = (*env)->NewObject(env, skemCls, constructor);
 
     jfieldID cipherTextFieldId = (*env)->GetFieldID(env, skemCls, "cipherText", "[B");
-    jbyteArray cipherTextByteArray = byteArray(env, (unsigned char*)cipherText, cipherTextLen);
+    jbyteArray cipherTextByteArray = byteArray(env, (unsigned char*)cipherText, (int)cipherTextLen);
     (*env)->SetObjectField(env, skem, cipherTextFieldId, cipherTextByteArray);
 
     jfieldID nonceFieldId = (*env)->GetFieldID(env, skemCls, "nonce", "[B");
@@ -140,7 +140,7 @@ JNIEXPORT jbyteArray JNICALL Java_io_pijun_george_Sodium_symmetricKeyDecrypt(
     unsigned char* keyUChar = ucharArray(env, key);
     int result = crypto_secretbox_open_easy(msgUChar,
                                             cipherTextUChar,
-                                            (unsigned long long)(*env)->GetArrayLength(env, cipherText),
+                                            (unsigned long long int)(*env)->GetArrayLength(env, cipherText),
                                             nonceUChar,
                                             keyUChar);
     free(cipherTextUChar);
@@ -168,7 +168,7 @@ JNIEXPORT jobject JNICALL Java_io_pijun_george_Sodium_publicKeyEncrypt(
     unsigned char* sndrKeyUChar = ucharArray(env, sndrSecKey);
     int result = crypto_box_easy(cipherText,
                                  msgUChar,
-                                 (*env)->GetArrayLength(env, msg),
+                                 (unsigned long long int)(*env)->GetArrayLength(env, msg),
                                  nonce,
                                  rcvrKeyUChar,
                                  sndrKeyUChar);
@@ -211,7 +211,7 @@ JNIEXPORT jbyteArray JNICALL Java_io_pijun_george_Sodium_publicKeyDecrypt(
     unsigned char* secKeyUChar = ucharArray(env, receiverSecretKey);
     int result = crypto_box_open_easy(msg,
                                       cipherTextUChar,
-                                      cipherTextLen,
+                                      (unsigned long long int)cipherTextLen,
                                       nonceUChar,
                                       pubKeyUChar,
                                       secKeyUChar);
@@ -226,18 +226,5 @@ JNIEXPORT jbyteArray JNICALL Java_io_pijun_george_Sodium_publicKeyDecrypt(
 
     return byteArray(env, msg, msgLen);
 }
-
-// Sodium.createHash(byte[] data, byte[] key)
-//JNIEXPORT jbyteArray JNICALL Java_io_pijun_george_Sodium_createHash(
-//    JNIEnv *env, jclass cls, jbyteArray data, jbyteArray key) {
-//    jsize dataLen = (*env)->GetArrayLength(env, data);
-//    jsize keyLen = (*env)->GetArrayLength(env, key);
-//    unsigned char hash[crypto_generichash_BYTES];
-//    int result = crypto_generichash(hash,
-//                                    crypto_generichash_BYTES,
-//
-//
-//    );
-//}
 
 #pragma clang diagnostic pop

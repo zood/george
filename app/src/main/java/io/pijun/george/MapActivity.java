@@ -78,7 +78,7 @@ import io.pijun.george.api.OscarAPI;
 import io.pijun.george.api.OscarClient;
 import io.pijun.george.api.OscarError;
 import io.pijun.george.api.PackageWatcher;
-import io.pijun.george.api.User;
+import io.pijun.george.api.SearchUserResult;
 import io.pijun.george.api.UserComm;
 import io.pijun.george.api.locationiq.RevGeocoding;
 import io.pijun.george.api.locationiq.ReverseGeocodingCache;
@@ -1052,13 +1052,13 @@ public final class MapActivity extends AppCompatActivity implements OnMapReadyCa
             DB db = DB.get();
             UserRecord userRecord = db.getUser(username);
             if (userRecord == null) {
-                Response<User> searchResponse = api.searchForUser(username).execute();
+                Response<SearchUserResult> searchResponse = api.searchForUser(username).execute();
                 if (!searchResponse.isSuccessful()) {
                     OscarError err = OscarError.fromResponse(searchResponse);
                     Utils.showStringAlert(this, null, "Unable to find username: " + err);
                     return;
                 }
-                User userToRequest = searchResponse.body();
+                SearchUserResult userToRequest = searchResponse.body();
                 if (userToRequest == null) {
                     Utils.showStringAlert(this, null, "Unknown error while retrieving info about username");
                     return;

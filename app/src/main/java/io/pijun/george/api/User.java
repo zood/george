@@ -3,8 +3,8 @@ package io.pijun.george.api;
 public class User {
 
     public String username;
-    public byte[] id;
     public byte[] passwordSalt;
+    public String passwordHashAlgorithm;
     public long passwordHashOperationsLimit;
     public long passwordHashMemoryLimit;
     public byte[] publicKey;
