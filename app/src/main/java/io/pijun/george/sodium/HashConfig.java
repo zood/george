@@ -36,15 +36,17 @@ public class HashConfig {
     }
 
     public enum Algorithm {
-        Argon2i13("argon2i13", 1),
-        Argon2id13("argon2id13", 2);
+        Argon2i13("argon2i13", 1, 16),
+        Argon2id13("argon2id13", 2, 16);
 
         public final String name;
+        public final int saltLength;
         public final int sodiumId;
 
-        Algorithm(String name, int sodiumId) {
+        Algorithm(String name, int sodiumId, int saltLength) {
             this.name = name;
             this.sodiumId = sodiumId;
+            this.saltLength = saltLength;
         }
 
         @Nullable @AnyThread
@@ -205,6 +207,15 @@ public class HashConfig {
                     throw new RuntimeException("'Custom' is not a valid option. Must use one of 'interactive', 'moderate' or 'sensitive'");
             }
         }
+    }
+
+    @Override
+    public String toString() {
+        return "HashConfig{" +
+                "alg=" + alg +
+                ", opsLimit=" + opsLimit +
+                ", memLimit=" + memLimit +
+                '}';
     }
 
 }

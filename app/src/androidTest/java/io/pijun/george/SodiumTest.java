@@ -67,40 +67,10 @@ public class SodiumTest {
         assertNotNull(msg2Decrypted);
     }
 
-//    @Test
-//    public void testPasswordStretching() {
-//        byte[] passwordOrig = "something-random".getBytes(Constants.utf8);
-//        byte[] passwordCopy = "something-random".getBytes(Constants.utf8);
-//        byte[] salt = new byte[Sodium.getPasswordHashSaltLength()];
-//        random.nextBytes(salt);
-//
-//        HashConfig[] configs = new HashConfig[] {
-////                new HashConfig(HashConfig.Algorithm.Argon2i13, HashConfig.OpsSecurity.Interactive, HashConfig.MemSecurity.Interactive),
-//                new HashConfig(HashConfig.Algorithm.Argon2id13, HashConfig.OpsSecurity.Interactive, HashConfig.MemSecurity.Interactive)
-//        };
-//        int[] hashSizes = new int[]{32/*, 64, 96, 128*/};
-////        int[] hashSizes = new int[]{32, 64, 96, 128};
-//
-//        for (HashConfig cfg : configs) {
-//            for (int s : hashSizes) {
-//                // generate the hash
-//                byte[] hash = Sodium.stretchPassword(s, passwordOrig, salt, cfg.alg.sodiumId, cfg.getOpsLimit(), cfg.getMemLimit());
-//                assertNotNull(hash);
-//                assertEquals(s, hash.length);
-//
-//                // make sure the process is idempotent
-//                byte[] hash2 = Sodium.stretchPassword(s, passwordCopy, salt, cfg.alg.sodiumId, cfg.getOpsLimit(), cfg.getMemLimit());
-//                assertNotNull(hash2);
-//                assertEquals(s, hash2.length);
-//                assertArrayEquals(hash, hash2);
-//            }
-//        }
-//    }
-
     @Test
     public void testArgon2i13() {
         byte[] password = "something-random".getBytes(Constants.utf8);
-        byte[] salt = new byte[Sodium.getPasswordHashSaltLength()];
+        byte[] salt = new byte[HashConfig.Algorithm.Argon2i13.saltLength];
         random.nextBytes(salt);
 
         HashConfig[] configs = new HashConfig[] {
@@ -121,13 +91,14 @@ public class SodiumTest {
     @Test
     public void testArgon2id13() {
         byte[] password = "something-random".getBytes(Constants.utf8);
-        byte[] salt = new byte[Sodium.getPasswordHashSaltLength()];
+        byte[] salt = new byte[HashConfig.Algorithm.Argon2id13.saltLength];
         random.nextBytes(salt);
 
         HashConfig[] configs = new HashConfig[] {
                 new HashConfig(HashConfig.Algorithm.Argon2id13, HashConfig.OpsSecurity.Interactive, HashConfig.MemSecurity.Interactive),
                 new HashConfig(HashConfig.Algorithm.Argon2id13, HashConfig.OpsSecurity.Moderate, HashConfig.MemSecurity.Moderate),
-                new HashConfig(HashConfig.Algorithm.Argon2id13, HashConfig.OpsSecurity.Sensitive, HashConfig.MemSecurity.Sensitive)
+                // 1GB is too much memory to request for the emulator
+                //new HashConfig(HashConfig.Algorithm.Argon2id13, HashConfig.OpsSecurity.Sensitive, HashConfig.MemSecurity.Sensitive)
         };
         int size = 48;
 
@@ -142,7 +113,7 @@ public class SodiumTest {
     @Test
     public void testPasswordStretchingSize() {
         byte[] password = "something-random".getBytes(Constants.utf8);
-        byte[] salt = new byte[Sodium.getPasswordHashSaltLength()];
+        byte[] salt = new byte[HashConfig.Algorithm.Argon2i13.saltLength];
         random.nextBytes(salt);
 
         HashConfig cfg = new HashConfig(HashConfig.Algorithm.Argon2i13, HashConfig.OpsSecurity.Interactive, HashConfig.MemSecurity.Interactive);

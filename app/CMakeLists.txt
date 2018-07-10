@@ -4,8 +4,11 @@
 
 cmake_minimum_required(VERSION 3.4.1)
 
-file(GLOB_RECURSE sodium_SRCS src/main/cpp/libsodium/*.c)
-include_directories(src/main/cpp src/main/cpp/sodium)
+# store the path to the sodium library in a variable
+set(sodium-dir ${CMAKE_SOURCE_DIR}/../sodium)
+
+add_library(libsodium SHARED IMPORTED)
+set_target_properties(libsodium PROPERTIES IMPORTED_LOCATION ${sodium-dir}/lib/${ANDROID_ABI}/libsodium.so)
 
 # Creates and names a library, sets it as either STATIC
 # or SHARED, and provides the relative paths to its source code.
@@ -21,7 +24,7 @@ add_library( # Sets the name of the library.
              # Provides a relative path to your source file(s).
              # Associated headers in the same location as their source
              # file are automatically included.
-             src/main/cpp/sodium.c ${sodium_SRCS})
+             src/main/cpp/sodium.c)
 
 # Searches for a specified prebuilt library and stores the path as a
 # variable. Because system libraries are included in the search path by
@@ -36,13 +39,18 @@ find_library( # Sets the name of the path variable.
               # you want CMake to locate.
               log )
 
+target_include_directories(native-lib PRIVATE
+                           ${sodium-dir}/include)
+
 # Specifies libraries CMake should link to your target library. You
 # can link multiple libraries, such as libraries you define in the
 # build script, prebuilt third-party libraries, or system libraries.
 
 target_link_libraries( # Specifies the target library.
                        native-lib
+                       libsodium
+                       android
 
                        # Links the target library to the log library
                        # included in the NDK.
-                       log android )
+                       log)

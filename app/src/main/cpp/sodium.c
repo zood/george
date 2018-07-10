@@ -1,6 +1,7 @@
 #include <jni.h>
 #include <android/log.h>
 #include <sodium.h>
+#include <errno.h>
 
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wunused-parameter"
@@ -49,6 +50,7 @@ JNIEXPORT jbyteArray  JNICALL Java_io_pijun_george_Sodium_stretchPassword(
     free(saltUChar);
     if (result != 0) {
         __android_log_print(ANDROID_LOG_INFO, "Pijun", "createHashFromPassword returned non-zero value: %d", result);
+        __android_log_print(ANDROID_LOG_INFO, "Pijun", "errno is: %d", errno);
         return NULL;
     }
 

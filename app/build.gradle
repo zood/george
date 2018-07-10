@@ -36,6 +36,11 @@ android {
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
     }
+    sourceSets {
+        main {
+            jniLibs.srcDirs = ['../sodium/lib']
+        }
+    }
     externalNativeBuild {
         cmake {
             path "CMakeLists.txt"

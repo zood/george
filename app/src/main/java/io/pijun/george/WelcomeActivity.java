@@ -332,13 +332,14 @@ public class WelcomeActivity extends AppCompatActivity implements WelcomeLayout.
         prefs.setKeyPair(kp);
         u.publicKey = kp.publicKey;
 
-        u.passwordSalt = new byte[Sodium.getPasswordHashSaltLength()];
-        new SecureRandom().nextBytes(u.passwordSalt);
-
         HashConfig hashCfg = new HashConfig(HashConfig.Algorithm.Argon2id13, HashConfig.OpsSecurity.Sensitive, HashConfig.MemSecurity.Moderate);
         u.passwordHashAlgorithm = hashCfg.alg.name;
         u.passwordHashOperationsLimit = hashCfg.getOpsLimit();
         u.passwordHashMemoryLimit = hashCfg.getMemLimit();
+
+        u.passwordSalt = new byte[hashCfg.alg.saltLength];
+        new SecureRandom().nextBytes(u.passwordSalt);
+
         // We need a key with which to encrypt our data, so we'll use the hash of our password
         byte[] passwordHash = Sodium.stretchPassword(Sodium.getSymmetricKeyLength(),
                 password.getBytes(Constants.utf8),
