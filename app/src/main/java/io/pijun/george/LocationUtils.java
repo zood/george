@@ -31,15 +31,11 @@ public class LocationUtils {
 
     @WorkerThread
     private synchronized static void _upload(@NonNull Context ctx, @NonNull Location location, boolean immediately) {
-        if (!Network.isConnected(ctx)) {
-            return;
-        }
-
         Prefs prefs = Prefs.get(ctx);
         String token = prefs.getAccessToken();
         KeyPair keyPair = prefs.getKeyPair();
         if (token == null || keyPair == null) {
-            L.i("LM.upload: token or keypair was null, so skipping upload");
+            L.i("LUtils.upload: token or keypair was null, so skipping upload");
             return;
         }
 
@@ -56,28 +52,28 @@ public class LocationUtils {
         for (FriendRecord f : friends) {
             EncryptedData encMsg = Sodium.publicKeyEncrypt(msgBytes, f.user.publicKey, keyPair.secretKey);
             if (encMsg == null) {
-                L.w("LM.upload encryption failed for " + f.user.username);
+                L.w("LUtils.upload encryption failed for " + f.user.username);
                 continue;
             }
             pkgs.put(Hex.toHexString(f.sendingBoxId), encMsg);
         }
         LimitedShare ls = DB.get().getLimitedShare();
         if (ls != null) {
-            L.i("LM.upload: to limited share");
+            L.i("LUtils.upload: to limited share");
             if (LimitedShareService.IsRunning) {
                 EncryptedData encMsg = Sodium.publicKeyEncrypt(msgBytes, ls.publicKey, keyPair.secretKey);
                 if (encMsg != null) {
                     pkgs.put(Hex.toHexString(ls.sendingBoxId), encMsg);
                 } else {
-                    L.w("LM.upload: limited share encryption failed");
+                    L.w("LUtils.upload: limited share encryption failed");
                 }
             } else {
-                L.i("LM.upload: oops. the limited share isn't running. we'll delete it.");
+                L.i("LUtils.upload: oops. the limited share isn't running. we'll delete it.");
                 DB.get().deleteLimitedShares();
             }
         }
         if (pkgs.size() > 0) {
-            if (immediately) {
+            if (immediately && Network.isConnected(ctx)) {
                 OscarAPI api = OscarClient.newInstance(token);
                 try {
                     Response<Void> response = api.dropMultiplePackages(pkgs).execute();
@@ -87,7 +83,7 @@ public class LocationUtils {
                         return;
                     }
                     OscarError err = OscarError.fromResponse(response);
-                    L.w("LM.upload error dropping packages - " + err);
+                    L.w("LUtils.upload error dropping packages - " + err);
                 } catch (IOException ex) {
                     L.w("Failed to upload location because " + ex.getLocalizedMessage());
                 }

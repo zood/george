@@ -9,8 +9,8 @@ android {
         applicationId "io.pijun.george"
         minSdkVersion 21
         targetSdkVersion 27
-        versionCode 17
-        versionName "0.17"
+        versionCode 19
+        versionName "0.19"
         multiDexEnabled true
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
         resConfigs "en"
@@ -73,7 +73,7 @@ dependencies {
     implementation 'com.google.android.gms:play-services-maps:15.0.1'
     // cloud messaging
     implementation 'com.google.firebase:firebase-messaging:17.0.0'
-    implementation 'com.google.firebase:firebase-core:16.0.0'
+    implementation 'com.google.firebase:firebase-core:16.0.1'
 
     implementation 'com.squareup.retrofit2:retrofit:2.4.0'
     implementation 'com.squareup.retrofit2:converter-gson:2.4.0'
