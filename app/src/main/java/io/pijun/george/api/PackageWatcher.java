@@ -11,12 +11,13 @@ import java.io.InputStreamReader;
 import java.util.concurrent.TimeUnit;
 
 import io.pijun.george.App;
+import io.pijun.george.Config;
 import io.pijun.george.Constants;
-import io.pijun.george.database.DB;
 import io.pijun.george.L;
 import io.pijun.george.MessageUtils;
 import io.pijun.george.WorkerRunnable;
 import io.pijun.george.crypto.EncryptedData;
+import io.pijun.george.database.DB;
 import io.pijun.george.database.FriendRecord;
 import okhttp3.Interceptor;
 import okhttp3.OkHttpClient;
@@ -39,12 +40,7 @@ public class PackageWatcher {
     @WorkerThread
     public static PackageWatcher createWatcher(@NonNull Context context, @NonNull String accessToken) {
         PackageWatcher watcher = new PackageWatcher(context);
-        String url;
-        if (Constants.USE_PRODUCTION) {
-            url = "wss://api.pijun.io/alpha/drop-boxes/watch";
-        } else {
-            url = "ws://192.168.1.76:9999/alpha/drop-boxes/watch";
-        }
+        String url = "wss://" + Config.apiAddress() + "/alpha/drop-boxes/watch";
         try {
             OkHttpClient.Builder clientBuilder = new OkHttpClient.Builder();
             clientBuilder.addInterceptor(new Interceptor() {
@@ -113,6 +109,7 @@ public class PackageWatcher {
                 }
 
                 byte[] boxId = new byte[Constants.DROP_BOX_ID_LENGTH];
+//                L.i("PW.boxId " + Hex.toHexString(boxId));
                 System.arraycopy(binary, 1, boxId, 0, Constants.DROP_BOX_ID_LENGTH);
 
                 int msgOffset = 1 + Constants.DROP_BOX_ID_LENGTH;

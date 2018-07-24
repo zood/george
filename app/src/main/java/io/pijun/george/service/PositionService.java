@@ -90,7 +90,7 @@ public class PositionService extends Service {
     }
 
     private void notifyWaiters() {
-        // I know this is racey, but because all the waiting threads have a timeout it's not big deal
+        // I know this is racey, but because all the waiting threads have a timeout it's not a big deal
         waitLatch.countDown();
         waitLatch = new CountDownLatch(1);
     }

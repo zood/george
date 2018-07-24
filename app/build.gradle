@@ -18,7 +18,7 @@ android {
             exclude "lib/mips/*"
 //            exclude "lib/x86/*"
 //            exclude "lib/x86_64/*"
-            exclude "lib/armeabi/*"
+//            exclude "lib/armeabi/*"
         }
         externalNativeBuild {
             cmake {

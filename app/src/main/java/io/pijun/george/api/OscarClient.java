@@ -16,10 +16,9 @@ import java.lang.ref.WeakReference;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-import io.pijun.george.Constants;
+import io.pijun.george.Config;
 import io.pijun.george.Hex;
 import io.pijun.george.L;
-import io.pijun.george.queue.PersistentQueue;
 import io.pijun.george.Prefs;
 import io.pijun.george.Sodium;
 import io.pijun.george.api.adapter.BytesToBase64Adapter;
@@ -34,6 +33,7 @@ import io.pijun.george.api.task.SendMessageTask;
 import io.pijun.george.crypto.EncryptedData;
 import io.pijun.george.crypto.KeyPair;
 import io.pijun.george.database.UserRecord;
+import io.pijun.george.queue.PersistentQueue;
 import okhttp3.Interceptor;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
@@ -85,13 +85,7 @@ public class OscarClient {
             }
         }
 
-        String url;
-        if (Constants.USE_PRODUCTION) {
-            url = "https://api.pijun.io/alpha/";
-        } else {
-            url = "http://192.168.1.76:9999/alpha/";
-        }
-
+        String url = "https://" + Config.apiAddress() + "/alpha/";
         OkHttpClient.Builder httpBuilder = new OkHttpClient.Builder();
 //        HttpLoggingInterceptor interceptor = new HttpLoggingInterceptor();
 //        interceptor.setLevel(HttpLoggingInterceptor.Level.BODY);
