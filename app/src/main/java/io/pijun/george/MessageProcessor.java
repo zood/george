@@ -10,14 +10,14 @@ import com.crashlytics.android.Crashlytics;
 
 import io.pijun.george.api.Message;
 import io.pijun.george.api.OscarClient;
-import io.pijun.george.api.task.MessageConverter;
+import io.pijun.george.api.MessageConverter;
 import io.pijun.george.database.DB;
 import io.pijun.george.database.UserRecord;
 import io.pijun.george.queue.PersistentQueue;
 
 public class MessageProcessor {
 
-    private static final String QUEUE_FILENAME = "action.queue";
+    private static final String QUEUE_FILENAME = "message_processor";
     private static volatile MessageProcessor sSingleton;
     private final PersistentQueue<Message> mQueue;
 

@@ -13,6 +13,8 @@ import android.support.annotation.WorkerThread;
 
 import com.crashlytics.android.Crashlytics;
 
+import java.nio.ByteBuffer;
+import java.util.Locale;
 import java.util.concurrent.Semaphore;
 
 import io.pijun.george.L;
@@ -76,18 +78,48 @@ public class PersistentQueue<E> {
     @WorkerThread
     @Nullable
     private E getHead(boolean thenDelete) {
-        E element = null;
+        E element;
         SQLiteDatabase db = mHelper.getWritableDatabase();
         int itemId = 0;
-        try (Cursor c = db.query(TASKS_TABLE, new String[]{TASKS_COL_ID, TASKS_COL_DATA}, null, null, null, null, TASKS_COL_ID + " ASC", "1")) {
+        int colSize = 0;
+        // read back the row, and data length
+        try (Cursor c = db.query(TASKS_TABLE, new String[]{TASKS_COL_ID, "length("+TASKS_COL_DATA+")"}, null, null, null, null, TASKS_COL_ID + " ASC", "1")) {
             if (c.moveToNext()) {
-                itemId = c.getInt(c.getColumnIndexOrThrow(TASKS_COL_ID));
-                byte[] data = c.getBlob(c.getColumnIndexOrThrow(TASKS_COL_DATA));
-                element = mConverter.deserialize(data);
+                itemId = c.getInt(0);
+                colSize = c.getInt(1);
             }
         }
 
-        if (thenDelete && itemId != 0) {
+        // if there was no row, return null
+        if (itemId == 0) {
+            return null;
+        }
+
+        // otherwise, read in the data 768 KB at a time
+        int offset = 1;
+        int bytesRead = 0;
+        int chunkSize = 768 * 1024; // 768 KB
+        ByteBuffer buffer = ByteBuffer.allocate(colSize);
+        String template = "SELECT substr(%s, %d, %d) FROM %s WHERE id=%d";
+        while (bytesRead < colSize) {
+            if (bytesRead + chunkSize > colSize) {
+                chunkSize = colSize - bytesRead;
+            }
+            String query = String.format(Locale.US, template, TASKS_COL_DATA, offset, chunkSize, TASKS_TABLE, itemId);
+            try (Cursor c = db.rawQuery(query, null)) {
+                boolean next = c.moveToNext();
+                if (!next) {
+                    throw new RuntimeException("No row found while reading data bytes. Something wrong with your math?");
+                }
+                byte[] data = c.getBlob(0);
+                buffer.put(data);
+            }
+            bytesRead += chunkSize;
+            offset += chunkSize;
+        }
+
+        element = mConverter.deserialize(buffer.array());
+        if (thenDelete) {
             deleteRow(itemId);
         }
 
@@ -95,7 +127,7 @@ public class PersistentQueue<E> {
     }
 
     @WorkerThread
-    public void offer(E e) {
+    public void offer(@NonNull E e) {
         byte[] bytes = mConverter.serialize(e);
         ContentValues cv = new ContentValues();
         cv.put(TASKS_COL_DATA, bytes);
@@ -192,8 +224,8 @@ public class PersistentQueue<E> {
     }
 
     public interface Converter<E> {
-        E deserialize(byte[] bytes);
-        byte[] serialize(E t);
+        E deserialize(@NonNull byte[] bytes);
+        @NonNull byte[] serialize(@NonNull E item);
     }
 
 }

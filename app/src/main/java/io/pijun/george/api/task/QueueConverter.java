@@ -1,5 +1,7 @@
 package io.pijun.george.api.task;
 
+import android.support.annotation.NonNull;
+
 import com.google.gson.JsonElement;
 import com.google.gson.JsonParser;
 
@@ -13,7 +15,7 @@ import io.pijun.george.api.OscarClient;
 public class QueueConverter implements PersistentQueue.Converter<OscarTask> {
 
     @Override
-    public OscarTask deserialize(byte[] bytes) {
+    public OscarTask deserialize(@NonNull byte[] bytes) {
         InputStreamReader reader = new InputStreamReader(new ByteArrayInputStream(bytes));
         JsonElement root = new JsonParser().parse(reader);
         String apiMethod = root.getAsJsonObject().get("api_method").getAsString();
@@ -35,8 +37,9 @@ public class QueueConverter implements PersistentQueue.Converter<OscarTask> {
         }
     }
 
+    @NonNull
     @Override
-    public byte[] serialize(OscarTask task) {
+    public byte[] serialize(@NonNull OscarTask task) {
         switch (task.apiMethod) {
             case AddFcmTokenTask.NAME:
                 AddFcmTokenTask aftt = (AddFcmTokenTask) task;

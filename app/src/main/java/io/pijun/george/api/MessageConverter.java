@@ -1,4 +1,6 @@
-package io.pijun.george.api.task;
+package io.pijun.george.api;
+
+import android.support.annotation.NonNull;
 
 import com.google.gson.JsonElement;
 import com.google.gson.JsonParser;
@@ -14,14 +16,15 @@ import io.pijun.george.api.OscarClient;
 public class MessageConverter implements PersistentQueue.Converter<Message> {
 
     @Override
-    public Message deserialize(byte[] bytes) {
+    public Message deserialize(@NonNull byte[] bytes) {
         InputStreamReader reader = new InputStreamReader(new ByteArrayInputStream(bytes));
         JsonElement root = new JsonParser().parse(reader);
         return OscarClient.sGson.fromJson(root, Message.class);
     }
 
+    @NonNull
     @Override
-    public byte[] serialize(Message msg) {
+    public byte[] serialize(@NonNull Message msg) {
         return OscarClient.sGson.toJson(msg).getBytes(Constants.utf8);
     }
 }
