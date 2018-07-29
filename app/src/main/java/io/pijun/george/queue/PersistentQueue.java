@@ -107,8 +107,7 @@ public class PersistentQueue<E> {
             }
             String query = String.format(Locale.US, template, TASKS_COL_DATA, offset, chunkSize, TASKS_TABLE, itemId);
             try (Cursor c = db.rawQuery(query, null)) {
-                boolean next = c.moveToNext();
-                if (!next) {
+                if (!c.moveToNext()) {
                     throw new RuntimeException("No row found while reading data bytes. Something wrong with your math?");
                 }
                 byte[] data = c.getBlob(0);

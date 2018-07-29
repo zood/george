@@ -82,12 +82,20 @@ public class MessageUtils {
 
     @WorkerThread @Error
     private static int handleAvatarUpdate(@NonNull Context context, @NonNull UserRecord user, @NonNull UserComm comm) {
+        L.i("handleAvatarUpdate for " + user.username);
         try {
+            // make sure this person is at least a friend
+            if (DB.get().getFriendByUserId(user.id) == null) {
+                L.i(user.username + " is not a friend. We don't want their avatar.");
+                return ERROR_NONE;
+            }
+
             boolean success = AvatarManager.saveAvatar(context, user.username, comm.avatar);
             if (!success) {
                 L.w("Failed to save avatar from " + user.username);
             }
         } catch (IOException ex) {
+            L.w("Exception saving avatar", ex);
             Crashlytics.logException(ex);
         }
         return ERROR_NONE;
@@ -191,7 +199,7 @@ public class MessageUtils {
         L.i("handleLocationUpdateRequestReceived");
         L.i(user.username + " responded to update request: " + comm.locationUpdateRequestAction);
         FriendRecord friend = DB.get().getFriendByUserId(user.id);
-        if (friend == null) {
+        if (friend == null || friend.receivingBoxId == null) {
             return ERROR_NONE;
         }
         UpdateStatusTracker.setUpdateRequestResponse(friend.id, System.currentTimeMillis(), comm.locationUpdateRequestAction);
