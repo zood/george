@@ -14,7 +14,7 @@ import io.pijun.george.App;
 import io.pijun.george.Config;
 import io.pijun.george.Constants;
 import io.pijun.george.L;
-import io.pijun.george.MessageUtils;
+import io.pijun.george.MessageProcessor;
 import io.pijun.george.WorkerRunnable;
 import io.pijun.george.crypto.EncryptedData;
 import io.pijun.george.database.DB;
@@ -124,9 +124,9 @@ public class PackageWatcher {
                             L.i("  can't find user associated with receiving box id");
                             return;
                         }
-                        int result = MessageUtils.unwrapAndProcess(mContext, friend.user.userId, encMsg.cipherText, encMsg.nonce);
-                        if (result != MessageUtils.ERROR_NONE) {
-                            L.i("  error unwrapping+processing dropped message: " + result);
+                        MessageProcessor.Result result = MessageProcessor.decryptAndProcess(mContext, friend.user.userId, encMsg.cipherText, encMsg.nonce);
+                        if (result != MessageProcessor.Result.Success) {
+                            L.i("  error decrypting+processing dropped message: " + result);
                         }
                     }
                 });
