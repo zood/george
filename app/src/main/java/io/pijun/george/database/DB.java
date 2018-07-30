@@ -613,7 +613,7 @@ public class DB {
     }
 
     @WorkerThread
-    public void setFriendLocation(long friendId, double lat, double lng, long time, Float accuracy, Float speed, Float bearing) throws DBException {
+    public void setFriendLocation(long friendId, double lat, double lng, long time, @Nullable Float accuracy, @Nullable Float speed, @Nullable Float bearing, @Nullable String movement) throws DBException {
         SQLiteDatabase db = mDbHelper.getWritableDatabase();
         ContentValues cv = new ContentValues();
         cv.put(LOCATIONS_COL_FRIEND_ID, friendId);
@@ -628,6 +628,9 @@ public class DB {
         }
         if (bearing != null) {
             cv.put(LOCATIONS_COL_BEARING, bearing);
+        }
+        if (movement != null && !movement.equals(MovementType.Unknown.val)) {
+            cv.put(LOCATIONS_COL_MOVEMENTS, movement);
         }
         long result = db.replace(LOCATIONS_TABLE, null, cv);
         if (result == -1) {
