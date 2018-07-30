@@ -66,6 +66,6 @@ public interface OscarAPI {
     Call<SearchUserResult> searchForUser(@Query("username") String username);
 
     @POST("users/{userId}/messages")
-    Call<Void> sendMessage(@Path("userId") String hexUserId, @Body Map<String, Object> body);
+    Call<Void> sendMessage(@Path("userId") String hexUserId, @Body OutboundMessage msg);
 
 }

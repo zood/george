@@ -1,5 +1,7 @@
 package io.pijun.george.api.task;
 
+import android.support.annotation.NonNull;
+
 import io.pijun.george.crypto.EncryptedData;
 
 public class SendMessageTask extends OscarTask {
@@ -9,7 +11,7 @@ public class SendMessageTask extends OscarTask {
     public boolean urgent;
     public boolean isTransient;
 
-    public SendMessageTask(String accessToken) {
+    public SendMessageTask(@NonNull String accessToken) {
         super(NAME, accessToken);
     }
 

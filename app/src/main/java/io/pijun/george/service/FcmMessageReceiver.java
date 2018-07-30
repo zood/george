@@ -1,10 +1,7 @@
 package io.pijun.george.service;
 
-import android.content.Context;
-import android.os.PowerManager;
 import android.support.annotation.WorkerThread;
 import android.text.TextUtils;
-import android.text.format.DateUtils;
 import android.util.Base64;
 
 import com.google.firebase.messaging.FirebaseMessagingService;
@@ -29,12 +26,6 @@ public class FcmMessageReceiver extends FirebaseMessagingService {
     @Override
     public void onMessageReceived(RemoteMessage remoteMessage) {
         L.i("FcmMessageReceiver.onMessageReceived");
-        PowerManager pwrMgr = (PowerManager) getSystemService(Context.POWER_SERVICE);
-        if (pwrMgr == null) {
-            return;
-        }
-        PowerManager.WakeLock lock = pwrMgr.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "FcmMessageReceiverLock");
-        lock.acquire(5 * DateUtils.SECOND_IN_MILLIS);
         Map<String, String> data = remoteMessage.getData();
         if (data == null) {
             return;
@@ -62,12 +53,27 @@ public class FcmMessageReceiver extends FirebaseMessagingService {
     private void handleMessageReceived(Map<String, String> data) {
         L.i("FcmMessageReceiver.handleMessageReceived");
         Message msg = new Message();
-        msg.id = Long.parseLong(data.get("id"));
+        try {
+            msg.id = Long.parseLong(data.get("id"));
+        } catch (NumberFormatException ignore) {}
         msg.cipherText = Base64.decode(data.get("cipher_text"), Base64.NO_WRAP);
         msg.nonce = Base64.decode(data.get("nonce"), Base64.NO_WRAP);
         msg.senderId = Base64.decode(data.get("sender_id"), Base64.NO_WRAP);
 
-        MessageProcessor.get().queue(msg);
+        MessageProcessor.Result result = MessageProcessor.decryptAndProcess(this, msg.senderId, msg.cipherText, msg.nonce);
+        if (result == MessageProcessor.Result.Success) {
+            String accessToken = Prefs.get(this).getAccessToken();
+            // If this isn't a transient message, and we have an access token, delete the message
+            if (msg.id != 0 && accessToken != null) {
+                OscarAPI api = OscarClient.newInstance(accessToken);
+                try {
+                    api.deleteMessage(msg.id).execute();
+                } catch (IOException ignore) {
+                    // No big deal. It will get handled next time the app is opened, and this message
+                    // is placed in the processing queue.
+                }
+            }
+        }
     }
 
     @WorkerThread
@@ -82,19 +88,22 @@ public class FcmMessageReceiver extends FirebaseMessagingService {
             return;
         }
         String token = Prefs.get(this).getAccessToken();
-        if (TextUtils.isEmpty(token)) {
+        if (token == null) {
             return;
         }
-        OscarAPI client = OscarClient.newInstance(token);
+        OscarAPI api = OscarClient.newInstance(token);
         try {
-            Response<Message> response = client.getMessage(msgId).execute();
+            Response<Message> response = api.getMessage(msgId).execute();
             if (response.isSuccessful()) {
                 Message msg = response.body();
                 if (msg == null) {
                     L.w("unable to decode message from body");
                     return;
                 }
-                MessageProcessor.get().queue(msg);
+                MessageProcessor.Result result = MessageProcessor.decryptAndProcess(getApplicationContext(), msg.senderId, msg.cipherText, msg.nonce);
+                if (result == MessageProcessor.Result.Success) {
+                    api.deleteMessage(msgId).execute();
+                }
             }
         } catch (IOException ex) {
             // network error. Oh, well. We'll get it later.

@@ -311,7 +311,7 @@ public final class MapActivity extends AppCompatActivity implements OnMapReadyCa
                         return;
                     }
                     for (Message msg : msgs) {
-                        MessageProcessor.get().queue(msg);
+                        MessageProcessor.queue(msg);
                     }
                 } catch (IOException ignore) {
                     // meh, we'll try again later

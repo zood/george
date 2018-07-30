@@ -51,11 +51,11 @@ public class MessageProcessor {
     }
 
     private static final String QUEUE_FILENAME = "message_processor";
-    private static volatile MessageProcessor sSingleton;
-    private final PersistentQueue<Message> mQueue;
+    private static volatile MessageProcessor singleton;
+    private final PersistentQueue<Message> queue;
 
     private MessageProcessor() {
-        mQueue = new PersistentQueue<>(App.getApp(), QUEUE_FILENAME, new MessageConverter());
+        queue = new PersistentQueue<>(App.getApp(), QUEUE_FILENAME, new MessageConverter());
     }
 
     public static Result decryptAndProcess(@NonNull Context context, @NonNull byte[] senderId, @NonNull byte[] cipherText, @NonNull byte[] nonce) {
@@ -160,21 +160,21 @@ public class MessageProcessor {
 
     @NonNull
     @AnyThread
-    public static MessageProcessor get() {
-        if (sSingleton == null) {
+    private static MessageProcessor get() {
+        if (singleton == null) {
             synchronized (MessageProcessor.class) {
-                if (sSingleton == null) {
-                    sSingleton = new MessageProcessor();
+                if (singleton == null) {
+                    singleton = new MessageProcessor();
                     App.runInBackground(new WorkerRunnable() {
                         @Override
                         public void run() {
-                            sSingleton.processQueue();
+                            singleton.processQueue();
                         }
                     });
                 }
             }
         }
-        return sSingleton;
+        return singleton;
     }
 
     private static Result handleAvatarRequest(@NonNull Context ctx, @NonNull UserRecord user) {
@@ -288,20 +288,20 @@ public class MessageProcessor {
 
         L.i("MU attempting to start the position service");
         ContextCompat.startForegroundService(context, PositionService.newIntent(context));
-        App.runInBackground(new WorkerRunnable() {
-            @Override
-            public void run() {
-                PositionService.await();
-                UserComm done = UserComm.newLocationUpdateRequestReceived(UserComm.LOCATION_UPDATE_REQUEST_ACTION_FINISHED);
-                L.i("Queueing 'location_update_request_action_finished' to " + userRecord.username);
-                String errMsg = OscarClient.queueSendMessage(context, userRecord, done, true, true);
-                if (errMsg != null) {
-                    L.w(errMsg);
-                }
-            }
-        });
+
+        // let them know we've started
+        L.i("queueing update starting");
         UserComm started = UserComm.newLocationUpdateRequestReceived(UserComm.LOCATION_UPDATE_REQUEST_ACTION_STARTING);
         String errMsg = OscarClient.queueSendMessage(context, userRecord, started, true, true);
+        if (errMsg != null) {
+            L.w(errMsg);
+        }
+
+        // let them know it's done
+        PositionService.await();
+        UserComm done = UserComm.newLocationUpdateRequestReceived(UserComm.LOCATION_UPDATE_REQUEST_ACTION_FINISHED);
+        L.i("Queueing 'location_update_request_action_finished' to " + userRecord.username);
+        errMsg = OscarClient.queueSendMessage(context, userRecord, done, true, true);
         if (errMsg != null) {
             L.w(errMsg);
         }
@@ -327,12 +327,12 @@ public class MessageProcessor {
         while (true) {
             Message msg;
             try {
-                msg = mQueue.blockingPeek();
+                msg = queue.blockingPeek();
                 Result result = decryptAndProcess(App.getApp(), msg.senderId, msg.cipherText, msg.nonce);
                 String token = Prefs.get(App.getApp()).getAccessToken();
                 switch (result) {
                     case Success:
-                        mQueue.poll();
+                        queue.poll();
                         // delete the action from the server
                         if (msg.id != 0 && !TextUtils.isEmpty(token)) {
                             OscarClient.queueDeleteMessage(App.getApp(), token, msg.id);
@@ -360,7 +360,7 @@ public class MessageProcessor {
                     case ErrorUnknownSender:
                     case ErrorUnknown:
                     default:
-                        mQueue.poll();
+                        queue.poll();
                         // delete the action from the server
                         if (msg.id != 0 && !TextUtils.isEmpty(token)) {
                             OscarClient.queueDeleteMessage(App.getApp(), token, msg.id);
@@ -382,11 +382,11 @@ public class MessageProcessor {
     }
 
     @AnyThread
-    public void queue(@NonNull Message msg) {
+    public static void queue(@NonNull Message msg) {
         App.runInBackground(new WorkerRunnable() {
             @Override
             public void run() {
-                mQueue.offer(msg);
+                get().queue.offer(msg);
             }
         });
     }

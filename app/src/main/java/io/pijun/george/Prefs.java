@@ -5,6 +5,7 @@ import android.content.SharedPreferences;
 import android.support.annotation.AnyThread;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
+import android.text.TextUtils;
 
 import com.google.android.gms.maps.model.CameraPosition;
 import com.google.android.gms.maps.model.LatLng;
@@ -124,7 +125,11 @@ public class Prefs {
         return mPrefs.getString(KEY_ACCESS_TOKEN, null);
     }
 
-    public void setAccessToken(String token) {
+    public void setAccessToken(@Nullable String token) {
+        if (TextUtils.isEmpty(token)) {
+            // so we never have to deal with checking for empty strings anywhere else in the app
+            token = null;
+        }
         mPrefs.edit().putString(KEY_ACCESS_TOKEN, token).apply();
     }
 

@@ -16,12 +16,10 @@ import com.crashlytics.android.Crashlytics;
 
 import java.io.IOException;
 import java.lang.ref.WeakReference;
-import java.util.Map;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 import io.pijun.george.L;
 import io.pijun.george.Prefs;
-import io.pijun.george.Utils;
 import io.pijun.george.WorkerRunnable;
 import io.pijun.george.api.task.AddFcmTokenTask;
 import io.pijun.george.api.task.DeleteFcmTokenTask;
@@ -134,10 +132,12 @@ public final class TaskSender {
                     break;
                 case SendMessageTask.NAME:
                     SendMessageTask smt = (SendMessageTask) task;
-                    Map<String, Object> map = Utils.map("cipher_text", smt.message.cipherText,
-                            "nonce", smt.message.nonce, "urgent", smt.urgent,
-                            "transient", smt.isTransient);
-                    call = api.sendMessage(smt.hexUserId, map);
+                    OutboundMessage om = new OutboundMessage();
+                    om.cipherText = smt.message.cipherText;
+                    om.nonce = smt.message.nonce;
+                    om.urgent = smt.urgent;
+                    om.isTransient = smt.isTransient;
+                    call = api.sendMessage(smt.hexUserId, om);
                     break;
                 default:
                     throw new RuntimeException("Unknown task type");
