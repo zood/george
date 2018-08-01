@@ -53,22 +53,18 @@ public class Identicon {
     @ColorInt
     private static int getHashColor(byte val) {
         int absVal = Math.abs(val);
-        if (absVal < 16) {
-            return Color.parseColor("#F44336"); // red
-        } else if (absVal < 32) {
-            return Color.parseColor("#E91E63"); // pink
-        } else if (absVal < 48) {
-            return Color.parseColor("#673AB7"); // deep purple
+        if (absVal < 21) {
+            return Color.parseColor("#5CD1FF"); // blue
+        } else if (absVal < 42) {
+            return Color.parseColor("#E41C16"); // red
         } else if (absVal < 64) {
-            return Color.parseColor("#3F51B5"); // indigo
-        } else if (absVal < 80) {
-            return Color.parseColor("#00BCD4"); // cyan
-        } else if (absVal < 96) {
-            return Color.parseColor("#4CAF50"); // green
-        } else if (absVal < 112) {
-            return Color.parseColor("#FFEB38"); // yellow
+            return Color.parseColor("#3C4466"); // navy
+        } else if (absVal < 85) {
+            return Color.parseColor("#F6921E"); // orange
+        } else if (absVal < 106) {
+            return Color.parseColor("#FFE422"); // canady
         } else {
-            return Color.parseColor("#FF9800"); // orange
+            return Color.parseColor("#46585E"); // grey
         }
     }
 }

@@ -34,7 +34,6 @@ import io.pijun.george.database.DB;
 import io.pijun.george.database.FriendLocation;
 import io.pijun.george.database.FriendRecord;
 import io.pijun.george.databinding.FragmentFriendsSheetBinding;
-import io.pijun.george.event.AvatarUpdated;
 import io.pijun.george.event.FriendRemoved;
 import io.pijun.george.event.LocationSharingGranted;
 import io.pijun.george.event.LocationSharingRevoked;
@@ -42,7 +41,7 @@ import io.pijun.george.view.FriendsSheetBehavior;
 import io.pijun.george.view.FriendsSheetLayout;
 import io.pijun.george.view.MainLayout;
 
-public class FriendsSheetFragment extends Fragment implements FriendItemsAdapter.FriendItemsListener {
+public class FriendsSheetFragment extends Fragment implements FriendItemsAdapter.FriendItemsListener, AvatarManager.Listener {
 
     private AvatarsAdapter mAvatarsAdapter = new AvatarsAdapter();
     private FriendItemsAdapter mFriendItemsAdapter = new FriendItemsAdapter();
@@ -58,12 +57,6 @@ public class FriendsSheetFragment extends Fragment implements FriendItemsAdapter
         if (context instanceof MapActivity) {
             ((MapActivity) context).setFriendsSheetFragment(this);
         }
-    }
-
-    @Subscribe @Keep @UiThread
-    public void onAvatarUpdated(AvatarUpdated evt) {
-        mAvatarsAdapter.onAvatarUpdated(evt.username);
-        mFriendItemsAdapter.onAvatarUpdated(evt.username);
     }
 
     /**
@@ -226,6 +219,7 @@ public class FriendsSheetFragment extends Fragment implements FriendItemsAdapter
     public void onStart() {
         super.onStart();
 
+        AvatarManager.addListener(this);
         App.registerOnBus(this);
         final DB db = DB.get();
         App.runInBackground(() -> {
@@ -250,6 +244,7 @@ public class FriendsSheetFragment extends Fragment implements FriendItemsAdapter
     @Override
     public void onStop() {
         App.unregisterFromBus(this);
+        AvatarManager.removeListener(this);
         mAvatarsAdapter.setListener(null);
         mBehavior = null;
 
@@ -395,4 +390,14 @@ public class FriendsSheetFragment extends Fragment implements FriendItemsAdapter
         maxTrY -= mBinding.title.getTop() + mBinding.title.getHeight()/2.0f;    // to calculate the actual difference with the center of the title
         mBinding.title.setTranslationY(maxTrY * slideOffset);
     }
+
+    //region AvatarManager.Listener
+
+    @Override
+    public void onAvatarUpdated(@Nullable String username) {
+        mAvatarsAdapter.onAvatarUpdated(username);
+        mFriendItemsAdapter.onAvatarUpdated(username);
+    }
+
+    //endregion
 }

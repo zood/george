@@ -3,9 +3,7 @@ package io.pijun.george;
 import android.Manifest;
 import android.animation.ObjectAnimator;
 import android.animation.ValueAnimator;
-import android.annotation.SuppressLint;
 import android.content.Context;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentSender;
 import android.content.pm.PackageManager;
@@ -23,7 +21,6 @@ import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.annotation.UiThread;
 import android.support.annotation.WorkerThread;
-import android.support.constraint.ConstraintLayout;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v4.graphics.drawable.DrawableCompat;
@@ -31,10 +28,7 @@ import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.text.TextUtils;
 import android.text.format.DateUtils;
-import android.view.GestureDetector;
-import android.view.MotionEvent;
 import android.view.View;
-import android.view.ViewTreeObserver;
 import android.widget.EditText;
 import android.widget.Toast;
 
@@ -65,7 +59,6 @@ import com.google.android.gms.maps.model.MarkerOptions;
 import com.squareup.otto.Subscribe;
 import com.squareup.picasso.Picasso;
 
-import java.io.File;
 import java.io.IOException;
 import java.lang.ref.WeakReference;
 import java.security.SecureRandom;
@@ -88,20 +81,16 @@ import io.pijun.george.database.FriendLocation;
 import io.pijun.george.database.FriendRecord;
 import io.pijun.george.database.UserRecord;
 import io.pijun.george.databinding.ActivityMapBinding;
-import io.pijun.george.event.AvatarUpdated;
 import io.pijun.george.event.FriendRemoved;
 import io.pijun.george.event.LocationSharingGranted;
 import io.pijun.george.event.LocationSharingRevoked;
-import io.pijun.george.interpolator.LinearBezierInterpolator;
 import io.pijun.george.service.FcmTokenRegistrar;
 import io.pijun.george.service.LimitedShareService;
 import io.pijun.george.view.AvatarView;
-import io.pijun.george.view.DrawerActionRecognizer;
-import io.pijun.george.view.DrawerSwipesListener;
 import io.pijun.george.view.MyLocationView;
 import retrofit2.Response;
 
-public final class MapActivity extends AppCompatActivity implements OnMapReadyCallback, GoogleMap.OnMarkerClickListener, AvatarsAdapter.AvatarsAdapterListener, DrawerSwipesListener {
+public final class MapActivity extends AppCompatActivity implements OnMapReadyCallback, GoogleMap.OnMarkerClickListener, AvatarsAdapter.AvatarsAdapterListener {
 
     private static final int REQUEST_LOCATION_PERMISSION = 18;
     private static final int REQUEST_LOCATION_SETTINGS = 20;
@@ -122,10 +111,6 @@ public final class MapActivity extends AppCompatActivity implements OnMapReadyCa
     private EditText mUsernameField;
     private Circle mCurrentCircle;
     private WeakReference<FriendsSheetFragment> mFriendsSheet;
-    private boolean mInitialLayoutDone = false;
-    private float mUiHiddenOffset;
-    private GestureDetector mGestureDetector;
-    private DrawerActionRecognizer mDrawerActionRecognizer;
     private boolean requestLocationOnStart = false;
 
     public static Intent newIntent(Context ctx) {
@@ -163,17 +148,6 @@ public final class MapActivity extends AppCompatActivity implements OnMapReadyCa
         getWindow().setStatusBarColor(Color.TRANSPARENT);
         binding = DataBindingUtil.setContentView(this, R.layout.activity_map);
 
-        binding.root.getViewTreeObserver().addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
-            @Override
-            public void onGlobalLayout() {
-                if (mInitialLayoutDone) {
-                    return;
-                }
-                mInitialLayoutDone = true;
-                onInitialLayoutDone();
-            }
-        });
-
         mMapView = findViewById(R.id.map);
         mMapView.onCreate(savedInstanceState);
         mMapView.getMapAsync(this);
@@ -201,17 +175,6 @@ public final class MapActivity extends AppCompatActivity implements OnMapReadyCa
         mLocationSettingsRequest = builder.build();
 
         startService(FcmTokenRegistrar.newIntent(this));
-
-        App.runOnUiThread(new UiRunnable() {
-            @Override
-            public void run() {
-                String username = Prefs.get(MapActivity.this).getUsername();
-                binding.username.setText(username);
-                binding.avatar.username = username;
-                File myAvatar = AvatarManager.getMyAvatar(MapActivity.this);
-                Picasso.with(MapActivity.this).load(myAvatar).into(binding.avatar);
-            }
-        });
     }
 
     public void onRequestLocation(View v) {
@@ -621,29 +584,6 @@ public final class MapActivity extends AppCompatActivity implements OnMapReadyCa
     @Subscribe
     @Keep
     @UiThread
-    public void onAvatarUpdated(AvatarUpdated evt) {
-        if (binding == null) {
-            // UI isn't loaded, so get outta here
-            return;
-        }
-        // we're only interested in updates to the user profile
-        if (evt.username != null) {
-            return;
-        }
-        // Update it
-        File myAvatar = AvatarManager.getMyAvatar(this);
-        Picasso.with(this).load(myAvatar).into(binding.avatar);
-    }
-
-    @UiThread
-    public void onCloseDrawerAction(View v) {
-        onFlingCloseDrawer();
-        mDrawerActionRecognizer.setClosed(true);
-    }
-
-    @Subscribe
-    @Keep
-    @UiThread
     public void onLocationSharingGranted(final LocationSharingGranted grant) {
         L.i("onLocationSharingGranted");
         if (mPkgWatcher == null) {
@@ -731,32 +671,6 @@ public final class MapActivity extends AppCompatActivity implements OnMapReadyCa
             CameraUpdate update = CameraUpdateFactory.newLatLng(new LatLng(loc.latitude, loc.longitude));
             mGoogMap.animateCamera(update);
         }
-    }
-
-    @UiThread
-    public void onLogOutAction(View v) {
-        L.i("onLogOutAction");
-        AlertDialog.Builder builder = new AlertDialog.Builder(this, R.style.AlertDialogTheme);
-        builder.setMessage(R.string.confirm_log_out_msg);
-        builder.setCancelable(true);
-        builder.setNegativeButton(R.string.no, null);
-        builder.setPositiveButton(R.string.log_out, new DialogInterface.OnClickListener() {
-            @Override
-            public void onClick(DialogInterface dialog, int which) {
-                AuthenticationManager.get().logOut(MapActivity.this, new AuthenticationManager.LogoutWatcher() {
-                    @Override
-                    public void onUserLoggedOut() {
-                        Intent welcomeIntent = WelcomeActivity.newIntent(MapActivity.this);
-                        startActivity(welcomeIntent);
-                        finish();
-                    }
-                });
-            }
-        });
-        builder.show();
-
-        onFlingCloseDrawer();
-        mDrawerActionRecognizer.setClosed(true);
     }
 
     @Override
@@ -1025,13 +939,13 @@ public final class MapActivity extends AppCompatActivity implements OnMapReadyCa
 
     }
 
-    @UiThread
-    public void showProfile(View v) {
-        Intent i = ProfileActivity.newIntent(this);
-        startActivity(i);
+    public void onShowSettings(View v) {
+        startActivityForResult(SettingsActivity.newIntent(this), SettingsActivity.REQUEST_EXIT);
+    }
 
-        onFlingCloseDrawer();
-        mDrawerActionRecognizer.setClosed(true);
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
     }
 
     @WorkerThread
@@ -1111,193 +1025,6 @@ public final class MapActivity extends AppCompatActivity implements OnMapReadyCa
         if (marker != null) {
             marker.remove();
         }
-    }
-
-    @SuppressLint("ClickableViewAccessibility")
-    @UiThread
-    private void onInitialLayoutDone() {
-        // set pivots
-        binding.map.setPivotY(binding.map.getHeight()/2);
-
-        // translate the drawer components out of view
-        mUiHiddenOffset = -(binding.location.getX() + Utils.dpsToPix(this, 100));
-        binding.avatar.setTranslationX(mUiHiddenOffset);
-        binding.username.setTranslationX(mUiHiddenOffset);
-        binding.location.setTranslationX(mUiHiddenOffset);
-        binding.settings.setTranslationX(mUiHiddenOffset);
-        binding.about.setTranslationX(mUiHiddenOffset);
-        binding.logOut.setTranslationX(mUiHiddenOffset);
-
-        // install the gesture listener
-        mDrawerActionRecognizer = new DrawerActionRecognizer(binding.root.getWidth(), this);
-        mGestureDetector = new GestureDetector(this, mDrawerActionRecognizer);
-        binding.touchInterceptor.setOnTouchListener((View v, MotionEvent event) -> {
-            boolean onUp = event.getAction() == MotionEvent.ACTION_UP;
-            boolean detectorConsumed = mGestureDetector.onTouchEvent(event);
-            if (!detectorConsumed && onUp && mDrawerActionRecognizer.isGesturing()) {
-                mDrawerActionRecognizer.onUp();
-                return true;
-            }
-            return detectorConsumed;
-        });
-    }
-
-    @Override
-    public void onCloseDrawer(float pixels, float delta) {
-        float range = binding.root.getWidth() * 0.75f;
-        float xOffset = range - pixels;
-        xOffset = Math.max(xOffset, 0);
-        binding.map.setTranslationX(xOffset);
-
-        float progress = xOffset / range;
-        float scale = 1 - 0.25f * progress;
-        binding.map.setScaleX(scale);
-        binding.map.setScaleY(scale);
-
-        float uiOffset = Math.max(mUiHiddenOffset, -pixels);
-        uiOffset = Math.min(0, uiOffset);
-        binding.avatar.setTranslationX(uiOffset);
-        binding.username.setTranslationX(uiOffset);
-        binding.location.setTranslationX(uiOffset);
-        binding.settings.setTranslationX(uiOffset);
-        binding.about.setTranslationX(uiOffset);
-        binding.logOut.setTranslationX(uiOffset);
-
-        FriendsSheetFragment fragment = mFriendsSheet.get();
-        if (fragment.getView() != null) {
-            ConstraintLayout sheet = (ConstraintLayout) fragment.getView();
-            float sheetOffset = sheet.getTranslationY() - delta;
-            int baseOffset = (int) sheet.getTag();
-            sheetOffset = Math.max(sheetOffset, (float) baseOffset);
-            sheet.setTranslationY(sheetOffset);
-        }
-
-        float friendFABOffset = binding.addFriendFab.getTranslationY() - delta;
-        friendFABOffset = Math.max(0, friendFABOffset);
-        binding.addFriendFab.setTranslationY(friendFABOffset);
-
-        float locFABOffset = binding.myLocationFab.getTranslationY() + delta;
-        locFABOffset = Math.min(0, locFABOffset);
-        binding.myLocationFab.setTranslationY(locFABOffset);
-    }
-
-    @Override
-    public void onOpenDrawer(float pixels) {
-        float range = binding.root.getWidth() * 0.75f;
-        float xOffset = Math.max(pixels, 0);
-        xOffset = Math.min(xOffset, range);
-        binding.map.setTranslationX(xOffset);
-
-        float progress = xOffset / range;
-        // the smallest we shrink is 75%
-        float scale = 1 - 0.25f * progress;
-        binding.map.setScaleX(scale);
-        binding.map.setScaleY(scale);
-
-        // animate away friends sheet
-        FriendsSheetFragment fragment = mFriendsSheet.get();
-        if (fragment != null && fragment.getView() != null) {
-            ConstraintLayout sheet = (ConstraintLayout) fragment.getView();
-            int transY = (int) sheet.getTag();
-            float friendsOffset = transY + Math.min(range, pixels);
-            sheet.setTranslationY(friendsOffset);
-        }
-
-        // the Add Friends fab
-        float friendFABOffset = Math.max(0, Math.min(range, pixels));
-        binding.addFriendFab.setTranslationY(friendFABOffset);
-
-        // and the 'my location' fab
-        float myLocFABOffset = Math.max(0, Math.min(range, pixels));
-        myLocFABOffset *= -1;
-        binding.myLocationFab.setTranslationY(myLocFABOffset);
-
-        // animate the drawer elements too
-        float uiOffset = Math.min(0, mUiHiddenOffset + pixels);
-        binding.avatar.setTranslationX(uiOffset);
-        binding.username.setTranslationX(uiOffset);
-        binding.location.setTranslationX(uiOffset);
-        binding.settings.setTranslationX(uiOffset);
-        binding.about.setTranslationX(uiOffset);
-        binding.logOut.setTranslationX(uiOffset);
-    }
-
-    @Override
-    public void onFlingCloseDrawer() {
-        binding.map.animate().setInterpolator(new LinearBezierInterpolator()).x(0);
-        binding.map.animate().setInterpolator(new LinearBezierInterpolator()).scaleX(1).scaleY(1);
-
-        binding.avatar.animate().setInterpolator(new LinearBezierInterpolator()).translationX(mUiHiddenOffset).setDuration(200);
-        binding.username.animate().setInterpolator(new LinearBezierInterpolator()).translationX(mUiHiddenOffset).setDuration(200);
-        binding.location.animate().setInterpolator(new LinearBezierInterpolator()).translationX(mUiHiddenOffset).setDuration(200);
-        binding.settings.animate().setInterpolator(new LinearBezierInterpolator()).translationX(mUiHiddenOffset).setDuration(200);
-        binding.about.animate().setInterpolator(new LinearBezierInterpolator()).translationX(mUiHiddenOffset).setDuration(200);
-        binding.logOut.animate().setInterpolator(new LinearBezierInterpolator()).translationX(mUiHiddenOffset).setDuration(200);
-
-        FriendsSheetFragment fragment = mFriendsSheet.get();
-        if (fragment.getView() != null) {
-            ConstraintLayout sheet = (ConstraintLayout) fragment.getView();
-            float transY = (int)sheet.getTag(); // int cast for unboxing
-            sheet.animate().setInterpolator(new LinearBezierInterpolator()).translationY(transY).setDuration(200);
-        }
-
-        binding.myLocationFab.animate().setInterpolator(new LinearBezierInterpolator()).translationY(0).setDuration(200);
-        binding.addFriendFab.animate().setInterpolator(new LinearBezierInterpolator()).translationY(0).setDuration(200);
-    }
-
-    @Override
-    public void onFlingOpenDrawer() {
-        binding.map.setPivotY(binding.root.getHeight()/2);
-
-        float range = binding.root.getWidth() * 0.75f;
-        binding.map.animate().setInterpolator(new LinearBezierInterpolator()).x(range).setDuration(200);
-
-        // the smallest we shrink is 75%
-        float scale = 1 - 0.25f;
-        binding.map.animate()
-                .setInterpolator(new LinearBezierInterpolator())
-                .scaleX(scale)
-                .scaleY(scale)
-                .setDuration(200);
-
-        // animate the drawer elements too
-        binding.avatar.animate().setInterpolator(new LinearBezierInterpolator()).translationX(0).setDuration(200);
-        binding.username.animate().setInterpolator(new LinearBezierInterpolator()).translationX(0).setDuration(200);
-        binding.location.animate().setInterpolator(new LinearBezierInterpolator()).translationX(0).setDuration(200);
-        binding.settings.animate().setInterpolator(new LinearBezierInterpolator()).translationX(0).setDuration(200);
-        binding.about.animate().setInterpolator(new LinearBezierInterpolator()).translationX(0).setDuration(200);
-        binding.logOut.animate().setInterpolator(new LinearBezierInterpolator()).translationX(0).setDuration(200);
-
-        // friends sheet
-        FriendsSheetFragment fragment = mFriendsSheet.get();
-        if (fragment.getView() != null) {
-            ConstraintLayout sheet = (ConstraintLayout) fragment.getView();
-            float transY = (int)sheet.getTag() + range;   // the int cast is for unboxing the tag
-            sheet.animate().translationY(transY).setInterpolator(new LinearBezierInterpolator()).setDuration(200);
-        }
-
-        // the two fabs
-        binding.addFriendFab.animate().translationY(range).setInterpolator(new LinearBezierInterpolator()).setDuration(200);
-        binding.myLocationFab.animate().translationY(-range).setInterpolator(new LinearBezierInterpolator()).setDuration(200);
-    }
-
-    @Override
-    public boolean onSettleDrawer() {
-        float transX = binding.map.getTranslationX();
-        float range = binding.root.getWidth() * 0.75f;
-        float progress = transX / range;
-        if (progress >= 0.5) {
-            onFlingOpenDrawer();
-            return true;
-        } else {
-            onFlingCloseDrawer();
-            return false;
-        }
-    }
-
-    public void onShowLogs(View v) {
-        Intent i = LogActivity.newIntent(this);
-        startActivity(i);
     }
 
     private UpdateStatusTracker.Listener updateStatusTrackerListener = new UpdateStatusTracker.Listener() {

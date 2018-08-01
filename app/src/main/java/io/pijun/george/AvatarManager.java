@@ -6,6 +6,8 @@ import android.graphics.BitmapFactory;
 import android.support.annotation.AnyThread;
 import android.support.annotation.CheckResult;
 import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
+import android.support.annotation.UiThread;
 import android.support.annotation.WorkerThread;
 
 import com.crashlytics.android.Crashlytics;
@@ -16,22 +18,72 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.lang.ref.WeakReference;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Locale;
 
 import io.pijun.george.api.OscarClient;
 import io.pijun.george.api.UserComm;
-import io.pijun.george.crypto.EncryptedData;
 import io.pijun.george.crypto.KeyPair;
 import io.pijun.george.database.DB;
 import io.pijun.george.database.FriendRecord;
 import io.pijun.george.database.UserRecord;
-import io.pijun.george.event.AvatarUpdated;
 
 public class AvatarManager {
 
     private static final String AVATAR_DIR = "avatars";
     public static final String MY_AVATAR = "me";
+    private static ArrayList<WeakReference<Listener>> listeners = new ArrayList<>();
+
+    //region Listener management
+
+    @AnyThread
+    static void addListener(@NonNull Listener listener) {
+        WeakReference<Listener> ref = new WeakReference<>(listener);
+        synchronized (AvatarManager.class) {
+            listeners.add(ref);
+        }
+    }
+
+    @AnyThread
+    private static void notifyListeners(@Nullable String username) {
+        // Copy the items into another list, so we don't block any add/remove operations while
+        // notifying listeners.
+        LinkedList<WeakReference<Listener>> copy = new LinkedList<>(listeners);
+        App.runOnUiThread(new UiRunnable() {
+            @Override
+            public void run() {
+                for (WeakReference<Listener> ref : copy) {
+                    Listener l = ref.get();
+                    if (l == null) {
+                        continue;
+                    }
+                    l.onAvatarUpdated(username);
+                }
+            }
+        });
+    }
+
+    @AnyThread
+    static void removeListener(@NonNull Listener listener) {
+        synchronized (AvatarManager.class) {
+            int i=0;
+            while (i < listeners.size()) {
+                WeakReference<Listener> ref = listeners.get(i);
+                Listener l = ref.get();
+                if (l == null || l == listener) {
+                    listeners.remove(i);
+                    continue;
+                }
+                i++;
+            }
+        }
+    }
+
+    //endregion
 
     @CheckResult @NonNull @AnyThread
     static File getAvatar(@NonNull Context ctx, @NonNull String username) {
@@ -77,7 +129,7 @@ public class AvatarManager {
         fos.close();
 
         Picasso.with(ctx).invalidate(getAvatar(ctx, username));
-        App.postOnBus(new AvatarUpdated(username));
+        notifyListeners(username);
         return true;
     }
 
@@ -110,13 +162,18 @@ public class AvatarManager {
         fos.close();
         Picasso.with(ctx).invalidate(getMyAvatar(ctx));
 
-        App.postOnBus(new AvatarUpdated(null));
+        notifyListeners(null);
 
         App.runInBackground(new WorkerRunnable() {
             @Override
             public void run() {
                 try {
-                    sendAvatarToFriends();
+                    ArrayList<FriendRecord> friends = DB.get().getFriendsToShareWith();
+                    LinkedList<UserRecord> users = new LinkedList<>();
+                    for (FriendRecord f : friends) {
+                        users.add(f.user);
+                    }
+                    sendAvatarToUsers(ctx, users);
                     DB.get().scheduleBackup(ctx);
                 } catch (IOException ex) {
                     Crashlytics.logException(ex);
@@ -129,7 +186,18 @@ public class AvatarManager {
 
     @WorkerThread
     static void sendAvatarToUser(@NonNull Context ctx, @NonNull UserRecord user) throws IOException {
-        L.i("sendAvatarToUser: " + user.username);
+        sendAvatarToUsers(ctx, Collections.singletonList(user));
+    }
+
+    @WorkerThread
+    private static void sendAvatarToUsers(@NonNull Context ctx, @NonNull List<UserRecord> users) throws IOException {
+        StringBuilder sb = new StringBuilder("sendAvatarToUsers: ");
+        for (UserRecord u : users) {
+            sb.append(u.username);
+            sb.append(",");
+        }
+        L.i(sb.toString());
+
         File avatarFile = getMyAvatar(ctx);
         if (!avatarFile.exists()) {
             return;
@@ -149,54 +217,16 @@ public class AvatarManager {
             return;
         }
         UserComm comm = UserComm.newAvatarUpdate(buffer);
-        byte[] json = comm.toJSON();
-        EncryptedData encMsg = Sodium.publicKeyEncrypt(json, user.publicKey, keyPair.secretKey);
-        if (encMsg == null) {
-            L.i("Encrypting avatar for " + user.username + " failed");
-            return;
-        }
-        L.i("Sending avatar to " + user.username);
-        String errMsg = OscarClient.queueSendMessage(ctx, user, comm, false, false);
-        if (errMsg != null) {
-            L.w(errMsg);
+        for (UserRecord u : users) {
+            String errMsg = OscarClient.queueSendMessage(ctx, u, comm, false, false);
+            if (errMsg != null) {
+                L.w(errMsg);
+            }
         }
     }
 
-    @WorkerThread
-    private static void sendAvatarToFriends() throws IOException {
-        Context ctx = App.getApp();
-        File avatarFile = getMyAvatar(ctx);
-        if (!avatarFile.exists()) {
-            return;
-        }
-        ArrayList<FriendRecord> friends = DB.get().getFriendsToShareWith();
-        if (friends.size() == 0) {
-            return;
-        }
-        Prefs prefs = Prefs.get(ctx);
-        String token = prefs.getAccessToken();
-        KeyPair keyPair = prefs.getKeyPair();
-        if (token == null || keyPair == null) {
-            L.i("AvatarManager.sendAvatarToFriends missing token or keyPair");
-            return;
-        }
-
-        FileInputStream fis = new FileInputStream(avatarFile);
-        byte []buffer = new byte[(int) avatarFile.length()];
-        int read = fis.read(buffer);
-        if (read < avatarFile.length()) {
-            L.w("Did not read entire avatar image");
-            return;
-        }
-        UserComm comm = UserComm.newAvatarUpdate(buffer);
-        byte[] json = comm.toJSON();
-        for (FriendRecord f : friends) {
-            L.i("Sending avatar to " + f.user.username);
-            String errMsg = OscarClient.queueSendMessage(ctx, f.user, json, false, false);
-            if (errMsg != null) {
-                L.w("Problem sending avatar: " + errMsg);
-            }
-        }
+    interface Listener {
+        @UiThread void onAvatarUpdated(@Nullable String username);
     }
 
 }

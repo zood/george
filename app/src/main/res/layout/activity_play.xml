@@ -107,10 +107,6 @@
         android:transformPivotX="0px"
         android:layout_width="match_parent"
         android:layout_height="match_parent">
-        <include
-            layout="@layout/map_content"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent" />
 
         <fragment
             android:id="@+id/friends_sheet"

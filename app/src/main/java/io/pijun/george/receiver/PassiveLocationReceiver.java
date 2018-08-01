@@ -18,7 +18,6 @@ import com.google.android.gms.location.LocationResult;
 import com.google.android.gms.location.LocationServices;
 
 import io.pijun.george.App;
-import io.pijun.george.L;
 import io.pijun.george.LocationUtils;
 
 public class PassiveLocationReceiver extends BroadcastReceiver {
@@ -41,9 +40,9 @@ public class PassiveLocationReceiver extends BroadcastReceiver {
     @Override
     @UiThread
     public void onReceive(Context context, Intent intent) {
-        L.i("PLR onReceive");
+//        L.i("PLR onReceive");
         if (!LocationResult.hasResult(intent)) {
-            L.i("PLR intent had no location");
+//            L.i("PLR intent had no location");
             return;
         }
 

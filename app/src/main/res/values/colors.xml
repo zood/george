@@ -1,8 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="colorPrimary">#34cc54</color> <!-- teal -->
-    <color name="colorPrimaryDark">#2ebd46</color>
-    <color name="colorAccent">#32b6f4</color>
+    <!--<color name="colorPrimary">#34cc54</color> &lt;!&ndash; teal &ndash;&gt;-->
+    <color name="colorPrimary">@color/pijun_blue</color>
+    <!--<color name="colorPrimaryDark">#2ebd46</color>-->
+    <color name="colorPrimaryDark">@color/pijun_navy</color>
+    <!--<color name="colorAccent">#32b6f4</color>-->
+    <color name="colorAccent">@color/pijun_red</color>
 
     <color name="pijun_typographic">#4b5761</color>
     <color name="common_gray">#777777</color>
@@ -15,4 +18,14 @@
     <color name="drawer_gradient_end">#8fe163</color>
     <color name="amber">#ffc107</color>
     <color name="red">#ffff0000</color>
+
+    <color name="pijun_blue">#5cd1ff</color>
+    <color name="pijun_red">#e41c16</color>
+    <color name="pijun_navy">#3c4466</color>
+    <color name="pijun_orange">#f6921e</color>
+    <color name="pijun_canady">#ffe422</color>
+    <color name="pijun_grey">#46585e</color>
+
+    <color name="settings_item_title">#252525</color>
+    <color name="settings_item_subtitle">#727272</color>
 </resources>
