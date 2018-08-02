@@ -44,8 +44,12 @@ public class PersistentQueue<E> {
     @WorkerThread
     @CheckResult
     @NonNull
-    public E blockingPeek() throws InterruptedException {
-        mSemaphore.acquire();
+    public E blockingPeek() {
+        try {
+            mSemaphore.acquire();
+        } catch (InterruptedException ie) {
+            throw new RuntimeException("Interrupted while acquiring semaphore", ie);
+        }
         try {
             E element = getHead(false);
             if (element == null) {
@@ -193,8 +197,12 @@ public class PersistentQueue<E> {
 
     @WorkerThread
     @NonNull
-    public E take() throws InterruptedException {
-        mSemaphore.acquire();
+    public E take() {
+        try {
+            mSemaphore.acquire();
+        } catch (InterruptedException ie) {
+            throw new RuntimeException("Interrupted while acquiring semaphore", ie);
+        }
         E element = getHead(true);
         if (element == null) {
             throw new RuntimeException("Mismatch between semaphore permits and actual queue count");

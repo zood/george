@@ -21,6 +21,11 @@ public class Network {
         return (net != null && net.isConnectedOrConnecting());
     }
 
+    /**
+     * Determine whether background data usage is restricted for this app.
+     * @param context A Context object
+     * @return true if background data is restricted. false, otherwise.
+     */
     public static boolean isBackgroundDataRestricted(@NonNull Context context) {
         if (Build.VERSION.SDK_INT < 24) {
             return false;

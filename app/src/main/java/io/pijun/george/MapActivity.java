@@ -240,7 +240,7 @@ public final class MapActivity extends AppCompatActivity implements OnMapReadyCa
                     // 3 minutes
                     long now = System.currentTimeMillis();
                     UserComm comm = UserComm.newLocationUpdateRequest();
-                    final float DELAY = 1;
+                    final float DELAY = 3;
                     for (FriendRecord fr : friends) {
                         // check if this friend shares location with us
                         if (fr.receivingBoxId == null) {
@@ -849,11 +849,6 @@ public final class MapActivity extends AppCompatActivity implements OnMapReadyCa
         startActivityForResult(SettingsActivity.newIntent(this), SettingsActivity.REQUEST_EXIT);
     }
 
-    @Override
-    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        super.onActivityResult(requestCode, resultCode, data);
-    }
-
     @WorkerThread
     private void attemptLocationGrant(String username) {
         Prefs prefs = Prefs.get(this);
@@ -941,19 +936,19 @@ public final class MapActivity extends AppCompatActivity implements OnMapReadyCa
                     break;
                 case Requested:
                     vis = View.VISIBLE;
-                    colorId = R.color.colorPrimary;
+                    colorId = R.color.pijun_canary;
                     break;
                 case RequestedAndUnresponsive:
                     vis = View.VISIBLE;
-                    colorId = R.color.common_gray;
+                    colorId = R.color.pijun_grey;
                     break;
                 case RequestDenied:
                     vis = View.VISIBLE;
-                    colorId = R.color.red;
+                    colorId = R.color.pijun_red;
                     break;
                 case RequestAcknowledged:
                     vis = View.VISIBLE;
-                    colorId = R.color.colorAccent;
+                    colorId = R.color.pijun_blue;
                     break;
                 case RequestFulfilled:
                     vis = View.GONE;

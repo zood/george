@@ -75,7 +75,6 @@
         <service android:name=".service.LimitedShareService" />
         <service android:name=".service.LocationJobService" android:permission="android.permission.BIND_JOB_SERVICE" />
         <service android:name=".service.BackupDatabaseJob" android:permission="android.permission.BIND_JOB_SERVICE" />
-        <service android:name=".service.OscarJobService" android:permission="android.permission.BIND_JOB_SERVICE" />
         <service android:name=".service.PositionService" />
         <!-- END SERVICES -->
 
