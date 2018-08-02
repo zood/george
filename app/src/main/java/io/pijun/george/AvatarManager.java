@@ -24,6 +24,7 @@ import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 import io.pijun.george.api.OscarClient;
 import io.pijun.george.api.UserComm;
@@ -36,16 +37,14 @@ public class AvatarManager {
 
     private static final String AVATAR_DIR = "avatars";
     public static final String MY_AVATAR = "me";
-    private static ArrayList<WeakReference<Listener>> listeners = new ArrayList<>();
+    private static CopyOnWriteArrayList<WeakReference<Listener>> listeners = new CopyOnWriteArrayList<>();
 
     //region Listener management
 
     @AnyThread
     static void addListener(@NonNull Listener listener) {
         WeakReference<Listener> ref = new WeakReference<>(listener);
-        synchronized (AvatarManager.class) {
-            listeners.add(ref);
-        }
+        listeners.add(ref);
     }
 
     @AnyThread
@@ -69,17 +68,15 @@ public class AvatarManager {
 
     @AnyThread
     static void removeListener(@NonNull Listener listener) {
-        synchronized (AvatarManager.class) {
-            int i=0;
-            while (i < listeners.size()) {
-                WeakReference<Listener> ref = listeners.get(i);
-                Listener l = ref.get();
-                if (l == null || l == listener) {
-                    listeners.remove(i);
-                    continue;
-                }
-                i++;
+        int i=0;
+        while (i < listeners.size()) {
+            WeakReference<Listener> ref = listeners.get(i);
+            Listener l = ref.get();
+            if (l == null || l == listener) {
+                listeners.remove(i);
+                continue;
             }
+            i++;
         }
     }
 

@@ -2,12 +2,9 @@ package io.pijun.george;
 
 import android.app.Application;
 import android.os.Handler;
-import android.os.Looper;
 import android.support.annotation.AnyThread;
 import android.support.annotation.NonNull;
 import android.support.v7.app.AppCompatDelegate;
-
-import com.squareup.otto.Bus;
 
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -25,7 +22,6 @@ public class App extends Application {
     public static boolean isLimitedShareRunning = false;
     private Handler mUiThreadHandler;
     private ExecutorService mExecutor;
-    private Bus mBus;
 
     @Override
     public void onCreate() {
@@ -42,7 +38,6 @@ public class App extends Application {
 
         mUiThreadHandler = new Handler();
         mExecutor = Executors.newCachedThreadPool();
-        mBus = new Bus();
 
         DB.init(this, false);
         TaskSender.get().start(this);
@@ -62,33 +57,6 @@ public class App extends Application {
 
     public static App getApp() {
         return sApp;
-    }
-
-    @AnyThread
-    public static void postOnBus(@NonNull final Object passenger) {
-        if (Looper.myLooper() == Looper.getMainLooper()) {
-            sApp.mBus.post(passenger);
-        } else {
-            runOnUiThread(() -> sApp.mBus.post(passenger));
-        }
-    }
-
-    @AnyThread
-    public static void registerOnBus(@NonNull final Object busStop) {
-        if (Looper.myLooper() == Looper.getMainLooper()) {
-            sApp.mBus.register(busStop);
-        } else {
-            runOnUiThread(() -> sApp.mBus.register(busStop));
-        }
-    }
-
-    @AnyThread
-    public static void unregisterFromBus(@NonNull final Object busStop) {
-        if (Looper.myLooper() == Looper.getMainLooper()) {
-            App.sApp.mBus.unregister(busStop);
-        } else {
-            runOnUiThread(() -> App.sApp.mBus.unregister(busStop));
-        }
     }
 
     @AnyThread

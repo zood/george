@@ -22,11 +22,8 @@ import io.pijun.george.api.OscarError;
 import io.pijun.george.api.UserComm;
 import io.pijun.george.crypto.KeyPair;
 import io.pijun.george.database.DB;
-import io.pijun.george.database.FriendLocation;
 import io.pijun.george.database.FriendRecord;
 import io.pijun.george.database.UserRecord;
-import io.pijun.george.event.LocationSharingGranted;
-import io.pijun.george.event.LocationSharingRevoked;
 import io.pijun.george.queue.PersistentQueue;
 import io.pijun.george.service.PositionService;
 import retrofit2.Response;
@@ -313,7 +310,6 @@ public class MessageProcessor {
             Crashlytics.logException(ex);
             return Result.ErrorDatabaseException;
         }
-        App.postOnBus(new FriendLocation(fr.id, comm));
 
         return Result.Success;
     }
@@ -328,7 +324,6 @@ public class MessageProcessor {
             Crashlytics.logException(ex);
             return Result.ErrorDatabaseException;
         }
-        App.postOnBus(new LocationSharingGranted(user.id));
 
         return Result.Success;
     }
@@ -337,7 +332,6 @@ public class MessageProcessor {
         L.i("LocationSharingRevocation");
         DB db = DB.get();
         db.sharingRevokedBy(user, context);
-        App.postOnBus(new LocationSharingRevoked(user.id));
         return Result.Success;
     }
 

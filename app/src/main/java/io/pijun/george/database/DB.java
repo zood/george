@@ -10,10 +10,12 @@ import android.database.sqlite.SQLiteCursorDriver;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.database.sqlite.SQLiteQuery;
+import android.support.annotation.AnyThread;
 import android.support.annotation.CheckResult;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.annotation.Size;
+import android.support.annotation.UiThread;
 import android.support.annotation.WorkerThread;
 import android.support.v4.util.LongSparseArray;
 
@@ -23,14 +25,18 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.Locale;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 import io.pijun.george.App;
 import io.pijun.george.AvatarManager;
 import io.pijun.george.Constants;
 import io.pijun.george.Hex;
 import io.pijun.george.L;
+import io.pijun.george.UiRunnable;
+import io.pijun.george.WorkerRunnable;
 import io.pijun.george.service.BackupDatabaseJob;
 
 @SuppressWarnings("WeakerAccess")
@@ -103,12 +109,13 @@ public class DB {
     }
 
     private DBHelper mDbHelper;
+    private CopyOnWriteArrayList<WeakReference<Listener>> listeners = new CopyOnWriteArrayList<>();
 
     @WorkerThread
     private DB() {}
 
     @NonNull
-    @WorkerThread
+    @AnyThread
     public static DB get() {
         if (sDb.mDbHelper == null) {
             throw new RuntimeException("You have to call DB.init before using the DB");
@@ -560,6 +567,8 @@ public class DB {
         }
 
         scheduleBackup(ctx);
+
+        notifyFriendRemoved(friend.id);
     }
 
     @WorkerThread
@@ -636,6 +645,8 @@ public class DB {
         if (result == -1) {
             throw new DBException("Error occurred while setting friend location");
         }
+
+        notifyFriendLocationUpdated(new FriendLocation(friendId, lat, lng, time, accuracy, speed, bearing, MovementType.get(movement)));
     }
 
     @WorkerThread
@@ -660,6 +671,8 @@ public class DB {
         }
 
         scheduleBackup(ctx);
+
+        notifySharingGranted(user.id);
     }
 
     @WorkerThread
@@ -671,6 +684,8 @@ public class DB {
         String[] args = new String[]{String.valueOf(user.id)};
         db.update(FRIENDS_TABLE, cv, whereClause, args);
         scheduleBackup(ctx);
+
+        notifySharingRevoked(user.id);
     }
 
     @WorkerThread
@@ -756,4 +771,101 @@ public class DB {
             L.i("onUpgrade - old: " + oldVersion + ", new: " + newVersion);
         }
     }
+
+    //region Listener management
+    public interface Listener {
+        @UiThread
+        default void onFriendLocationUpdated(FriendLocation loc) {}
+        @UiThread
+        default void onFriendRemoved(long friendId) {}
+        @WorkerThread
+        default void onLocationSharingGranted(long userId) {}
+        @WorkerThread
+        default void onLocationSharingRevoked(long userId) {}
+    }
+
+    @AnyThread
+    public void addLocationListener(@NonNull Listener listener) {
+        WeakReference<Listener> ref = new WeakReference<>(listener);
+        listeners.add(ref);
+    }
+
+    @AnyThread
+    private void notifyFriendLocationUpdated(@NonNull FriendLocation location) {
+        App.runOnUiThread(new UiRunnable() {
+            @Override
+            public void run() {
+                for (WeakReference<Listener> ref : listeners) {
+                    Listener l = ref.get();
+                    if (l == null) {
+                        continue;
+                    }
+                    l.onFriendLocationUpdated(location);
+                }
+            }
+        });
+    }
+
+    @AnyThread
+    private void notifyFriendRemoved(long friendId) {
+        App.runOnUiThread(new UiRunnable() {
+            @Override
+            public void run() {
+                for (WeakReference<Listener> ref : listeners) {
+                    Listener l = ref.get();
+                    if (l == null) {
+                        continue;
+                    }
+                    l.onFriendRemoved(friendId);
+                }
+            }
+        });
+    }
+
+    @AnyThread
+    private void notifySharingGranted(long userId) {
+        App.runInBackground(new WorkerRunnable() {
+            @Override
+            public void run() {
+                for (WeakReference<Listener> ref : listeners) {
+                    Listener l = ref.get();
+                    if (l == null) {
+                        continue;
+                    }
+                    l.onLocationSharingGranted(userId);
+                }
+            }
+        });
+    }
+
+    @AnyThread
+    private void notifySharingRevoked(long userId) {
+        App.runInBackground(new WorkerRunnable() {
+            @Override
+            public void run() {
+                for (WeakReference<Listener> ref : listeners) {
+                    Listener l = ref.get();
+                    if (l == null) {
+                        continue;
+                    }
+                    l.onLocationSharingRevoked(userId);
+                }
+            }
+        });
+    }
+
+    @AnyThread
+    public void removeLocationListener(@NonNull Listener listener) {
+        int i=0;
+        while (i< listeners.size()) {
+            WeakReference<Listener> ref = listeners.get(i);
+            Listener l = ref.get();
+            if (l == null || l == listener) {
+                listeners.remove(i);
+                continue;
+            }
+            i++;
+        }
+    }
+    //endregion
 }

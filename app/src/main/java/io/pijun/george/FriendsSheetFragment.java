@@ -5,7 +5,6 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.databinding.DataBindingUtil;
 import android.os.Bundle;
-import android.support.annotation.Keep;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.annotation.UiThread;
@@ -21,7 +20,6 @@ import android.view.ViewTreeObserver;
 import android.widget.Toast;
 
 import com.crashlytics.android.Crashlytics;
-import com.squareup.otto.Subscribe;
 
 import java.io.IOException;
 import java.security.SecureRandom;
@@ -34,14 +32,11 @@ import io.pijun.george.database.DB;
 import io.pijun.george.database.FriendLocation;
 import io.pijun.george.database.FriendRecord;
 import io.pijun.george.databinding.FragmentFriendsSheetBinding;
-import io.pijun.george.event.FriendRemoved;
-import io.pijun.george.event.LocationSharingGranted;
-import io.pijun.george.event.LocationSharingRevoked;
 import io.pijun.george.view.FriendsSheetBehavior;
 import io.pijun.george.view.FriendsSheetLayout;
 import io.pijun.george.view.MainLayout;
 
-public class FriendsSheetFragment extends Fragment implements FriendItemsAdapter.FriendItemsListener, AvatarManager.Listener {
+public class FriendsSheetFragment extends Fragment implements FriendItemsAdapter.FriendItemsListener, AvatarManager.Listener, DB.Listener {
 
     private AvatarsAdapter mAvatarsAdapter = new AvatarsAdapter();
     private FriendItemsAdapter mFriendItemsAdapter = new FriendItemsAdapter();
@@ -83,6 +78,8 @@ public class FriendsSheetFragment extends Fragment implements FriendItemsAdapter
 
         mFriendItemsAdapter.setListener(this);
         mTenDips = Utils.dpsToPix(requireContext(), 10);
+
+        DB.get().addLocationListener(this);
     }
 
     @SuppressLint("ClickableViewAccessibility")
@@ -121,48 +118,26 @@ public class FriendsSheetFragment extends Fragment implements FriendItemsAdapter
     }
 
     @Override
+    public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
+        super.onViewCreated(view, savedInstanceState);
+
+        AvatarManager.addListener(this);
+    }
+
+    @Override
+    public void onDestroy() {
+        DB.get().removeLocationListener(this);
+
+        super.onDestroy();
+    }
+
+    @Override
     public void onDestroyView() {
+        AvatarManager.removeListener(this);
         mBinding = null;
         mBehavior = null;
 
         super.onDestroyView();
-    }
-
-    @Subscribe
-    @Keep
-    public void onFriendLocationUpdated(final FriendLocation loc) {
-        mFriendItemsAdapter.setFriendLocation(requireContext(), loc);
-    }
-
-    @Subscribe
-    @Keep
-    @UiThread
-    public void onLocationSharingGranted(LocationSharingGranted grant) {
-        App.runInBackground(() -> {
-            FriendRecord friend = DB.get().getFriendByUserId(grant.userId);
-            if (friend != null) {
-                mAvatarsAdapter.addFriend(friend);
-                App.runOnUiThread(() -> mFriendItemsAdapter.updateFriend(friend));
-            }
-        });
-    }
-
-    @Subscribe
-    @Keep
-    @UiThread
-    public void onLocationSharingRevoked(LocationSharingRevoked revoked) {
-        App.runInBackground(() -> {
-            DB db = DB.get();
-            // check if this is a known friend
-            FriendRecord friend = db.getFriendByUserId(revoked.userId);
-            if (friend == null) {
-                // we don't know this person, so just leave
-                return;
-            }
-            ArrayList<FriendRecord> friends = db.getFriends();
-            mFriendItemsAdapter.setFriends(friends);
-            App.runOnUiThread(() -> mFriendItemsAdapter.removeFriendLocation(friend.id));
-        });
     }
 
     @UiThread
@@ -179,13 +154,6 @@ public class FriendsSheetFragment extends Fragment implements FriendItemsAdapter
         });
         bldr.setNeutralButton(R.string.never_mind, null);
         bldr.show();
-    }
-
-    @Subscribe
-    @Keep
-    public void onFriendRemoved(FriendRemoved evt) {
-        mFriendItemsAdapter.removeFriend(evt.friendId);
-        mAvatarsAdapter.removeFriend(evt.friendId);
     }
 
     @Override
@@ -219,8 +187,6 @@ public class FriendsSheetFragment extends Fragment implements FriendItemsAdapter
     public void onStart() {
         super.onStart();
 
-        AvatarManager.addListener(this);
-        App.registerOnBus(this);
         final DB db = DB.get();
         App.runInBackground(() -> {
             ArrayList<FriendRecord> friends = db.getFriends();
@@ -243,8 +209,6 @@ public class FriendsSheetFragment extends Fragment implements FriendItemsAdapter
 
     @Override
     public void onStop() {
-        App.unregisterFromBus(this);
-        AvatarManager.removeListener(this);
         mAvatarsAdapter.setListener(null);
         mBehavior = null;
 
@@ -271,10 +235,7 @@ public class FriendsSheetFragment extends Fragment implements FriendItemsAdapter
             L.w("Error removing friend", ex);
             Crashlytics.logException(ex);
             Utils.showStringAlert(getContext(), null, "There was a problem removing this friend. Try again, and if it still fails, contact support.");
-            return;
         }
-
-        App.postOnBus(new FriendRemoved(friend.id, friend.user.id, friend.user.username));
     }
 
     @WorkerThread
@@ -399,5 +360,41 @@ public class FriendsSheetFragment extends Fragment implements FriendItemsAdapter
         mFriendItemsAdapter.onAvatarUpdated(username);
     }
 
+    //endregion
+
+    //region DB.Listener
+    @Override
+    public void onFriendLocationUpdated(final FriendLocation loc) {
+        mFriendItemsAdapter.setFriendLocation(requireContext(), loc);
+    }
+
+    @Override
+    public void onFriendRemoved(long friendId) {
+        mFriendItemsAdapter.removeFriend(friendId);
+        mAvatarsAdapter.removeFriend(friendId);
+    }
+
+    @Override
+    public void onLocationSharingGranted(long userId) {
+        FriendRecord friend = DB.get().getFriendByUserId(userId);
+        if (friend != null) {
+            mAvatarsAdapter.addFriend(friend);
+            App.runOnUiThread(() -> mFriendItemsAdapter.updateFriend(friend));
+        }
+    }
+
+    @Override
+    public void onLocationSharingRevoked(long userId) {
+        DB db = DB.get();
+        // check if this is a known friend
+        FriendRecord friend = db.getFriendByUserId(userId);
+        if (friend == null) {
+            // we don't know this person, so just leave
+            return;
+        }
+        ArrayList<FriendRecord> friends = db.getFriends();
+        mFriendItemsAdapter.setFriends(friends);
+        App.runOnUiThread(() -> mFriendItemsAdapter.removeFriendLocation(friend.id));
+    }
     //endregion
 }

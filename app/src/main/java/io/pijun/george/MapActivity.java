@@ -16,7 +16,6 @@ import android.os.Bundle;
 import android.os.Looper;
 import android.support.annotation.AnyThread;
 import android.support.annotation.ColorRes;
-import android.support.annotation.Keep;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.annotation.UiThread;
@@ -56,7 +55,6 @@ import com.google.android.gms.maps.model.CircleOptions;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
-import com.squareup.otto.Subscribe;
 import com.squareup.picasso.Picasso;
 
 import java.io.IOException;
@@ -81,16 +79,13 @@ import io.pijun.george.database.FriendLocation;
 import io.pijun.george.database.FriendRecord;
 import io.pijun.george.database.UserRecord;
 import io.pijun.george.databinding.ActivityMapBinding;
-import io.pijun.george.event.FriendRemoved;
-import io.pijun.george.event.LocationSharingGranted;
-import io.pijun.george.event.LocationSharingRevoked;
 import io.pijun.george.service.FcmTokenRegistrar;
 import io.pijun.george.service.LimitedShareService;
 import io.pijun.george.view.AvatarView;
 import io.pijun.george.view.MyLocationView;
 import retrofit2.Response;
 
-public final class MapActivity extends AppCompatActivity implements OnMapReadyCallback, GoogleMap.OnMarkerClickListener, AvatarsAdapter.AvatarsAdapterListener {
+public final class MapActivity extends AppCompatActivity implements OnMapReadyCallback, GoogleMap.OnMarkerClickListener, AvatarsAdapter.AvatarsAdapterListener, DB.Listener {
 
     private static final int REQUEST_LOCATION_PERMISSION = 18;
     private static final int REQUEST_LOCATION_SETTINGS = 20;
@@ -174,6 +169,8 @@ public final class MapActivity extends AppCompatActivity implements OnMapReadyCa
         builder.addLocationRequest(mLocationRequest);
         mLocationSettingsRequest = builder.build();
 
+        DB.get().addLocationListener(this);
+
         startService(FcmTokenRegistrar.newIntent(this));
     }
 
@@ -213,7 +210,6 @@ public final class MapActivity extends AppCompatActivity implements OnMapReadyCa
 
         App.isInForeground = true;
         checkForLocationPermission();
-        App.registerOnBus(this);
         mMapView.onStart();
         UpdateStatusTracker.addListener(updateStatusTrackerListener);
         App.runInBackground(new WorkerRunnable() {
@@ -323,7 +319,6 @@ public final class MapActivity extends AppCompatActivity implements OnMapReadyCa
         // stop receiving location updates
         mLocationProviderClient.removeLocationUpdates(mLocationCallbackHelper);
 
-        App.unregisterFromBus(this);
         App.runInBackground(() -> {
             if (mPkgWatcher != null) {
                 mPkgWatcher.disconnect();
@@ -337,6 +332,7 @@ public final class MapActivity extends AppCompatActivity implements OnMapReadyCa
     @Override
     @UiThread
     protected void onDestroy() {
+        DB.get().removeLocationListener(this);
         mMarkerTracker.clear();
 
         super.onDestroy();
@@ -579,98 +575,6 @@ public final class MapActivity extends AppCompatActivity implements OnMapReadyCa
                 });
 
         beginLocationUpdates();
-    }
-
-    @Subscribe
-    @Keep
-    @UiThread
-    public void onLocationSharingGranted(final LocationSharingGranted grant) {
-        L.i("onLocationSharingGranted");
-        if (mPkgWatcher == null) {
-            return;
-        }
-
-        App.runInBackground(new WorkerRunnable() {
-            @Override
-            public void run() {
-                final FriendRecord friend = DB.get().getFriendByUserId(grant.userId);
-                if (friend == null) {
-                    L.w("MapActivity.onLocationSharingGranted didn't find friend record");
-                    return;
-                }
-                // Perform the null check because the location sharing grant may have been revoked.
-                // (If the other person is flipping the sharing switch back and forth).
-                if (friend.receivingBoxId != null) {
-                    L.i("onLocationSharingGranted: friend found. will watch");
-                    mPkgWatcher.watch(friend.receivingBoxId);
-                }
-            }
-        });
-    }
-
-    @Subscribe
-    @Keep
-    @UiThread
-    public void onLocationSharingRevoked(final LocationSharingRevoked revoked) {
-        // remove the map marker, if there is one
-        App.runInBackground(() -> {
-            DB db = DB.get();
-            FriendRecord friend = db.getFriendByUserId(revoked.userId);
-            if (friend == null) {
-                return;
-            }
-            App.runOnUiThread(() -> {
-                Marker marker = mMarkerTracker.removeMarker(friend.id);
-                if (marker == null) {
-                    return;
-                }
-                marker.remove();
-            });
-        });
-    }
-
-    @Subscribe
-    @Keep
-    @UiThread
-    public void onFriendLocationUpdated(final FriendLocation loc) {
-        if (selectedAvatarFriendId == loc.friendId) {
-            setAvatarInfo(loc);
-        }
-        // check if we already have a marker for this friend
-        Marker marker = mMarkerTracker.getById(loc.friendId);
-        if (marker == null) {
-            App.runInBackground(() -> {
-                final FriendRecord friend = DB.get().getFriendById(loc.friendId);
-                if (friend != null) {
-                    addMapMarker(friend, loc);
-                }
-            });
-        } else {
-            if (marker.isInfoWindowShown()) {
-                marker.hideInfoWindow();
-            }
-            marker.setPosition(new LatLng(loc.latitude, loc.longitude));
-            mMarkerTracker.updateLocation(loc.friendId, loc);
-
-            // if there is an error circle being shown on this marker, adjust it too
-            if (mCurrentCircle != null) {
-                long friendId = (long) mCurrentCircle.getTag();
-                if (loc.friendId == friendId) {
-                    if (loc.accuracy != null) {
-                        mCurrentCircle.setRadius(loc.accuracy);
-                        mCurrentCircle.setCenter(new LatLng(loc.latitude, loc.longitude));
-                    } else {
-                        // no accuracy, so remove the circle
-                        mCurrentCircle.remove();
-                    }
-                }
-            }
-        }
-
-        if (friendForCameraToTrack == loc.friendId && mGoogMap != null) {
-            CameraUpdate update = CameraUpdateFactory.newLatLng(new LatLng(loc.latitude, loc.longitude));
-            mGoogMap.animateCamera(update);
-        }
     }
 
     @Override
@@ -1018,15 +922,6 @@ public final class MapActivity extends AppCompatActivity implements OnMapReadyCa
         }
     }
 
-    @Subscribe
-    @Keep
-    public void onFriendRemoved(FriendRemoved evt) {
-        Marker marker = mMarkerTracker.removeMarker(evt.friendId);
-        if (marker != null) {
-            marker.remove();
-        }
-    }
-
     private UpdateStatusTracker.Listener updateStatusTrackerListener = new UpdateStatusTracker.Listener() {
         @Override
         public void onUpdateStatusChanged(long friendId) {
@@ -1129,4 +1024,93 @@ public final class MapActivity extends AppCompatActivity implements OnMapReadyCa
             LocationUtils.upload(MapActivity.this, location, false);
         }
     };
+
+    //region DB.Listener
+    @Override
+    public void onFriendLocationUpdated(final FriendLocation loc) {
+        if (selectedAvatarFriendId == loc.friendId) {
+            setAvatarInfo(loc);
+        }
+        // check if we already have a marker for this friend
+        Marker marker = mMarkerTracker.getById(loc.friendId);
+        if (marker == null) {
+            App.runInBackground(() -> {
+                final FriendRecord friend = DB.get().getFriendById(loc.friendId);
+                if (friend != null) {
+                    addMapMarker(friend, loc);
+                }
+            });
+        } else {
+            if (marker.isInfoWindowShown()) {
+                marker.hideInfoWindow();
+            }
+            marker.setPosition(new LatLng(loc.latitude, loc.longitude));
+            mMarkerTracker.updateLocation(loc.friendId, loc);
+
+            // if there is an error circle being shown on this marker, adjust it too
+            if (mCurrentCircle != null) {
+                long friendId = (long) mCurrentCircle.getTag();
+                if (loc.friendId == friendId) {
+                    if (loc.accuracy != null) {
+                        mCurrentCircle.setRadius(loc.accuracy);
+                        mCurrentCircle.setCenter(new LatLng(loc.latitude, loc.longitude));
+                    } else {
+                        // no accuracy, so remove the circle
+                        mCurrentCircle.remove();
+                    }
+                }
+            }
+        }
+
+        if (friendForCameraToTrack == loc.friendId && mGoogMap != null) {
+            CameraUpdate update = CameraUpdateFactory.newLatLng(new LatLng(loc.latitude, loc.longitude));
+            mGoogMap.animateCamera(update);
+        }
+    }
+
+    @Override
+    public void onFriendRemoved(long friendId) {
+        Marker marker = mMarkerTracker.removeMarker(friendId);
+        if (marker != null) {
+            marker.remove();
+        }
+    }
+
+    @Override
+    public void onLocationSharingGranted(long userId) {
+        L.i("onLocationSharingGranted");
+        if (mPkgWatcher == null) {
+            return;
+        }
+
+        final FriendRecord friend = DB.get().getFriendByUserId(userId);
+        if (friend == null) {
+            L.w("MapActivity.onLocationSharingGranted didn't find friend record");
+            return;
+        }
+        // Perform the null check because the location sharing grant may have been revoked.
+        // (If the other person is flipping the sharing switch back and forth).
+        if (friend.receivingBoxId != null) {
+            L.i("onLocationSharingGranted: friend found. will watch");
+            mPkgWatcher.watch(friend.receivingBoxId);
+        }
+    }
+
+    @Override
+    public void onLocationSharingRevoked(long userId) {
+        // remove the map marker, if there is one
+        DB db = DB.get();
+        FriendRecord friend = db.getFriendByUserId(userId);
+        if (friend == null) {
+            return;
+        }
+        App.runOnUiThread(() -> {
+            Marker marker = mMarkerTracker.removeMarker(friend.id);
+            if (marker == null) {
+                return;
+            }
+            marker.remove();
+        });
+    }
+    //endregion
 }
