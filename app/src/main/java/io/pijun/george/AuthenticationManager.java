@@ -13,7 +13,7 @@ import com.crashlytics.android.Crashlytics;
 import java.io.IOException;
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
-import java.util.HashSet;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 import io.pijun.george.api.AuthenticationChallenge;
 import io.pijun.george.api.FinishedAuthenticationChallenge;
@@ -62,15 +62,8 @@ public class AuthenticationManager {
         SymmetricKeyDecryptionFailed,
     }
 
-    private HashSet<WeakReference<Listener>> listeners = new HashSet<>();
+    private CopyOnWriteArrayList<WeakReference<Listener>> listeners = new CopyOnWriteArrayList<>();
     private static AuthenticationManager singleton;
-
-    public void addListener(@NonNull Listener l) {
-        WeakReference<Listener> ref = new WeakReference<>(l);
-        synchronized (AuthenticationManager.class) {
-            listeners.add(ref);
-        }
-    }
 
     public static AuthenticationManager get() {
         if (singleton == null) {
@@ -316,18 +309,22 @@ public class AuthenticationManager {
                         if (completion != null) {
                             completion.onUserLoggedOut();
                         }
-                        synchronized (AuthenticationManager.class) {
-                            for (WeakReference<Listener> ref : listeners) {
-                                Listener l = ref.get();
-                                if (l != null) {
-                                    l.onUserLoggedOut();
-                                }
+                        for (WeakReference<Listener> ref : listeners) {
+                            Listener l = ref.get();
+                            if (l != null) {
+                                l.onUserLoggedOut();
                             }
                         }
                     }
                 });
             }
         });
+    }
+
+    //region Listener management
+    public void addListener(@NonNull Listener listener) {
+        WeakReference<Listener> ref = new WeakReference<>(listener);
+        listeners.add(ref);
     }
 
     @WorkerThread
@@ -339,22 +336,26 @@ public class AuthenticationManager {
                     watcher.onUserLoggedIn(err, detail);
                 }
 
-                synchronized (AuthenticationManager.class) {
-                    for (WeakReference<Listener> ref : listeners) {
-                        Listener l = ref.get();
-                        if (l != null) {
-                            l.onUserLoggedIn(err, detail);
-                        }
+                for (WeakReference<Listener> ref : listeners) {
+                    Listener l = ref.get();
+                    if (l != null) {
+                        l.onUserLoggedIn(err, detail);
                     }
                 }
             }
         });
     }
 
-    public void remove(@NonNull Listener l) {
-        WeakReference<Listener> ref = new WeakReference<>(l);
-        synchronized (AuthenticationManager.class) {
-            listeners.remove(ref);
+    public void removeListener(@NonNull Listener listener) {
+        int i=0;
+        while (i<listeners.size()) {
+            WeakReference<Listener> ref = listeners.get(i);
+            Listener l = ref.get();
+            if (l == null || l == listener) {
+                listeners.remove(i);
+                continue;
+            }
+            i++;
         }
     }
 
@@ -372,4 +373,5 @@ public class AuthenticationManager {
         @UiThread
         void onUserLoggedOut();
     }
+    //endregion
 }

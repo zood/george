@@ -785,7 +785,7 @@ public class DB {
     }
 
     @AnyThread
-    public void addLocationListener(@NonNull Listener listener) {
+    public void addListener(@NonNull Listener listener) {
         WeakReference<Listener> ref = new WeakReference<>(listener);
         listeners.add(ref);
     }
@@ -855,9 +855,9 @@ public class DB {
     }
 
     @AnyThread
-    public void removeLocationListener(@NonNull Listener listener) {
+    public void removeListener(@NonNull Listener listener) {
         int i=0;
-        while (i< listeners.size()) {
+        while (i<listeners.size()) {
             WeakReference<Listener> ref = listeners.get(i);
             Listener l = ref.get();
             if (l == null || l == listener) {

@@ -135,12 +135,12 @@ public class SettingsFragment extends Fragment implements SettingsAdapter.Listen
         builder.setPositiveButton(R.string.log_out, new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int which) {
-//                AuthenticationManager.get().logOut(requireContext(), new AuthenticationManager.LogoutWatcher() {
-//                    @Override
-//                    public void onUserLoggedOut() {
-//                        // TODO
-//                    }
-//                });
+                AuthenticationManager.get().logOut(requireContext(), new AuthenticationManager.LogoutWatcher() {
+                    @Override
+                    public void onUserLoggedOut() {
+                        requireActivity().finish();
+                    }
+                });
             }
         });
         builder.show();

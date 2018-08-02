@@ -85,7 +85,7 @@ import io.pijun.george.view.AvatarView;
 import io.pijun.george.view.MyLocationView;
 import retrofit2.Response;
 
-public final class MapActivity extends AppCompatActivity implements OnMapReadyCallback, GoogleMap.OnMarkerClickListener, AvatarsAdapter.AvatarsAdapterListener, DB.Listener {
+public final class MapActivity extends AppCompatActivity implements OnMapReadyCallback, GoogleMap.OnMarkerClickListener, AvatarsAdapter.AvatarsAdapterListener, DB.Listener, AuthenticationManager.Listener {
 
     private static final int REQUEST_LOCATION_PERMISSION = 18;
     private static final int REQUEST_LOCATION_SETTINGS = 20;
@@ -169,7 +169,8 @@ public final class MapActivity extends AppCompatActivity implements OnMapReadyCa
         builder.addLocationRequest(mLocationRequest);
         mLocationSettingsRequest = builder.build();
 
-        DB.get().addLocationListener(this);
+        DB.get().addListener(this);
+        AuthenticationManager.get().addListener(this);
 
         startService(FcmTokenRegistrar.newIntent(this));
     }
@@ -332,7 +333,8 @@ public final class MapActivity extends AppCompatActivity implements OnMapReadyCa
     @Override
     @UiThread
     protected void onDestroy() {
-        DB.get().removeLocationListener(this);
+        DB.get().removeListener(this);
+        AuthenticationManager.get().removeListener(this);
         mMarkerTracker.clear();
 
         super.onDestroy();
@@ -1112,5 +1114,16 @@ public final class MapActivity extends AppCompatActivity implements OnMapReadyCa
             marker.remove();
         });
     }
+    //endregion
+
+    //region AuthenticationManager.Listener
+
+    @Override
+    public void onUserLoggedOut() {
+        Intent i = WelcomeActivity.newIntent(this);
+        startActivity(i);
+        finish();
+    }
+
     //endregion
 }

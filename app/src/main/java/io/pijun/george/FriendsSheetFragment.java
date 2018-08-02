@@ -79,7 +79,7 @@ public class FriendsSheetFragment extends Fragment implements FriendItemsAdapter
         mFriendItemsAdapter.setListener(this);
         mTenDips = Utils.dpsToPix(requireContext(), 10);
 
-        DB.get().addLocationListener(this);
+        DB.get().addListener(this);
     }
 
     @SuppressLint("ClickableViewAccessibility")
@@ -126,7 +126,7 @@ public class FriendsSheetFragment extends Fragment implements FriendItemsAdapter
 
     @Override
     public void onDestroy() {
-        DB.get().removeLocationListener(this);
+        DB.get().removeListener(this);
 
         super.onDestroy();
     }
