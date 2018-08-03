@@ -12,9 +12,7 @@ import android.os.Build;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.IBinder;
-
 import android.os.PowerManager;
-import android.support.annotation.AnyThread;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.annotation.WorkerThread;
@@ -37,8 +35,14 @@ import java.util.concurrent.TimeUnit;
 import io.pijun.george.App;
 import io.pijun.george.L;
 import io.pijun.george.LocationUtils;
+import io.pijun.george.Prefs;
 import io.pijun.george.R;
 import io.pijun.george.WorkerRunnable;
+import io.pijun.george.api.OscarClient;
+import io.pijun.george.api.UserComm;
+import io.pijun.george.crypto.KeyPair;
+import io.pijun.george.database.DB;
+import io.pijun.george.database.UserRecord;
 
 public class PositionService extends Service {
 
@@ -49,9 +53,10 @@ public class PositionService extends Service {
 
     private static final String FINDING_LOCATION_CHANNEL_ID = "finding_location_01";
     private static final int NOTIFICATION_ID = 44;  // arbitrary number
+    private static final String NOTIFY_USER_ID_KEY = "notify_user_id";
 
     private static int HANDLER_COUNT = 1;
-    public static final int MAX_WAIT_SECONDS = 30;
+    public static final int MAX_WAIT_SECONDS = 20;
     // The lock stays longer, because we need to give ourselves ample time to clean up
     private static final int LOCK_SECONDS = MAX_WAIT_SECONDS + 35;
 
@@ -59,6 +64,7 @@ public class PositionService extends Service {
     private final LinkedBlockingQueue<Command> cmdsQueue = new LinkedBlockingQueue<>();
     private HandlerThread thread;
     private PowerManager.WakeLock wakeLock;
+    private long notifyUserId = -1;
 
     private static Handler serviceHandler;
     static {
@@ -85,8 +91,12 @@ public class PositionService extends Service {
         cmdsQueue.add(cmd);
     }
 
-    public static Intent newIntent(@NonNull Context context) {
-        return new Intent(context, PositionService.class);
+    public static Intent newIntent(@NonNull Context context, @Nullable Long notifyUserId) {
+        Intent i = new Intent(context, PositionService.class);
+        if (notifyUserId != null) {
+            i.putExtra(NOTIFY_USER_ID_KEY, notifyUserId.longValue());
+        }
+        return i;
     }
 
     private void notifyWaiters() {
@@ -103,6 +113,8 @@ public class PositionService extends Service {
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
+        notifyUserId = intent.getLongExtra(NOTIFY_USER_ID_KEY, -1);
+
         serviceHandler.post(new WorkerRunnable() {
             @Override
             public void run() {
@@ -145,6 +157,31 @@ public class PositionService extends Service {
     }
 
     @WorkerThread
+    private void sendDoneMessage() {
+        if (notifyUserId == -1) {
+            return;
+        }
+        Prefs prefs = Prefs.get(this);
+        String token = prefs.getAccessToken();
+        KeyPair kp = prefs.getKeyPair();
+        if (token == null || kp == null) {
+            L.w("PS.sendDoneMessage token or keypair was null");
+            return;
+        }
+        UserRecord user = DB.get().getUser(notifyUserId);
+        if (user == null) {
+            L.w("PS.sendDoneMessage user record not found");
+            return;
+        }
+        UserComm finished = UserComm.newLocationUpdateRequestReceived(UserComm.LOCATION_UPDATE_REQUEST_ACTION_FINISHED);
+        L.i("PS.sendDoneMessage is sending");
+        String errMsg = OscarClient.immediatelySendMessage(user, token, kp, finished, true, true);
+        if (errMsg != null) {
+            L.w("PS.sendDoneMessage - " + errMsg);
+        }
+    }
+
+    @WorkerThread
     private void showNotification() {
         if (Build.VERSION.SDK_INT >= 26) {
             NotificationManager mgr = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
@@ -165,9 +202,13 @@ public class PositionService extends Service {
         startForeground(NOTIFICATION_ID, bldr.build());
     }
 
+    @WorkerThread
     private void shutDown() {
         FusedLocationProviderClient client = LocationServices.getFusedLocationProviderClient(this);
         client.removeLocationUpdates(callback);
+
+        // Send a done message if we were given a user to notify
+        sendDoneMessage();
 
         try { wakeLock.release(); }
         catch (Throwable ignore) {}
@@ -227,7 +268,7 @@ public class PositionService extends Service {
         });
     }
 
-    @AnyThread
+    @WorkerThread
     private void uploadLatestLocation() {
         LinkedList<Location> locations = new LinkedList<>();
         locationsQueue.drainTo(locations);
@@ -236,7 +277,7 @@ public class PositionService extends Service {
         }
         Location l = locations.getLast();
 
-        LocationUtils.upload(this, l, true);
+        LocationUtils.uploadNow(this, l);
     }
 
     private LocationCallback callback = new LocationCallback() {

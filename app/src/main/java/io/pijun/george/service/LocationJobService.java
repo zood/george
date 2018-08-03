@@ -67,7 +67,7 @@ public class LocationJobService extends JobService {
             return false;
         }
 
-        ContextCompat.startForegroundService(this, PositionService.newIntent(this));
+        ContextCompat.startForegroundService(this, PositionService.newIntent(this, null));
         App.runInBackground(new WorkerRunnable() {
             @Override
             public void run() {

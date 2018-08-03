@@ -230,7 +230,7 @@ public final class MapActivity extends AppCompatActivity implements OnMapReadyCa
                 ArrayList<FriendRecord> friends = DB.get().getFriends();
                 for (FriendRecord fr: friends) {
                     if (fr.receivingBoxId != null) {
-                        L.i("\twatching " + Hex.toHexString(fr.receivingBoxId));
+//                        L.i("\twatching " + Hex.toHexString(fr.receivingBoxId));
                         mPkgWatcher.watch(fr.receivingBoxId);
                     }
                 }
@@ -1018,7 +1018,12 @@ public final class MapActivity extends AppCompatActivity implements OnMapReadyCa
                     mGoogMap.animateCamera(update);
                 }
             }
-            LocationUtils.upload(MapActivity.this, location, false);
+            App.runInBackground(new WorkerRunnable() {
+                @Override
+                public void run() {
+                    LocationUtils.uploadNow(MapActivity.this, location);
+                }
+            });
         }
     };
 

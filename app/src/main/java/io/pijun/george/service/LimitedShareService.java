@@ -300,14 +300,15 @@ public class LimitedShareService extends Service /* implements LocationListener 
 
     private LocationCallback mLocationCallbackHelper = new LocationCallback() {
         @Override
-        @UiThread
+        @WorkerThread
         public void onLocationResult(LocationResult result) {
             L.i("LSS.onLocationChanged");
             Location location = result.getLastLocation();
             if (location == null) {
                 return;
             }
-            LocationUtils.upload(LimitedShareService.this, location, false);
+
+            LocationUtils.uploadNow(LimitedShareService.this, location);
         }
     };
 }

@@ -98,6 +98,7 @@ public class UserComm {
         return c;
     }
 
+    @NonNull @CheckResult
     public static UserComm newLocationUpdateRequestReceived(@LocationUpdateRequestAction String action) {
         UserComm c = new UserComm();
         c.type = CommType.LocationUpdateRequestReceived;
@@ -126,6 +127,7 @@ public class UserComm {
         return c;
     }
 
+    @SuppressWarnings({"RedundantIfStatement", "BooleanMethodIsAlwaysInverted"})
     public boolean isValid() {
         if (type == null) {
             return false;

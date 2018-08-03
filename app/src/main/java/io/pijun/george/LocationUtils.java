@@ -1,16 +1,16 @@
 package io.pijun.george;
 
-import android.annotation.SuppressLint;
 import android.content.Context;
 import android.location.Location;
-import android.os.Looper;
-import android.support.annotation.AnyThread;
 import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 import android.support.annotation.WorkerThread;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashMap;
+import java.util.concurrent.PriorityBlockingQueue;
 
 import io.pijun.george.api.OscarAPI;
 import io.pijun.george.api.OscarClient;
@@ -21,16 +21,32 @@ import io.pijun.george.crypto.KeyPair;
 import io.pijun.george.database.DB;
 import io.pijun.george.database.FriendRecord;
 import io.pijun.george.database.LimitedShare;
-import io.pijun.george.network.Network;
 import io.pijun.george.service.LimitedShareService;
 import retrofit2.Response;
 
 public class LocationUtils {
 
-    private static UserComm lastLocationMessage = null;
+    @Nullable private static UserComm lastLocationMessage = null;
+    private static PriorityBlockingQueue<Location> locationsQueue = new PriorityBlockingQueue<>(5, new Comparator<Location>() {
+        @Override
+        public int compare(Location o1, Location o2) {
+            // We want the largest timestamp to be at the front/head of the queue
+            return (int) (o2.getTime() - o1.getTime());
+        }
+    });
 
-    @WorkerThread
-    private synchronized static void _upload(@NonNull Context ctx, @NonNull Location location, boolean immediately) {
+    synchronized private static void _uploadNow(@NonNull Context ctx) {
+        Location polled = locationsQueue.poll();
+        if (polled == null) {
+            L.i("LUtils._uploadNow - nothing to do for me. Bye.");
+            return;
+        }
+        // Make sure this isn't just a dupe of the last uploaded message
+        if (lastLocationMessage != null && polled.getTime() == lastLocationMessage.time) {
+            L.i("LUtils._upload - caught a dupe that was already uploaded");
+            return;
+        }
+
         Prefs prefs = Prefs.get(ctx);
         String token = prefs.getAccessToken();
         KeyPair keyPair = prefs.getKeyPair();
@@ -39,12 +55,7 @@ public class LocationUtils {
             return;
         }
 
-        UserComm locMsg = UserComm.newLocationInfo(location, Prefs.get(ctx).getCurrentMovement());
-        // if this is the same message as before, skip sending it
-        if (lastLocationMessage != null && lastLocationMessage.equals(locMsg)) {
-            L.i("LUtils found duplicate location");
-            return;
-        }
+        UserComm locMsg = UserComm.newLocationInfo(polled, prefs.getCurrentMovement());
         byte[] msgBytes = locMsg.toJSON();
         // share to our friends
         ArrayList<FriendRecord> friends = DB.get().getFriendsToShareWith();
@@ -72,42 +83,48 @@ public class LocationUtils {
                 DB.get().deleteLimitedShares();
             }
         }
+        lastLocationMessage = locMsg;   // doesn't matter if we succed or not
         if (pkgs.size() > 0) {
-            if (immediately && Network.isConnected(ctx)) {
-                OscarAPI api = OscarClient.newInstance(token);
-                try {
-                    Response<Void> response = api.dropMultiplePackages(pkgs).execute();
-                    if (response.isSuccessful()) {
-                        prefs.setLastLocationUpdateTime(System.currentTimeMillis());
-                        lastLocationMessage = locMsg;
-                        return;
-                    }
+            OscarAPI api = OscarClient.newInstance(token);
+            try {
+                Response<Void> response = api.dropMultiplePackages(pkgs).execute();
+                if (response.isSuccessful()) {
+                    prefs.setLastLocationUpdateTime(System.currentTimeMillis());
+                } else {
                     OscarError err = OscarError.fromResponse(response);
-                    L.w("LUtils.upload error dropping packages - " + err);
-                } catch (IOException ex) {
-                    L.w("Failed to upload location because " + ex.getLocalizedMessage());
+                    L.w("LUtils._uploadNow error dropping packages - " + err);
                 }
-            } else {
-                OscarClient.queueDropMultiplePackages(ctx, token, pkgs);
-                prefs.setLastLocationUpdateTime(System.currentTimeMillis());
-                lastLocationMessage = locMsg;
+            } catch (IOException ex) {
+                L.w("LUtils._uploadNow - Failed to upload location because " + ex.getLocalizedMessage());
             }
+        }
+
+        // TRY to clear out old queue items. It may fail if a newer location has been dropped in.
+        // If so, we just need to wait for someone else to come through here to upload the
+        // new one, and then clear everything behind it.
+        Location peeked = locationsQueue.peek();
+        while (peeked != null && peeked.getTime() <= polled.getTime()) {
+            L.i("removing ");
+            locationsQueue.remove(peeked);
+            peeked = locationsQueue.peek();
         }
     }
 
-    @SuppressLint("WrongThread")
-    @AnyThread
-    public static void upload(@NonNull Context ctx, @NonNull Location location, boolean immediately) {
-        if (Looper.myLooper() == Looper.getMainLooper()) {
-            App.runInBackground(new WorkerRunnable() {
-                @Override
-                public void run() {
-                    _upload(ctx, location, immediately);
-                }
-            });
-        } else {
-            _upload(ctx, location, immediately);
+    @WorkerThread
+    public static void uploadNow(@NonNull Context ctx, @NonNull Location location) {
+        locationsQueue.add(location);
+        Location peeked = locationsQueue.peek();
+        if (peeked == null) {
+            L.i("LUtils.uploadNow - the queue got cleared after we dropped our location object");
+            return;
         }
+        if (peeked != location) {
+            // we're not the newest location
+            L.i("We're not the newest location. Found " + peeked.getTime() + ", but I'm just " + location.getTime());
+            return;
+        }
+
+        _uploadNow(ctx);
     }
 
 }

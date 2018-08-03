@@ -224,7 +224,7 @@ public class MessageProcessor {
             case LocationInfo:
                 return handleLocationInfo(user, comm);
             case LocationUpdateRequest:
-                return handleLocationUpdateRequest(context, user);
+                return handleLocationUpdateRequest(context, user, token, keyPair);
             case LocationUpdateRequestReceived:
                 return handleLocationUpdateRequestReceived(user, comm);
             default:
@@ -335,7 +335,7 @@ public class MessageProcessor {
         return Result.Success;
     }
 
-    private static Result handleLocationUpdateRequest(@NonNull Context context, @NonNull UserRecord userRecord) {
+    private static Result handleLocationUpdateRequest(@NonNull Context context, @NonNull UserRecord userRecord, @NonNull String accessToken, @NonNull KeyPair keyPair) {
         L.i("handleLocationUpdateRequest from " + userRecord.username);
         Prefs prefs = Prefs.get(context);
         long updateTime = prefs.getLastLocationUpdateTime();
@@ -352,7 +352,7 @@ public class MessageProcessor {
         if (!App.isInForeground && timeSinceUpdate < 3 * DateUtils.MINUTE_IN_MILLIS) {
             L.i("\talready provided an update at " + updateTime);
             UserComm tooSoon = UserComm.newLocationUpdateRequestReceived(UserComm.LOCATION_UPDATE_REQUEST_ACTION_TOO_SOON);
-            String errMsg = OscarClient.queueSendMessage(context, userRecord, tooSoon, true, true);
+            String errMsg = OscarClient.immediatelySendMessage(userRecord, accessToken, keyPair, tooSoon, true, true);
             if (errMsg != null) {
                 L.w(errMsg);
             }
@@ -360,21 +360,12 @@ public class MessageProcessor {
         }
 
         L.i("MU attempting to start the position service");
-        ContextCompat.startForegroundService(context, PositionService.newIntent(context));
+        ContextCompat.startForegroundService(context, PositionService.newIntent(context, userRecord.id));
 
         // let them know we've started
         L.i("queueing update starting");
         UserComm started = UserComm.newLocationUpdateRequestReceived(UserComm.LOCATION_UPDATE_REQUEST_ACTION_STARTING);
-        String errMsg = OscarClient.queueSendMessage(context, userRecord, started, true, true);
-        if (errMsg != null) {
-            L.w(errMsg);
-        }
-
-        // let them know it's done
-        PositionService.await();
-        UserComm done = UserComm.newLocationUpdateRequestReceived(UserComm.LOCATION_UPDATE_REQUEST_ACTION_FINISHED);
-        L.i("Queueing 'location_update_request_action_finished' to " + userRecord.username);
-        errMsg = OscarClient.queueSendMessage(context, userRecord, done, true, true);
+        String errMsg = OscarClient.immediatelySendMessage(userRecord, accessToken, keyPair, started, true, true);
         if (errMsg != null) {
             L.w(errMsg);
         }
@@ -383,8 +374,8 @@ public class MessageProcessor {
     }
 
     private static Result handleLocationUpdateRequestReceived(@NonNull UserRecord user, @NonNull UserComm comm) {
-        L.i("handleLocationUpdateRequestReceived");
-        L.i(user.username + " responded to update request: " + comm.locationUpdateRequestAction);
+        String logMsg = String.format("handleLocationUpdateRequestReceived - %s - %s", user.username, comm.locationUpdateRequestAction);
+        L.i(logMsg);
         FriendRecord friend = DB.get().getFriendByUserId(user.id);
         if (friend == null || friend.receivingBoxId == null) {
             return Result.Success;

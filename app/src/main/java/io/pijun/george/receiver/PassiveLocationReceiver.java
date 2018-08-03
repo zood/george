@@ -19,6 +19,7 @@ import com.google.android.gms.location.LocationServices;
 
 import io.pijun.george.App;
 import io.pijun.george.LocationUtils;
+import io.pijun.george.WorkerRunnable;
 
 public class PassiveLocationReceiver extends BroadcastReceiver {
 
@@ -57,7 +58,12 @@ public class PassiveLocationReceiver extends BroadcastReceiver {
             return;
         }
 
-        LocationUtils.upload(context, loc, false);
+        App.runInBackground(new WorkerRunnable() {
+            @Override
+            public void run() {
+                LocationUtils.uploadNow(context, loc);
+            }
+        });
     }
 
     @AnyThread

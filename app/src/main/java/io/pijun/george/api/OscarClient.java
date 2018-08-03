@@ -57,20 +57,6 @@ public class OscarClient {
     }
 
     @NonNull
-    @CheckResult
-    static PersistentQueue<OscarTask> getQueue(@NonNull Context context) {
-        if (sQueue == null) {
-            synchronized (OscarClient.class) {
-                if (sQueue == null) {
-                    sQueue = new PersistentQueue<>(context, QUEUE_FILENAME, new QueueConverter());
-                }
-            }
-        }
-
-        return sQueue;
-    }
-
-    @NonNull
     public static OscarAPI newInstance(@Nullable final String accessToken) {
         // check if we already have an API object for this token around
         // However, if the token is null, just create a new api object, because
@@ -115,6 +101,50 @@ public class OscarClient {
             sApiCache.put(accessToken, new WeakReference<>(api));
         }
         return api;
+    }
+
+    //region Convenience methods some API methods
+
+    @NonNull
+    @CheckResult
+    static PersistentQueue<OscarTask> getQueue(@NonNull Context context) {
+        if (sQueue == null) {
+            synchronized (OscarClient.class) {
+                if (sQueue == null) {
+                    sQueue = new PersistentQueue<>(context, QUEUE_FILENAME, new QueueConverter());
+                }
+            }
+        }
+
+        return sQueue;
+    }
+
+    @WorkerThread @CheckResult @Nullable
+    public static String immediatelySendMessage(@NonNull UserRecord toUser, @NonNull String accessToken, @NonNull KeyPair keyPair, @NonNull UserComm comm, boolean urgent, boolean isTransient) {
+        EncryptedData encMsg = Sodium.publicKeyEncrypt(comm.toJSON(), toUser.publicKey, keyPair.secretKey);
+        if (encMsg == null) {
+            return "Encrypting msg to " + toUser.username + " failed.";
+        }
+        OutboundMessage om = new OutboundMessage();
+        om.cipherText = encMsg.cipherText;
+        om.nonce = encMsg.nonce;
+        om.urgent = urgent;
+        om.isTransient = isTransient;
+
+        OscarAPI api = newInstance(accessToken);
+        try {
+            retrofit2.Response<Void> response = api.sendMessage(Hex.toHexString(toUser.userId), om).execute();
+            if (response.isSuccessful()) {
+                return null;
+            }
+            OscarError err = OscarError.fromResponse(response);
+            if (err != null) {
+                return err.toString();
+            }
+            return "Unknown server error received while sending message";
+        } catch (IOException ex) {
+            return "Network error: " + ex.getLocalizedMessage();
+        }
     }
 
     @WorkerThread
@@ -181,4 +211,6 @@ public class OscarClient {
 
         return null;
     }
+
+    //endregion
 }
