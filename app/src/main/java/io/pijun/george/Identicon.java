@@ -52,17 +52,18 @@ public class Identicon {
 
     @ColorInt
     private static int getHashColor(byte val) {
-        int absVal = Math.abs(val);
-        if (absVal < 21) {
+        // we want the unsigned value
+        int num = val & 0xFF;
+        if (num < 42) {
             return Color.parseColor("#5CD1FF"); // blue
-        } else if (absVal < 42) {
+        } else if (num < 85) {
             return Color.parseColor("#E41C16"); // red
-        } else if (absVal < 64) {
+        } else if (num < 128) {
             return Color.parseColor("#3C4466"); // navy
-        } else if (absVal < 85) {
+        } else if (num < 170) {
             return Color.parseColor("#F6921E"); // orange
-        } else if (absVal < 106) {
-            return Color.parseColor("#FFE422"); // canady
+        } else if (num < 213) {
+            return Color.parseColor("#FFE422"); // canary
         } else {
             return Color.parseColor("#46585E"); // grey
         }
