@@ -42,8 +42,8 @@
             android:contentDescription="@null"
             app:layout_marginTopPercent="11%"
             android:layout_marginTop="72dp"
-            android:layout_width="96dp"
-            android:layout_height="113dp" />
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content" />
 
         <io.pijun.george.view.Hill
             android:id="@+id/globe"
@@ -53,13 +53,13 @@
 
         <ImageView
             android:id="@+id/screen_title"
-            android:src="@drawable/ic_pijun_text"
+            android:src="@drawable/pijun_wordmark_blue_340w"
             android:contentDescription="@string/pijun"
             android:layout_marginTop="32dp"
             android:layout_centerHorizontal="true"
             android:layout_below="@id/logo"
-            android:layout_width="85dp"
-            android:layout_height="38dp" />
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content" />
 
         <TextView
             android:id="@+id/screen_subtitle"
