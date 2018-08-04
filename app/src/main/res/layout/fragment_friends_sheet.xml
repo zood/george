@@ -25,7 +25,7 @@
             android:text="@string/friends"
             android:textSize="17sp"
             android:textColor="@color/ui_tint_gray"
-            android:fontFamily="@font/lato_bold"
+            android:fontFamily="@font/poppins_regular"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="@+id/friend_items"
             android:layout_marginStart="72dp"

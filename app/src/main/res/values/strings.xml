@@ -17,7 +17,6 @@
     <string name="cancel">Cancel</string>
     <string name="check_messages">Check messages</string>
     <string name="friend_requests">Friend requests</string>
-    <string name="share_wisely">Share wisely</string>
     <string name="sign_in">Sign in</string>
     <string name="register">Register</string>
     <string name="show">Show</string>
@@ -100,4 +99,5 @@
     <string name="unknown_password_hash_algorithm_msg">The password hash algorithm on your account isn\'t one this version of Pijun knows about. Make sure you have the latest version of Pijun, then try again.</string>
     <string name="show_public_key">Show public key</string>
     <string name="your_public_key">Your public key</string>
+    <string name="the_privacy_company">The privacy company</string>
 </resources>

@@ -3,30 +3,39 @@
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto">
 
+    <!--Light-->
+    <font
+        android:fontStyle="normal"
+        android:fontWeight="300"
+        android:font="@font/poppins_light"
+        app:fontStyle="normal"
+        app:fontWeight="300"
+        app:font="@font/poppins_light" />
+
     <!--Regular-->
     <font
         android:fontStyle="normal"
         android:fontWeight="400"
-        android:font="@font/lato_regular"
+        android:font="@font/poppins_regular"
         app:fontStyle="normal"
         app:fontWeight="400"
-        app:font="@font/lato_regular"/>
+        app:font="@font/poppins_regular" />
 
     <!--Bold-->
     <font
         android:fontStyle="normal"
         android:fontWeight="700"
-        android:font="@font/lato_bold"
+        android:font="@font/poppins_bold"
         app:fontStyle="normal"
         app:fontWeight="700"
-        app:font="@font/lato_bold" />
+        app:font="@font/poppins_bold" />
 
     <!--Black-->
     <font
         android:fontStyle="normal"
         android:fontWeight="900"
-        android:font="@font/lato_black"
+        android:font="@font/poppins_black"
         app:fontStyle="normal"
         app:fontWeight="900"
-        app:font="@font/lato_black" />
+        app:font="@font/poppins_black" />
 </font-family>

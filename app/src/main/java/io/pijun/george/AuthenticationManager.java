@@ -295,9 +295,13 @@ public class AuthenticationManager {
         App.runInBackground(new WorkerRunnable() {
             @Override
             public void run() {
-                String fcmToken = Prefs.get(ctx).getFcmToken();
-                ctx.startService(FcmTokenRegistrar.newIntent(ctx, true, fcmToken));
-                Prefs.get(ctx).clearAll();
+                Prefs prefs = Prefs.get(ctx);
+                String accessToken = prefs.getAccessToken();
+                // check that we have a token, in case some other bug is causing this method to be called twice
+                if (accessToken != null) {
+                    ctx.startService(FcmTokenRegistrar.newIntent(ctx, true, accessToken));
+                }
+                prefs.clearAll();
                 DB.get().deleteAllData();
                 LocationJobService.cancelLocationJobService(ctx);
                 PassiveLocationReceiver.unregister(ctx);

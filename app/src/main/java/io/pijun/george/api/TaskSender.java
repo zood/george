@@ -106,10 +106,20 @@ public final class TaskSender {
                 wakeLock.acquire(30 * DateUtils.SECOND_IN_MILLIS);
                 Response response = call.execute();
                 if (response.isSuccessful()) {
-                    queue.take();
+                    queue.poll();
                 } else {
                     OscarError err = OscarError.fromResponse(response);
                     L.i("problem executing task: " + call.request().method() + " " + call.request().url());
+                    if (err != null) {
+                        switch (err.code) {
+                            case OscarError.ERROR_INVALID_ACCESS_TOKEN:
+                                // toss the message. This was probably caused by a bug elsewhere in the app
+                                queue.poll();
+                                break;
+                            default:
+                        }
+                    }
+
                     L.i("  " + err);
                 }
             } catch (IOException e) {
@@ -120,7 +130,7 @@ public final class TaskSender {
                 continue;
             } catch (Throwable t) {
                 Crashlytics.logException(t);
-                queue.take();
+                queue.poll();
             } finally {
                 try {
                     // There's a chance that this wakelock may timeout right before we release it
