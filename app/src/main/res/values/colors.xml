@@ -1,22 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!--<color name="colorPrimary">#34cc54</color> &lt;!&ndash; teal &ndash;&gt;-->
     <color name="colorPrimary">@color/pijun_blue</color>
-    <!--<color name="colorPrimaryDark">#2ebd46</color>-->
     <color name="colorPrimaryDark">@color/pijun_navy</color>
-    <!--<color name="colorAccent">#32b6f4</color>-->
     <color name="colorAccent">@color/pijun_red</color>
 
-    <color name="pijun_typographic">#4b5761</color>
-    <color name="common_gray">#777777</color>
     <color name="friend_item_black">#555555</color>
     <color name="friend_item_gray">#AAAAAA</color>
     <color name="cloud_outline">#4d34cc54</color>
     <color name="ui_tint_gray">#aab9c6</color>
     <color name="shade">#A0000000</color>
     <color name="error_circle_fill">#3032b6f4</color>
-    <color name="drawer_gradient_end">#8fe163</color>
-    <color name="amber">#ffc107</color>
 
     <color name="pijun_blue">#5cd1ff</color>
     <color name="pijun_red">#e41c16</color>
@@ -24,6 +17,7 @@
     <color name="pijun_orange">#f6921e</color>
     <color name="pijun_canary">#ffe422</color>
     <color name="pijun_grey">#46585e</color>
+    <color name="pijun_grey_50">#8046585e</color>
 
     <color name="settings_item_title">#252525</color>
     <color name="settings_item_subtitle">#727272</color>

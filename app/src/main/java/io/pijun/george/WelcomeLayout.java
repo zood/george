@@ -112,19 +112,19 @@ public class WelcomeLayout extends ViewGroup implements View.OnFocusChangeListen
                     regViews.usernameC = (TextInputLayout) child;
                     regViews.username = child.findViewById(R.id.reg_username);
                     regViews.username.setOnFocusChangeListener(this);
-                    regViews.username.setCompoundDrawablesRelativeWithIntrinsicBounds(getTintedDrawable(R.drawable.ic_user), null, null, null);
+                    regViews.username.setCompoundDrawablesRelativeWithIntrinsicBounds(getTintedDrawable(R.drawable.ic_sharp_person_24px), null, null, null);
                     break;
                 case R.id.reg_password_container:
                     regViews.passwordC = (TextInputLayout) child;
                     regViews.password = child.findViewById(R.id.reg_password);
                     regViews.password.setOnFocusChangeListener(this);
-                    regViews.password.setCompoundDrawablesRelativeWithIntrinsicBounds(getTintedDrawable(R.drawable.ic_padlock), null, null, null);
+                    regViews.password.setCompoundDrawablesRelativeWithIntrinsicBounds(getTintedDrawable(R.drawable.ic_sharp_lock_24px), null, null, null);
                     break;
                 case R.id.reg_email_container:
                     regViews.emailC = (TextInputLayout) child;
                     regViews.email = child.findViewById(R.id.reg_email);
                     regViews.email.setOnFocusChangeListener(this);
-                    regViews.email.setCompoundDrawablesRelativeWithIntrinsicBounds(getTintedDrawable(R.drawable.ic_email_black_22dp), null, null, null);
+                    regViews.email.setCompoundDrawablesRelativeWithIntrinsicBounds(getTintedDrawable(R.drawable.ic_sharp_email_24px), null, null, null);
                     break;
                 case R.id.register_button:
                     regViews.button = (Button) child;
@@ -133,13 +133,13 @@ public class WelcomeLayout extends ViewGroup implements View.OnFocusChangeListen
                     siViews.usernameC = (TextInputLayout) child;
                     siViews.username = child.findViewById(R.id.si_username);
                     siViews.username.setOnFocusChangeListener(this);
-                    siViews.username.setCompoundDrawablesRelativeWithIntrinsicBounds(getTintedDrawable(R.drawable.ic_user), null, null, null);
+                    siViews.username.setCompoundDrawablesRelativeWithIntrinsicBounds(getTintedDrawable(R.drawable.ic_sharp_person_24px), null, null, null);
                     break;
                 case R.id.si_password_container:
                     siViews.passwordC = (TextInputLayout) child;
                     siViews.password = child.findViewById(R.id.si_password);
                     siViews.password.setOnFocusChangeListener(this);
-                    siViews.password.setCompoundDrawablesRelativeWithIntrinsicBounds(getTintedDrawable(R.drawable.ic_padlock), null, null, null);
+                    siViews.password.setCompoundDrawablesRelativeWithIntrinsicBounds(getTintedDrawable(R.drawable.ic_sharp_lock_24px), null, null, null);
                     break;
                 case R.id.sign_in_button:
                     siViews.button = (Button) child;
