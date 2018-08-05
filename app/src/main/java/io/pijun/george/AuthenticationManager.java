@@ -306,6 +306,7 @@ public class AuthenticationManager {
                 LocationJobService.cancelLocationJobService(ctx);
                 PassiveLocationReceiver.unregister(ctx);
                 UserActivityReceiver.stopUpdates(ctx);
+                AvatarManager.deleteAll(ctx);
 
                 App.runOnUiThread(new UiRunnable() {
                     @Override

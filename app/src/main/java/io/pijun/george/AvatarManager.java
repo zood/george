@@ -82,6 +82,20 @@ public class AvatarManager {
 
     //endregion
 
+    @WorkerThread
+    static void deleteAll(@NonNull Context ctx) {
+        File filesDir = ctx.getFilesDir();
+        File avatarsDir = new File(filesDir, AVATAR_DIR);
+        File[] avatars = avatarsDir.listFiles();
+        if (avatars == null) {
+            return;
+        }
+
+        for (File a : avatars) {
+            a.delete();
+        }
+    }
+
     @CheckResult @NonNull @AnyThread
     static File getAvatar(@NonNull Context ctx, @NonNull String username) {
         File filesDir = ctx.getFilesDir();
