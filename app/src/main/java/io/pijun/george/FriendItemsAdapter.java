@@ -116,7 +116,7 @@ class FriendItemsAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
             // -- LOCATION AND UPDATE TIME --
             if (friend.receivingBoxId == null) {
                 h.location.setText("");
-                h.updateTime.setText(R.string.not_sharing_location);
+                h.updateTime.setText(R.string.not_sharing_with_you);
             } else {
                 FriendLocation loc = mFriendLocations.get(friend.id);
                 if (loc == null) {

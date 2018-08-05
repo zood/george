@@ -396,5 +396,25 @@ public class FriendsSheetFragment extends Fragment implements FriendItemsAdapter
         mFriendItemsAdapter.setFriends(friends);
         App.runOnUiThread(() -> mFriendItemsAdapter.removeFriendLocation(friend.id));
     }
+
+    @Override
+    public void onStartedSharingWithUser(long userId) {
+        App.runInBackground(new WorkerRunnable() {
+            @Override
+            public void run() {
+                DB db = DB.get();
+                ArrayList<FriendRecord> friends = db.getFriends();
+                mFriendItemsAdapter.setFriends(friends);
+                mAvatarsAdapter.setFriends(friends);
+                for (FriendRecord record : friends) {
+                    FriendLocation loc = db.getFriendLocation(record.id);
+                    if (loc != null) {
+                        App.runOnUiThread(() -> mFriendItemsAdapter.setFriendLocation(requireContext(), loc));
+                    }
+                }
+            }
+        });
+    }
+
     //endregion
 }

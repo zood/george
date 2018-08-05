@@ -706,6 +706,8 @@ public class DB {
             }
         }
         scheduleBackup(ctx);
+
+        notifyStartedSharingWithUser(user.id);
     }
 
     @WorkerThread
@@ -720,6 +722,8 @@ public class DB {
             throw new DBException("Num affected rows was " + result + " for username '" + user.username + "'");
         }
         scheduleBackup(ctx);
+
+        notifyStoppedSharingWithUser(user.id);
     }
 
     private static class DBHelper extends SQLiteOpenHelper {
@@ -774,14 +778,17 @@ public class DB {
 
     //region Listener management
     public interface Listener {
-        @UiThread
-        default void onFriendLocationUpdated(FriendLocation loc) {}
-        @UiThread
-        default void onFriendRemoved(long friendId) {}
-        @WorkerThread
-        default void onLocationSharingGranted(long userId) {}
-        @WorkerThread
-        default void onLocationSharingRevoked(long userId) {}
+        @UiThread default void onFriendLocationUpdated(FriendLocation loc) {}
+
+        @UiThread default void onFriendRemoved(long friendId) {}
+
+        @WorkerThread default void onLocationSharingGranted(long userId) {}
+
+        @WorkerThread default void onLocationSharingRevoked(long userId) {}
+
+        @UiThread default void onStartedSharingWithUser(long userId) {}
+
+        @UiThread default void onStoppedSharingWithUser(long userId) {}
     }
 
     @AnyThread
@@ -801,6 +808,38 @@ public class DB {
                         continue;
                     }
                     l.onFriendLocationUpdated(location);
+                }
+            }
+        });
+    }
+
+    @AnyThread
+    private void notifyStartedSharingWithUser(long userId) {
+        App.runOnUiThread(new UiRunnable() {
+            @Override
+            public void run() {
+                for (WeakReference<Listener> ref : listeners) {
+                    Listener l = ref.get();
+                    if (l == null) {
+                        continue;
+                    }
+                    l.onStartedSharingWithUser(userId);
+                }
+            }
+        });
+    }
+
+    @AnyThread
+    private void notifyStoppedSharingWithUser(long userId) {
+        App.runOnUiThread(new UiRunnable() {
+            @Override
+            public void run() {
+                for (WeakReference<Listener> ref : listeners) {
+                    Listener l = ref.get();
+                    if (l == null) {
+                        continue;
+                    }
+                    l.onStoppedSharingWithUser(userId);
                 }
             }
         });

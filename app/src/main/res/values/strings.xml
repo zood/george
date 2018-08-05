@@ -64,7 +64,6 @@
     <string name="sharing">Sharing</string>
     <string name="unknown">Unknown</string>
     <string name="loading_ellipsis">Loading…</string>
-    <string name="not_sharing_location">Not sharing location</string>
     <string name="select_avatar_msg">Select an avatar or pick your own picture.</string>
     <string name="select">Select</string>
     <string name="avatar_preview">Avatar preview</string>
@@ -100,4 +99,5 @@
     <string name="show_public_key">Show public key</string>
     <string name="your_public_key">Your public key</string>
     <string name="the_privacy_company">The privacy company</string>
+    <string name="not_sharing_with_you">Not sharing with you</string>
 </resources>
