@@ -217,16 +217,13 @@ public class FriendsSheetFragment extends Fragment implements FriendItemsAdapter
 
     @WorkerThread
     private void removeFriend(@NonNull FriendRecord friend) {
-        Prefs prefs = Prefs.get(requireContext());
-        String accessToken = prefs.getAccessToken();
-        if (TextUtils.isEmpty(accessToken)) {
-            Utils.showStringAlert(requireContext(), null, "How are you not logged in right now? (missing access token)");
-            return;
-        }
-        KeyPair keyPair = prefs.getKeyPair();
-        if (keyPair == null) {
-            Utils.showStringAlert(requireContext(), null, "How are you not logged in right now? (missing key pair)");
-            return;
+        // If we're sharing location with this user, let them know we'll no longer be sharing with them
+        if (friend.sendingBoxId != null) {
+            UserComm comm = UserComm.newLocationSharingRevocation();
+            String errMsg = OscarClient.queueSendMessage(requireContext(), friend.user, comm, false, false);
+            if (errMsg != null) {
+                Crashlytics.logException(new RuntimeException(errMsg));
+            }
         }
 
         try {
