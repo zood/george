@@ -58,12 +58,7 @@ public class PassiveLocationReceiver extends BroadcastReceiver {
             return;
         }
 
-        App.runInBackground(new WorkerRunnable() {
-            @Override
-            public void run() {
-                LocationUtils.uploadNow(context, loc);
-            }
-        });
+        LocationUtils.upload(loc);
     }
 
     @AnyThread

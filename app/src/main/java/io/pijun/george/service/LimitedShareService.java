@@ -308,7 +308,7 @@ public class LimitedShareService extends Service /* implements LocationListener 
                 return;
             }
 
-            LocationUtils.uploadNow(LimitedShareService.this, location);
+            LocationUtils.upload(location);
         }
     };
 }

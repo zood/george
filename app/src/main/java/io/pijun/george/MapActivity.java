@@ -991,12 +991,8 @@ public final class MapActivity extends AppCompatActivity implements OnMapReadyCa
                     mGoogMap.animateCamera(update);
                 }
             }
-            App.runInBackground(new WorkerRunnable() {
-                @Override
-                public void run() {
-                    LocationUtils.uploadNow(MapActivity.this, location);
-                }
-            });
+
+            LocationUtils.upload(location);
         }
     };
 
@@ -1104,12 +1100,11 @@ public final class MapActivity extends AppCompatActivity implements OnMapReadyCa
     private PkgWatcher.Listener pkgWatcherListener = new PkgWatcher.Listener() {
         @Override
         public void onDisconnected(int code, String reason) {
-            L.i("MA.PWL.onDisconnected - code " + code);
+//            L.i("MA.PWL.onDisconnected - code " + code);
             // If we're not running, then this disconnect was probably because we called disconnect()
             if (!isStarted) {
                 return;
             }
-            L.i("   isStarted");
             try {
                 Thread.sleep(5000);
             } catch (InterruptedException ignore) {}
@@ -1121,7 +1116,6 @@ public final class MapActivity extends AppCompatActivity implements OnMapReadyCa
             if (token == null) {
                 return;
             }
-            L.i("   token isn't null. reconnecting");
             pkgWatcher.connect(token);
             ArrayList<FriendRecord> friends = DB.get().getFriends();
             for (FriendRecord f : friends) {
@@ -1133,15 +1127,14 @@ public final class MapActivity extends AppCompatActivity implements OnMapReadyCa
 
         @Override
         public void onMessageReceived(@NonNull byte[] boxId, @NonNull EncryptedData data) {
-            L.i("MA.PWL.onMessageReceived");
+//            L.i("MA.PWL.onMessageReceived");
             FriendRecord friend = DB.get().getFriendByReceivingBoxId(boxId);
             if (friend == null) {
-                L.i("   can't find user associated with receiving box id");
                 return;
             }
             MessageProcessor.Result result = MessageProcessor.decryptAndProcess(MapActivity.this, friend.user.userId, data.cipherText, data.nonce);
             if (result != MessageProcessor.Result.Success) {
-                L.i("   error decrypting+processing dropped message: " + result);
+                L.i("MA.PWL error decrypting+processing dropped message: " + result);
             }
         }
     };

@@ -277,7 +277,7 @@ public class PositionService extends Service {
         }
         Location l = locations.getLast();
 
-        LocationUtils.uploadNow(this, l);
+        LocationUtils.upload(l);
     }
 
     private LocationCallback callback = new LocationCallback() {

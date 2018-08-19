@@ -2,6 +2,9 @@ package io.pijun.george;
 
 import android.content.Context;
 import android.location.Location;
+import android.os.Handler;
+import android.os.HandlerThread;
+import android.support.annotation.AnyThread;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.annotation.WorkerThread;
@@ -10,6 +13,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.concurrent.PriorityBlockingQueue;
 
 import io.pijun.george.api.OscarAPI;
@@ -26,6 +30,20 @@ import retrofit2.Response;
 
 public class LocationUtils {
 
+    static {
+        HandlerThread thread = new HandlerThread("LocationUploader");
+        thread.start();
+        Handler handler = new Handler(thread.getLooper());
+        handler.post(new WorkerRunnable() {
+            @Override
+            public void run() {
+                LocationUtils.run();
+            }
+        });
+        // the thread should never quit, because the run() method never exits
+        thread.quitSafely();
+    }
+
     @Nullable private static UserComm lastLocationMessage = null;
     private static PriorityBlockingQueue<Location> locationsQueue = new PriorityBlockingQueue<>(5, new Comparator<Location>() {
         @Override
@@ -35,96 +53,93 @@ public class LocationUtils {
         }
     });
 
-    synchronized private static void _uploadNow(@NonNull Context ctx) {
-        Location polled = locationsQueue.poll();
-        if (polled == null) {
-            L.i("LUtils._uploadNow - nothing to do for me. Bye.");
-            return;
-        }
-        // Make sure this isn't just a dupe of the last uploaded message
-        if (lastLocationMessage != null && polled.getTime() == lastLocationMessage.time) {
-            L.i("LUtils._upload - caught a dupe that was already uploaded");
-            return;
-        }
-
-        Prefs prefs = Prefs.get(ctx);
-        String token = prefs.getAccessToken();
-        KeyPair keyPair = prefs.getKeyPair();
-        if (token == null || keyPair == null) {
-            L.i("LUtils.upload: token or keypair was null, so skipping upload");
-            return;
-        }
-
-        UserComm locMsg = UserComm.newLocationInfo(polled, prefs.getCurrentMovement());
-        byte[] msgBytes = locMsg.toJSON();
-        // share to our friends
-        ArrayList<FriendRecord> friends = DB.get().getFriendsToShareWith();
-        HashMap<String, EncryptedData> pkgs = new HashMap<>(friends.size());
-        for (FriendRecord f : friends) {
-            EncryptedData encMsg = Sodium.publicKeyEncrypt(msgBytes, f.user.publicKey, keyPair.secretKey);
-            if (encMsg == null) {
-                L.w("LUtils.upload encryption failed for " + f.user.username);
-                continue;
-            }
-            pkgs.put(Hex.toHexString(f.sendingBoxId), encMsg);
-        }
-        LimitedShare ls = DB.get().getLimitedShare();
-        if (ls != null) {
-            L.i("LUtils.upload: to limited share");
-            if (LimitedShareService.IsRunning) {
-                EncryptedData encMsg = Sodium.publicKeyEncrypt(msgBytes, ls.publicKey, keyPair.secretKey);
-                if (encMsg != null) {
-                    pkgs.put(Hex.toHexString(ls.sendingBoxId), encMsg);
-                } else {
-                    L.w("LUtils.upload: limited share encryption failed");
-                }
-            } else {
-                L.i("LUtils.upload: oops. the limited share isn't running. we'll delete it.");
-                DB.get().deleteLimitedShares();
-            }
-        }
-        lastLocationMessage = locMsg;   // doesn't matter if we succed or not
-        if (pkgs.size() > 0) {
-            OscarAPI api = OscarClient.newInstance(token);
-            try {
-                Response<Void> response = api.dropMultiplePackages(pkgs).execute();
-                if (response.isSuccessful()) {
-                    prefs.setLastLocationUpdateTime(System.currentTimeMillis());
-                } else {
-                    OscarError err = OscarError.fromResponse(response);
-                    L.w("LUtils._uploadNow error dropping packages - " + err);
-                }
-            } catch (IOException ex) {
-                L.w("LUtils._uploadNow - Failed to upload location because " + ex.getLocalizedMessage());
-            }
-        }
-
-        // TRY to clear out old queue items. It may fail if a newer location has been dropped in.
-        // If so, we just need to wait for someone else to come through here to upload the
-        // new one, and then clear everything behind it.
-        Location peeked = locationsQueue.peek();
-        while (peeked != null && peeked.getTime() <= polled.getTime()) {
-            L.i("removing ");
-            locationsQueue.remove(peeked);
-            peeked = locationsQueue.peek();
-        }
-    }
+    private LocationUtils() {}
 
     @WorkerThread
-    public static void uploadNow(@NonNull Context ctx, @NonNull Location location) {
-        locationsQueue.add(location);
-        Location peeked = locationsQueue.peek();
-        if (peeked == null) {
-            L.i("LUtils.uploadNow - the queue got cleared after we dropped our location object");
-            return;
-        }
-        if (peeked != location) {
-            // we're not the newest location
-            L.i("We're not the newest location. Found " + peeked.getTime() + ", but I'm just " + location.getTime());
-            return;
-        }
+    private static void run() {
+        //noinspection InfiniteLoopStatement
+        while (true) {
+            Location loc;
+            try {
+                loc = locationsQueue.take();
+                L.i("length of lq " + locationsQueue.size());
+            } catch (InterruptedException ex) {
+                // should never happen
+                L.w("LocationUtils.run interrupted", ex);
+                continue;
+            }
 
-        _uploadNow(ctx);
+            if (lastLocationMessage != null && loc.getTime() <= lastLocationMessage.time) {
+                L.i("LUtils.run - caught a dupe/old");
+                continue;
+            }
+
+            Context ctx = App.getApp();
+            Prefs prefs = Prefs.get(ctx);
+            String token = prefs.getAccessToken();
+            KeyPair keyPair = prefs.getKeyPair();
+            if (token == null || keyPair == null) {
+                L.i("LUtils.run: token or keypair was null, so skipping upload");
+                continue;
+            }
+
+            UserComm locMsg = UserComm.newLocationInfo(loc, prefs.getCurrentMovement());
+            byte[] msgBytes = locMsg.toJSON();
+            // share to our friends
+            ArrayList<FriendRecord> friends = DB.get().getFriendsToShareWith();
+            HashMap<String, EncryptedData> pkgs = new HashMap<>(friends.size());
+            for (FriendRecord f : friends) {
+                EncryptedData encMsg = Sodium.publicKeyEncrypt(msgBytes, f.user.publicKey, keyPair.secretKey);
+                if (encMsg == null) {
+                    L.w("LUtils.run encryption failed for " + f.user.username);
+                    continue;
+                }
+                pkgs.put(Hex.toHexString(f.sendingBoxId), encMsg);
+            }
+            LimitedShare ls = DB.get().getLimitedShare();
+            if (ls != null) {
+                L.i("LUtils.upload: to limited share");
+                if (LimitedShareService.IsRunning) {
+                    EncryptedData encMsg = Sodium.publicKeyEncrypt(msgBytes, ls.publicKey, keyPair.secretKey);
+                    if (encMsg != null) {
+                        pkgs.put(Hex.toHexString(ls.sendingBoxId), encMsg);
+                    } else {
+                        L.w("LUtils.run: limited share encryption failed");
+                    }
+                } else {
+                    L.i("LUtils.run: oops. the limited share isn't running. we'll delete it.");
+                    DB.get().deleteLimitedShares();
+                }
+            }
+            lastLocationMessage = locMsg;   // doesn't matter if we succeed or not
+            if (pkgs.size() > 0) {
+                OscarAPI api = OscarClient.newInstance(token);
+                try {
+                    Response<Void> response = api.dropMultiplePackages(pkgs).execute();
+                    if (response.isSuccessful()) {
+                        prefs.setLastLocationUpdateTime(System.currentTimeMillis());
+                    } else {
+                        OscarError err = OscarError.fromResponse(response);
+                        L.w("LUtils.run error dropping packages - " + err);
+                    }
+                } catch (IOException ex) {
+                    L.w("LUtils.run - Failed to upload location because " + ex.getLocalizedMessage());
+                }
+            }
+
+            // now remove any older locations that have piled up
+            Iterator<Location> iter = locationsQueue.iterator();
+            while (iter.hasNext()) {
+                Location l = iter.next();
+                if (l.getTime() <= lastLocationMessage.time) {
+                    iter.remove();
+                }
+            }
+        }
     }
 
+    @AnyThread
+    public static void upload(@NonNull Location location) {
+        locationsQueue.add(location);
+    }
 }
