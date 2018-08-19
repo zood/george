@@ -68,11 +68,12 @@ import io.pijun.george.api.Message;
 import io.pijun.george.api.OscarAPI;
 import io.pijun.george.api.OscarClient;
 import io.pijun.george.api.OscarError;
-import io.pijun.george.api.PackageWatcher;
+import io.pijun.george.api.PkgWatcher;
 import io.pijun.george.api.SearchUserResult;
 import io.pijun.george.api.UserComm;
 import io.pijun.george.api.locationiq.RevGeocoding;
 import io.pijun.george.api.locationiq.ReverseGeocodingCache;
+import io.pijun.george.crypto.EncryptedData;
 import io.pijun.george.crypto.KeyPair;
 import io.pijun.george.database.DB;
 import io.pijun.george.database.FriendLocation;
@@ -93,7 +94,7 @@ public final class MapActivity extends AppCompatActivity implements OnMapReadyCa
     private ActivityMapBinding binding;
     private MapView mMapView;
     private GoogleMap mGoogMap;
-    private volatile PackageWatcher mPkgWatcher;
+    private PkgWatcher pkgWatcher;
     private MarkerTracker mMarkerTracker = new MarkerTracker();
     private FusedLocationProviderClient mLocationProviderClient;
     private SettingsClient mSettingsClient;
@@ -106,7 +107,7 @@ public final class MapActivity extends AppCompatActivity implements OnMapReadyCa
     private EditText mUsernameField;
     private Circle mCurrentCircle;
     private WeakReference<FriendsSheetFragment> mFriendsSheet;
-    private boolean requestLocationOnStart = false;
+    private boolean isStarted = false;
 
     public static Intent newIntent(Context ctx) {
         return new Intent(ctx, MapActivity.class);
@@ -209,6 +210,7 @@ public final class MapActivity extends AppCompatActivity implements OnMapReadyCa
     protected void onStart() {
         super.onStart();
 
+        isStarted = true;
         App.isInForeground = true;
         checkForLocationPermission();
         mMapView.onStart();
@@ -221,40 +223,14 @@ public final class MapActivity extends AppCompatActivity implements OnMapReadyCa
                 if (token == null) {
                     return;
                 }
-                mPkgWatcher = PackageWatcher.createWatcher(MapActivity.this, token);
-                if (mPkgWatcher == null) {
-                    L.w("unable to create package watcher");
-                    return;
-                }
+
+                pkgWatcher = new PkgWatcher(pkgWatcherListener);
+                pkgWatcher.connect(token);
 
                 ArrayList<FriendRecord> friends = DB.get().getFriends();
                 for (FriendRecord fr: friends) {
                     if (fr.receivingBoxId != null) {
-//                        L.i("\twatching " + Hex.toHexString(fr.receivingBoxId));
-                        mPkgWatcher.watch(fr.receivingBoxId);
-                    }
-                }
-
-                if (requestLocationOnStart) {
-                    // Request a location update from any friend that hasn't given us an update for
-                    // 3 minutes
-                    long now = System.currentTimeMillis();
-                    UserComm comm = UserComm.newLocationUpdateRequest();
-                    final float DELAY = 3;
-                    for (FriendRecord fr : friends) {
-                        // check if this friend shares location with us
-                        if (fr.receivingBoxId == null) {
-                            continue;
-                        }
-                        FriendLocation loc = DB.get().getFriendLocation(fr.id);
-                        if (loc == null || (now - loc.time) > DELAY * DateUtils.SECOND_IN_MILLIS) {
-                            UpdateStatusTracker.setLastRequestTime(fr.id, System.currentTimeMillis());
-                            L.i("queue location request");
-                            String errMsg = OscarClient.queueSendMessage(MapActivity.this, fr.user, comm, true, true);
-                            if (errMsg != null) {
-                                L.w("failed to queue location_update_request: " + errMsg);
-                            }
-                        }
+                        pkgWatcher.watch(fr.receivingBoxId);
                     }
                 }
 
@@ -301,6 +277,7 @@ public final class MapActivity extends AppCompatActivity implements OnMapReadyCa
     protected void onStop() {
         super.onStop();
 
+        isStarted = false;
         UpdateStatusTracker.removeListener(updateStatusTrackerListener);
         mMapView.onStop();
 
@@ -320,12 +297,8 @@ public final class MapActivity extends AppCompatActivity implements OnMapReadyCa
         // stop receiving location updates
         mLocationProviderClient.removeLocationUpdates(mLocationCallbackHelper);
 
-        App.runInBackground(() -> {
-            if (mPkgWatcher != null) {
-                mPkgWatcher.disconnect();
-                mPkgWatcher = null;
-            }
-        });
+        pkgWatcher.disconnect();
+        pkgWatcher = null;
 
         App.isInForeground = false;
     }
@@ -1081,10 +1054,9 @@ public final class MapActivity extends AppCompatActivity implements OnMapReadyCa
     @Override
     public void onLocationSharingGranted(long userId) {
         L.i("onLocationSharingGranted");
-        if (mPkgWatcher == null) {
+        if (pkgWatcher == null) {
             return;
         }
-
         final FriendRecord friend = DB.get().getFriendByUserId(userId);
         if (friend == null) {
             L.w("MapActivity.onLocationSharingGranted didn't find friend record");
@@ -1094,7 +1066,7 @@ public final class MapActivity extends AppCompatActivity implements OnMapReadyCa
         // (If the other person is flipping the sharing switch back and forth).
         if (friend.receivingBoxId != null) {
             L.i("onLocationSharingGranted: friend found. will watch");
-            mPkgWatcher.watch(friend.receivingBoxId);
+            pkgWatcher.watch(friend.receivingBoxId);
         }
     }
 
@@ -1124,6 +1096,55 @@ public final class MapActivity extends AppCompatActivity implements OnMapReadyCa
         startActivity(i);
         finish();
     }
+
+    //endregion
+
+    // region PackageWatcher.Listener
+
+    private PkgWatcher.Listener pkgWatcherListener = new PkgWatcher.Listener() {
+        @Override
+        public void onDisconnected(int code, String reason) {
+            L.i("MA.PWL.onDisconnected - code " + code);
+            // If we're not running, then this disconnect was probably because we called disconnect()
+            if (!isStarted) {
+                return;
+            }
+            L.i("   isStarted");
+            try {
+                Thread.sleep(5000);
+            } catch (InterruptedException ignore) {}
+            // are we still running after our siesta?
+            if (!isStarted) {
+                return;
+            }
+            String token = Prefs.get(MapActivity.this).getAccessToken();
+            if (token == null) {
+                return;
+            }
+            L.i("   token isn't null. reconnecting");
+            pkgWatcher.connect(token);
+            ArrayList<FriendRecord> friends = DB.get().getFriends();
+            for (FriendRecord f : friends) {
+                if (f.receivingBoxId != null) {
+                    pkgWatcher.watch(f.receivingBoxId);
+                }
+            }
+        }
+
+        @Override
+        public void onMessageReceived(@NonNull byte[] boxId, @NonNull EncryptedData data) {
+            L.i("MA.PWL.onMessageReceived");
+            FriendRecord friend = DB.get().getFriendByReceivingBoxId(boxId);
+            if (friend == null) {
+                L.i("   can't find user associated with receiving box id");
+                return;
+            }
+            MessageProcessor.Result result = MessageProcessor.decryptAndProcess(MapActivity.this, friend.user.userId, data.cipherText, data.nonce);
+            if (result != MessageProcessor.Result.Success) {
+                L.i("   error decrypting+processing dropped message: " + result);
+            }
+        }
+    };
 
     //endregion
 }
