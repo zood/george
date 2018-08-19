@@ -62,7 +62,6 @@ public class LocationUtils {
             Location loc;
             try {
                 loc = locationsQueue.take();
-                L.i("length of lq " + locationsQueue.size());
             } catch (InterruptedException ex) {
                 // should never happen
                 L.w("LocationUtils.run interrupted", ex);
