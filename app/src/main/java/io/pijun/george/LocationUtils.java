@@ -116,7 +116,7 @@ public class LocationUtils {
                 try {
                     Response<Void> response = api.dropMultiplePackages(pkgs).execute();
                     if (response.isSuccessful()) {
-                        prefs.setLastLocationUpdateTime(System.currentTimeMillis());
+                        prefs.setLastLocationUpdateTime(loc.getTime());
                     } else {
                         OscarError err = OscarError.fromResponse(response);
                         L.w("LUtils.run error dropping packages - " + err);
