@@ -92,6 +92,7 @@ public class AvatarManager {
         }
 
         for (File a : avatars) {
+            //noinspection ResultOfMethodCallIgnored
             a.delete();
         }
     }
