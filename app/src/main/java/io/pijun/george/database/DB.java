@@ -73,6 +73,7 @@ public class DB {
     private static final String LOCATIONS_COL_SPEED = "speed";
     private static final String LOCATIONS_COL_BEARING = "bearing";
     private static final String LOCATIONS_COL_MOVEMENTS = "movements";
+    private static final String LOCATIONS_COL_BATTERY_LEVEL = "battery_level";
     private static final String[] LOCATIONS_COLUMNS = new String[]{
             LOCATIONS_COL_FRIEND_ID,
             LOCATIONS_COL_LATITUDE,
@@ -82,6 +83,7 @@ public class DB {
             LOCATIONS_COL_SPEED,
             LOCATIONS_COL_BEARING,
             LOCATIONS_COL_MOVEMENTS,
+            LOCATIONS_COL_BATTERY_LEVEL,
     };
 
     private static final String USERS_TABLE = "users";
@@ -298,7 +300,12 @@ public class DB {
                 }
                 int movementsColIdx = c.getColumnIndexOrThrow(LOCATIONS_COL_MOVEMENTS);
                 MovementType movement = MovementType.get(c.getString(movementsColIdx));
-                fl = new FriendLocation(friendRecordId, lat, lng, time, acc, speed, bearing, movement);
+                Integer batteryLevel = null;
+                int batteryLevelIdx = c.getColumnIndexOrThrow(LOCATIONS_COL_BATTERY_LEVEL);
+                if (!c.isNull(batteryLevelIdx)) {
+                    batteryLevel = c.getInt(batteryLevelIdx);
+                }
+                fl = new FriendLocation(friendRecordId, lat, lng, time, acc, speed, bearing, movement, batteryLevel);
             }
         }
 
@@ -622,7 +629,7 @@ public class DB {
     }
 
     @WorkerThread
-    public void setFriendLocation(long friendId, double lat, double lng, long time, @Nullable Float accuracy, @Nullable Float speed, @Nullable Float bearing, @Nullable String movement) throws DBException {
+    public void setFriendLocation(long friendId, double lat, double lng, long time, @Nullable Float accuracy, @Nullable Float speed, @Nullable Float bearing, @Nullable String movement, @Nullable Integer batteryLevel) throws DBException {
         SQLiteDatabase db = mDbHelper.getWritableDatabase();
         ContentValues cv = new ContentValues();
         cv.put(LOCATIONS_COL_FRIEND_ID, friendId);
@@ -641,12 +648,15 @@ public class DB {
         if (movement != null && !movement.equals(MovementType.Unknown.val)) {
             cv.put(LOCATIONS_COL_MOVEMENTS, movement);
         }
+        if (batteryLevel != null) {
+            cv.put(LOCATIONS_COL_BATTERY_LEVEL, batteryLevel);
+        }
         long result = db.replace(LOCATIONS_TABLE, null, cv);
         if (result == -1) {
             throw new DBException("Error occurred while setting friend location");
         }
 
-        notifyFriendLocationUpdated(new FriendLocation(friendId, lat, lng, time, accuracy, speed, bearing, MovementType.get(movement)));
+        notifyFriendLocationUpdated(new FriendLocation(friendId, lat, lng, time, accuracy, speed, bearing, MovementType.get(movement), batteryLevel));
     }
 
     @WorkerThread

@@ -304,7 +304,7 @@ public class MessageProcessor {
             return Result.ErrorNotAFriend;
         }
         try {
-            db.setFriendLocation(fr.id, comm.latitude, comm.longitude, comm.time, comm.accuracy, comm.speed, comm.bearing, comm.movement);
+            db.setFriendLocation(fr.id, comm.latitude, comm.longitude, comm.time, comm.accuracy, comm.speed, comm.bearing, comm.movement, comm.batteryLevel);
         } catch (DB.DBException ex) {
             L.w("error setting location info for friend", ex);
             Crashlytics.logException(ex);

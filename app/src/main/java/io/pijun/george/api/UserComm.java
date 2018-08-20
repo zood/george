@@ -109,7 +109,7 @@ public class UserComm {
     }
 
     @NonNull @CheckResult
-    public static UserComm newLocationInfo(@NonNull Location l, @Nullable MovementType movement, @IntRange(from=-1, to=100) int batteryLevel) {
+    public static UserComm newLocationInfo(@NonNull Location l, @Nullable MovementType movement, @IntRange(from=0, to=100) Integer batteryLevel) {
         UserComm c = new UserComm();
         c.type = CommType.LocationInfo;
         c.latitude = l.getLatitude();
@@ -125,9 +125,7 @@ public class UserComm {
             c.bearing = l.getBearing();
         }
         c.movement = movement == null ? null : movement.val;
-        if (batteryLevel == -1) {
-            c.batteryLevel = batteryLevel;
-        }
+        c.batteryLevel = batteryLevel;
 
         return c;
     }
