@@ -72,7 +72,7 @@ public class DB {
     private static final String LOCATIONS_COL_ACCURACY = "accuracy";
     private static final String LOCATIONS_COL_SPEED = "speed";
     private static final String LOCATIONS_COL_BEARING = "bearing";
-    private static final String LOCATIONS_COL_MOVEMENTS = "movements";
+    private static final String LOCATIONS_COL_MOVEMENT = "movement";
     private static final String LOCATIONS_COL_BATTERY_LEVEL = "battery_level";
     private static final String[] LOCATIONS_COLUMNS = new String[]{
             LOCATIONS_COL_FRIEND_ID,
@@ -82,7 +82,7 @@ public class DB {
             LOCATIONS_COL_ACCURACY,
             LOCATIONS_COL_SPEED,
             LOCATIONS_COL_BEARING,
-            LOCATIONS_COL_MOVEMENTS,
+            LOCATIONS_COL_MOVEMENT,
             LOCATIONS_COL_BATTERY_LEVEL,
     };
 
@@ -298,7 +298,7 @@ public class DB {
                 if (!c.isNull(bearingColIdx)) {
                     bearing = c.getFloat(bearingColIdx);
                 }
-                int movementsColIdx = c.getColumnIndexOrThrow(LOCATIONS_COL_MOVEMENTS);
+                int movementsColIdx = c.getColumnIndexOrThrow(LOCATIONS_COL_MOVEMENT);
                 MovementType movement = MovementType.get(c.getString(movementsColIdx));
                 Integer batteryLevel = null;
                 int batteryLevelIdx = c.getColumnIndexOrThrow(LOCATIONS_COL_BATTERY_LEVEL);
@@ -646,7 +646,7 @@ public class DB {
             cv.put(LOCATIONS_COL_BEARING, bearing);
         }
         if (movement != null && !movement.equals(MovementType.Unknown.val)) {
-            cv.put(LOCATIONS_COL_MOVEMENTS, movement);
+            cv.put(LOCATIONS_COL_MOVEMENT, movement);
         }
         if (batteryLevel != null) {
             cv.put(LOCATIONS_COL_BATTERY_LEVEL, batteryLevel);
@@ -761,7 +761,7 @@ public class DB {
                     + LOCATIONS_COL_ACCURACY + " REAL, "
                     + LOCATIONS_COL_SPEED + " REAL, "
                     + LOCATIONS_COL_BEARING + " REAL, "
-                    + LOCATIONS_COL_MOVEMENTS + " TEXT)";
+                    + LOCATIONS_COL_MOVEMENT + " TEXT)";
             db.execSQL(createLocations);
 
             String createUsers = "CREATE TABLE "
