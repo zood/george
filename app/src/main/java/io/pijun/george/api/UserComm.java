@@ -2,6 +2,7 @@ package io.pijun.george.api;
 
 import android.location.Location;
 import android.support.annotation.CheckResult;
+import android.support.annotation.IntRange;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.annotation.StringDef;
@@ -29,10 +30,11 @@ public class UserComm {
     public double latitude;
     public double longitude;
     public long time;
-    public Float accuracy;
-    public Float speed;
-    public Float bearing;
-    public String movement;
+    @Nullable public Float accuracy;
+    @Nullable public Float speed;
+    @Nullable public Float bearing;
+    @Nullable public String movement;
+    @Nullable public Integer batteryLevel;
 
     // location_update_request_received
     @LocationUpdateRequestAction public String locationUpdateRequestAction;
@@ -107,7 +109,7 @@ public class UserComm {
     }
 
     @NonNull @CheckResult
-    public static UserComm newLocationInfo(@NonNull Location l, @Nullable MovementType movement) {
+    public static UserComm newLocationInfo(@NonNull Location l, @Nullable MovementType movement, @IntRange(from=-1, to=100) int batteryLevel) {
         UserComm c = new UserComm();
         c.type = CommType.LocationInfo;
         c.latitude = l.getLatitude();
@@ -123,6 +125,9 @@ public class UserComm {
             c.bearing = l.getBearing();
         }
         c.movement = movement == null ? null : movement.val;
+        if (batteryLevel == -1) {
+            c.batteryLevel = batteryLevel;
+        }
 
         return c;
     }
@@ -163,6 +168,11 @@ public class UserComm {
                 //noinspection RedundantIfStatement
                 if (time <= 0) {
                     return false;
+                }
+                if (batteryLevel != null) {
+                    if (batteryLevel < -1 || batteryLevel > 100) {
+                        return false;
+                    }
                 }
                 return true;
             case LocationUpdateRequest:
@@ -211,6 +221,7 @@ public class UserComm {
                 Objects.equals(speed, userComm.speed) &&
                 Objects.equals(bearing, userComm.bearing) &&
                 Objects.equals(movement, userComm.movement) &&
+                Objects.equals(batteryLevel, userComm.batteryLevel) &&
                 Objects.equals(locationUpdateRequestAction, userComm.locationUpdateRequestAction) &&
                 Objects.equals(debugData, userComm.debugData);
     }
@@ -218,7 +229,7 @@ public class UserComm {
     @Override
     public int hashCode() {
 
-        int result = Objects.hash(type, latitude, longitude, time, accuracy, speed, bearing, movement, locationUpdateRequestAction, debugData);
+        int result = Objects.hash(type, latitude, longitude, time, accuracy, speed, bearing, movement, batteryLevel, locationUpdateRequestAction, debugData);
         result = 31 * result + Arrays.hashCode(dropBox);
         result = 31 * result + Arrays.hashCode(avatar);
         return result;
@@ -229,13 +240,17 @@ public class UserComm {
         return "UserComm{" +
                 "type=" + type +
                 ", dropBox=" + Arrays.toString(dropBox) +
+                ", avatar=" + Arrays.toString(avatar) +
                 ", latitude=" + latitude +
                 ", longitude=" + longitude +
                 ", time=" + time +
                 ", accuracy=" + accuracy +
                 ", speed=" + speed +
                 ", bearing=" + bearing +
-                ", locationUpdateRequestAction=" + locationUpdateRequestAction +
+                ", movement='" + movement + '\'' +
+                ", batteryLevel=" + batteryLevel +
+                ", locationUpdateRequestAction='" + locationUpdateRequestAction + '\'' +
+                ", debugData='" + debugData + '\'' +
                 '}';
     }
 }

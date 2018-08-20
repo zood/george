@@ -82,7 +82,7 @@ public class LocationUtils {
                 continue;
             }
 
-            UserComm locMsg = UserComm.newLocationInfo(loc, prefs.getCurrentMovement());
+            UserComm locMsg = UserComm.newLocationInfo(loc, prefs.getCurrentMovement(), Battery.getLevel(ctx));
             byte[] msgBytes = locMsg.toJSON();
             // share to our friends
             ArrayList<FriendRecord> friends = DB.get().getFriendsToShareWith();
