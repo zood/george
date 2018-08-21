@@ -79,6 +79,7 @@ import io.pijun.george.database.FriendLocation;
 import io.pijun.george.database.FriendRecord;
 import io.pijun.george.database.UserRecord;
 import io.pijun.george.databinding.ActivityMapBinding;
+import io.pijun.george.service.BackupDatabaseJob;
 import io.pijun.george.service.FcmTokenRegistrar;
 import io.pijun.george.service.LimitedShareService;
 import io.pijun.george.view.AvatarView;
@@ -850,7 +851,8 @@ public final class MapActivity extends AppCompatActivity implements OnMapReadyCa
                     Utils.showStringAlert(this, null, "Unknown error while retrieving info about username");
                     return;
                 }
-                userRecord = db.addUser(userToRequest.id, userToRequest.username, userToRequest.publicKey, true, this);
+                userRecord = db.addUser(userToRequest.id, userToRequest.username, userToRequest.publicKey);
+                BackupDatabaseJob.scheduleBackup(this);
             }
 
             // check if we already have this user as a friend, and if we're already sharing with them
@@ -877,11 +879,12 @@ public final class MapActivity extends AppCompatActivity implements OnMapReadyCa
                 return;
             }
 
-            db.startSharingWith(userRecord, sendingBoxId, this);
+            db.startSharingWith(userRecord, sendingBoxId);
             try { AvatarManager.sendAvatarToUser(this, userRecord); }
             catch (IOException ex) {
                 CloudLogger.log(ex);
             }
+            BackupDatabaseJob.scheduleBackup(this);
             Utils.showStringAlert(this, null, "You're now sharing with " + username);
         } catch (IOException ex) {
             Utils.showStringAlert(this, null, "Network problem trying to share your location. Check your connection then try again.");

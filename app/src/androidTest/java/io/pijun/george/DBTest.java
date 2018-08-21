@@ -17,6 +17,7 @@ import io.pijun.george.database.DB;
 import io.pijun.george.database.FriendLocation;
 import io.pijun.george.database.FriendRecord;
 import io.pijun.george.database.LimitedShare;
+import io.pijun.george.database.MovementType;
 import io.pijun.george.database.Snapshot;
 import io.pijun.george.database.UserRecord;
 
@@ -74,9 +75,9 @@ public class DBTest {
     public void test010AddUser() {
         UserRecord u1, u2, u3;
         try {
-            u1 = DB.get().addUser(u1UserId, u1Username, u1PublicKey, false, ctx);
-            u2 = DB.get().addUser(u2UserId, u2Username, u2PublicKey, false, ctx);
-            u3 = DB.get().addUser(u3UserId, u3Username, u3PublicKey, false, ctx);
+            u1 = DB.get().addUser(u1UserId, u1Username, u1PublicKey);
+            u2 = DB.get().addUser(u2UserId, u2Username, u2PublicKey);
+            u3 = DB.get().addUser(u3UserId, u3Username, u3PublicKey);
         } catch (DB.DBException ex) {
             fail(ex.getLocalizedMessage());
             return;
@@ -155,8 +156,8 @@ public class DBTest {
         assertNotNull(u1);
 
         try {
-            DB.get().sharingGrantedBy(u1, f1Rid, ctx);
-            DB.get().startSharingWith(u1, f1Sid, ctx);
+            DB.get().sharingGrantedBy(u1, f1Rid);
+            DB.get().startSharingWith(u1, f1Sid);
         } catch (DB.DBException ex) {
             fail(ex.getLocalizedMessage());
             return;
@@ -180,7 +181,7 @@ public class DBTest {
         assertNotNull(u2);
 
         try {
-            DB.get().startSharingWith(u2, f2Sid, ctx);
+            DB.get().startSharingWith(u2, f2Sid);
         } catch (DB.DBException ex) {
             fail(ex.getLocalizedMessage());
             return;
@@ -200,7 +201,7 @@ public class DBTest {
         assertNotNull(u3);
 
         try {
-            DB.get().sharingGrantedBy(u3, f3Rid, ctx);
+            DB.get().sharingGrantedBy(u3, f3Rid);
         } catch (DB.DBException ex) {
             fail(ex.getLocalizedMessage());
             return;
@@ -253,7 +254,7 @@ public class DBTest {
         assertNotNull(u2);
 
         try {
-            DB.get().stopSharingWith(u2, ctx);
+            DB.get().stopSharingWith(u2);
         } catch (DB.DBException ex) {
             fail(ex.getLocalizedMessage());
             return;
@@ -270,7 +271,7 @@ public class DBTest {
         UserRecord u3 = DB.get().getUser(u3Id);
         assertNotNull(u3);
 
-        DB.get().sharingRevokedBy(u3, ctx);
+        DB.get().sharingRevokedBy(u3);
 
         FriendRecord f3 = DB.get().getFriendById(f3Id);
         assertNotNull(f3);
@@ -284,7 +285,7 @@ public class DBTest {
         assertNull(loc);
 
         try {
-            DB.get().setFriendLocation(f1Id, 3, 3, 4, 1.0f, 8.0f, 90.0f);
+            DB.get().setFriendLocation(f1Id, 3, 3, 4, 1.0f, 8.0f, 90.0f, MovementType.Bicycle.val, 82);
         } catch (DB.DBException ex) {
             fail(ex.getLocalizedMessage());
             return;

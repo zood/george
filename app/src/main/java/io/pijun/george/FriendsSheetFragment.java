@@ -28,6 +28,7 @@ import io.pijun.george.database.DB;
 import io.pijun.george.database.FriendLocation;
 import io.pijun.george.database.FriendRecord;
 import io.pijun.george.databinding.FragmentFriendsSheetBinding;
+import io.pijun.george.service.BackupDatabaseJob;
 import io.pijun.george.view.FriendsSheetBehavior;
 import io.pijun.george.view.FriendsSheetLayout;
 import io.pijun.george.view.MainLayout;
@@ -223,12 +224,13 @@ public class FriendsSheetFragment extends Fragment implements FriendItemsAdapter
         }
 
         try {
-            DB.get().removeFriend(friend, requireContext());
+            DB.get().removeFriend(friend);
         } catch (DB.DBException ex) {
             L.w("Error removing friend", ex);
             CloudLogger.log(ex);
             Utils.showStringAlert(getContext(), null, "There was a problem removing this friend. Try again, and if it still fails, contact support.");
         }
+        BackupDatabaseJob.scheduleBackup(requireContext());
     }
 
     @WorkerThread
@@ -246,7 +248,7 @@ public class FriendsSheetFragment extends Fragment implements FriendItemsAdapter
         // add this to our database
         DB db = DB.get();
         try {
-            db.startSharingWith(friend.user, sendingBoxId, requireContext());
+            db.startSharingWith(friend.user, sendingBoxId);
             AvatarManager.sendAvatarToUser(requireContext(), friend.user);
         } catch (DB.DBException ex) {
             CloudLogger.log(ex);
@@ -260,6 +262,7 @@ public class FriendsSheetFragment extends Fragment implements FriendItemsAdapter
         } catch (IOException ex) {
             CloudLogger.log(ex);
         }
+        BackupDatabaseJob.scheduleBackup(requireContext());
 
         FriendRecord updatedFriend = db.getFriendById(friend.id);
         if (updatedFriend == null) {
@@ -279,7 +282,7 @@ public class FriendsSheetFragment extends Fragment implements FriendItemsAdapter
         // remove the sending box id from the database
         DB db = DB.get();
         try {
-            db.stopSharingWith(friend.user, requireContext());
+            db.stopSharingWith(friend.user);
         } catch (DB.DBException ex) {
             CloudLogger.log(ex);
             App.runOnUiThread(new UiRunnable() {
@@ -290,6 +293,7 @@ public class FriendsSheetFragment extends Fragment implements FriendItemsAdapter
                 }
             });
         }
+        BackupDatabaseJob.scheduleBackup(requireContext());
 
         UserComm comm = UserComm.newLocationSharingRevocation();
         String errMsg = OscarClient.queueSendMessage(requireContext(), friend.user, comm, false, false);

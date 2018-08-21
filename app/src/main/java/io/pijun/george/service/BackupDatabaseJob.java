@@ -2,9 +2,12 @@ package io.pijun.george.service;
 
 import android.app.job.JobInfo;
 import android.app.job.JobParameters;
+import android.app.job.JobScheduler;
 import android.app.job.JobService;
 import android.content.ComponentName;
 import android.content.Context;
+import android.support.annotation.AnyThread;
+import android.support.annotation.NonNull;
 import android.support.annotation.WorkerThread;
 import android.text.TextUtils;
 import android.text.format.DateUtils;
@@ -37,6 +40,16 @@ public class BackupDatabaseJob extends JobService {
                 .setRequiresCharging(false)
                 .setRequiresDeviceIdle(false);
         return builder.build();
+    }
+
+    @AnyThread
+    public static void scheduleBackup(@NonNull Context context) {
+        JobScheduler scheduler = (JobScheduler) context.getSystemService(Context.JOB_SCHEDULER_SERVICE);
+        if (scheduler != null) {    // it will never be null
+            scheduler.schedule(BackupDatabaseJob.getJobInfo(context));
+        } else {
+            L.i("jobscheduler is null");
+        }
     }
 
     private JobParameters mJobParams;

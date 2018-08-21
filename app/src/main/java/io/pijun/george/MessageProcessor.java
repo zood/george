@@ -7,7 +7,6 @@ import android.support.annotation.WorkerThread;
 import android.support.v4.content.ContextCompat;
 import android.text.TextUtils;
 import android.text.format.DateUtils;
-import android.util.Pair;
 
 import java.io.IOException;
 
@@ -23,6 +22,7 @@ import io.pijun.george.database.DB;
 import io.pijun.george.database.FriendRecord;
 import io.pijun.george.database.UserRecord;
 import io.pijun.george.queue.PersistentQueue;
+import io.pijun.george.service.BackupDatabaseJob;
 import io.pijun.george.service.PositionService;
 import retrofit2.Response;
 
@@ -52,84 +52,6 @@ public class MessageProcessor {
 
     private MessageProcessor() {
         queue = new PersistentQueue<>(App.getApp(), QUEUE_FILENAME, new MessageConverter());
-    }
-
-    // We should use this eventually, so we can break up the decryptAndProcess method
-    public static Pair<UserComm, Result> decrypt(@NonNull Context ctx, @NonNull byte[] senderId, @NonNull byte[] cipherText, @NonNull byte[] nonce) {
-        //noinspection ConstantConditions
-        if (senderId == null || senderId.length != Constants.USER_ID_LENGTH) {
-            L.i("senderId: " + Hex.toHexString(senderId));
-            return Pair.create(null, Result.ErrorInvalidSenderId);
-        }
-        //noinspection ConstantConditions
-        if (cipherText == null) {
-            return Pair.create(null, Result.ErrorMissingCipherText);
-        }
-        //noinspection ConstantConditions
-        if (nonce == null) {
-            return Pair.create(null, Result.ErrorMissingNonce);
-        }
-        DB db = DB.get();
-        UserRecord user = db.getUser(senderId);
-        Prefs prefs = Prefs.get(ctx);
-        String token = prefs.getAccessToken();
-        KeyPair keyPair = prefs.getKeyPair();
-        if (!AuthenticationManager.isLoggedIn(ctx)) {
-            return Pair.create(null, Result.ErrorNotLoggedIn);
-        }
-        if (token == null || keyPair == null) {
-            return Pair.create(null, Result.ErrorNotLoggedIn);
-        }
-
-        if (user == null) {
-            L.i("  need to download user");
-            // we need to retrieve it from the server
-            OscarAPI api = OscarClient.newInstance(token);
-            try {
-                Response<LimitedUserInfo> response = api.getUser(Hex.toHexString(senderId)).execute();
-                if (!response.isSuccessful()) {
-                    OscarError apiErr = OscarError.fromResponse(response);
-                    if (apiErr == null) {
-                        return Pair.create(null, Result.ErrorUnknown);
-                    }
-                    switch (apiErr.code) {
-                        case OscarError.ERROR_INVALID_ACCESS_TOKEN:
-                            return Pair.create(null, Result.ErrorNotLoggedIn);
-                        case OscarError.ERROR_USER_NOT_FOUND:
-                            return Pair.create(null, Result.ErrorUnknownSender);
-                        case OscarError.ERROR_INTERNAL:
-                            return Pair.create(null, Result.ErrorRemoteInternal);
-                        default:
-                            return Pair.create(null, Result.ErrorUnknown);
-                    }
-                }
-                LimitedUserInfo lui = response.body();
-                if (lui == null) {
-                    L.w("Unable to decode user " + Hex.toHexString(senderId) + " from response");
-                    return Pair.create(null, Result.ErrorUnknown);
-                }
-                // now that we've encountered a new user, add them to the database (because of TOFU)
-                user = db.addUser(senderId, lui.username, lui.publicKey, true, ctx);
-                L.i("  added user: " + user);
-            } catch (IOException ioe) {
-                return Pair.create(null, Result.ErrorNoNetwork);
-            } catch (DB.DBException dbe) {
-                CloudLogger.log(dbe);
-                return Pair.create(null, Result.ErrorDatabaseException);
-            }
-        }
-
-        byte[] unwrappedBytes = Sodium.publicKeyDecrypt(cipherText, nonce, user.publicKey, keyPair.secretKey);
-        if (unwrappedBytes == null) {
-            return Pair.create(null, Result.ErrorDecryptionFailed);
-        }
-        UserComm comm = UserComm.fromJSON(unwrappedBytes);
-        if (!comm.isValid()) {
-            L.i("usercomm from " + user.username + " was invalid. here it is: " + comm);
-            return Pair.create(null, Result.ErrorInvalidCommunication);
-        }
-
-        return Pair.create(comm, null);
     }
 
     public static Result decryptAndProcess(@NonNull Context context, @NonNull byte[] senderId, @NonNull byte[] cipherText, @NonNull byte[] nonce) {
@@ -187,8 +109,9 @@ public class MessageProcessor {
                     return Result.ErrorUnknown;
                 }
                 // now that we've encountered a new user, add them to the database (because of TOFU)
-                user = db.addUser(senderId, lui.username, lui.publicKey, true, context);
+                user = db.addUser(senderId, lui.username, lui.publicKey);
                 L.i("  added user: " + user);
+                BackupDatabaseJob.scheduleBackup(context);
             } catch (IOException ioe) {
                 return Result.ErrorNoNetwork;
             } catch (DB.DBException dbe) {
@@ -316,7 +239,8 @@ public class MessageProcessor {
         L.i("LocationSharingGrant");
         DB db = DB.get();
         try {
-            db.sharingGrantedBy(user, comm.dropBox, context);
+            db.sharingGrantedBy(user, comm.dropBox);
+            BackupDatabaseJob.scheduleBackup(context);
         } catch (DB.DBException ex) {
             L.w("error recording location grant", ex);
             CloudLogger.log(ex);
@@ -329,7 +253,8 @@ public class MessageProcessor {
     private static Result handleLocationSharingRevocation(@NonNull Context context, @NonNull UserRecord user) {
         L.i("LocationSharingRevocation");
         DB db = DB.get();
-        db.sharingRevokedBy(user, context);
+        db.sharingRevokedBy(user);
+        BackupDatabaseJob.scheduleBackup(context);
         return Result.Success;
     }
 
