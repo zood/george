@@ -19,8 +19,6 @@ import android.support.annotation.UiThread;
 import android.support.annotation.WorkerThread;
 import android.support.v4.util.LongSparseArray;
 
-import com.crashlytics.android.Crashlytics;
-
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -32,6 +30,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 
 import io.pijun.george.App;
 import io.pijun.george.AvatarManager;
+import io.pijun.george.CloudLogger;
 import io.pijun.george.Constants;
 import io.pijun.george.Hex;
 import io.pijun.george.L;
@@ -424,7 +423,7 @@ public class DB {
                     Snapshot.Friend f = new Snapshot.Friend();
                     friendRecord.user = getUser(friendRecord.userId);
                     if (friendRecord.user == null) {
-                        Crashlytics.logException(new DBException("unable to find a user record for a friend"));
+                        CloudLogger.log("unable to find a user record for a friend");
                         continue;
                     }
                     f.userId = friendRecord.user.userId;
@@ -761,7 +760,8 @@ public class DB {
                     + LOCATIONS_COL_ACCURACY + " REAL, "
                     + LOCATIONS_COL_SPEED + " REAL, "
                     + LOCATIONS_COL_BEARING + " REAL, "
-                    + LOCATIONS_COL_MOVEMENT + " TEXT)";
+                    + LOCATIONS_COL_MOVEMENT + " TEXT, "
+                    + LOCATIONS_COL_BATTERY_LEVEL + " INTEGER)";
             db.execSQL(createLocations);
 
             String createUsers = "CREATE TABLE "

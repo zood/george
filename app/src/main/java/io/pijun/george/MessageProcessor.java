@@ -9,8 +9,6 @@ import android.text.TextUtils;
 import android.text.format.DateUtils;
 import android.util.Pair;
 
-import com.crashlytics.android.Crashlytics;
-
 import java.io.IOException;
 
 import io.pijun.george.api.LimitedUserInfo;
@@ -116,7 +114,7 @@ public class MessageProcessor {
             } catch (IOException ioe) {
                 return Pair.create(null, Result.ErrorNoNetwork);
             } catch (DB.DBException dbe) {
-                Crashlytics.logException(dbe);
+                CloudLogger.log(dbe);
                 return Pair.create(null, Result.ErrorDatabaseException);
             }
         }
@@ -194,7 +192,7 @@ public class MessageProcessor {
             } catch (IOException ioe) {
                 return Result.ErrorNoNetwork;
             } catch (DB.DBException dbe) {
-                Crashlytics.logException(dbe);
+                CloudLogger.log(dbe);
                 return Result.ErrorDatabaseException;
             }
         }
@@ -269,7 +267,7 @@ public class MessageProcessor {
             }
             AvatarManager.sendAvatarToUser(ctx, user);
         } catch (IOException ex) {
-            Crashlytics.logException(ex);
+            CloudLogger.log(ex);
             L.w("Error handling avatar request", ex);
         }
 
@@ -291,7 +289,7 @@ public class MessageProcessor {
             }
         } catch (IOException ex) {
             L.w("Exception saving avatar", ex);
-            Crashlytics.logException(ex);
+            CloudLogger.log(ex);
         }
         return Result.Success;
     }
@@ -307,7 +305,7 @@ public class MessageProcessor {
             db.setFriendLocation(fr.id, comm.latitude, comm.longitude, comm.time, comm.accuracy, comm.speed, comm.bearing, comm.movement, comm.batteryLevel);
         } catch (DB.DBException ex) {
             L.w("error setting location info for friend", ex);
-            Crashlytics.logException(ex);
+            CloudLogger.log(ex);
             return Result.ErrorDatabaseException;
         }
 
@@ -321,7 +319,7 @@ public class MessageProcessor {
             db.sharingGrantedBy(user, comm.dropBox, context);
         } catch (DB.DBException ex) {
             L.w("error recording location grant", ex);
-            Crashlytics.logException(ex);
+            CloudLogger.log(ex);
             return Result.ErrorDatabaseException;
         }
 
@@ -440,7 +438,7 @@ public class MessageProcessor {
                 }
             } catch (Throwable t) {
                 L.w("MessageProcessor.processQueue exception", t);
-                Crashlytics.logException(t);
+                CloudLogger.log(t);
             }
         }
     }

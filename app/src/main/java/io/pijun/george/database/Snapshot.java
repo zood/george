@@ -3,12 +3,11 @@ package io.pijun.george.database;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 
-import com.crashlytics.android.Crashlytics;
-
 import java.io.ByteArrayInputStream;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
 
+import io.pijun.george.CloudLogger;
 import io.pijun.george.Constants;
 import io.pijun.george.api.OscarClient;
 
@@ -49,7 +48,7 @@ public class Snapshot {
         try {
             snapshot = OscarClient.sGson.fromJson(isr, Snapshot.class);
         } catch (Throwable t) {
-            Crashlytics.logException(t);
+            CloudLogger.log(t);
             return null;
         }
         return snapshot;

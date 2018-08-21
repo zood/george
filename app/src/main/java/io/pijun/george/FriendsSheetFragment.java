@@ -12,14 +12,11 @@ import android.support.annotation.WorkerThread;
 import android.support.v4.app.Fragment;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.widget.LinearLayoutManager;
-import android.text.TextUtils;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewTreeObserver;
 import android.widget.Toast;
-
-import com.crashlytics.android.Crashlytics;
 
 import java.io.IOException;
 import java.security.SecureRandom;
@@ -27,7 +24,6 @@ import java.util.ArrayList;
 
 import io.pijun.george.api.OscarClient;
 import io.pijun.george.api.UserComm;
-import io.pijun.george.crypto.KeyPair;
 import io.pijun.george.database.DB;
 import io.pijun.george.database.FriendLocation;
 import io.pijun.george.database.FriendRecord;
@@ -222,7 +218,7 @@ public class FriendsSheetFragment extends Fragment implements FriendItemsAdapter
             UserComm comm = UserComm.newLocationSharingRevocation();
             String errMsg = OscarClient.queueSendMessage(requireContext(), friend.user, comm, false, false);
             if (errMsg != null) {
-                Crashlytics.logException(new RuntimeException(errMsg));
+                CloudLogger.log(errMsg);
             }
         }
 
@@ -230,7 +226,7 @@ public class FriendsSheetFragment extends Fragment implements FriendItemsAdapter
             DB.get().removeFriend(friend, requireContext());
         } catch (DB.DBException ex) {
             L.w("Error removing friend", ex);
-            Crashlytics.logException(ex);
+            CloudLogger.log(ex);
             Utils.showStringAlert(getContext(), null, "There was a problem removing this friend. Try again, and if it still fails, contact support.");
         }
     }
@@ -243,7 +239,7 @@ public class FriendsSheetFragment extends Fragment implements FriendItemsAdapter
         UserComm comm = UserComm.newLocationSharingGrant(sendingBoxId);
         String errMsg = OscarClient.queueSendMessage(requireContext(), friend.user, comm, false, false);
         if (errMsg != null) {
-            Crashlytics.logException(new RuntimeException(errMsg));
+             CloudLogger.log(new RuntimeException(errMsg));
             return;
         }
 
@@ -253,7 +249,7 @@ public class FriendsSheetFragment extends Fragment implements FriendItemsAdapter
             db.startSharingWith(friend.user, sendingBoxId, requireContext());
             AvatarManager.sendAvatarToUser(requireContext(), friend.user);
         } catch (DB.DBException ex) {
-            Crashlytics.logException(ex);
+            CloudLogger.log(ex);
             App.runOnUiThread(new UiRunnable() {
                 @Override
                 public void run() {
@@ -262,7 +258,7 @@ public class FriendsSheetFragment extends Fragment implements FriendItemsAdapter
                 }
             });
         } catch (IOException ex) {
-            Crashlytics.logException(ex);
+            CloudLogger.log(ex);
         }
 
         FriendRecord updatedFriend = db.getFriendById(friend.id);
@@ -285,7 +281,7 @@ public class FriendsSheetFragment extends Fragment implements FriendItemsAdapter
         try {
             db.stopSharingWith(friend.user, requireContext());
         } catch (DB.DBException ex) {
-            Crashlytics.logException(ex);
+            CloudLogger.log(ex);
             App.runOnUiThread(new UiRunnable() {
                 @Override
                 public void run() {
@@ -298,7 +294,7 @@ public class FriendsSheetFragment extends Fragment implements FriendItemsAdapter
         UserComm comm = UserComm.newLocationSharingRevocation();
         String errMsg = OscarClient.queueSendMessage(requireContext(), friend.user, comm, false, false);
         if (errMsg != null) {
-            Crashlytics.logException(new RuntimeException(errMsg));
+            CloudLogger.log(new RuntimeException(errMsg));
         }
 
         // grab the updated friend record, and apply it on our adapter

@@ -10,10 +10,9 @@ import android.support.annotation.NonNull;
 import android.support.annotation.WorkerThread;
 import android.text.format.DateUtils;
 
-import com.crashlytics.android.Crashlytics;
-
 import java.io.IOException;
 
+import io.pijun.george.CloudLogger;
 import io.pijun.george.L;
 import io.pijun.george.WorkerRunnable;
 import io.pijun.george.api.task.AddFcmTokenTask;
@@ -57,7 +56,7 @@ public final class TaskSender {
         PersistentQueue<OscarTask> queue = OscarClient.getQueue(ctx);
         PowerManager pwrMgr = (PowerManager) ctx.getSystemService(Context.POWER_SERVICE);
         if (pwrMgr == null) {
-            Crashlytics.log("PowerManager is null");
+            CloudLogger.log("PowerManager is null");
             return;
         }
 
@@ -129,7 +128,7 @@ public final class TaskSender {
                 //noinspection UnnecessaryContinue
                 continue;
             } catch (Throwable t) {
-                Crashlytics.logException(t);
+                CloudLogger.log(t);
                 queue.poll();
             } finally {
                 try {

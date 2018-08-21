@@ -20,7 +20,6 @@ import android.support.v4.app.NotificationCompat;
 import android.support.v4.content.ContextCompat;
 import android.text.format.DateUtils;
 
-import com.crashlytics.android.Crashlytics;
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationCallback;
 import com.google.android.gms.location.LocationRequest;
@@ -33,6 +32,7 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 
 import io.pijun.george.App;
+import io.pijun.george.CloudLogger;
 import io.pijun.george.L;
 import io.pijun.george.LocationUtils;
 import io.pijun.george.Prefs;
@@ -134,17 +134,17 @@ public class PositionService extends Service {
                     cmd = cmdsQueue.take();
                 } catch (InterruptedException ex) {
                     L.e("Error taking command", ex);
-                    Crashlytics.logException(ex);
+                    CloudLogger.log(ex);
                     continue;
                 }
 
                 switch (cmd) {
                     case ShutDown:
-                        L.i("cmd - shut down");
+//                        L.i("cmd - shut down");
                         shutDown();
                         return;
                     case UploadLocation:
-                        L.i("cmd - upload location");
+//                        L.i("cmd - upload location");
                         uploadLatestLocation();
                         break;
                     default:
@@ -152,7 +152,7 @@ public class PositionService extends Service {
                 }
             }
         } catch (Throwable t) {
-            Crashlytics.logException(t);
+            CloudLogger.log(t);
         }
     }
 
@@ -293,7 +293,7 @@ public class PositionService extends Service {
                 issueCommand(Command.UploadLocation);
                 // if we get a location with an accuracy of <= 10 meters, that's good enough.
                 boolean isAccurate = loc.hasAccuracy() && loc.getAccuracy() <= 10;
-                L.i("PS - acc: " + loc.getAccuracy() + ", time: " + loc.getTime() + ", now: " + System.currentTimeMillis());
+//                L.i("PS - acc: " + loc.getAccuracy() + ", time: " + loc.getTime() + ", now: " + System.currentTimeMillis());
                 // Also check that it's a recent value, and not some cached value the system gave us.
                 boolean isRecent = (System.currentTimeMillis() - loc.getTime()) < 30 * DateUtils.SECOND_IN_MILLIS;
                 if (isAccurate && isRecent) {
@@ -301,7 +301,7 @@ public class PositionService extends Service {
                 }
             } catch (Throwable t) {
                 L.w("Exception in PS.onLocationResult");
-                Crashlytics.logException(t);
+                CloudLogger.log(t);
             }
         }
     };

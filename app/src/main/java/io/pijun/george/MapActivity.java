@@ -31,7 +31,6 @@ import android.view.View;
 import android.widget.EditText;
 import android.widget.Toast;
 
-import com.crashlytics.android.Crashlytics;
 import com.google.android.gms.common.api.ApiException;
 import com.google.android.gms.common.api.ResolvableApiException;
 import com.google.android.gms.location.FusedLocationProviderClient;
@@ -399,7 +398,7 @@ public final class MapActivity extends AppCompatActivity implements OnMapReadyCa
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
             // This should never happen. Nobody should be calling this method before permission has been obtained.
             L.w("MapActivity.beginLocationUpdates was called before obtaining location permission");
-            Crashlytics.logException(new Exception("Location updates requested before acquiring permission"));
+            CloudLogger.log("Location updates requested before acquiring permission");
             return;
         }
 
@@ -862,7 +861,7 @@ public final class MapActivity extends AppCompatActivity implements OnMapReadyCa
                     UserComm comm = UserComm.newLocationSharingGrant(friend.sendingBoxId);
                     String errMsg = OscarClient.queueSendMessage(this, userRecord, comm, false, false);
                     if (errMsg != null) {
-                        Crashlytics.logException(new RuntimeException(errMsg));
+                        CloudLogger.log(errMsg);
                     }
                     Utils.showStringAlert(this, null, "You're already sharing your location with " + username);
                     return;
@@ -881,26 +880,24 @@ public final class MapActivity extends AppCompatActivity implements OnMapReadyCa
             db.startSharingWith(userRecord, sendingBoxId, this);
             try { AvatarManager.sendAvatarToUser(this, userRecord); }
             catch (IOException ex) {
-                Crashlytics.logException(ex);
+                CloudLogger.log(ex);
             }
             Utils.showStringAlert(this, null, "You're now sharing with " + username);
         } catch (IOException ex) {
             Utils.showStringAlert(this, null, "Network problem trying to share your location. Check your connection then try again.");
         } catch (DB.DBException dbe) {
             Utils.showStringAlert(this, null, "Error adding friend into database");
-            Crashlytics.logException(dbe);
+            CloudLogger.log(dbe);
         }
     }
 
     private UpdateStatusTracker.Listener updateStatusTrackerListener = new UpdateStatusTracker.Listener() {
         @Override
         public void onUpdateStatusChanged(long friendId) {
-            L.i("updatestatuschanged - friendId: " + friendId + ", trackingId: " + selectedAvatarFriendId);
             if (friendId != selectedAvatarFriendId || binding == null) {
                 return;
             }
             UpdateStatusTracker.State status = UpdateStatusTracker.getFriendState(friendId);
-            L.i("updatestatuschanged " + friendId + ", state: " + status);
             int vis;
             @ColorRes int colorId = 0;
             switch (status) {
@@ -992,7 +989,12 @@ public final class MapActivity extends AppCompatActivity implements OnMapReadyCa
                 }
             }
 
-            LocationUtils.upload(location);
+            App.runInBackground(new WorkerRunnable() {
+                @Override
+                public void run() {
+                    LocationUtils.upload(location);
+                }
+            });
         }
     };
 

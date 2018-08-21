@@ -10,7 +10,6 @@ import android.support.annotation.Nullable;
 import android.support.annotation.UiThread;
 import android.support.annotation.WorkerThread;
 
-import com.crashlytics.android.Crashlytics;
 import com.squareup.picasso.Picasso;
 
 import java.io.File;
@@ -133,7 +132,7 @@ public class AvatarManager {
         try {
             fos = new FileOutputStream(imgFile);
         } catch (FileNotFoundException ex) {
-            Crashlytics.logException(ex);
+            CloudLogger.log(ex);
             return false;
         }
 
@@ -162,7 +161,7 @@ public class AvatarManager {
         try {
             fos = new FileOutputStream(imgFile);
         } catch (FileNotFoundException ex) {
-            Crashlytics.logException(ex);
+            CloudLogger.log(ex);
             return false;
         }
         boolean success = img.compress(Bitmap.CompressFormat.JPEG, 80, fos);
@@ -188,7 +187,7 @@ public class AvatarManager {
                     sendAvatarToUsers(ctx, users);
                     DB.get().scheduleBackup(ctx);
                 } catch (IOException ex) {
-                    Crashlytics.logException(ex);
+                    CloudLogger.log(ex);
                 }
             }
         });

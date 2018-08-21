@@ -8,8 +8,6 @@ import android.support.annotation.Nullable;
 import android.support.annotation.UiThread;
 import android.support.annotation.WorkerThread;
 
-import com.crashlytics.android.Crashlytics;
-
 import java.io.IOException;
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
@@ -254,7 +252,7 @@ public class AuthenticationManager {
             try {
                 DB.get().restoreDatabase(ctx, snapshot);
             } catch (DB.DBException ex) {
-                Crashlytics.logException(ex);
+                CloudLogger.log(ex);
                 notifyLoginWatchers(Error.DatabaseRestoreFailed, null, watcher);
                 return;
             }

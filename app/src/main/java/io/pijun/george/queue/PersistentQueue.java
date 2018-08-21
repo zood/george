@@ -11,12 +11,11 @@ import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.annotation.WorkerThread;
 
-import com.crashlytics.android.Crashlytics;
-
 import java.nio.ByteBuffer;
 import java.util.Locale;
 import java.util.concurrent.Semaphore;
 
+import io.pijun.george.CloudLogger;
 import io.pijun.george.L;
 
 public class PersistentQueue<E> {
@@ -138,7 +137,7 @@ public class PersistentQueue<E> {
             mHelper.getWritableDatabase().insertOrThrow(TASKS_TABLE, null, cv);
         } catch (SQLException ex) {
             L.w("Error offering", ex);
-            Crashlytics.logException(ex);
+            CloudLogger.log(ex);
             return;
         }
         mSemaphore.release();

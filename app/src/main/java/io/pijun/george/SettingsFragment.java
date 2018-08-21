@@ -21,8 +21,6 @@ import android.view.ViewGroup;
 import android.widget.PopupMenu;
 import android.widget.TextView;
 
-import com.crashlytics.android.Crashlytics;
-
 import java.io.File;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -217,7 +215,7 @@ public class SettingsFragment extends Fragment implements SettingsAdapter.Listen
             startActivityForResult(intent, REQUEST_IMAGE_CAPTURE);
         } catch (Throwable t) {
             L.w("unable to start camera", t);
-            Crashlytics.logException(t);
+            CloudLogger.log(t);
         }
     }
 
