@@ -15,9 +15,9 @@ android {
         resConfigs "en"
         packagingOptions {
             exclude "lib/mips/*"
+            exclude "lib/armeabi/*"
 //            exclude "lib/x86/*"
 //            exclude "lib/x86_64/*"
-//            exclude "lib/armeabi/*"
         }
         externalNativeBuild {
             cmake {
@@ -31,8 +31,11 @@ android {
     buildTypes {
         release {
             shrinkResources false
-            minifyEnabled false
+            minifyEnabled true
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+        }
+        debug {
+            jniDebuggable = true
         }
     }
     sourceSets {
