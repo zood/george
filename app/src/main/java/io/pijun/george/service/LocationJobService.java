@@ -6,11 +6,11 @@ import android.app.job.JobScheduler;
 import android.app.job.JobService;
 import android.content.ComponentName;
 import android.content.Context;
-import android.support.annotation.AnyThread;
-import android.support.annotation.NonNull;
-import android.support.v4.content.ContextCompat;
 import android.text.format.DateUtils;
 
+import androidx.annotation.AnyThread;
+import androidx.annotation.NonNull;
+import androidx.core.content.ContextCompat;
 import io.pijun.george.App;
 import io.pijun.george.AuthenticationManager;
 import io.pijun.george.L;

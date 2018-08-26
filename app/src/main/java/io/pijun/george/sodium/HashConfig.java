@@ -1,8 +1,8 @@
 package io.pijun.george.sodium;
 
-import android.support.annotation.AnyThread;
-import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
+import androidx.annotation.AnyThread;
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 
 public class HashConfig {
 
@@ -49,7 +49,8 @@ public class HashConfig {
             this.saltLength = saltLength;
         }
 
-        @Nullable @AnyThread
+        @Nullable
+        @AnyThread
         public static Algorithm get(String name) {
             for (Algorithm a : values()) {
                 if (a.name.equals(name)) {
@@ -209,6 +210,7 @@ public class HashConfig {
         }
     }
 
+    @NonNull
     @Override
     public String toString() {
         return "HashConfig{" +

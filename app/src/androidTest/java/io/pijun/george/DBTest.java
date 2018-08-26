@@ -1,8 +1,6 @@
 package io.pijun.george;
 
 import android.content.Context;
-import android.support.test.InstrumentationRegistry;
-import android.support.test.runner.AndroidJUnit4;
 
 import org.junit.BeforeClass;
 import org.junit.FixMethodOrder;
@@ -13,6 +11,8 @@ import org.junit.runners.MethodSorters;
 import java.security.SecureRandom;
 import java.util.ArrayList;
 
+import androidx.test.InstrumentationRegistry;
+import androidx.test.runner.AndroidJUnit4;
 import io.pijun.george.database.DB;
 import io.pijun.george.database.FriendLocation;
 import io.pijun.george.database.FriendRecord;
@@ -21,7 +21,12 @@ import io.pijun.george.database.MovementType;
 import io.pijun.george.database.Snapshot;
 import io.pijun.george.database.UserRecord;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertArrayEquals;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.fail;
 
 @RunWith(AndroidJUnit4.class)
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)

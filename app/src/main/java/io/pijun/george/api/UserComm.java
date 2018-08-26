@@ -1,11 +1,6 @@
 package io.pijun.george.api;
 
 import android.location.Location;
-import android.support.annotation.CheckResult;
-import android.support.annotation.IntRange;
-import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
-import android.support.annotation.StringDef;
 
 import java.io.ByteArrayInputStream;
 import java.io.InputStreamReader;
@@ -13,6 +8,11 @@ import java.lang.annotation.Retention;
 import java.util.Arrays;
 import java.util.Objects;
 
+import androidx.annotation.CheckResult;
+import androidx.annotation.IntRange;
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.annotation.StringDef;
 import io.pijun.george.Constants;
 import io.pijun.george.L;
 import io.pijun.george.database.MovementType;
@@ -30,7 +30,8 @@ public class UserComm {
     public double latitude;
     public double longitude;
     public long time;
-    @Nullable public Float accuracy;
+    @Nullable
+    public Float accuracy;
     @Nullable public Float speed;
     @Nullable public Float bearing;
     @Nullable public String movement;
@@ -55,7 +56,8 @@ public class UserComm {
 
     private UserComm() {}
 
-    @NonNull @CheckResult
+    @NonNull
+    @CheckResult
     public static UserComm newAvatarRequest() {
         UserComm c = new UserComm();
         c.type = CommType.AvatarRequest;
@@ -233,6 +235,7 @@ public class UserComm {
         return result;
     }
 
+    @NonNull
     @Override
     public String toString() {
         return "UserComm{" +

@@ -1,21 +1,21 @@
 apply plugin: 'com.android.application'
 
 android {
-    compileSdkVersion 27
+    compileSdkVersion 28
     dataBinding.enabled = true
 
     defaultConfig {
         applicationId "io.pijun.george"
         minSdkVersion 21
-        targetSdkVersion 27
+        targetSdkVersion 28
         versionCode 23
         versionName "0.23"
         multiDexEnabled true
-        testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
+        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         resConfigs "en"
         packagingOptions {
             exclude "lib/mips/*"
-            exclude "lib/armeabi/*"
+//            exclude "lib/armeabi/*"
 //            exclude "lib/x86/*"
 //            exclude "lib/x86_64/*"
         }
@@ -30,7 +30,7 @@ android {
     }
     buildTypes {
         release {
-            shrinkResources false
+            shrinkResources true
             minifyEnabled true
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
@@ -60,14 +60,14 @@ repositories {
 
 dependencies {
     implementation fileTree(dir: 'libs', include: ['*.jar'])
-    androidTestImplementation('com.android.support.test.espresso:espresso-core:2.2.2', {
+    androidTestImplementation('androidx.test.espresso:espresso-core:3.1.0-alpha4', {
         exclude group: 'com.android.support', module: 'support-annotations'
     })
 
-    implementation 'com.android.support:appcompat-v7:27.1.1'
-    implementation 'com.android.support:design:27.1.1'
-    implementation 'com.android.support:percent:27.1.1'
-    implementation 'com.android.support.constraint:constraint-layout:1.1.2'
+    implementation 'androidx.appcompat:appcompat:1.0.0-rc01'
+    implementation 'com.google.android.material:material:1.0.0-rc01'
+    implementation 'androidx.percentlayout:percentlayout:1.0.0-rc01'
+    implementation 'androidx.constraintlayout:constraintlayout:1.1.2'
 
     // used for fusion location
     implementation 'com.google.android.gms:play-services-location:15.0.1'
@@ -75,7 +75,7 @@ dependencies {
     implementation 'com.google.android.gms:play-services-maps:15.0.1'
     // cloud messaging
     implementation 'com.google.firebase:firebase-messaging:17.0.0'
-    implementation 'com.google.firebase:firebase-core:16.0.1'
+    implementation 'com.google.firebase:firebase-core:16.0.3'
 
     implementation 'com.squareup.retrofit2:retrofit:2.4.0'
     implementation 'com.squareup.retrofit2:converter-gson:2.4.0'
@@ -87,7 +87,7 @@ dependencies {
     implementation 'com.squareup.picasso:picasso:2.5.2'
 
     testImplementation 'junit:junit:4.12'
-    androidTestImplementation 'com.android.support.test.espresso:espresso-core:3.0.2'
+    androidTestImplementation 'androidx.test.espresso:espresso-core:3.1.0-alpha4'
 }
 
 apply plugin: 'com.google.gms.google-services'

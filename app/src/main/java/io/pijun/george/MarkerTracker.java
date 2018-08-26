@@ -1,15 +1,15 @@
 package io.pijun.george;
 
-import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
-import android.support.annotation.UiThread;
-import android.support.v4.util.LongSparseArray;
+import android.util.LongSparseArray;
 
 import com.google.android.gms.maps.model.Marker;
 
 import java.util.HashMap;
 import java.util.Set;
 
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.annotation.UiThread;
 import io.pijun.george.database.FriendLocation;
 
 public class MarkerTracker {

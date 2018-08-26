@@ -1,14 +1,14 @@
 package io.pijun.george.api;
 
-import android.support.annotation.NonNull;
-
+import androidx.annotation.NonNull;
 import io.pijun.george.Hex;
 
 @SuppressWarnings("NullableProblems")
 public class AuthenticationChallenge {
 
     public static class User {
-        @NonNull public byte[] publicKey;
+        @NonNull
+        public byte[] publicKey;
         @NonNull public byte[] wrappedSecretKey;
         @NonNull public byte[] wrappedSecretKeyNonce;
         @NonNull public byte[] passwordSalt;

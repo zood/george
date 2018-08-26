@@ -3,12 +3,6 @@ package io.pijun.george;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
-import android.support.annotation.AnyThread;
-import android.support.annotation.CheckResult;
-import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
-import android.support.annotation.UiThread;
-import android.support.annotation.WorkerThread;
 
 import com.squareup.picasso.Picasso;
 
@@ -25,6 +19,12 @@ import java.util.List;
 import java.util.Locale;
 import java.util.concurrent.CopyOnWriteArrayList;
 
+import androidx.annotation.AnyThread;
+import androidx.annotation.CheckResult;
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.annotation.UiThread;
+import androidx.annotation.WorkerThread;
 import io.pijun.george.api.OscarClient;
 import io.pijun.george.api.UserComm;
 import io.pijun.george.crypto.KeyPair;
@@ -97,7 +97,8 @@ public class AvatarManager {
         }
     }
 
-    @CheckResult @NonNull @AnyThread
+    @CheckResult
+    @NonNull @AnyThread
     static File getAvatar(@NonNull Context ctx, @NonNull String username) {
         File filesDir = ctx.getFilesDir();
         File avatarsDir = new File(filesDir, AVATAR_DIR);
@@ -238,7 +239,8 @@ public class AvatarManager {
     }
 
     interface Listener {
-        @UiThread void onAvatarUpdated(@Nullable String username);
+        @UiThread
+        void onAvatarUpdated(@Nullable String username);
     }
 
 }

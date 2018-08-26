@@ -1,8 +1,9 @@
 package io.pijun.george.view;
 
 import android.content.Context;
-import android.support.constraint.ConstraintLayout;
 import android.util.AttributeSet;
+
+import androidx.constraintlayout.widget.ConstraintLayout;
 
 public class FriendsSheetLayout extends ConstraintLayout {
     public float hiddenStateTranslationY;

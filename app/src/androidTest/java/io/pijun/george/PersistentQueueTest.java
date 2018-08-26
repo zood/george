@@ -1,15 +1,15 @@
 package io.pijun.george;
 
 import android.content.Context;
-import android.support.annotation.NonNull;
-import android.support.test.InstrumentationRegistry;
-import android.support.test.runner.AndroidJUnit4;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import java.security.SecureRandom;
 
+import androidx.annotation.NonNull;
+import androidx.test.InstrumentationRegistry;
+import androidx.test.runner.AndroidJUnit4;
 import io.pijun.george.queue.PersistentQueue;
 
 import static org.junit.Assert.assertArrayEquals;
@@ -99,7 +99,7 @@ public class PersistentQueueTest {
     }
 
     @Test
-    public void testTake() throws Exception {
+    public void testTake() {
         PersistentQueue<String> queue = newStringQueue();
         queue.offer(element1);
         queue.offer(element2);
@@ -110,7 +110,7 @@ public class PersistentQueueTest {
     }
 
     @Test
-    public void testBlockingPeek() throws Exception {
+    public void testBlockingPeek() {
         PersistentQueue<String> queue = newStringQueue();
         queue.offer(element1);
         assertEquals(queue.blockingPeek(), element1);

@@ -33,10 +33,6 @@
             android:windowSoftInputMode="adjustResize|stateHidden"
             android:theme="@style/WelcomeTheme" />
         <activity
-            android:name=".AvatarPickerActivity"
-            android:windowSoftInputMode="adjustResize"
-            android:theme="@style/AppTheme" />
-        <activity
             android:name=".LogActivity"
             android:windowSoftInputMode="adjustResize"
             android:theme="@style/AppTheme" />
@@ -52,15 +48,6 @@
         <activity android:name=".SettingsActivity"
             android:screenOrientation="portrait"
             android:theme="@style/AppTheme" />
-        <activity
-            android:name=".TestActivity"
-            android:windowSoftInputMode="adjustResize|stateHidden"
-            android:theme="@style/AppTheme">
-            <!--<intent-filter>-->
-                <!--<action android:name="android.intent.action.MAIN" />-->
-                <!--<category android:name="android.intent.category.LAUNCHER" />-->
-            <!--</intent-filter>-->
-        </activity>
 
         <!-- BEGIN SERVICES -->
         <service android:name=".service.FcmMessageReceiver">
@@ -93,7 +80,7 @@
         <!-- BEGIN PROVIDERS -->
         <provider
             android:authorities="io.pijun.george.fileprovider"
-            android:name="android.support.v4.content.FileProvider"
+            android:name="androidx.core.content.FileProvider"
             android:exported="false"
             android:grantUriPermissions="true">
             <meta-data

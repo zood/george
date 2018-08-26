@@ -4,11 +4,12 @@ import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
-import android.support.annotation.ColorInt;
-import android.support.annotation.NonNull;
 
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+
+import androidx.annotation.ColorInt;
+import androidx.annotation.NonNull;
 
 public class Identicon {
 

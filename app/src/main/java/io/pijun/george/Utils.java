@@ -3,16 +3,17 @@ package io.pijun.george;
 import android.annotation.SuppressLint;
 import android.content.Context;
 import android.os.Looper;
-import android.support.annotation.AnyThread;
-import android.support.annotation.Nullable;
-import android.support.annotation.StringRes;
-import android.support.annotation.UiThread;
-import android.support.v7.app.AlertDialog;
 
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
 import java.util.regex.Pattern;
+
+import androidx.annotation.AnyThread;
+import androidx.annotation.Nullable;
+import androidx.annotation.StringRes;
+import androidx.annotation.UiThread;
+import androidx.appcompat.app.AlertDialog;
 
 @SuppressWarnings("WeakerAccess")
 public final class Utils {
@@ -76,11 +77,6 @@ public final class Utils {
         builder.show();
     }
 
-    public static int pixToDps(Context ctx, int pixs) {
-        float scale = ctx.getResources().getDisplayMetrics().density;
-        return (int)((pixs - 0.5f)/scale);
-    }
-
     public static int dpsToPix(Context ctx, int dps) {
         float scale = ctx.getResources().getDisplayMetrics().density;
         return (int) (dps * scale + 0.5f);
@@ -134,6 +130,7 @@ public final class Utils {
             return false;
         }
 
+        //noinspection RedundantIfStatement
         if (domainParts[domainParts.length-1].length() < 2) {
             return false;
         }

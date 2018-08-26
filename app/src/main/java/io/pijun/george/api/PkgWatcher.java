@@ -2,9 +2,6 @@ package io.pijun.george.api;
 
 import android.os.Handler;
 import android.os.HandlerThread;
-import android.support.annotation.AnyThread;
-import android.support.annotation.NonNull;
-import android.support.annotation.WorkerThread;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -12,6 +9,9 @@ import java.io.InputStreamReader;
 import java.util.Locale;
 import java.util.concurrent.TimeUnit;
 
+import androidx.annotation.AnyThread;
+import androidx.annotation.NonNull;
+import androidx.annotation.WorkerThread;
 import io.pijun.george.App;
 import io.pijun.george.Config;
 import io.pijun.george.Constants;
@@ -30,7 +30,8 @@ public class PkgWatcher {
 
     private static int count = 1;
     private Handler handler;
-    @NonNull final private Listener listener;
+    @NonNull
+    final private Listener listener;
     private WebSocket socket;
 
     public PkgWatcher(@NonNull Listener listener) {

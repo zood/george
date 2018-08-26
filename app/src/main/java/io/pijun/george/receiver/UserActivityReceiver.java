@@ -4,9 +4,6 @@ import android.app.PendingIntent;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
-import android.support.annotation.AnyThread;
-import android.support.annotation.NonNull;
-import android.support.annotation.UiThread;
 
 import com.google.android.gms.location.ActivityRecognition;
 import com.google.android.gms.location.ActivityTransition;
@@ -21,6 +18,9 @@ import com.google.android.gms.tasks.Task;
 import java.util.ArrayList;
 import java.util.List;
 
+import androidx.annotation.AnyThread;
+import androidx.annotation.NonNull;
+import androidx.annotation.UiThread;
 import io.pijun.george.L;
 import io.pijun.george.Prefs;
 import io.pijun.george.database.MovementType;
@@ -36,7 +36,8 @@ public class UserActivityReceiver extends BroadcastReceiver {
                 .build();
     }
 
-    @AnyThread @NonNull
+    @AnyThread
+    @NonNull
     private static List<ActivityTransition> getHandledTransitions() {
         List<ActivityTransition> transitions = new ArrayList<>();
         int[] activities = new int[]{

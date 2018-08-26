@@ -1,7 +1,6 @@
 package io.pijun.george.api.task;
 
-import android.support.annotation.NonNull;
-
+import androidx.annotation.NonNull;
 import io.pijun.george.crypto.EncryptedData;
 
 public class SendMessageTask extends OscarTask {
@@ -16,6 +15,7 @@ public class SendMessageTask extends OscarTask {
     }
 
     @Override
+    @NonNull
     public String toString() {
         return "SendMessageTask{" +
                 "hexUserId='" + hexUserId + '\'' +

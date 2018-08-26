@@ -108,7 +108,7 @@
             android:layout_marginBottom="32dp"
             android:onClick="onShowSignIn" />
 
-        <android.support.design.widget.TextInputLayout
+        <com.google.android.material.textfield.TextInputLayout
             android:id="@+id/si_username_container"
             app:hintEnabled="false"
             android:textColorHint="@color/pijun_grey_50"
@@ -117,7 +117,7 @@
             android:layout_marginTop="32dp"
             android:layout_width="match_parent"
             android:layout_height="wrap_content">
-            <android.support.design.widget.TextInputEditText
+            <com.google.android.material.textfield.TextInputEditText
                 android:id="@+id/si_username"
                 style="@style/WelcomeEditText"
                 android:theme="@style/WelcomeTheme.EditText"
@@ -127,8 +127,8 @@
                 android:hint="@string/username"
                 android:inputType="text|textNoSuggestions"
                 android:privateImeOptions="nm" />
-        </android.support.design.widget.TextInputLayout>
-        <android.support.design.widget.TextInputLayout
+        </com.google.android.material.textfield.TextInputLayout>
+        <com.google.android.material.textfield.TextInputLayout
             android:id="@+id/si_password_container"
             app:hintEnabled="false"
             android:textColorHint="@color/pijun_grey_50"
@@ -139,7 +139,7 @@
             android:layout_height="wrap_content"
             app:passwordToggleEnabled="true"
             app:passwordToggleTint="@color/pijun_grey_50">
-            <android.support.design.widget.TextInputEditText
+            <com.google.android.material.textfield.TextInputEditText
                 android:id="@+id/si_password"
                 style="@style/WelcomeEditText"
                 android:theme="@style/WelcomeTheme.EditText"
@@ -147,7 +147,7 @@
                 android:layout_height="wrap_content"
                 android:hint="@string/password"
                 android:inputType="textPassword" />
-        </android.support.design.widget.TextInputLayout>
+        </com.google.android.material.textfield.TextInputLayout>
 
         <Button
             android:id="@+id/sign_in_button"
@@ -169,7 +169,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content" />
 
-        <android.support.design.widget.TextInputLayout
+        <com.google.android.material.textfield.TextInputLayout
             android:id="@+id/reg_username_container"
             app:hintEnabled="false"
             android:textColorHint="@color/pijun_grey_50"
@@ -178,7 +178,7 @@
             android:layout_marginTop="32dp"
             android:layout_width="match_parent"
             android:layout_height="wrap_content">
-            <android.support.design.widget.TextInputEditText
+            <com.google.android.material.textfield.TextInputEditText
                 android:id="@+id/reg_username"
                 style="@style/WelcomeEditText"
                 android:theme="@style/WelcomeTheme.EditText"
@@ -187,8 +187,8 @@
                 android:hint="@string/username"
                 android:inputType="text|textNoSuggestions"
                 android:privateImeOptions="nm" />
-        </android.support.design.widget.TextInputLayout>
-        <android.support.design.widget.TextInputLayout
+        </com.google.android.material.textfield.TextInputLayout>
+        <com.google.android.material.textfield.TextInputLayout
             android:id="@+id/reg_password_container"
             app:hintEnabled="false"
             app:passwordToggleEnabled="true"
@@ -199,7 +199,7 @@
             android:layout_marginTop="16dp"
             android:layout_width="match_parent"
             android:layout_height="wrap_content">
-            <android.support.design.widget.TextInputEditText
+            <com.google.android.material.textfield.TextInputEditText
                 android:id="@+id/reg_password"
                 style="@style/WelcomeEditText"
                 android:theme="@style/WelcomeTheme.EditText"
@@ -207,8 +207,8 @@
                 android:layout_height="wrap_content"
                 android:hint="@string/password"
                 android:inputType="textPassword" />
-        </android.support.design.widget.TextInputLayout>
-        <android.support.design.widget.TextInputLayout
+        </com.google.android.material.textfield.TextInputLayout>
+        <com.google.android.material.textfield.TextInputLayout
             android:id="@+id/reg_email_container"
             app:hintEnabled="false"
             android:textColorHint="@color/pijun_grey_50"
@@ -217,7 +217,7 @@
             android:layout_marginTop="16dp"
             android:layout_width="match_parent"
             android:layout_height="wrap_content">
-            <android.support.design.widget.TextInputEditText
+            <com.google.android.material.textfield.TextInputEditText
                 android:id="@+id/reg_email"
                 style="@style/WelcomeEditText"
                 android:theme="@style/WelcomeTheme.EditText"
@@ -225,7 +225,7 @@
                 android:inputType="textEmailAddress"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content" />
-        </android.support.design.widget.TextInputLayout>
+        </com.google.android.material.textfield.TextInputLayout>
 
         <Button
             android:id="@+id/register_button"

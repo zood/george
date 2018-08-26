@@ -1,12 +1,11 @@
 package io.pijun.george.api;
 
-import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
-
 import com.google.gson.annotations.SerializedName;
 
 import java.io.Reader;
 
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import io.pijun.george.L;
 import okhttp3.ResponseBody;
 import retrofit2.Response;
@@ -46,6 +45,7 @@ public class OscarError {
     public int code;
 
     @Override
+    @NonNull
     public String toString() {
         return "OscarError{" +
                 "message='" + message + '\'' +

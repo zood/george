@@ -13,11 +13,6 @@ import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.IBinder;
 import android.os.PowerManager;
-import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
-import android.support.annotation.WorkerThread;
-import android.support.v4.app.NotificationCompat;
-import android.support.v4.content.ContextCompat;
 import android.text.format.DateUtils;
 
 import com.google.android.gms.location.FusedLocationProviderClient;
@@ -31,6 +26,11 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.annotation.WorkerThread;
+import androidx.core.app.NotificationCompat;
+import androidx.core.content.ContextCompat;
 import io.pijun.george.App;
 import io.pijun.george.CloudLogger;
 import io.pijun.george.L;
@@ -242,7 +242,7 @@ public class PositionService extends Service {
 
         PowerManager pwrMgr = (PowerManager) getSystemService(Context.POWER_SERVICE);
         if (pwrMgr != null) {
-            wakeLock = pwrMgr.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "PositionServiceLock");
+            wakeLock = pwrMgr.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "ZoodLocation:PositionServiceLock");
             wakeLock.setReferenceCounted(false);
             wakeLock.acquire(LOCK_SECONDS * DateUtils.SECOND_IN_MILLIS);
         }

@@ -1,16 +1,15 @@
 package io.pijun.george.api.task;
 
-import android.support.annotation.NonNull;
-
 import com.google.gson.JsonElement;
 import com.google.gson.JsonParser;
 
 import java.io.ByteArrayInputStream;
 import java.io.InputStreamReader;
 
+import androidx.annotation.NonNull;
 import io.pijun.george.Constants;
-import io.pijun.george.queue.PersistentQueue;
 import io.pijun.george.api.OscarClient;
+import io.pijun.george.queue.PersistentQueue;
 
 public class QueueConverter implements PersistentQueue.Converter<OscarTask> {
 

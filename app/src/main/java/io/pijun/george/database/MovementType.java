@@ -1,9 +1,9 @@
 package io.pijun.george.database;
 
-import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
-
 import com.google.android.gms.location.DetectedActivity;
+
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 
 public enum MovementType {
     Vehicle("vehicle"),

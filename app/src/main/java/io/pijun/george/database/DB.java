@@ -9,14 +9,7 @@ import android.database.sqlite.SQLiteCursorDriver;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.database.sqlite.SQLiteQuery;
-import android.support.annotation.AnyThread;
-import android.support.annotation.CheckResult;
-import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
-import android.support.annotation.Size;
-import android.support.annotation.UiThread;
-import android.support.annotation.WorkerThread;
-import android.support.v4.util.LongSparseArray;
+import android.util.LongSparseArray;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -27,6 +20,13 @@ import java.util.ArrayList;
 import java.util.Locale;
 import java.util.concurrent.CopyOnWriteArrayList;
 
+import androidx.annotation.AnyThread;
+import androidx.annotation.CheckResult;
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.annotation.Size;
+import androidx.annotation.UiThread;
+import androidx.annotation.WorkerThread;
 import io.pijun.george.App;
 import io.pijun.george.AvatarManager;
 import io.pijun.george.CloudLogger;
@@ -758,7 +758,8 @@ public class DB {
     public interface Listener {
         @UiThread default void onFriendLocationUpdated(FriendLocation loc) {}
 
-        @UiThread default void onFriendRemoved(long friendId) {}
+        @UiThread
+        default void onFriendRemoved(long friendId) {}
 
         @WorkerThread default void onLocationSharingGranted(long userId) {}
 

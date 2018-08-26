@@ -1,8 +1,9 @@
 package com.arashpayan.gesture;
 
 import android.graphics.PointF;
-import android.support.v4.view.MotionEventCompat;
 import android.view.MotionEvent;
+
+import androidx.core.view.MotionEventCompat;
 
 /**
  * GestureRecognizer is a utility class with common functionality needed by the different

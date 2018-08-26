@@ -4,10 +4,6 @@ import android.content.Context;
 import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.drawable.Drawable;
-import android.support.annotation.AnyThread;
-import android.support.annotation.Nullable;
-import android.support.annotation.UiThread;
-import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -18,13 +14,19 @@ import com.squareup.picasso.Target;
 import java.util.ArrayList;
 import java.util.Locale;
 
+import androidx.annotation.AnyThread;
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.annotation.UiThread;
+import androidx.recyclerview.widget.RecyclerView;
 import io.pijun.george.database.FriendRecord;
 import io.pijun.george.view.AvatarView;
 
 class AvatarsAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
 
     private ArrayList<FriendRecord> mFriends = new ArrayList<>();
-    @Nullable private AvatarsAdapterListener mListener;
+    @Nullable
+    private AvatarsAdapterListener mListener;
 
     @AnyThread
     void addFriend(final FriendRecord friend) {
@@ -79,7 +81,7 @@ class AvatarsAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
     }
 
     @Override
-    public void onBindViewHolder(RecyclerView.ViewHolder holder, int position) {
+    public void onBindViewHolder(@NonNull RecyclerView.ViewHolder holder, int position) {
         if (holder instanceof AvatarViewHolder) {
             AvatarViewHolder h = (AvatarViewHolder) holder;
             Resources rsrcs = h.image.getResources();
@@ -112,7 +114,8 @@ class AvatarsAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
     }
 
     @Override
-    public RecyclerView.ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
+    @NonNull
+    public RecyclerView.ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
         LayoutInflater inflater = LayoutInflater.from(parent.getContext());
         if (viewType == R.layout.avatar_container_margin) {
             View view = inflater.inflate(R.layout.avatar_container_margin, parent, false);

@@ -17,13 +17,6 @@ import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.IBinder;
 import android.os.Looper;
-import android.support.annotation.AnyThread;
-import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
-import android.support.annotation.UiThread;
-import android.support.annotation.WorkerThread;
-import android.support.v4.app.NotificationCompat;
-import android.support.v4.content.ContextCompat;
 import android.text.format.DateUtils;
 import android.widget.Toast;
 
@@ -35,6 +28,13 @@ import com.google.android.gms.location.LocationServices;
 
 import java.security.SecureRandom;
 
+import androidx.annotation.AnyThread;
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.annotation.UiThread;
+import androidx.annotation.WorkerThread;
+import androidx.core.app.NotificationCompat;
+import androidx.core.content.ContextCompat;
 import io.pijun.george.App;
 import io.pijun.george.CloudLogger;
 import io.pijun.george.Constants;

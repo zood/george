@@ -1,9 +1,5 @@
 package io.pijun.george;
 
-
-import android.support.annotation.NonNull;
-import android.support.annotation.UiThread;
-import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -13,6 +9,9 @@ import com.squareup.picasso.Picasso;
 import java.io.File;
 import java.util.ArrayList;
 
+import androidx.annotation.NonNull;
+import androidx.annotation.UiThread;
+import androidx.recyclerview.widget.RecyclerView;
 import io.pijun.george.view.ProfileListItemViewHolder;
 import io.pijun.george.view.RecyclerViewAdapterItem;
 import io.pijun.george.view.SimpleListItemViewHolder;
@@ -29,7 +28,8 @@ public class SettingsAdapter extends RecyclerView.Adapter {
     private final ArrayList<RecyclerViewAdapterItem> adapterItems = new ArrayList<>();
     String username;
     byte[] publicKey;
-    @NonNull private SettingsAdapter.Listener listener;
+    @NonNull
+    private SettingsAdapter.Listener listener;
 
     SettingsAdapter(@NonNull Listener listener) {
         this.listener = listener;

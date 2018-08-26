@@ -3,11 +3,6 @@ package io.pijun.george.view;
 import android.animation.ValueAnimator;
 import android.annotation.SuppressLint;
 import android.content.Context;
-import android.support.annotation.CheckResult;
-import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
-import android.support.constraint.ConstraintLayout;
-import android.support.v4.app.FragmentActivity;
 import android.util.AttributeSet;
 import android.view.MotionEvent;
 import android.view.VelocityTracker;
@@ -18,14 +13,21 @@ import android.view.animation.LinearInterpolator;
 
 import java.lang.ref.WeakReference;
 
+import androidx.annotation.CheckResult;
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.constraintlayout.widget.ConstraintLayout;
+import androidx.fragment.app.FragmentActivity;
 import io.pijun.george.FriendsSheetFragment;
 import io.pijun.george.R;
 
 public class MainLayout extends ConstraintLayout {
     private boolean mIsScrolling;
-    @Nullable private Float yDown = null;
+    @Nullable
+    private Float yDown = null;
     private final int touchSlop;
-    @NonNull private WeakReference<FriendsSheetBehavior> behaviorRef = new WeakReference<>(null);
+    @NonNull
+    private WeakReference<FriendsSheetBehavior> behaviorRef = new WeakReference<>(null);
     boolean sheetIsHidden = true;
     private VelocityTracker velocityTracker;
 

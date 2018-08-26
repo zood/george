@@ -1,6 +1,5 @@
 package io.pijun.george.service;
 
-import android.support.annotation.WorkerThread;
 import android.text.TextUtils;
 import android.util.Base64;
 
@@ -10,6 +9,7 @@ import com.google.firebase.messaging.RemoteMessage;
 import java.io.IOException;
 import java.util.Map;
 
+import androidx.annotation.WorkerThread;
 import io.pijun.george.L;
 import io.pijun.george.MessageProcessor;
 import io.pijun.george.Prefs;
@@ -54,7 +54,10 @@ public class FcmMessageReceiver extends FirebaseMessagingService {
         L.i("FcmMessageReceiver.handleMessageReceived");
         Message msg = new Message();
         try {
-            msg.id = Long.parseLong(data.get("id"));
+            String msgId = data.get("id");
+            if (msgId != null) {
+                msg.id = Long.parseLong(msgId);
+            }
         } catch (NumberFormatException ignore) {}
         msg.cipherText = Base64.decode(data.get("cipher_text"), Base64.NO_WRAP);
         msg.nonce = Base64.decode(data.get("nonce"), Base64.NO_WRAP);
@@ -81,8 +84,11 @@ public class FcmMessageReceiver extends FirebaseMessagingService {
         L.i("handleMessageSyncNeeded");
         long msgId;
         try {
-            msgId = Long.parseLong(data.get("message_id"));
-            L.i("message id " + msgId);
+            String idStr = data.get("message_id");
+            if (idStr == null) {
+                return;
+            }
+            msgId = Long.parseLong(idStr);
         } catch (NumberFormatException ex) {
             L.w("Error parsing " + data.get("message_id"), ex);
             return;

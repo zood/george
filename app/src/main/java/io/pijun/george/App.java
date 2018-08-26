@@ -2,13 +2,13 @@ package io.pijun.george;
 
 import android.app.Application;
 import android.os.Handler;
-import android.support.annotation.AnyThread;
-import android.support.annotation.NonNull;
-import android.support.v7.app.AppCompatDelegate;
 
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
+import androidx.annotation.AnyThread;
+import androidx.annotation.NonNull;
+import androidx.appcompat.app.AppCompatDelegate;
 import io.pijun.george.api.TaskSender;
 import io.pijun.george.database.DB;
 import io.pijun.george.receiver.PassiveLocationReceiver;

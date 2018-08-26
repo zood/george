@@ -5,20 +5,19 @@ import android.content.Context;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.PowerManager;
-import android.support.annotation.AnyThread;
-import android.support.annotation.NonNull;
-import android.support.annotation.WorkerThread;
 import android.text.format.DateUtils;
 
 import java.io.IOException;
 
+import androidx.annotation.AnyThread;
+import androidx.annotation.NonNull;
+import androidx.annotation.WorkerThread;
 import io.pijun.george.CloudLogger;
 import io.pijun.george.L;
 import io.pijun.george.WorkerRunnable;
 import io.pijun.george.api.task.AddFcmTokenTask;
 import io.pijun.george.api.task.DeleteFcmTokenTask;
 import io.pijun.george.api.task.DeleteMessageTask;
-import io.pijun.george.api.task.DropMultiplePackagesTask;
 import io.pijun.george.api.task.DropPackageTask;
 import io.pijun.george.api.task.OscarTask;
 import io.pijun.george.api.task.SendMessageTask;
@@ -79,10 +78,6 @@ public final class TaskSender {
                 case DeleteMessageTask.NAME:
                     DeleteMessageTask dmt = (DeleteMessageTask) task;
                     call = api.deleteMessage(dmt.messageId);
-                    break;
-                case DropMultiplePackagesTask.NAME:
-                    DropMultiplePackagesTask dmpt = (DropMultiplePackagesTask) task;
-                    call = api.dropMultiplePackages(dmpt.packages);
                     break;
                 case DropPackageTask.NAME:
                     DropPackageTask dpt = (DropPackageTask) task;

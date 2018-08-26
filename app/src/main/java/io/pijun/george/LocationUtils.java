@@ -4,9 +4,6 @@ import android.content.Context;
 import android.location.Location;
 import android.os.Handler;
 import android.os.HandlerThread;
-import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
-import android.support.annotation.WorkerThread;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -15,6 +12,10 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.concurrent.PriorityBlockingQueue;
 
+import androidx.annotation.AnyThread;
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.annotation.WorkerThread;
 import io.pijun.george.api.OscarAPI;
 import io.pijun.george.api.OscarClient;
 import io.pijun.george.api.OscarError;
@@ -43,7 +44,8 @@ public class LocationUtils {
         thread.quitSafely();
     }
 
-    @Nullable private static UserComm lastLocationMessage = null;
+    @Nullable
+    private static UserComm lastLocationMessage = null;
     private static PriorityBlockingQueue<Location> locationsQueue = new PriorityBlockingQueue<>(5, new Comparator<Location>() {
         @Override
         public int compare(Location o1, Location o2) {
@@ -140,7 +142,7 @@ public class LocationUtils {
         }
     }
 
-    @WorkerThread
+    @AnyThread
     public static void upload(@NonNull Location location) {
         locationsQueue.add(location);
     }

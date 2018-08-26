@@ -11,11 +11,6 @@ import android.graphics.Outline;
 import android.graphics.Paint;
 import android.graphics.Shader;
 import android.graphics.drawable.Drawable;
-import android.support.annotation.ColorInt;
-import android.support.annotation.ColorRes;
-import android.support.annotation.Nullable;
-import android.support.annotation.UiThread;
-import android.support.v4.content.ContextCompat;
 import android.util.AttributeSet;
 import android.view.View;
 import android.view.ViewOutlineProvider;
@@ -23,6 +18,11 @@ import android.view.ViewOutlineProvider;
 import com.squareup.picasso.Picasso;
 import com.squareup.picasso.Target;
 
+import androidx.annotation.ColorInt;
+import androidx.annotation.ColorRes;
+import androidx.annotation.Nullable;
+import androidx.annotation.UiThread;
+import androidx.core.content.ContextCompat;
 import io.pijun.george.Identicon;
 import io.pijun.george.R;
 
@@ -41,7 +41,8 @@ public class AvatarView extends View implements Target {
     private float mHeight;
     private Paint mBorderPaint;
     private float mBorderWidth;
-    @Nullable private Bitmap mImg;
+    @Nullable
+    private Bitmap mImg;
     @Nullable private BitmapShader mImgShader;
     private Paint mImgPaint;
     private float mRadius;

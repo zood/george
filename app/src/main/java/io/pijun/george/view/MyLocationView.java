@@ -5,9 +5,9 @@ import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
-import android.support.annotation.NonNull;
-import android.support.v4.content.ContextCompat;
 
+import androidx.annotation.NonNull;
+import androidx.core.content.ContextCompat;
 import io.pijun.george.R;
 import io.pijun.george.Utils;
 

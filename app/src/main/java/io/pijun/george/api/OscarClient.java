@@ -1,10 +1,6 @@
 package io.pijun.george.api;
 
 import android.content.Context;
-import android.support.annotation.CheckResult;
-import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
-import android.support.annotation.WorkerThread;
 import android.text.TextUtils;
 
 import com.google.gson.FieldNamingPolicy;
@@ -16,6 +12,10 @@ import java.lang.ref.WeakReference;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
+import androidx.annotation.CheckResult;
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.annotation.WorkerThread;
 import io.pijun.george.Config;
 import io.pijun.george.Hex;
 import io.pijun.george.L;
@@ -26,7 +26,6 @@ import io.pijun.george.api.adapter.CommTypeAdapter;
 import io.pijun.george.api.task.AddFcmTokenTask;
 import io.pijun.george.api.task.DeleteFcmTokenTask;
 import io.pijun.george.api.task.DeleteMessageTask;
-import io.pijun.george.api.task.DropMultiplePackagesTask;
 import io.pijun.george.api.task.OscarTask;
 import io.pijun.george.api.task.QueueConverter;
 import io.pijun.george.api.task.SendMessageTask;
@@ -119,7 +118,8 @@ public class OscarClient {
         return sQueue;
     }
 
-    @WorkerThread @CheckResult @Nullable
+    @WorkerThread
+    @CheckResult @Nullable
     public static String immediatelySendMessage(@NonNull UserRecord toUser, @NonNull String accessToken, @NonNull KeyPair keyPair, @NonNull UserComm comm, boolean urgent, boolean isTransient) {
         EncryptedData encMsg = Sodium.publicKeyEncrypt(comm.toJSON(), toUser.publicKey, keyPair.secretKey);
         if (encMsg == null) {
@@ -166,13 +166,6 @@ public class OscarClient {
         DeleteMessageTask dmt = new DeleteMessageTask(accessToken);
         dmt.messageId = msgId;
         getQueue(context).offer(dmt);
-    }
-
-    @WorkerThread
-    public static void queueDropMultiplePackages(@NonNull Context context, @NonNull String accessToken, @NonNull Map<String, EncryptedData> pkgs) {
-        DropMultiplePackagesTask dmpt = new DropMultiplePackagesTask(accessToken);
-        dmpt.packages = pkgs;
-        getQueue(context).offer(dmpt);
     }
 
     @WorkerThread @CheckResult

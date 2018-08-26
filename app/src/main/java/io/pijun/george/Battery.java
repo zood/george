@@ -5,19 +5,20 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.os.BatteryManager;
 import android.os.Bundle;
-import android.support.annotation.CheckResult;
-import android.support.annotation.IntRange;
-import android.support.annotation.NonNull;
 import android.text.format.DateUtils;
 
-public class Battery {
+import androidx.annotation.CheckResult;
+import androidx.annotation.IntRange;
+import androidx.annotation.NonNull;
+
+class Battery {
 
     private static long lastCheckTime = 0;
     private static int lastLevel = -1;
 
     @CheckResult
     @IntRange(from=-1, to=100)
-    public static int getLevel(@NonNull Context context) {
+    static int getLevel(@NonNull Context context) {
         long now = System.currentTimeMillis();
         long since = now - lastCheckTime;
         if (since > 3 * DateUtils.MINUTE_IN_MILLIS) {

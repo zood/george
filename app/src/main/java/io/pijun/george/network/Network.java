@@ -4,8 +4,8 @@ import android.content.Context;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.Build;
-import android.support.annotation.NonNull;
 
+import androidx.annotation.NonNull;
 import io.pijun.george.L;
 
 public class Network {

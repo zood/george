@@ -3,15 +3,15 @@ package io.pijun.george.service;
 import android.app.IntentService;
 import android.content.Context;
 import android.content.Intent;
-import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
-import android.support.annotation.WorkerThread;
 import android.text.TextUtils;
 
 import com.google.firebase.iid.FirebaseInstanceId;
 
 import java.util.Collections;
 
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.annotation.WorkerThread;
 import io.pijun.george.L;
 import io.pijun.george.Prefs;
 import io.pijun.george.api.OscarClient;

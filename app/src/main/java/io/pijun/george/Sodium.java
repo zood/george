@@ -1,9 +1,8 @@
 package io.pijun.george;
 
-import android.support.annotation.CheckResult;
-import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
-
+import androidx.annotation.CheckResult;
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import io.pijun.george.crypto.EncryptedData;
 import io.pijun.george.crypto.KeyPair;
 

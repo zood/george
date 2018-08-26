@@ -1,13 +1,12 @@
 package io.pijun.george;
 
-import android.support.test.runner.AndroidJUnit4;
-
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import java.security.SecureRandom;
 
+import androidx.test.runner.AndroidJUnit4;
 import io.pijun.george.crypto.EncryptedData;
 import io.pijun.george.crypto.KeyPair;
 import io.pijun.george.sodium.HashConfig;
@@ -75,8 +74,8 @@ public class SodiumTest {
 
         HashConfig[] configs = new HashConfig[] {
                 new HashConfig(HashConfig.Algorithm.Argon2i13, HashConfig.OpsSecurity.Interactive, HashConfig.MemSecurity.Interactive),
-                new HashConfig(HashConfig.Algorithm.Argon2i13, HashConfig.OpsSecurity.Moderate, HashConfig.MemSecurity.Moderate),
-                new HashConfig(HashConfig.Algorithm.Argon2i13, HashConfig.OpsSecurity.Sensitive, HashConfig.MemSecurity.Sensitive)
+                new HashConfig(HashConfig.Algorithm.Argon2i13, HashConfig.OpsSecurity.Moderate, HashConfig.MemSecurity.Moderate)
+//                new HashConfig(HashConfig.Algorithm.Argon2i13, HashConfig.OpsSecurity.Sensitive, HashConfig.MemSecurity.Sensitive)
         };
         int size = 48;
 

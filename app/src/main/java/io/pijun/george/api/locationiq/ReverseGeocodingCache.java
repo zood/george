@@ -1,14 +1,14 @@
 package io.pijun.george.api.locationiq;
 
 import android.content.Context;
-import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
-import android.support.annotation.UiThread;
-import android.support.annotation.WorkerThread;
 
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.annotation.UiThread;
+import androidx.annotation.WorkerThread;
 import io.pijun.george.App;
 import io.pijun.george.UiRunnable;
 import io.pijun.george.WorkerRunnable;
@@ -77,6 +77,9 @@ public class ReverseGeocodingCache {
 
     private static void notifyListeners(@NonNull LatLng ll, @Nullable RevGeocoding addr) {
         CopyOnWriteArrayList<OnCachedListener> listeners = ongoingRequests.get(ll);
+        if (listeners == null) {
+            return;
+        }
         for (OnCachedListener l : listeners) {
             App.runOnUiThread(new UiRunnable() {
                 @Override

@@ -1,6 +1,6 @@
 package io.pijun.george;
 
-import android.support.annotation.UiThread;
+import androidx.annotation.UiThread;
 
 public interface UiRunnable extends Runnable {
 

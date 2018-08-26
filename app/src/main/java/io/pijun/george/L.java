@@ -1,7 +1,6 @@
 package io.pijun.george;
 
 import android.content.Context;
-import android.support.annotation.NonNull;
 import android.util.Log;
 
 import java.io.FileNotFoundException;
@@ -13,6 +12,8 @@ import java.util.Date;
 import java.util.Locale;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
+
+import androidx.annotation.NonNull;
 
 public class L {
     private static final String TAG = "Pijun";

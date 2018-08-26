@@ -1,8 +1,9 @@
 package io.pijun.george.view;
 
-import android.support.annotation.NonNull;
 import android.view.GestureDetector;
 import android.view.MotionEvent;
+
+import androidx.annotation.NonNull;
 
 public final class DrawerActionRecognizer extends GestureDetector.SimpleOnGestureListener {
     private boolean isClosed = true;

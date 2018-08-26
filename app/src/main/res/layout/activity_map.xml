@@ -24,7 +24,7 @@
         android:layout_height="0dp"
         app:layout_constraintBottom_toBottomOf="parent" />
 
-    <android.support.constraint.ConstraintLayout
+    <androidx.constraintlayout.widget.ConstraintLayout
         android:id="@+id/marker_details"
         android:paddingBottom="8dp"
         android:background="@android:color/white"
@@ -38,7 +38,7 @@
         android:layout_marginBottom="76dp"
         android:layout_width="match_parent"
         android:layout_height="wrap_content">
-        <android.support.constraint.Guideline
+        <androidx.constraintlayout.widget.Guideline
             android:id="@+id/marker_top_guideline"
             android:orientation="horizontal"
             app:layout_constraintGuide_begin="9dp"
@@ -113,9 +113,9 @@
             android:layout_marginStart="4dp"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content" />
-    </android.support.constraint.ConstraintLayout>
+    </androidx.constraintlayout.widget.ConstraintLayout>
 
-    <android.support.design.widget.FloatingActionButton
+    <com.google.android.material.floatingactionbutton.FloatingActionButton
         android:id="@+id/my_location_fab"
         android:transformPivotX="0px"
         android:src="@drawable/ic_my_location_black_24dp"

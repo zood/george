@@ -1,9 +1,6 @@
 package io.pijun.george.database;
 
-import android.support.annotation.NonNull;
-
-import io.pijun.george.api.CommType;
-import io.pijun.george.api.UserComm;
+import androidx.annotation.NonNull;
 
 public class FriendLocation {
 
@@ -18,14 +15,6 @@ public class FriendLocation {
     public final MovementType movement;
     public Integer batteryLevel;
 
-    FriendLocation(long friendId, @NonNull UserComm comm) {
-        this(friendId, comm.latitude, comm.longitude, comm.time, comm.accuracy, comm.speed, comm.bearing, MovementType.get(comm.movement), comm.batteryLevel);
-
-        if (comm.type != CommType.LocationInfo) {
-            throw new IllegalArgumentException("Comm must be a LocationInfo message");
-        }
-    }
-
     FriendLocation(long id, double lat, double lng, long time, Float accuracy, Float speed, Float bearing, MovementType movement, Integer batteryLevel) {
         this.friendId = id;
         this.latitude = lat;
@@ -39,6 +28,7 @@ public class FriendLocation {
     }
 
     @Override
+    @NonNull
     public String toString() {
         return "FriendLocation{" +
                 "friendId=" + friendId +

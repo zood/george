@@ -1,9 +1,10 @@
 package com.arashpayan.gesture;
 
 import android.graphics.PointF;
-import android.support.v4.view.MotionEventCompat;
 import android.view.MotionEvent;
 import android.view.View;
+
+import androidx.core.view.MotionEventCompat;
 
 /**
  * A recognizer for detecting a finger or multiple fingers being dragged around the screen. This

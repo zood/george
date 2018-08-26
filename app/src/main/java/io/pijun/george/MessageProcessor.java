@@ -1,15 +1,15 @@
 package io.pijun.george;
 
 import android.content.Context;
-import android.support.annotation.AnyThread;
-import android.support.annotation.NonNull;
-import android.support.annotation.WorkerThread;
-import android.support.v4.content.ContextCompat;
 import android.text.TextUtils;
 import android.text.format.DateUtils;
 
 import java.io.IOException;
 
+import androidx.annotation.AnyThread;
+import androidx.annotation.NonNull;
+import androidx.annotation.WorkerThread;
+import androidx.core.content.ContextCompat;
 import io.pijun.george.api.LimitedUserInfo;
 import io.pijun.george.api.Message;
 import io.pijun.george.api.MessageConverter;

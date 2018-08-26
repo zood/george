@@ -1,12 +1,11 @@
 package io.pijun.george.database;
 
-import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
-
 import java.io.ByteArrayInputStream;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
 
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import io.pijun.george.CloudLogger;
 import io.pijun.george.Constants;
 import io.pijun.george.api.OscarClient;

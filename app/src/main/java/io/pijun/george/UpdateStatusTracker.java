@@ -1,14 +1,14 @@
 package io.pijun.george;
 
-import android.support.annotation.AnyThread;
-import android.support.annotation.CheckResult;
-import android.support.annotation.NonNull;
-import android.support.annotation.UiThread;
 import android.text.format.DateUtils;
 import android.util.LongSparseArray;
 
 import java.util.HashSet;
 
+import androidx.annotation.AnyThread;
+import androidx.annotation.CheckResult;
+import androidx.annotation.NonNull;
+import androidx.annotation.UiThread;
 import io.pijun.george.api.UserComm;
 
 public class UpdateStatusTracker {
@@ -37,14 +37,15 @@ public class UpdateStatusTracker {
     private static LongSparseArray<Long> requestTimes = new LongSparseArray<>();
     private static LongSparseArray<Response> responses = new LongSparseArray<>();
 
-    public static void addListener(@NonNull Listener l) {
+    static void addListener(@NonNull Listener l) {
         synchronized (UpdateStatusTracker.class) {
             listeners.add(l);
         }
     }
 
-    @CheckResult @AnyThread
-    public static State getFriendState(long friendId) {
+    @CheckResult
+    @AnyThread
+    static State getFriendState(long friendId) {
         long now = System.currentTimeMillis();
         Long reqTime = requestTimes.get(friendId);
         // if this is old data, remove it
@@ -103,13 +104,13 @@ public class UpdateStatusTracker {
     }
 
     @AnyThread
-    public static void removeListener(@NonNull Listener l) {
+    static void removeListener(@NonNull Listener l) {
         synchronized (UpdateStatusTracker.class) {
             listeners.remove(l);
         }
     }
 
-    public static void setLastRequestTime(long friendId, long reqTime) {
+    static void setLastRequestTime(long friendId, long reqTime) {
         synchronized (UpdateStatusTracker.class) {
             requestTimes.put(friendId, reqTime);
             notifyListeners(friendId);
@@ -117,7 +118,7 @@ public class UpdateStatusTracker {
     }
 
     @AnyThread
-    public static void setUpdateRequestResponse(long friendId, long respTime, String message) {
+    static void setUpdateRequestResponse(long friendId, long respTime, String message) {
         synchronized (UpdateStatusTracker.class) {
             responses.put(friendId, new Response(respTime, message));
             notifyListeners(friendId);

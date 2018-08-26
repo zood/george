@@ -1,11 +1,11 @@
 package io.pijun.george.api.locationiq;
 
 import android.content.Context;
-import android.support.annotation.AnyThread;
-import android.support.annotation.NonNull;
 
 import java.io.IOException;
 
+import androidx.annotation.AnyThread;
+import androidx.annotation.NonNull;
 import io.pijun.george.R;
 import io.pijun.george.api.OscarClient;
 import okhttp3.HttpUrl;

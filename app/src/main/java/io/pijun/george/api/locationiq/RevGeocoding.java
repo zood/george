@@ -1,6 +1,6 @@
 package io.pijun.george.api.locationiq;
 
-import android.support.annotation.NonNull;
+import androidx.annotation.NonNull;
 
 public class RevGeocoding {
 //    String placeId;

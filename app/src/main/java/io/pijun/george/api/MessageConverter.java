@@ -1,6 +1,5 @@
 package io.pijun.george.api;
 
-import android.support.annotation.NonNull;
 
 import com.google.gson.JsonElement;
 import com.google.gson.JsonParser;
@@ -8,10 +7,9 @@ import com.google.gson.JsonParser;
 import java.io.ByteArrayInputStream;
 import java.io.InputStreamReader;
 
+import androidx.annotation.NonNull;
 import io.pijun.george.Constants;
 import io.pijun.george.queue.PersistentQueue;
-import io.pijun.george.api.Message;
-import io.pijun.george.api.OscarClient;
 
 public class MessageConverter implements PersistentQueue.Converter<Message> {
 

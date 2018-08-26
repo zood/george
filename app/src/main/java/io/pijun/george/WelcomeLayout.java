@@ -4,15 +4,6 @@ import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.res.ColorStateList;
 import android.graphics.drawable.Drawable;
-import android.support.annotation.DrawableRes;
-import android.support.annotation.IntDef;
-import android.support.annotation.NonNull;
-import android.support.annotation.Px;
-import android.support.annotation.UiThread;
-import android.support.design.widget.TextInputEditText;
-import android.support.design.widget.TextInputLayout;
-import android.support.percent.PercentRelativeLayout;
-import android.support.v4.content.ContextCompat;
 import android.util.AttributeSet;
 import android.view.View;
 import android.view.ViewGroup;
@@ -22,10 +13,20 @@ import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 
+import com.google.android.material.textfield.TextInputEditText;
+import com.google.android.material.textfield.TextInputLayout;
+
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.util.Locale;
 
+import androidx.annotation.DrawableRes;
+import androidx.annotation.IntDef;
+import androidx.annotation.NonNull;
+import androidx.annotation.Px;
+import androidx.annotation.UiThread;
+import androidx.core.content.ContextCompat;
+import androidx.percentlayout.widget.PercentRelativeLayout;
 import io.pijun.george.interpolator.Bezier65Interpolator;
 import io.pijun.george.interpolator.BezierLinearInterpolator;
 import io.pijun.george.interpolator.LinearBezierInterpolator;
@@ -318,7 +319,7 @@ public class WelcomeLayout extends ViewGroup implements View.OnFocusChangeListen
         logoT = (int)(0.062*(float)height);
         logoR = logoL + mLogo.getMeasuredWidth();
         logoB = logoT + mLogo.getMeasuredHeight();
-        mLogo.setPivotX(mLogo.getMeasuredWidth()/2);
+        mLogo.setPivotX(mLogo.getMeasuredWidth()/2.0f);
         mLogo.setPivotY(0);
         mLogo.setScaleX(headerScale);
         mLogo.setScaleY(headerScale);
@@ -329,7 +330,7 @@ public class WelcomeLayout extends ViewGroup implements View.OnFocusChangeListen
         titleT = logoT + (int)((float)mLogo.getMeasuredHeight()*headerScale) + fourPctPix;
         titleR = titleL + mTitle.getMeasuredWidth();
         titleB = titleT + mTitle.getMeasuredHeight();
-        mTitle.setPivotX(mTitle.getMeasuredWidth()/2);
+        mTitle.setPivotX(mTitle.getMeasuredWidth()/2.0f);
         mTitle.setPivotY(0);
         mTitle.setScaleX(headerScale);
         mTitle.setScaleY(headerScale);
@@ -340,7 +341,7 @@ public class WelcomeLayout extends ViewGroup implements View.OnFocusChangeListen
         subtitleT = titleT + (int)((float)mTitle.getMeasuredHeight()*headerScale) + (int)(0.02*(float)height);
         subtitleR = subtitleL + mSubtitle.getMeasuredWidth();
         subtitleB = subtitleT + mSubtitle.getMeasuredHeight();
-        mSubtitle.setPivotX(mSubtitle.getMeasuredWidth()/2);
+        mSubtitle.setPivotX(mSubtitle.getMeasuredWidth()/2.0f);
         mSubtitle.setPivotY(0);
         mSubtitle.setScaleX(headerScale);
         mSubtitle.setScaleY(headerScale);
@@ -404,7 +405,7 @@ public class WelcomeLayout extends ViewGroup implements View.OnFocusChangeListen
         logoT = (int)(0.062*(float)height);
         logoR = logoL + mLogo.getMeasuredWidth();
         logoB = logoT + mLogo.getMeasuredHeight();
-        mLogo.setPivotX(mLogo.getMeasuredWidth()/2);
+        mLogo.setPivotX(mLogo.getMeasuredWidth()/2.0f);
         mLogo.setPivotY(0);
         mLogo.setScaleX(headerScale);
         mLogo.setScaleY(headerScale);
@@ -415,7 +416,7 @@ public class WelcomeLayout extends ViewGroup implements View.OnFocusChangeListen
         titleT = logoT + (int)((float)mLogo.getMeasuredHeight()*headerScale) + fourPctPix;
         titleR = titleL + mTitle.getMeasuredWidth();
         titleB = titleT + mTitle.getMeasuredHeight();
-        mTitle.setPivotX(mTitle.getMeasuredWidth()/2);
+        mTitle.setPivotX(mTitle.getMeasuredWidth()/2.0f);
         mTitle.setPivotY(0);
         mTitle.setScaleX(headerScale);
         mTitle.setScaleY(headerScale);
@@ -426,7 +427,7 @@ public class WelcomeLayout extends ViewGroup implements View.OnFocusChangeListen
         subtitleT = titleT + (int)((float)mTitle.getMeasuredHeight()*headerScale) + (int)(0.02*(float)height);
         subtitleR = subtitleL + mSubtitle.getMeasuredWidth();
         subtitleB = subtitleT + mSubtitle.getMeasuredHeight();
-        mSubtitle.setPivotX(mSubtitle.getMeasuredWidth()/2);
+        mSubtitle.setPivotX(mSubtitle.getMeasuredWidth()/2.0f);
         mSubtitle.setPivotY(0);
         mSubtitle.setScaleX(headerScale);
         mSubtitle.setScaleY(headerScale);

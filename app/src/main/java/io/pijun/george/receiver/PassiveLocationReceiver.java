@@ -6,10 +6,6 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.location.Location;
-import android.support.annotation.AnyThread;
-import android.support.annotation.NonNull;
-import android.support.annotation.UiThread;
-import android.support.v4.content.ContextCompat;
 import android.text.format.DateUtils;
 
 import com.google.android.gms.location.FusedLocationProviderClient;
@@ -17,9 +13,12 @@ import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationResult;
 import com.google.android.gms.location.LocationServices;
 
+import androidx.annotation.AnyThread;
+import androidx.annotation.NonNull;
+import androidx.annotation.UiThread;
+import androidx.core.content.ContextCompat;
 import io.pijun.george.App;
 import io.pijun.george.LocationUtils;
-import io.pijun.george.WorkerRunnable;
 
 public class PassiveLocationReceiver extends BroadcastReceiver {
 

@@ -6,17 +6,16 @@ import android.app.job.JobScheduler;
 import android.app.job.JobService;
 import android.content.ComponentName;
 import android.content.Context;
-import android.support.annotation.AnyThread;
-import android.support.annotation.NonNull;
-import android.support.annotation.WorkerThread;
 import android.text.TextUtils;
 import android.text.format.DateUtils;
 
 import java.io.IOException;
 
+import androidx.annotation.AnyThread;
+import androidx.annotation.NonNull;
+import androidx.annotation.WorkerThread;
 import io.pijun.george.App;
 import io.pijun.george.AuthenticationManager;
-import io.pijun.george.database.DB;
 import io.pijun.george.L;
 import io.pijun.george.Prefs;
 import io.pijun.george.Sodium;
@@ -24,6 +23,7 @@ import io.pijun.george.WorkerRunnable;
 import io.pijun.george.api.OscarClient;
 import io.pijun.george.api.OscarError;
 import io.pijun.george.crypto.EncryptedData;
+import io.pijun.george.database.DB;
 import io.pijun.george.database.Snapshot;
 import retrofit2.Response;
 

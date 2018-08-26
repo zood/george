@@ -1,9 +1,10 @@
 package com.arashpayan.gesture;
 
 import android.graphics.PointF;
-import android.support.v4.view.MotionEventCompat;
 import android.view.MotionEvent;
 import android.view.View;
+
+import androidx.core.view.MotionEventCompat;
 
 /**
  * A recognizer for tap events. By default, it recognizes a single tap, but it can be configured

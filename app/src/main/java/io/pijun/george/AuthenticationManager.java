@@ -1,18 +1,18 @@
 package io.pijun.george;
 
 import android.content.Context;
-import android.support.annotation.AnyThread;
-import android.support.annotation.CheckResult;
-import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
-import android.support.annotation.UiThread;
-import android.support.annotation.WorkerThread;
 
 import java.io.IOException;
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.concurrent.CopyOnWriteArrayList;
 
+import androidx.annotation.AnyThread;
+import androidx.annotation.CheckResult;
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.annotation.UiThread;
+import androidx.annotation.WorkerThread;
 import io.pijun.george.api.AuthenticationChallenge;
 import io.pijun.george.api.FinishedAuthenticationChallenge;
 import io.pijun.george.api.LoginResponse;
@@ -92,7 +92,7 @@ public class AuthenticationManager {
     }
 
     @AnyThread
-    public void logIn(@NonNull Context ctx, @NonNull final String username, @NonNull final String password, @Nullable LoginWatcher watcher) {
+    void logIn(@NonNull Context ctx, @NonNull final String username, @NonNull final String password, @Nullable LoginWatcher watcher) {
         App.runInBackground(new WorkerRunnable() {
             @Override
             public void run() {
@@ -289,7 +289,7 @@ public class AuthenticationManager {
     }
 
     @AnyThread
-    public void logOut(@NonNull Context ctx, @Nullable LogoutWatcher completion) {
+    void logOut(@NonNull Context ctx, @Nullable LogoutWatcher completion) {
         App.runInBackground(new WorkerRunnable() {
             @Override
             public void run() {
@@ -325,7 +325,7 @@ public class AuthenticationManager {
     }
 
     //region Listener management
-    public void addListener(@NonNull Listener listener) {
+    void addListener(@NonNull Listener listener) {
         WeakReference<Listener> ref = new WeakReference<>(listener);
         listeners.add(ref);
     }
@@ -349,7 +349,7 @@ public class AuthenticationManager {
         });
     }
 
-    public void removeListener(@NonNull Listener listener) {
+    void removeListener(@NonNull Listener listener) {
         int i=0;
         while (i<listeners.size()) {
             WeakReference<Listener> ref = listeners.get(i);
