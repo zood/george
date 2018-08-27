@@ -306,7 +306,6 @@ public class WelcomeActivity extends AppCompatActivity implements WelcomeViewHol
 
     //region WelcomeViewHolder.Listener
 
-
     @Override
     public void onRegisterAction() {
         viewHolder.clearFocus();
@@ -319,8 +318,9 @@ public class WelcomeActivity extends AppCompatActivity implements WelcomeViewHol
             foundError = true;
         }
 
-        final Editable password = binding.siPassword.getText();
+        final Editable password = binding.regPassword.getText();
         if (password == null || password.length() < Constants.PASSWORD_TEXT_MIN_LENGTH) {
+            L.i("reg password: '" + password + "'");
             binding.regPasswordContainer.setError(getString(R.string.too_short));
             foundError = true;
         }
