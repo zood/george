@@ -12,7 +12,7 @@ import android.widget.ImageView;
 import androidx.annotation.DrawableRes;
 import androidx.annotation.NonNull;
 import androidx.core.content.ContextCompat;
-import io.pijun.george.databinding.ActivityWelcome2Binding;
+import io.pijun.george.databinding.ActivityWelcomeBinding;
 
 public class WelcomeViewHolder implements ViewTreeObserver.OnGlobalLayoutListener {
 
@@ -25,11 +25,11 @@ public class WelcomeViewHolder implements ViewTreeObserver.OnGlobalLayoutListene
 
     // Default is true, because the clouds should start moving right away
     private boolean areCloudsMoving = true;
-    private ActivityWelcome2Binding binding;
+    private ActivityWelcomeBinding binding;
     private State state = State.Main;
     private float displayDensity = 0;
 
-    WelcomeViewHolder(@NonNull ActivityWelcome2Binding binding) {
+    WelcomeViewHolder(@NonNull ActivityWelcomeBinding binding) {
         this.binding = binding;
 
         // hide everything until we're notified that the initial layout has been completed
@@ -74,7 +74,9 @@ public class WelcomeViewHolder implements ViewTreeObserver.OnGlobalLayoutListene
         binding.siPassword.clearFocus();
 
         InputMethodManager mgr = (InputMethodManager) binding.root.getContext().getSystemService(Context.INPUT_METHOD_SERVICE);
-        mgr.hideSoftInputFromWindow(binding.root.getWindowToken(), 0);
+        if (mgr != null) {
+            mgr.hideSoftInputFromWindow(binding.root.getWindowToken(), 0);
+        }
     }
 
     State getState() {
@@ -92,10 +94,6 @@ public class WelcomeViewHolder implements ViewTreeObserver.OnGlobalLayoutListene
         ColorStateList csl = ContextCompat.getColorStateList(ctx, R.color.welcome_edittext_drawabletint);
         d.setTintList(csl);
         return d;
-    }
-
-    private int pix(int dps) {
-        return (int) (dps * displayDensity + 0.5f);
     }
 
     //region OnGlobalLayoutListener to listen for the initial layout

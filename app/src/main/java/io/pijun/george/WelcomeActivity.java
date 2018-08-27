@@ -8,7 +8,6 @@ import android.text.Editable;
 import android.text.TextUtils;
 import android.text.TextWatcher;
 import android.view.View;
-import android.view.inputmethod.InputMethodManager;
 
 import com.google.android.material.textfield.TextInputEditText;
 import com.google.android.material.textfield.TextInputLayout;
@@ -31,7 +30,7 @@ import io.pijun.george.api.OscarError;
 import io.pijun.george.api.User;
 import io.pijun.george.crypto.EncryptedData;
 import io.pijun.george.crypto.KeyPair;
-import io.pijun.george.databinding.ActivityWelcome2Binding;
+import io.pijun.george.databinding.ActivityWelcomeBinding;
 import io.pijun.george.sodium.HashConfig;
 import retrofit2.Response;
 
@@ -41,14 +40,14 @@ public class WelcomeActivity extends AppCompatActivity {
         return new Intent(ctx, WelcomeActivity.class);
     }
 
-    private ActivityWelcome2Binding binding;
+    private ActivityWelcomeBinding binding;
     private WelcomeViewHolder viewHolder;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        binding = DataBindingUtil.setContentView(this, R.layout.activity_welcome2);
+        binding = DataBindingUtil.setContentView(this, R.layout.activity_welcome);
         viewHolder = new WelcomeViewHolder(binding);
 
         binding.regUsername.addTextChangedListener(
