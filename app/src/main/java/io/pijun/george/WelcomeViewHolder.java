@@ -6,11 +6,13 @@ import android.graphics.drawable.Drawable;
 import android.view.View;
 import android.view.ViewTreeObserver;
 import android.view.animation.LinearInterpolator;
+import android.view.inputmethod.EditorInfo;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.ImageView;
 
 import androidx.annotation.DrawableRes;
 import androidx.annotation.NonNull;
+import androidx.annotation.UiThread;
 import androidx.core.content.ContextCompat;
 import io.pijun.george.databinding.ActivityWelcomeBinding;
 
@@ -28,9 +30,11 @@ public class WelcomeViewHolder implements ViewTreeObserver.OnGlobalLayoutListene
     private ActivityWelcomeBinding binding;
     private State state = State.Main;
     private float displayDensity = 0;
+    @NonNull private final Listener listener;
 
-    WelcomeViewHolder(@NonNull ActivityWelcomeBinding binding) {
+    WelcomeViewHolder(@NonNull ActivityWelcomeBinding binding, @NonNull Listener listener) {
         this.binding = binding;
+        this.listener = listener;
 
         // hide everything until we're notified that the initial layout has been completed
         binding.logo.setVisibility(View.INVISIBLE);
@@ -55,6 +59,50 @@ public class WelcomeViewHolder implements ViewTreeObserver.OnGlobalLayoutListene
         binding.root.getViewTreeObserver().addOnGlobalLayoutListener(this);
 
         applyTextFieldDrawables();
+        applyTextFieldActionListeners();
+    }
+
+    private void applyTextFieldActionListeners() {
+        binding.siUsername.setOnEditorActionListener((v, actionId, event) -> {
+            if (actionId == EditorInfo.IME_ACTION_NEXT) {
+                binding.siPassword.requestFocus();
+                return true;
+            }
+
+            return false;
+        });
+
+        binding.siPassword.setOnEditorActionListener((v, actionId, event) -> {
+            if (actionId == EditorInfo.IME_ACTION_GO) {
+                listener.onSignInAction();
+                return true;
+            }
+            return false;
+        });
+
+        binding.regUsername.setOnEditorActionListener((v, actionId, event) -> {
+            if (actionId == EditorInfo.IME_ACTION_NEXT) {
+                binding.regPassword.requestFocus();
+                return true;
+            }
+            return false;
+        });
+
+        binding.regPassword.setOnEditorActionListener((v, actionId, event) -> {
+            if (actionId == EditorInfo.IME_ACTION_NEXT) {
+                binding.regEmail.requestFocus();
+                return true;
+            }
+            return false;
+        });
+
+        binding.regEmail.setOnEditorActionListener((v, actionId, event) -> {
+            if (actionId == EditorInfo.IME_ACTION_GO) {
+                listener.onRegisterAction();
+                return true;
+            }
+            return false;
+        });
     }
 
     private void applyTextFieldDrawables() {
@@ -329,7 +377,6 @@ public class WelcomeViewHolder implements ViewTreeObserver.OnGlobalLayoutListene
                 withEndAction(new Runnable() {
                     @Override
                     public void run() {
-                        L.i("about to schedule cloud movement");
                         scheduleCloudMovement(cloud, speed);
                     }
                 }).start();
@@ -356,4 +403,8 @@ public class WelcomeViewHolder implements ViewTreeObserver.OnGlobalLayoutListene
 
     //endregion
 
+    interface Listener {
+        @UiThread void onSignInAction();
+        @UiThread void onRegisterAction();
+    }
 }

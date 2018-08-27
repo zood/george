@@ -34,7 +34,7 @@ import io.pijun.george.databinding.ActivityWelcomeBinding;
 import io.pijun.george.sodium.HashConfig;
 import retrofit2.Response;
 
-public class WelcomeActivity extends AppCompatActivity {
+public class WelcomeActivity extends AppCompatActivity implements WelcomeViewHolder.Listener {
 
     public static Intent newIntent(Context ctx) {
         return new Intent(ctx, WelcomeActivity.class);
@@ -48,7 +48,7 @@ public class WelcomeActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
 
         binding = DataBindingUtil.setContentView(this, R.layout.activity_welcome);
-        viewHolder = new WelcomeViewHolder(binding);
+        viewHolder = new WelcomeViewHolder(binding, this);
 
         binding.regUsername.addTextChangedListener(
                 new UsernameWatcher(
@@ -92,40 +92,6 @@ public class WelcomeActivity extends AppCompatActivity {
         super.onBackPressed();
     }
 
-    @UiThread
-    public void onSignInAction(View v) {
-        viewHolder.clearFocus();
-        boolean foundError = false;
-
-        final Editable usernameText = binding.siUsername.getText();
-        if (TextUtils.isEmpty(usernameText)) {
-            binding.siUsernameContainer.setError(getString(R.string.username_please_msg));
-            foundError = true;
-        }
-
-        final Editable passwordText = binding.siPassword.getText();
-        if(TextUtils.isEmpty(passwordText)) {
-            binding.siPasswordContainer.setError(getString(R.string.password_missing_msg));
-            foundError = true;
-        }
-
-        if (foundError) {
-            return;
-        }
-
-        //noinspection ConstantConditions
-        String username = usernameText.toString();
-        //noinspection ConstantConditions
-        String password = passwordText.toString();
-
-        App.runInBackground(new WorkerRunnable() {
-            @Override
-            public void run() {
-                login(username, password);
-            }
-        });
-    }
-
     public void onShowRegistration(View v) {
         viewHolder.transitionToRegistration();
     }
@@ -136,52 +102,7 @@ public class WelcomeActivity extends AppCompatActivity {
 
     @UiThread
     public void onRegisterAction(View v) {
-        viewHolder.clearFocus();
-
-        boolean foundError = false;
-        final Editable usernameText = binding.regUsername.getText();
-        int msgId = Utils.getInvalidUsernameReason(usernameText);
-        if (msgId != 0) {
-            binding.regUsernameContainer.setError(getString(msgId));
-            foundError = true;
-        }
-
-        final Editable password = binding.siPassword.getText();
-        if (password == null || password.length() < Constants.PASSWORD_TEXT_MIN_LENGTH) {
-            binding.regPasswordContainer.setError(getString(R.string.too_short));
-            foundError = true;
-        }
-
-        final Editable emailEditable = binding.regEmail.getText();
-        if (emailEditable != null) {
-            String email = emailEditable.toString().trim();
-            if (!TextUtils.isEmpty(email)) {
-                if (!Utils.isValidEmail(email)) {
-                    binding.regEmailContainer.setError(getString(R.string.invalid_address));
-                    foundError = true;
-                }
-            }
-        }
-
-        if (foundError) {
-            return;
-        }
-
-        // This will always result in storing the username, because a null username gets checked
-        // for up above.
-        String username = usernameText != null ? usernameText.toString() : "";
-
-        App.runInBackground(new WorkerRunnable() {
-            @Override
-            public void run() {
-                final User user = generateUser(username, password.toString());
-                if (user == null) {
-                    Utils.showAlert(WelcomeActivity.this, 0, R.string.unknown_user_generation_error_msg);
-                    return;
-                }
-                registerUser(user, password.toString());
-            }
-        });
+        onRegisterAction();
     }
 
     @SuppressLint("WrongThread")
@@ -379,59 +300,101 @@ public class WelcomeActivity extends AppCompatActivity {
         finish();
     }
 
-//    @Override
-//    public void onWelcomeLayoutFocused(final View view) {
-//        handleFocusChange(view, findViewById(R.id.scrollview), findViewById(R.id.root));
-//    }
+    public void onSignInAction(View v) {
+        onSignInAction();
+    }
 
-//    private void handleFocusChange(final View view, final ScrollView sv, final WelcomeLayout root) {
-//        if (sv.getBottom() == root.getBottom()) {
-//            // we need to give the window more time to present the keyboard and resize the scrollview
-//            App.runOnUiThread(new UiRunnable() {
-//                @Override
-//                public void run() {
-//                    handleFocusChange(view, sv, root);
-//                }
-//            }, 34);
-//            return;
-//        }
-//        int id = view.getId();
-//
-//        View container;
-//        switch (id) {
-//            case R.id.reg_username:
-//                container = root.findViewById(R.id.reg_username_container);
-//                break;
-//            case R.id.reg_password:
-//                container = root.findViewById(R.id.reg_password_container);
-//                break;
-//            case R.id.reg_email:
-//                container = root.findViewById(R.id.reg_email_container);
-//                break;
-//            case R.id.si_username:
-//                container = root.findViewById(R.id.si_username_container);
-//                break;
-//            case R.id.si_password:
-//                container = root.findViewById(R.id.si_password_container);
-//                break;
-//            default:
-//                return;
-//        }
-//
-//        int topMargin = (sv.getBottom() - container.getHeight()) / 2;
-//        // The ScrollView's smoothScrollTo method is too fast and jerky, so we use a custom
-//        // ValueAnimator to make the scroll prettier.
-//        ValueAnimator animator = ValueAnimator.ofInt(sv.getScrollY(), container.getTop() - topMargin);
-//        animator.setInterpolator(new Bezier65Interpolator());
-//        animator.setDuration(500);
-//        animator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
-//            @Override
-//            public void onAnimationUpdate(ValueAnimator animation) {
-//                sv.scrollTo(0, (int) animation.getAnimatedValue());
-//            }
-//        });
-//        animator.start();
-//    }
+    //region WelcomeViewHolder.Listener
+
+
+    @Override
+    public void onRegisterAction() {
+        viewHolder.clearFocus();
+
+        boolean foundError = false;
+        final Editable usernameText = binding.regUsername.getText();
+        int msgId = Utils.getInvalidUsernameReason(usernameText);
+        if (msgId != 0) {
+            binding.regUsernameContainer.setError(getString(msgId));
+            foundError = true;
+        }
+
+        final Editable password = binding.siPassword.getText();
+        if (password == null || password.length() < Constants.PASSWORD_TEXT_MIN_LENGTH) {
+            binding.regPasswordContainer.setError(getString(R.string.too_short));
+            foundError = true;
+        }
+
+        final Editable emailEditable = binding.regEmail.getText();
+        if (emailEditable != null) {
+            String email = emailEditable.toString().trim();
+            if (!TextUtils.isEmpty(email)) {
+                if (!Utils.isValidEmail(email)) {
+                    binding.regEmailContainer.setError(getString(R.string.invalid_address));
+                    foundError = true;
+                }
+            }
+        }
+
+        if (foundError) {
+            return;
+        }
+
+        // This will always result in storing the username, because a null username gets checked
+        // for up above.
+        String username = usernameText != null ? usernameText.toString() : "";
+
+        App.runInBackground(new WorkerRunnable() {
+            @Override
+            public void run() {
+                final User user = generateUser(username, password.toString());
+                if (user == null) {
+                    Utils.showAlert(WelcomeActivity.this, 0, R.string.unknown_user_generation_error_msg);
+                    return;
+                }
+                registerUser(user, password.toString());
+            }
+        });
+    }
+
+    @UiThread
+    @Override
+    public void onSignInAction() {
+        viewHolder.clearFocus();
+        boolean foundError = false;
+
+        final Editable usernameText = binding.siUsername.getText();
+        if (TextUtils.isEmpty(usernameText)) {
+            binding.siUsernameContainer.setError(getString(R.string.username_please_msg));
+            foundError = true;
+        }
+
+        final Editable passwordText = binding.siPassword.getText();
+        if(TextUtils.isEmpty(passwordText)) {
+            binding.siPasswordContainer.setError(getString(R.string.password_missing_msg));
+            foundError = true;
+        }
+
+        if (foundError) {
+            return;
+        }
+
+        //noinspection ConstantConditions
+        String username = usernameText.toString();
+        //noinspection ConstantConditions
+        String password = passwordText.toString();
+
+        App.runInBackground(new WorkerRunnable() {
+            @Override
+            public void run() {
+                login(username, password);
+            }
+        });
+    }
+
+    //endregion
+
+    //region TextWatchers
 
     private abstract class StandardWatcher implements TextWatcher {
 
@@ -521,4 +484,6 @@ public class WelcomeActivity extends AppCompatActivity {
             mLayout.setErrorEnabled(false);
         }
     }
+
+    //endregion
 }
