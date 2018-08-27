@@ -92,11 +92,11 @@ public final class Utils {
     }
 
     @StringRes
-    public static int getInvalidUsernameReason(@Nullable String username) {
+    public static int getInvalidUsernameReason(@Nullable CharSequence username) {
         if (username == null) {
             return R.string.username_missing;
         }
-        String lc = username.toLowerCase(Locale.US);
+        String lc = username.toString().toLowerCase(Locale.US);
         // Check if it's valid, before making any other assumptions.
         if (sUsernamePattern.matcher(lc).matches()) {
             return 0;
