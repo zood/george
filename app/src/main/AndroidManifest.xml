@@ -9,6 +9,8 @@
     <uses-permission android:name="com.google.android.gms.permission.ACTIVITY_RECOGNITION" />
     <uses-permission android:name="android.permission.WAKE_LOCK" />
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+    <!--required for Android P-->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
 
     <application
         android:name=".App"
@@ -55,12 +57,6 @@
                 <action android:name="com.google.firebase.MESSAGING_EVENT" />
             </intent-filter>
         </service>
-        <service android:name=".service.FcmTokenMonitor">
-            <intent-filter>
-                <action android:name="com.google.firebase.INSTANCE_ID_EVENT" />
-            </intent-filter>
-        </service>
-        <service android:name=".service.FcmTokenRegistrar" />
         <service android:name=".service.LimitedShareService" />
         <service android:name=".service.LocationJobService" android:permission="android.permission.BIND_JOB_SERVICE" />
         <service android:name=".service.BackupDatabaseJob" android:permission="android.permission.BIND_JOB_SERVICE" />
@@ -95,6 +91,9 @@
         <meta-data
             android:name="com.google.android.geo.API_KEY"
             android:value="@string/google_maps_key" />
+
+        <!--for google maps-->
+        <uses-library android:name="org.apache.http.legacy" android:required="false" />
     </application>
 
 </manifest>

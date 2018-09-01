@@ -10,6 +10,7 @@ import java.io.IOException;
 import java.util.Map;
 
 import androidx.annotation.WorkerThread;
+import io.pijun.george.AuthenticationManager;
 import io.pijun.george.L;
 import io.pijun.george.MessageProcessor;
 import io.pijun.george.Prefs;
@@ -26,6 +27,10 @@ public class FcmMessageReceiver extends FirebaseMessagingService {
     @Override
     public void onMessageReceived(RemoteMessage remoteMessage) {
         L.i("FcmMessageReceiver.onMessageReceived");
+        if (!AuthenticationManager.isLoggedIn(this)) {
+            L.i("\tnot logged in. returning early.");
+            return;
+        }
         Map<String, String> data = remoteMessage.getData();
         if (data == null) {
             return;
@@ -47,6 +52,32 @@ public class FcmMessageReceiver extends FirebaseMessagingService {
         } catch (Throwable t) {
             L.w("bad stuff while processing remote message", t);
         }
+    }
+
+    @Override
+    public void onNewToken(String fcmToken) {
+        L.i("FcmMessageReceiver.onNewToken");
+
+        Prefs prefs = Prefs.get(this);
+        String accessToken = prefs.getAccessToken();
+        if (accessToken == null) {
+            return;
+        }
+
+        // Delete whatever token we have right now (if we have one)
+        String oldToken = Prefs.get(this).getFcmToken();
+        if (oldToken != null) {
+            OscarClient.queueDeleteFcmToken(this, accessToken, oldToken);
+        }
+
+        // Is there an actual token? If not, just wipe what we have and return
+        if (fcmToken == null) {
+            prefs.setFcmToken(null);
+            return;
+        }
+
+        OscarClient.queueAddFcmToken(this, accessToken, fcmToken);
+        prefs.setFcmToken(fcmToken);
     }
 
     @WorkerThread

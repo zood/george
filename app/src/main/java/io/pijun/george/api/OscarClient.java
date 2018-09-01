@@ -9,7 +9,7 @@ import com.google.gson.GsonBuilder;
 
 import java.io.IOException;
 import java.lang.ref.WeakReference;
-import java.util.Map;
+import java.util.Collections;
 import java.util.concurrent.ConcurrentHashMap;
 
 import androidx.annotation.CheckResult;
@@ -148,9 +148,9 @@ public class OscarClient {
     }
 
     @WorkerThread
-    public static void queueAddFcmToken(@NonNull Context context, @NonNull String accessToken, @NonNull Map<String, String> body) {
+    public static void queueAddFcmToken(@NonNull Context context, @NonNull String accessToken, @NonNull String fcmToken) {
         AddFcmTokenTask aftt = new AddFcmTokenTask(accessToken);
-        aftt.body = body;
+        aftt.body = Collections.singletonMap("token", fcmToken);
         getQueue(context).offer(aftt);
     }
 

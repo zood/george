@@ -2,6 +2,10 @@ package io.pijun.george;
 
 import android.content.Context;
 
+import com.google.android.gms.tasks.OnSuccessListener;
+import com.google.firebase.iid.FirebaseInstanceId;
+import com.google.firebase.iid.InstanceIdResult;
+
 import java.io.IOException;
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
@@ -28,7 +32,6 @@ import io.pijun.george.database.FriendRecord;
 import io.pijun.george.database.Snapshot;
 import io.pijun.george.receiver.PassiveLocationReceiver;
 import io.pijun.george.receiver.UserActivityReceiver;
-import io.pijun.george.service.FcmTokenRegistrar;
 import io.pijun.george.service.LocationJobService;
 import io.pijun.george.sodium.HashConfig;
 import retrofit2.Response;
@@ -103,7 +106,6 @@ public class AuthenticationManager {
 
     @WorkerThread
     private void _logIn(@NonNull Context ctx, @NonNull final String username, @NonNull final String password, @Nullable LoginWatcher watcher) {
-        L.i("logging in");
         OscarAPI api = OscarClient.newInstance(null);
         Response<AuthenticationChallenge> startChallengeResp;
         try {
@@ -178,7 +180,6 @@ public class AuthenticationManager {
         FinishedAuthenticationChallenge finishedChallenge = new FinishedAuthenticationChallenge();
         finishedChallenge.challenge = Sodium.publicKeyEncrypt(authChallenge.challenge, pubKey, secretKey);
         finishedChallenge.creationDate = Sodium.publicKeyEncrypt(authChallenge.creationDate, pubKey, secretKey);
-        L.i(finishedChallenge.toString());
 
         Response<LoginResponse> completeChallengeResp;
         try {
@@ -271,6 +272,14 @@ public class AuthenticationManager {
 
         notifyLoginWatchers(Error.None, null, watcher);
 
+        // If the device has an FCM token, upload it
+        FirebaseInstanceId.getInstance().getInstanceId().addOnSuccessListener(new OnSuccessListener<InstanceIdResult>() {
+            @Override
+            public void onSuccess(InstanceIdResult result) {
+                OscarClient.queueAddFcmToken(ctx, loginResponse.accessToken, result.getToken());
+            }
+        });
+
         // request avatars from all friends
         UserComm avatarReq = UserComm.newAvatarRequest();
         byte[] reqJson = avatarReq.toJSON();
@@ -295,9 +304,9 @@ public class AuthenticationManager {
             public void run() {
                 Prefs prefs = Prefs.get(ctx);
                 String accessToken = prefs.getAccessToken();
-                // check that we have a token, in case some other bug is causing this method to be called twice
-                if (accessToken != null) {
-                    ctx.startService(FcmTokenRegistrar.newIntent(ctx, true, accessToken));
+                String fcmToken = prefs.getFcmToken();
+                if (accessToken != null && fcmToken != null) {
+                    OscarClient.queueDeleteFcmToken(ctx, accessToken, fcmToken);
                 }
                 prefs.clearAll();
                 DB.get().deleteAllData();

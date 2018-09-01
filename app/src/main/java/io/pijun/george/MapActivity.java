@@ -67,7 +67,8 @@ import io.pijun.george.api.Message;
 import io.pijun.george.api.OscarAPI;
 import io.pijun.george.api.OscarClient;
 import io.pijun.george.api.OscarError;
-import io.pijun.george.api.PkgWatcher;
+import io.pijun.george.api.OscarSocket;
+import io.pijun.george.api.PushNotification;
 import io.pijun.george.api.SearchUserResult;
 import io.pijun.george.api.UserComm;
 import io.pijun.george.api.locationiq.RevGeocoding;
@@ -80,7 +81,6 @@ import io.pijun.george.database.FriendRecord;
 import io.pijun.george.database.UserRecord;
 import io.pijun.george.databinding.ActivityMapBinding;
 import io.pijun.george.service.BackupDatabaseJob;
-import io.pijun.george.service.FcmTokenRegistrar;
 import io.pijun.george.service.LimitedShareService;
 import io.pijun.george.view.AvatarView;
 import io.pijun.george.view.MyLocationView;
@@ -94,7 +94,7 @@ public final class MapActivity extends AppCompatActivity implements OnMapReadyCa
     private ActivityMapBinding binding;
     private MapView mMapView;
     private GoogleMap mGoogMap;
-    private PkgWatcher pkgWatcher;
+    private OscarSocket oscarSocket;
     private MarkerTracker mMarkerTracker = new MarkerTracker();
     private FusedLocationProviderClient mLocationProviderClient;
     private SettingsClient mSettingsClient;
@@ -173,7 +173,7 @@ public final class MapActivity extends AppCompatActivity implements OnMapReadyCa
         DB.get().addListener(this);
         AuthenticationManager.get().addListener(this);
 
-        startService(FcmTokenRegistrar.newIntent(this));
+        oscarSocket = new OscarSocket(oscarSocketListener);
     }
 
     public void onRequestLocation(View v) {
@@ -224,13 +224,11 @@ public final class MapActivity extends AppCompatActivity implements OnMapReadyCa
                     return;
                 }
 
-                pkgWatcher = new PkgWatcher(pkgWatcherListener);
-                pkgWatcher.connect(token);
-
+                oscarSocket.connect(token);
                 ArrayList<FriendRecord> friends = DB.get().getFriends();
                 for (FriendRecord fr: friends) {
                     if (fr.receivingBoxId != null) {
-                        pkgWatcher.watch(fr.receivingBoxId);
+                        oscarSocket.watch(fr.receivingBoxId);
                     }
                 }
 
@@ -297,8 +295,7 @@ public final class MapActivity extends AppCompatActivity implements OnMapReadyCa
         // stop receiving location updates
         mLocationProviderClient.removeLocationUpdates(mLocationCallbackHelper);
 
-        pkgWatcher.disconnect();
-        pkgWatcher = null;
+        oscarSocket.disconnect();
 
         App.isInForeground = false;
     }
@@ -1055,7 +1052,7 @@ public final class MapActivity extends AppCompatActivity implements OnMapReadyCa
     @Override
     public void onLocationSharingGranted(long userId) {
         L.i("onLocationSharingGranted");
-        if (pkgWatcher == null) {
+        if (oscarSocket == null) {
             return;
         }
         final FriendRecord friend = DB.get().getFriendByUserId(userId);
@@ -1067,7 +1064,7 @@ public final class MapActivity extends AppCompatActivity implements OnMapReadyCa
         // (If the other person is flipping the sharing switch back and forth).
         if (friend.receivingBoxId != null) {
             L.i("onLocationSharingGranted: friend found. will watch");
-            pkgWatcher.watch(friend.receivingBoxId);
+            oscarSocket.watch(friend.receivingBoxId);
         }
     }
 
@@ -1100,13 +1097,11 @@ public final class MapActivity extends AppCompatActivity implements OnMapReadyCa
 
     //endregion
 
-    // region PackageWatcher.Listener
+    //region OscarSocket.Listener
 
-    private PkgWatcher.Listener pkgWatcherListener = new PkgWatcher.Listener() {
+    private OscarSocket.Listener oscarSocketListener = new OscarSocket.Listener() {
         @Override
-        public void onDisconnected(int code, String reason) {
-//            L.i("MA.PWL.onDisconnected - code " + code);
-            // If we're not running, then this disconnect was probably because we called disconnect()
+        public void onDisconnect(int code, String reason) {
             if (!isStarted) {
                 return;
             }
@@ -1121,26 +1116,62 @@ public final class MapActivity extends AppCompatActivity implements OnMapReadyCa
             if (token == null) {
                 return;
             }
-            pkgWatcher.connect(token);
+            oscarSocket.connect(token);
             ArrayList<FriendRecord> friends = DB.get().getFriends();
             for (FriendRecord f : friends) {
                 if (f.receivingBoxId != null) {
-                    pkgWatcher.watch(f.receivingBoxId);
+                    oscarSocket.watch(f.receivingBoxId);
                 }
             }
         }
 
         @Override
-        public void onMessageReceived(@NonNull byte[] boxId, @NonNull EncryptedData data) {
-//            L.i("MA.PWL.onMessageReceived");
+        public void onPackageReceived(@NonNull byte[] boxId, @NonNull EncryptedData data) {
             FriendRecord friend = DB.get().getFriendByReceivingBoxId(boxId);
             if (friend == null) {
                 return;
             }
             MessageProcessor.Result result = MessageProcessor.decryptAndProcess(MapActivity.this, friend.user.userId, data.cipherText, data.nonce);
             if (result != MessageProcessor.Result.Success) {
-                L.i("MA.PWL error decrypting+processing dropped message: " + result);
+                L.i("MA error decrypting+processing dropped package: " + result);
             }
+        }
+
+        @Override
+        public void onPushNotificationReceived(@NonNull PushNotification notification) {
+            L.i("MA.onPushNotificationReceived");
+            MessageProcessor.Result result = MessageProcessor.decryptAndProcess(MapActivity.this,
+                    notification.senderId,
+                    notification.cipherText,
+                    notification.nonce);
+            if (result != MessageProcessor.Result.Success) {
+                L.i("MA error decrypting+processing push notification: " + result);
+                return;
+            }
+
+            // Was this a transient message?
+            if (notification.id == null || notification.id.equals("0")) {
+                return;
+            }
+
+            // Wasn't transient, so let's delete it from the server
+            long msgId;
+            try {
+                msgId = Long.valueOf(notification.id);
+                if (msgId == 0) { // technically, a redundant check
+                    return;
+                }
+            } catch (NumberFormatException ex) {
+                // something is up on the server
+                L.w("failed to parse push message id", ex);
+                return;
+            }
+
+            String token = Prefs.get(MapActivity.this).getAccessToken();
+            if (token == null) {
+                return;
+            }
+            OscarClient.queueDeleteMessage(MapActivity.this, token, msgId);
         }
     };
 

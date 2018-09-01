@@ -12,7 +12,6 @@ import androidx.annotation.WorkerThread;
 import io.pijun.george.App;
 import io.pijun.george.UiRunnable;
 import io.pijun.george.WorkerRunnable;
-import io.pijun.george.model.LatLng;
 import retrofit2.Response;
 
 public class ReverseGeocodingCache {

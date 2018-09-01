@@ -15,7 +15,7 @@ android {
         resConfigs "en"
         packagingOptions {
             exclude "lib/mips/*"
-//            exclude "lib/armeabi/*"
+            exclude "lib/armeabi/*"
 //            exclude "lib/x86/*"
 //            exclude "lib/x86_64/*"
         }
@@ -74,7 +74,7 @@ dependencies {
     // used for Google maps view
     implementation 'com.google.android.gms:play-services-maps:15.0.1'
     // cloud messaging
-    implementation 'com.google.firebase:firebase-messaging:17.0.0'
+    implementation 'com.google.firebase:firebase-messaging:17.3.0'
     implementation 'com.google.firebase:firebase-core:16.0.3'
 
     implementation 'com.squareup.retrofit2:retrofit:2.4.0'

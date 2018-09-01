@@ -1,14 +1,15 @@
-package io.pijun.george.model;
+package io.pijun.george.api.locationiq;
 
 public class LatLng {
-    public final double lat;
-    public final double lng;
+    final double lat;
+    final double lng;
 
-    public LatLng(double lat, double lng) {
+    LatLng(double lat, double lng) {
         this.lat = lat;
         this.lng = lng;
     }
 
+    @SuppressWarnings("RedundantIfStatement")
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
