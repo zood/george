@@ -4,7 +4,9 @@ public enum CommType {
 
     AvatarRequest("avatar_request"),
     AvatarUpdate("avatar_update"),
+    BrowseDevices("browse_devices"),
     Debug("debug"),
+    DeviceInfo("device_info"),
     LocationInfo("location_info"),
     LocationSharingGrant("location_sharing_grant"),
     LocationUpdateRequest("location_update_request"),

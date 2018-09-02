@@ -1,22 +1,29 @@
 package io.pijun.george;
 
 import android.content.Context;
+import android.os.Build;
 import android.text.TextUtils;
 import android.text.format.DateUtils;
 
 import java.io.IOException;
+import java.util.Arrays;
 
 import androidx.annotation.AnyThread;
 import androidx.annotation.NonNull;
+import androidx.annotation.Size;
 import androidx.annotation.WorkerThread;
 import androidx.core.content.ContextCompat;
+import io.pijun.george.api.DeviceInfo;
 import io.pijun.george.api.LimitedUserInfo;
 import io.pijun.george.api.Message;
 import io.pijun.george.api.MessageConverter;
 import io.pijun.george.api.OscarAPI;
 import io.pijun.george.api.OscarClient;
 import io.pijun.george.api.OscarError;
+import io.pijun.george.api.OutboundMessage;
 import io.pijun.george.api.UserComm;
+import io.pijun.george.api.task.SendMessageTask;
+import io.pijun.george.crypto.EncryptedData;
 import io.pijun.george.crypto.KeyPair;
 import io.pijun.george.database.DB;
 import io.pijun.george.database.FriendRecord;
@@ -69,9 +76,20 @@ public class MessageProcessor {
         if (nonce == null) {
             return Result.ErrorMissingNonce;
         }
+
+        // check if this message is from ourself
+        Prefs prefs = Prefs.get(context);
+        byte[] ourId = prefs.getUserId();
+        if (ourId == null) {
+            return Result.ErrorNotLoggedIn;
+        }
+        if (Arrays.equals(senderId, ourId)) {
+            return handleMessageFromOurself(context, cipherText, nonce, ourId);
+        }
+
+
         DB db = DB.get();
         UserRecord user = db.getUser(senderId);
-        Prefs prefs = Prefs.get(context);
         String token = prefs.getAccessToken();
         KeyPair keyPair = prefs.getKeyPair();
         if (!AuthenticationManager.isLoggedIn(context)) {
@@ -135,9 +153,15 @@ public class MessageProcessor {
                 return handleAvatarRequest(context, user);
             case AvatarUpdate:
                 return handleAvatarUpdate(context, user, comm);
+            case BrowseDevices:
+                L.i("We shouldn't be receiving browse_devices from other users");
+                return Result.ErrorInvalidCommunication;
             case Debug:
                 L.i("debug from " + user.username + ": " + comm.debugData);
                 return Result.Success;
+            case DeviceInfo:
+                L.i("We shouldn't be receiving device_info from other users");
+                return Result.ErrorInvalidCommunication;
             case LocationSharingGrant:
                 return handleLocationSharingGrant(context, user, comm);
             case LocationSharingRevocation:
@@ -214,6 +238,53 @@ public class MessageProcessor {
             L.w("Exception saving avatar", ex);
             CloudLogger.log(ex);
         }
+        return Result.Success;
+    }
+
+    private static Result handleBrowseDevices(@NonNull Context ctx, @NonNull String accessToken, @NonNull KeyPair keyPair, @NonNull @Size(Constants.USER_ID_LENGTH) byte[] ourId) {
+        DeviceInfo di = new DeviceInfo(Prefs.get(ctx).getDeviceId(),
+                Build.MANUFACTURER,
+                Build.MODEL,
+                "Android",
+                Build.VERSION.RELEASE);
+        UserComm c = UserComm.newDeviceInfo(di);
+        // make sure we have everything we need
+        EncryptedData encrypted = Sodium.publicKeyEncrypt(c.toJSON(), keyPair.publicKey, keyPair.secretKey);
+        if (encrypted == null) {
+            L.w("Failed to encrypt device info message to myself");
+            return Result.ErrorEncryptionFailed;
+        }
+        OutboundMessage om = new OutboundMessage();
+        om.cipherText = encrypted.cipherText;
+        om.nonce = encrypted.nonce;
+        om.urgent = true;
+        om.isTransient = true;
+
+        OscarAPI api = OscarClient.newInstance(accessToken);
+        try {
+            Response<Void> response = api.sendMessage(Hex.toHexString(ourId), om).execute();
+            if (response.isSuccessful()) {
+                return Result.Success;
+            }
+
+            OscarError err = OscarError.fromResponse(response);
+            if (err != null) {
+                L.w(err.toString());
+            } else {
+                L.w("Unknown server error received while sending device_info");
+            }
+        } catch (IOException ex) {
+            L.i("Network error while trying to send device_info");
+        }
+
+        // something happened, so we'll queue it to try again later.
+        SendMessageTask smt = new SendMessageTask(accessToken);
+        smt.hexUserId = Hex.toHexString(ourId);
+        smt.message = encrypted;
+        smt.urgent = true;
+        smt.isTransient = true;
+        OscarClient.getQueue(ctx).offer(smt);
+
         return Result.Success;
     }
 
@@ -306,6 +377,40 @@ public class MessageProcessor {
         UpdateStatusTracker.setUpdateRequestResponse(friend.id, System.currentTimeMillis(), comm.locationUpdateRequestAction);
 
         return Result.Success;
+    }
+
+    private static Result handleMessageFromOurself(@NonNull Context context, @NonNull byte[] cipherText, @NonNull byte[] nonce, @NonNull @Size(Constants.USER_ID_LENGTH) byte[] ourId) {
+        if (!AuthenticationManager.isLoggedIn(context)) {
+            return Result.ErrorNotLoggedIn;
+        }
+
+        Prefs prefs = Prefs.get(context);
+        String token = prefs.getAccessToken();
+        KeyPair keyPair = prefs.getKeyPair();
+        if (token == null || keyPair == null) {
+            return Result.ErrorNotLoggedIn;
+        }
+
+        byte[] userCommBytes = Sodium.publicKeyDecrypt(cipherText, nonce, keyPair.publicKey, keyPair.secretKey);
+        if (userCommBytes == null) {
+            return Result.ErrorDecryptionFailed;
+        }
+        UserComm comm = UserComm.fromJSON(userCommBytes);
+        if (!comm.isValid()) {
+            L.i("usercomm from myself was invalid. here it is: " + comm);
+            return Result.ErrorInvalidCommunication;
+        }
+
+        // we only support a few messages from ourself
+        switch (comm.type) {
+            case BrowseDevices:
+                return handleBrowseDevices(context, token, keyPair, ourId);
+            case DeviceInfo:
+                // We don't care. Only useful for the web client
+                return Result.Success;
+            default:
+                return Result.ErrorInvalidCommunication;
+        }
     }
 
     @SuppressWarnings("InfiniteLoopStatement")

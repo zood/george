@@ -43,6 +43,10 @@ public class UserComm {
     // debug
     public String debugData;
 
+    // for device_info comm type
+    @SuppressWarnings("WeakerAccess")
+    public DeviceInfo deviceInfo;
+
     @Retention(SOURCE)
     @StringDef({
             LOCATION_UPDATE_REQUEST_ACTION_TOO_SOON,
@@ -77,6 +81,14 @@ public class UserComm {
         UserComm c = new UserComm();
         c.type = CommType.Debug;
         c.debugData = data;
+        return c;
+    }
+
+    @NonNull @CheckResult
+    public static UserComm newDeviceInfo(@NonNull DeviceInfo deviceInfo) {
+        UserComm c = new UserComm();
+        c.type = CommType.DeviceInfo;
+        c.deviceInfo = deviceInfo;
         return c;
     }
 
@@ -145,8 +157,15 @@ public class UserComm {
                     return false;
                 }
                 return true;
+            case BrowseDevices:
+                return true;
             case Debug:
                 if (debugData == null) {
+                    return false;
+                }
+                return true;
+            case DeviceInfo:
+                if (deviceInfo == null) {
                     return false;
                 }
                 return true;
@@ -188,7 +207,7 @@ public class UserComm {
                 }
                 return true;
             default:
-                L.i("encountered unknown commtype. probably from a different version of Pijun");
+                L.i("encountered unknown commtype. probably from a different version of Zood");
                 return false;
         }
     }
@@ -228,30 +247,9 @@ public class UserComm {
 
     @Override
     public int hashCode() {
-
-        int result = Objects.hash(type, latitude, longitude, time, accuracy, speed, bearing, movement, batteryLevel, locationUpdateRequestAction, debugData);
+        int result = Objects.hash(type, latitude, longitude, time, accuracy, speed, bearing, movement, batteryLevel, locationUpdateRequestAction, debugData, deviceInfo);
         result = 31 * result + Arrays.hashCode(dropBox);
         result = 31 * result + Arrays.hashCode(avatar);
         return result;
-    }
-
-    @NonNull
-    @Override
-    public String toString() {
-        return "UserComm{" +
-                "type=" + type +
-                ", dropBox=" + Arrays.toString(dropBox) +
-                ", avatar=" + Arrays.toString(avatar) +
-                ", latitude=" + latitude +
-                ", longitude=" + longitude +
-                ", time=" + time +
-                ", accuracy=" + accuracy +
-                ", speed=" + speed +
-                ", bearing=" + bearing +
-                ", movement='" + movement + '\'' +
-                ", batteryLevel=" + batteryLevel +
-                ", locationUpdateRequestAction='" + locationUpdateRequestAction + '\'' +
-                ", debugData='" + debugData + '\'' +
-                '}';
     }
 }

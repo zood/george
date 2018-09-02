@@ -5,6 +5,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import java.security.SecureRandom;
+import java.util.Arrays;
 
 import androidx.test.runner.AndroidJUnit4;
 import io.pijun.george.crypto.EncryptedData;
@@ -14,6 +15,7 @@ import io.pijun.george.sodium.HashConfig;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.fail;
 
 @RunWith(AndroidJUnit4.class)
 public class SodiumTest {
@@ -124,6 +126,23 @@ public class SodiumTest {
             assertNotNull(hash);
             assertEquals(s, hash.length);
         }
+    }
+
+    @Test
+    public void testMessageToSelf() {
+        KeyPair kp = new KeyPair();
+        assertEquals(0, Sodium.generateKeyPair(kp));
+        byte[] msg = "where's my glisten".getBytes(Constants.utf8);
+        EncryptedData encrypted = Sodium.publicKeyEncrypt(msg, kp.publicKey, kp.secretKey);
+        assertNotNull(encrypted);
+        assertNotNull(encrypted.cipherText);
+        assertNotNull(encrypted.nonce);
+        if (Arrays.equals(msg, encrypted.cipherText)) {
+            fail("Cipher text matched the original message");
+        }
+
+        byte[] decrypted = Sodium.publicKeyDecrypt(encrypted.cipherText, encrypted.nonce, kp.publicKey, kp.secretKey);
+        assertArrayEquals(msg, decrypted);
     }
 
 }

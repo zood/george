@@ -7,9 +7,13 @@ import android.text.TextUtils;
 import com.google.android.gms.maps.model.CameraPosition;
 import com.google.android.gms.maps.model.LatLng;
 
+import java.security.SecureRandom;
+
 import androidx.annotation.AnyThread;
+import androidx.annotation.CheckResult;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.annotation.Size;
 import io.pijun.george.crypto.KeyPair;
 import io.pijun.george.database.MovementType;
 
@@ -35,6 +39,8 @@ public class Prefs {
     private final static String KEY_CAMERA_POSITION_ZOOM = "camera_position_zoom";
     private final static String KEY_LAST_LOCATION_UPDATE_TIME = "last_location_update_time";
     private final static String KEY_CURRENT_MOVEMENT = "current_movement";
+
+    private final static String KEY_DEVICE_ID = "device_id";
 
     private Prefs(Context context) {
         mPrefs = context.getSharedPreferences("secrets", Context.MODE_PRIVATE);
@@ -92,7 +98,7 @@ public class Prefs {
         return kp;
     }
 
-    public void setKeyPair(KeyPair kp) {
+    void setKeyPair(KeyPair kp) {
         if (kp != null) {
             setBytes(kp.secretKey, KEY_SECRET_KEY);
             setBytes(kp.publicKey, KEY_PUBLIC_KEY);
@@ -215,6 +221,20 @@ public class Prefs {
 
     public void setCurrentMovement(@NonNull MovementType mvmt) {
         mPrefs.edit().putString(KEY_CURRENT_MOVEMENT, mvmt.val).apply();
+    }
+
+    @NonNull
+    @CheckResult
+    @Size(Constants.DEVICE_ID_SIZE)
+    byte[] getDeviceId() {
+        byte[] deviceId = getBytes(KEY_DEVICE_ID);
+        if (deviceId == null) {
+            deviceId = new byte[Constants.DEVICE_ID_SIZE];
+            new SecureRandom().nextBytes(deviceId);
+            setBytes(deviceId, KEY_DEVICE_ID);
+        }
+
+        return deviceId;
     }
 
 }

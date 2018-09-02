@@ -106,7 +106,7 @@ public class OscarClient {
 
     @NonNull
     @CheckResult
-    static PersistentQueue<OscarTask> getQueue(@NonNull Context context) {
+    public static PersistentQueue<OscarTask> getQueue(@NonNull Context context) {
         if (sQueue == null) {
             synchronized (OscarClient.class) {
                 if (sQueue == null) {
