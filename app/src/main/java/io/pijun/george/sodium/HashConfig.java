@@ -10,6 +10,7 @@ public class HashConfig {
     private final static long ARGON2I13_OPSLIMIT_INTERACTIVE = 4;
     private final static long ARGON2I13_OPSLIMIT_MODERATE = 6;
     private final static long ARGON2I13_OPSLIMIT_SENSITIVE = 8;
+    private final static long ARGON2I13_OPSLIMIT_ZOODSENSITIVE = 40;
     private final static long ARGON2I13_MEMLIMIT_INTERACTIVE = 33554432;    // 32 MB
     private final static long ARGON2I13_MEMLIMIT_MODERATE = 134217728;      // 128 MB
     private final static long ARGON2I13_MEMLIMIT_SENSITIVE = 536870912;     // 512 MB
@@ -17,6 +18,7 @@ public class HashConfig {
     private final static long ARGON2ID13_OPSLIMIT_INTERACTIVE = 2;
     private final static long ARGON2ID13_OPSLIMIT_MODERATE = 3;
     private final static long ARGON2ID13_OPSLIMIT_SENSITIVE = 4;
+    private final static long ARGON2ID13_OPSLIMIT_ZOODSENSITIVE = 30;
     private final static long ARGON2ID13_MEMLIMIT_INTERACTIVE = 67108864;   // 64 MB
     private final static long ARGON2ID13_MEMLIMIT_MODERATE = 268435456;     // 256 MB
     private final static long ARGON2ID13_MEMLIMIT_SENSITIVE = 1073741824;   // 1024 MB
@@ -32,6 +34,7 @@ public class HashConfig {
         Interactive,
         Moderate,
         Sensitive,
+        ZoodSensitive,
         Custom
     }
 
@@ -66,7 +69,7 @@ public class HashConfig {
     private long opsLimit;
     private long memLimit;
 
-    private HashConfig(@NonNull Algorithm alg, long opsLimit, long memLimit) {
+    public HashConfig(@NonNull Algorithm alg, long opsLimit, long memLimit) {
         this.alg = alg;
         this.opsLimit = opsLimit;
         this.memLimit = memLimit;
@@ -130,6 +133,8 @@ public class HashConfig {
                 return OpsSecurity.Moderate;
             } else if (opsLimit == ARGON2I13_OPSLIMIT_SENSITIVE) {
                 return OpsSecurity.Sensitive;
+            } else if (opsLimit == ARGON2I13_OPSLIMIT_ZOODSENSITIVE) {
+                return OpsSecurity.ZoodSensitive;
             } else {
                 return OpsSecurity.Custom;
             }
@@ -141,6 +146,8 @@ public class HashConfig {
             return OpsSecurity.Moderate;
         } else if (opsLimit == ARGON2ID13_OPSLIMIT_SENSITIVE) {
             return OpsSecurity.Sensitive;
+        } else if (opsLimit == ARGON2ID13_OPSLIMIT_ZOODSENSITIVE) {
+            return OpsSecurity.ZoodSensitive;
         } else {
             return OpsSecurity.Custom;
         }
@@ -190,6 +197,9 @@ public class HashConfig {
                 case Sensitive:
                     opsLimit = ARGON2I13_OPSLIMIT_SENSITIVE;
                     break;
+                case ZoodSensitive:
+                    opsLimit = ARGON2I13_OPSLIMIT_ZOODSENSITIVE;
+                    break;
                 case Custom:
                     throw new RuntimeException("'Custom' is not a valid option. Must use one of 'interactive', 'moderate' or 'sensitive'");
             }
@@ -203,6 +213,9 @@ public class HashConfig {
                     break;
                 case Sensitive:
                     opsLimit = ARGON2ID13_OPSLIMIT_SENSITIVE;
+                    break;
+                case ZoodSensitive:
+                    opsLimit = ARGON2ID13_OPSLIMIT_ZOODSENSITIVE;
                     break;
                 case Custom:
                     throw new RuntimeException("'Custom' is not a valid option. Must use one of 'interactive', 'moderate' or 'sensitive'");

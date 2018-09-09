@@ -216,7 +216,7 @@ public class WelcomeActivity extends AppCompatActivity implements WelcomeViewHol
         prefs.setKeyPair(kp);
         u.publicKey = kp.publicKey;
 
-        HashConfig hashCfg = new HashConfig(HashConfig.Algorithm.Argon2id13, HashConfig.OpsSecurity.Sensitive, HashConfig.MemSecurity.Moderate);
+        HashConfig hashCfg = new HashConfig(HashConfig.Algorithm.Argon2id13, HashConfig.OpsSecurity.ZoodSensitive, HashConfig.MemSecurity.Interactive);
         u.passwordHashAlgorithm = hashCfg.alg.name;
         u.passwordHashOperationsLimit = hashCfg.getOpsLimit();
         u.passwordHashMemoryLimit = hashCfg.getMemLimit();
