@@ -20,3 +20,12 @@
 -dontwarn okio.**
 # retrofit2
 -dontwarn retrofit2.Platform$Java8
+
+# Don't minify any zood code
+-keep class io.pijun.** {
+    public protected private *;
+}
+# Inner class protection
+-keep class io.pijun.*$* {
+    *;
+}
