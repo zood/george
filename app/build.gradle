@@ -66,7 +66,6 @@ dependencies {
 
     implementation 'androidx.appcompat:appcompat:1.0.0-rc01'
     implementation 'com.google.android.material:material:1.0.0-rc01'
-    implementation 'androidx.percentlayout:percentlayout:1.0.0-rc01'
     implementation 'androidx.constraintlayout:constraintlayout:1.1.2'
 
     // used for fusion location
@@ -75,7 +74,6 @@ dependencies {
     implementation 'com.google.android.gms:play-services-maps:15.0.1'
     // cloud messaging
     implementation 'com.google.firebase:firebase-messaging:17.3.0'
-    implementation 'com.google.firebase:firebase-core:16.0.3'
 
     implementation 'com.squareup.retrofit2:retrofit:2.4.0'
     implementation 'com.squareup.retrofit2:converter-gson:2.4.0'

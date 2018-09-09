@@ -94,6 +94,11 @@
 
         <!--for google maps-->
         <uses-library android:name="org.apache.http.legacy" android:required="false" />
+
+        <!--disable FCM analytics-->
+        <meta-data android:name="firebase_analytics_collection_deactivated" android:value="true" />
+        <!--disable google advertising id usage in the app-->
+        <meta-data android:name="google_analytics_adid_collection_enabled" android:value="false" />
     </application>
 
 </manifest>
