@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:padding="16dp">
+
+    <TextView
+        android:id="@+id/username"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textSize="18sp"
+        android:fontFamily="@font/poppins_bold"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        tools:text="arash" />
+
+    <TextView
+        android:id="@+id/update_time"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        app:layout_constraintBaseline_toBaselineOf="@id/username"
+        android:layout_marginStart="8dp"
+        android:fontFamily="@font/poppins_light"
+        app:layout_constraintStart_toEndOf="@id/username"
+        tools:text="(Now)" />
+
+    <ImageButton
+        android:id="@+id/reload"
+        android:visibility="gone"
+        android:src="@drawable/ic_refresh_black_24dp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content" />
+
+    <!--<ImageView-->
+        <!--android:id="@+id/battery_indicator"-->
+        <!--android:src="@drawable/ic_battery_50"-->
+        <!--app:layout_constraintStart_toStartOf="parent"-->
+        <!--app:layout_constraintTop_toBottomOf="@id/username"-->
+        <!--app:layout_constraintTop_toTopOf="8dp"-->
+        <!--android:layout_width="wrap_content"-->
+        <!--android:layout_height="wrap_content" />-->
+    <TextView
+        android:id="@+id/battery"
+        tools:text="50% ·"
+        android:textSize="12sp"
+        android:fontFamily="@font/poppins_light"
+        android:drawableEnd="@drawable/ic_sharp_battery_50"
+        android:drawablePadding="0dp"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/username"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content" />
+    <TextView
+        android:id="@+id/motion"
+        tools:text="· 55 m/h"
+        android:textSize="12sp"
+        android:fontFamily="@font/poppins_light"
+        app:layout_constraintStart_toEndOf="@id/battery"
+        app:layout_constraintBaseline_toBaselineOf="@id/battery"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content" />
+
+    <TextView
+        android:id="@+id/address"
+        tools:text="1212 Westlake Blvd, Thousand Oaks (±10m)"
+        android:textSize="12sp"
+        android:fontFamily="@font/poppins_light"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/battery"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content" />
+
+</androidx.constraintlayout.widget.ConstraintLayout>
