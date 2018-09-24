@@ -51,6 +51,7 @@ import java.util.ArrayList;
 
 import androidx.annotation.AnyThread;
 import androidx.annotation.ColorRes;
+import androidx.annotation.DrawableRes;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.UiThread;
@@ -574,7 +575,7 @@ public final class MapActivity extends AppCompatActivity implements OnMapReadyCa
                     @Override
                     public void run() {
                         if (binding != null) {
-                            binding.markerUsername.setText(friend.user.username);
+                            binding.username.setText(friend.user.username);
                         }
                     }
                 });
@@ -605,7 +606,7 @@ public final class MapActivity extends AppCompatActivity implements OnMapReadyCa
         }
 
         binding.markerDetails.setVisibility(View.VISIBLE);
-        binding.markerUsername.setText(fr.user.username);
+        binding.username.setText(fr.user.username);
 
         // Is the avatar info already showing for this user? If so, just center the camera and follow
         if (selectedAvatarFriendId == fr.id) {
@@ -686,12 +687,6 @@ public final class MapActivity extends AppCompatActivity implements OnMapReadyCa
 
     @UiThread
     private void setAvatarInfo(@NonNull FriendLocation loc) {
-        StringBuilder speed = new StringBuilder();
-        if (loc.speed != null) {
-            speed.append(loc.speed).append(" m/s");
-        }
-        binding.markerSpeed.setText(speed);
-
         long now = System.currentTimeMillis();
         final CharSequence relTime;
         if (loc.time >= now-60*DateUtils.SECOND_IN_MILLIS) {
@@ -703,67 +698,71 @@ public final class MapActivity extends AppCompatActivity implements OnMapReadyCa
                     DateUtils.MINUTE_IN_MILLIS,
                     DateUtils.FORMAT_ABBREV_RELATIVE);
         }
-        binding.markerTime.setText(String.format("(%s)", relTime));
+        binding.updateTime.setText(String.format("(%s)", relTime));
 
         binding.markerDetails.setTag(loc);
 
         updateStatusTrackerListener.onUpdateStatusChanged(loc.friendId);
 
-        if (loc.bearing != null) {
-            binding.markerDirection.setVisibility(View.VISIBLE);
-            binding.markerDirection.setRotation(loc.bearing);
-        } else {
-            binding.markerDirection.setVisibility(View.GONE);
-        }
-        String movement;
+        int movement = 0;
         switch (loc.movement) {
             case Bicycle:
-                movement = getString(R.string.biking);
+                movement = R.drawable.ic_sharp_bike_20dp;
                 break;
             case OnFoot:
-                movement = getString(R.string.on_foot);
-                break;
             case Running:
-                movement = getString(R.string.running);
+            case Walking:
+                movement = R.drawable.ic_sharp_walk_20dp;
                 break;
             case Vehicle:
-                movement = getString(R.string.in_the_car);
+                movement = R.drawable.ic_sharp_car_20dp;
                 break;
-            case Walking:
-                movement = getString(R.string.walking);
-                break;
-            case Stationary:
-                movement = "stationary";
-                break;
-            case Tilting:
-                movement = "tilting";
-                break;
-            case Unknown:
             default:
-                movement = null;
                 break;
         }
-        binding.markerActivity.setText(movement);
+
+        if (loc.bearing != null || movement != 0) {
+            binding.motionAndBearing.setVisibility(View.VISIBLE);
+        } else {
+            binding.motionAndBearing.setVisibility(View.GONE);
+        }
+
+        if (loc.batteryLevel != null) {
+            binding.battery.setText(getString(R.string.number_percent_msg, loc.batteryLevel));
+            @DrawableRes int batteryImg = 0;
+            if (loc.batteryLevel >= 95) {
+                batteryImg = R.drawable.ic_sharp_battery_full_20dp;
+            } else if (loc.batteryLevel >= 85) {
+                batteryImg = R.drawable.ic_sharp_battery_90_20dp;
+            } else if (loc.batteryLevel >= 70) {
+                batteryImg = R.drawable.ic_sharp_battery_80_20dp;
+            } else if (loc.batteryLevel >= 55) {
+                batteryImg = R.drawable.ic_sharp_battery_60_20dp;
+            } else if (loc.batteryLevel >= 40) {
+                batteryImg = R.drawable.ic_sharp_battery_50_20dp;
+            } else if (loc.batteryLevel >= 25) {
+                batteryImg = R.drawable.ic_sharp_battery_30_20dp;
+            } else {
+                batteryImg = R.drawable.ic_sharp_battery_20_20dp;
+            }
+            binding.battery.setCompoundDrawablesRelativeWithIntrinsicBounds(R.drawable.ic_sharp_battery_50_20dp, 0, 0, 0);
+        } else {
+            binding.battery.setText(null);
+            binding.battery.setCompoundDrawablesRelative(null, null, null, null);
+        }
+
         RevGeocoding rg = ReverseGeocodingCache.get(loc.latitude, loc.longitude);
         if (rg != null) {
-            StringBuilder s = new StringBuilder(rg.getAddress());
-            if (loc.accuracy != null) {
-                s.append(" (±").append(loc.accuracy.intValue()).append(" m)");
-            }
-            binding.markerLocation.setText(s);
+            binding.address.setText(rg.getAddress());
         } else {
-            binding.markerLocation.setText(R.string.loading_ellipsis);
+            binding.address.setText(R.string.loading_ellipsis);
             ReverseGeocodingCache.fetch(MapActivity.this, loc.latitude, loc.longitude, new ReverseGeocodingCache.OnCachedListener() {
                 @Override
                 public void onReverseGeocodingCached(@Nullable RevGeocoding rg) {
                     FriendLocation savedLoc = (FriendLocation) binding.markerDetails.getTag();
                     if (savedLoc != null && savedLoc.latitude == loc.latitude && savedLoc.longitude == loc.longitude) {
                         if (rg != null) {
-                            StringBuilder s = new StringBuilder(rg.getAddress());
-                            if (loc.accuracy != null) {
-                                s.append(" (±").append(loc.accuracy.intValue()).append(" m)");
-                            }
-                            binding.markerLocation.setText(s);
+                            binding.address.setText(rg.getAddress());
                         }
                     }
                 }
@@ -928,10 +927,10 @@ public final class MapActivity extends AppCompatActivity implements OnMapReadyCa
                     break;
             }
             if (colorId != 0) {
-                DrawableCompat.setTint(binding.markerProgressBar.getIndeterminateDrawable(),
+                DrawableCompat.setTint(binding.refreshProgressBar.getIndeterminateDrawable(),
                         ContextCompat.getColor(MapActivity.this, colorId));
             }
-            binding.markerProgressBar.setVisibility(vis);
+            binding.refreshProgressBar.setVisibility(vis);
         }
     };
 

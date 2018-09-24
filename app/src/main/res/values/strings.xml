@@ -100,4 +100,6 @@
     <string name="your_public_key">Your public key</string>
     <string name="the_privacy_company">The privacy company</string>
     <string name="not_sharing_with_you">Not sharing with you</string>
+    <string name="refresh">Refresh</string>
+    <string name="number_percent_msg">%d%%</string>
 </resources>
