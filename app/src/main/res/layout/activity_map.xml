@@ -62,10 +62,8 @@
             android:id="@+id/username"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:paddingTop="16dp"
+            android:layout_marginTop="16dp"
             android:layout_marginStart="16dp"
-            android:drawablePadding="16dp"
-            android:drawableTint="@color/pijun_navy"
             android:fontFamily="@font/poppins_bold"
             android:textColor="@color/pijun_navy"
             android:textSize="18sp"
@@ -73,19 +71,29 @@
             app:layout_constraintTop_toTopOf="parent"
             tools:text="arash" />
 
-        <TextView
-            android:id="@+id/motion_and_bearing"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
+        <ImageView
+            android:id="@+id/motion"
+            tools:src="@drawable/ic_sharp_bike_20dp"
+            android:contentDescription="@null"
+            android:tint="@color/pijun_navy"
             android:layout_marginStart="16dp"
-            android:drawableStart="@drawable/ic_sharp_bike_20dp"
-            android:drawableEnd="@drawable/ic_sharp_navigation_20dp"
-            android:drawablePadding="4dp"
-            android:drawableTint="@color/pijun_navy"
-            android:fontFamily="@font/poppins_bold"
-            android:textSize="18sp"
-            app:layout_constraintBaseline_toBaselineOf="@id/username"
-            app:layout_constraintStart_toEndOf="@id/username" />
+            app:layout_constraintTop_toTopOf="@id/username"
+            app:layout_constraintBottom_toBottomOf="@id/username"
+            app:layout_constraintStart_toEndOf="@id/username"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content" />
+
+        <ImageView
+            android:id="@+id/bearing"
+            tools:src="@drawable/ic_sharp_navigation_20dp"
+            android:contentDescription="@null"
+            android:tint="@color/pijun_navy"
+            android:layout_marginStart="8dp"
+            app:layout_constraintStart_toEndOf="@id/motion"
+            app:layout_constraintTop_toTopOf="@id/username"
+            app:layout_constraintBottom_toBottomOf="@id/username"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content" />
 
         <TextView
             android:id="@+id/update_time"
@@ -100,14 +108,13 @@
             app:layout_constraintEnd_toEndOf="parent"
             tools:text="25 min. ago" />
 
-        <!-- · -->
         <TextView
             android:id="@+id/battery"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:drawableStart="@drawable/ic_sharp_battery_50_20dp"
             android:drawablePadding="4dp"
-            android:drawableTint="@color/pijun_grey"
+            tools:drawableTint="@color/pijun_grey"
             android:fontFamily="@font/poppins_light"
             android:textColor="@color/pijun_grey"
             android:textSize="12sp"
@@ -136,12 +143,17 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="8dp"
             android:text="@string/refresh"
+            android:onClick="onRequestLocation"
             android:textColor="@color/pijun_blue"
             app:layout_constraintStart_toStartOf="@id/username"
             app:layout_constraintTop_toBottomOf="@id/address" />
 
         <androidx.appcompat.widget.SwitchCompat
             android:id="@+id/share_switch"
+            android:text="@string/sharing"
+            app:switchPadding="8dp"
+            android:fontFamily="@font/poppins_light"
+            android:textSize="12sp"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:checked="true"

@@ -10,6 +10,7 @@ import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
+import android.graphics.drawable.Drawable;
 import android.location.Location;
 import android.os.Bundle;
 import android.os.Looper;
@@ -600,8 +601,10 @@ public final class MapActivity extends AppCompatActivity implements OnMapReadyCa
     @UiThread
     public void onAvatarSelected(FriendRecord fr) {
         Marker marker = mMarkerTracker.getById(fr.id);
+        binding.markerDetails.setVisibility(View.VISIBLE);
         if (marker == null) {
-            binding.markerDetails.setVisibility(View.GONE);
+            selectedAvatarFriendId = -1;
+            showEmptyInfoPanel(fr);
             return;
         }
 
@@ -699,12 +702,13 @@ public final class MapActivity extends AppCompatActivity implements OnMapReadyCa
                     DateUtils.FORMAT_ABBREV_RELATIVE);
         }
         binding.updateTime.setText(String.format("(%s)", relTime));
+        binding.updateTime.setVisibility(View.VISIBLE);
 
         binding.markerDetails.setTag(loc);
 
         updateStatusTrackerListener.onUpdateStatusChanged(loc.friendId);
 
-        int movement = 0;
+        @DrawableRes int movement = 0;
         switch (loc.movement) {
             case Bicycle:
                 movement = R.drawable.ic_sharp_bike_20dp;
@@ -720,16 +724,25 @@ public final class MapActivity extends AppCompatActivity implements OnMapReadyCa
             default:
                 break;
         }
-
-        if (loc.bearing != null || movement != 0) {
-            binding.motionAndBearing.setVisibility(View.VISIBLE);
+        if (movement != 0) {
+            binding.motion.setImageResource(movement);
+            binding.motion.setVisibility(View.VISIBLE);
         } else {
-            binding.motionAndBearing.setVisibility(View.GONE);
+            binding.motion.setImageBitmap(null);
+            binding.motion.setVisibility(View.GONE);
+        }
+
+
+        if (loc.bearing != null) {
+            binding.bearing.setVisibility(View.VISIBLE);
+            binding.bearing.setRotation(loc.bearing);
+        } else {
+            binding.bearing.setVisibility(View.GONE);
         }
 
         if (loc.batteryLevel != null) {
             binding.battery.setText(getString(R.string.number_percent_msg, loc.batteryLevel));
-            @DrawableRes int batteryImg = 0;
+            @DrawableRes int batteryImg;
             if (loc.batteryLevel >= 95) {
                 batteryImg = R.drawable.ic_sharp_battery_full_20dp;
             } else if (loc.batteryLevel >= 85) {
@@ -745,7 +758,11 @@ public final class MapActivity extends AppCompatActivity implements OnMapReadyCa
             } else {
                 batteryImg = R.drawable.ic_sharp_battery_20_20dp;
             }
-            binding.battery.setCompoundDrawablesRelativeWithIntrinsicBounds(R.drawable.ic_sharp_battery_50_20dp, 0, 0, 0);
+            Drawable battery = getDrawable(batteryImg);
+            if (battery != null) {
+                battery.setTint(ContextCompat.getColor(this, R.color.pijun_grey));
+            }
+            binding.battery.setCompoundDrawablesRelativeWithIntrinsicBounds(battery, null, null, null);
         } else {
             binding.battery.setText(null);
             binding.battery.setCompoundDrawablesRelative(null, null, null, null);
@@ -767,6 +784,29 @@ public final class MapActivity extends AppCompatActivity implements OnMapReadyCa
                     }
                 }
             });
+        }
+
+        binding.refreshButton.setVisibility(View.VISIBLE);
+        binding.updateTime.setVisibility(View.VISIBLE);
+    }
+
+    @UiThread
+    private void showEmptyInfoPanel(@NonNull FriendRecord friend) {
+        binding.markerDetails.setVisibility(View.VISIBLE);
+        binding.username.setText(friend.user.username);
+        binding.address.setText(R.string.not_sharing_with_you);
+        binding.refreshButton.setVisibility(View.INVISIBLE);
+        binding.battery.setVisibility(View.GONE);
+        binding.motion.setImageBitmap(null);
+        binding.bearing.setImageBitmap(null);
+        binding.updateTime.setVisibility(View.INVISIBLE);
+
+        if (friend.sendingBoxId != null) {
+            binding.shareSwitch.setChecked(true);
+            binding.shareSwitch.setText(getString(R.string.sharing));
+        } else {
+            binding.shareSwitch.setChecked(false);
+            binding.shareSwitch.setText(getString(R.string.not_sharing));
         }
     }
 
