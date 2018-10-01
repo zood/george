@@ -1,7 +1,6 @@
 package io.pijun.george;
 
 import android.annotation.SuppressLint;
-import android.content.Context;
 import android.content.DialogInterface;
 import android.os.Bundle;
 import android.view.LayoutInflater;
@@ -35,21 +34,12 @@ import io.pijun.george.view.MainLayout;
 
 public class FriendsSheetFragment extends Fragment implements FriendItemsAdapter.FriendItemsListener, AvatarManager.Listener, DB.Listener {
 
-    private AvatarsAdapter mAvatarsAdapter = new AvatarsAdapter();
+    private AvatarsAdapter mAvatarsAdapter;
     private FriendItemsAdapter mFriendItemsAdapter = new FriendItemsAdapter();
     private FragmentFriendsSheetBinding mBinding;
     private FriendsSheetBehavior mBehavior;
     private int mTenDips;
     private boolean mInitialLayoutDone = false;
-
-    @Override
-    public void onAttach(Context context) {
-        super.onAttach(context);
-
-        if (context instanceof MapActivity) {
-            ((MapActivity) context).setFriendsSheetFragment(this);
-        }
-    }
 
     /**
      * Should be called by the containing activity
@@ -197,16 +187,16 @@ public class FriendsSheetFragment extends Fragment implements FriendItemsAdapter
             }
         });
 
-        if (getActivity() instanceof AvatarsAdapter.AvatarsAdapterListener) {
-            mAvatarsAdapter.setListener((AvatarsAdapter.AvatarsAdapterListener) getActivity());
-        }
+//        if (getActivity() instanceof AvatarsAdapter.Listener) {
+//            mAvatarsAdapter.setListener((AvatarsAdapter.Listener) getActivity());
+//        }
 
         mBehavior = MainLayout.registerFriendsSheet(this, mBinding.friendsSheet);
     }
 
     @Override
     public void onStop() {
-        mAvatarsAdapter.setListener(null);
+//        mAvatarsAdapter.setListener(null);
         mBehavior = null;
 
         super.onStop();

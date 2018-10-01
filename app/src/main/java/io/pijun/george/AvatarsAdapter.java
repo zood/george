@@ -25,8 +25,12 @@ import io.pijun.george.view.AvatarView;
 class AvatarsAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
 
     private ArrayList<FriendRecord> mFriends = new ArrayList<>();
-    @Nullable
-    private AvatarsAdapterListener mListener;
+    @NonNull
+    private final Listener listener;
+
+    AvatarsAdapter(@NonNull Listener l) {
+        this.listener = l;
+    }
 
     @AnyThread
     void addFriend(final FriendRecord friend) {
@@ -124,10 +128,8 @@ class AvatarsAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
             View view = inflater.inflate(R.layout.avatar_preview, parent, false);
             final AvatarViewHolder h = new AvatarViewHolder(view);
             h.itemView.setOnClickListener(v -> {
-                if (mListener != null) {
-                    FriendRecord friend = mFriends.get(h.getAdapterPosition());
-                    mListener.onAvatarSelected(friend);
-                }
+                FriendRecord friend = mFriends.get(h.getAdapterPosition());
+                listener.onAvatarSelected(friend);
             });
             return h;
         }
@@ -163,10 +165,6 @@ class AvatarsAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
         notifyDataSetChanged();
     }
 
-    void setListener(@Nullable AvatarsAdapterListener l) {
-        this.mListener = l;
-    }
-
     private static class AvatarContainerMarginViewHolder extends RecyclerView.ViewHolder {
         AvatarContainerMarginViewHolder(View itemView) {
             super(itemView);
@@ -183,7 +181,7 @@ class AvatarsAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
         }
     }
 
-    interface AvatarsAdapterListener {
+    interface Listener {
         @UiThread
         void onAvatarSelected(FriendRecord fr);
     }
