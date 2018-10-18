@@ -129,8 +129,6 @@ public final class MapActivity extends AppCompatActivity implements OnMapReadyCa
             return;
         }
 
-        getWindow().getDecorView().setBackground(null);
-        getWindow().setStatusBarColor(Color.TRANSPARENT);
         binding = DataBindingUtil.setContentView(this, R.layout.activity_map);
 
         mMapView = findViewById(R.id.map);

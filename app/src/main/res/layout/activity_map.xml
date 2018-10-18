@@ -6,7 +6,7 @@
 <androidx.constraintlayout.widget.ConstraintLayout
     android:id="@+id/root"
     android:background="@null"
-    android:fitsSystemWindows="false"
+    android:fitsSystemWindows="true"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     tools:context=".MapActivity">
@@ -98,31 +98,49 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content" />
 
+        <ImageButton
+            android:id="@+id/info_overflow"
+            android:contentDescription="@null"
+            android:src="@drawable/ic_add_24dp"
+            android:background="?attr/selectableItemBackground"
+            android:tint="@color/pijun_grey"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="@id/username"
+            app:layout_constraintBottom_toBottomOf="@id/username"
+            android:layout_marginEnd="16dp"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content" />
+
         <TextView
             android:id="@+id/update_time"
             android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
+            android:layout_height="0dp"
             android:layout_marginStart="8dp"
             android:layout_marginEnd="16dp"
             android:fontFamily="@font/poppins_bold"
             android:textColor="@color/pijun_navy"
             android:textSize="12sp"
-            app:layout_constraintBaseline_toBaselineOf="@id/username"
-            app:layout_constraintEnd_toEndOf="parent"
+            android:gravity="center_vertical"
+            app:layout_constraintTop_toTopOf="@id/username"
+            app:layout_constraintBottom_toBottomOf="@id/username"
+            app:layout_constraintEnd_toStartOf="@id/info_overflow"
             tools:text="25 min. ago" />
 
         <TextView
             android:id="@+id/battery"
             android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
+            android:layout_height="0dp"
             android:drawableStart="@drawable/ic_sharp_battery_50_20dp"
             android:drawablePadding="4dp"
             tools:drawableTint="@color/pijun_grey"
             android:fontFamily="@font/poppins_light"
             android:textColor="@color/pijun_grey"
             android:textSize="12sp"
-            app:layout_constraintEnd_toEndOf="@id/update_time"
-            app:layout_constraintTop_toBottomOf="@id/username"
+            android:gravity="center_vertical"
+            android:layout_marginEnd="16dp"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="@id/address"
+            app:layout_constraintBottom_toBottomOf="@id/address"
             tools:text="50%" />
 
         <TextView
@@ -133,6 +151,7 @@
             android:fontFamily="@font/poppins_light"
             android:textColor="@color/pijun_grey"
             android:textSize="12sp"
+            android:layout_marginTop="8dp"
             app:layout_constraintEnd_toStartOf="@id/battery"
             app:layout_constraintHorizontal_bias="0"
             app:layout_constraintStart_toStartOf="@id/username"
@@ -160,8 +179,9 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:checked="true"
+            android:layout_marginEnd="16dp"
             app:layout_constraintBaseline_toBaselineOf="@id/refresh_button"
-            app:layout_constraintEnd_toEndOf="@id/update_time"
+            app:layout_constraintEnd_toEndOf="parent"
             app:thumbTint="@color/switch_thumb"
             app:trackTint="@color/switch_track" />
     </androidx.constraintlayout.widget.ConstraintLayout>
@@ -175,7 +195,7 @@
         android:tint="@color/my_location_fab_tint"
         android:backgroundTint="@color/my_location_fab_background"
         app:borderWidth="0dp"
-        android:layout_marginTop="48dp"
+        android:layout_marginTop="24dp"
         android:layout_marginEnd="24dp"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toTopOf="parent"
