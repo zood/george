@@ -1,16 +1,21 @@
 package io.pijun.george.view;
 
 import android.content.Context;
-import android.content.res.TypedArray;
 import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.graphics.BitmapShader;
 import android.graphics.Canvas;
+import android.graphics.Color;
 import android.graphics.Matrix;
 import android.graphics.Outline;
 import android.graphics.Paint;
 import android.graphics.Shader;
+import android.graphics.Typeface;
 import android.graphics.drawable.Drawable;
+import android.os.Build;
+import android.text.Layout;
+import android.text.StaticLayout;
+import android.text.TextPaint;
+import android.text.TextUtils;
 import android.util.AttributeSet;
 import android.view.View;
 import android.view.ViewOutlineProvider;
@@ -18,147 +23,203 @@ import android.view.ViewOutlineProvider;
 import com.squareup.picasso.Picasso;
 import com.squareup.picasso.Target;
 
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+
 import androidx.annotation.ColorInt;
-import androidx.annotation.ColorRes;
+import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.UiThread;
-import androidx.core.content.ContextCompat;
-import io.pijun.george.Identicon;
+import androidx.core.content.res.ResourcesCompat;
+import io.pijun.george.Constants;
 import io.pijun.george.R;
-
-/*
-base = 43dp
-img-diameter = 34dp
-border-width 2.5dp =
-border-shadow dy=3dp, blur=5dp
-shadow-color = border-color at 50% alpha
-shadow size = 7%
- */
 
 public class AvatarView extends View implements Target {
 
-    private float mWidth;
-    private float mHeight;
-    private Paint mBorderPaint;
-    private float mBorderWidth;
-    @Nullable
-    private Bitmap mImg;
-    @Nullable private BitmapShader mImgShader;
-    private Paint mImgPaint;
-    private float mRadius;
-    public String username;
+    private static Typeface poppinsBold;
+
+    private int height;
+    private Bitmap image;
+    private Paint imagePaint;
+    private StaticLayout layout;
+    private BitmapShader shader;
+    private Paint bgPaint;
+    private TextPaint textPaint;
+    private int textWidth;
+    private String username;
+    private int width;
 
     public AvatarView(Context context) {
         super(context);
-        init(null);
+        init();
     }
 
     public AvatarView(Context context, @Nullable AttributeSet attrs) {
         super(context, attrs);
-        init(attrs);
+        init();
     }
 
     public AvatarView(Context context, @Nullable AttributeSet attrs, int defStyleAttr) {
         super(context, attrs, defStyleAttr);
-        init(attrs);
+        init();
+    }
+
+    @NonNull
+    private static ColorPair getColorPair(byte val) {
+        // we want the unsigned value
+        int num = val & 0xFF;
+        if (num < 42) {
+            return new ColorPair(Color.parseColor("#5CD1FF"), Color.WHITE); // blue
+        } else if (num < 85) {
+            return new ColorPair(Color.parseColor("#E41C16"), Color.WHITE); // red
+        } else if (num < 128) {
+            return new ColorPair(Color.parseColor("#3C4466"), Color.WHITE); // navy
+        } else if (num < 170) {
+            return new ColorPair(Color.parseColor("#F6921E"), Color.WHITE); // orange
+        } else if (num < 213) {
+            return new ColorPair(Color.parseColor("#FFE422"), Color.parseColor("#46585E")); // canary
+        } else {
+            return new ColorPair(Color.parseColor("#46585E"), Color.WHITE); // grey
+        }
+    }
+
+    private static byte[] getMD5Hash(@NonNull String data) {
+        try {
+            MessageDigest digest = MessageDigest.getInstance("MD5");
+            digest.update(data.getBytes(Constants.utf8));
+            return digest.digest();
+        } catch (NoSuchAlgorithmException ex) {
+            throw new RuntimeException("MD5 algo not found", ex);
+        }
     }
 
     private void handleSizeChanged() {
-        mBorderWidth = mWidth * 0.07f;
-        mBorderPaint.setStrokeWidth(mBorderWidth);
-        mRadius = mWidth/2.0f - mBorderWidth/2.0f;
+        textPaint.setTextSize(height * 0.7f);
+        if (!TextUtils.isEmpty(username)) {
+            String txt = username.charAt(0) + "";
+            textWidth = (int)textPaint.measureText(txt);
+            if (Build.VERSION.SDK_INT >= 23) {
+                layout = StaticLayout.Builder.obtain(txt, 0, 1, textPaint, textWidth)
+                        .setAlignment(Layout.Alignment.ALIGN_CENTER)
+                        .setLineSpacing(0, 1f)
+                        .setIncludePad(false)
+                        .build();
+            } else {
+                //noinspection deprecation
+                layout = new StaticLayout(txt, textPaint, textWidth, Layout.Alignment.ALIGN_CENTER, 1.0f, 0, false);
+            }
+        } else {
+            layout = null;
+        }
 
-        if (mImg != null && mImgShader != null) {
-            float xScale = (mRadius * 2 - mBorderWidth) / (float) mImg.getWidth();
-            float yScale = (mRadius * 2 - mBorderWidth) / (float) mImg.getHeight();
+        if (image != null) {
+            float xScale = width / (float)image.getWidth();
+            float yScale = height / (float)image.getHeight();
 
             Matrix matrix = new Matrix();
             matrix.postScale(xScale, yScale);
-            matrix.postTranslate(mBorderWidth, mBorderWidth);
-            mImgShader.setLocalMatrix(matrix);
+            shader.setLocalMatrix(matrix);
         }
     }
 
-    private void init(@Nullable AttributeSet attrs) {
-        int borderColor = ContextCompat.getColor(getContext(), R.color.colorPrimary);
-        if (attrs != null) {
-            TypedArray a = getContext().getTheme().obtainStyledAttributes(attrs, R.styleable.AvatarView, 0, 0);
-            try {
-                borderColor = a.getColor(R.styleable.AvatarView_borderColor, borderColor);
-            } finally {
-                a.recycle();
-            }
-        }
-
-        setLayerType(View.LAYER_TYPE_SOFTWARE, null);
-
-        mBorderPaint = new Paint();
-        mBorderPaint.setColor(borderColor);
-        mBorderPaint.setStyle(Paint.Style.STROKE);
-        mBorderPaint.setAntiAlias(true);
-
-        mImgPaint = new Paint();
-        mImgPaint.setAntiAlias(true);
-
-        if (isInEditMode()) {
-            mImg = BitmapFactory.decodeResource(getResources(), R.drawable.george_clooney);
-            mImgShader = new BitmapShader(mImg, Shader.TileMode.CLAMP, Shader.TileMode.CLAMP);
-            mImgPaint.setShader(mImgShader);
-        }
-
+    @UiThread
+    private void init() {
         setOutlineProvider(new ViewOutlineProvider() {
             @Override
-            public void getOutline(View v, Outline o) {
-                o.setRoundRect(0, 0, getWidth(), getHeight(), mRadius);
+            public void getOutline(View view, Outline outline) {
+                outline.setRoundRect(0, 0, getWidth(), getHeight(), getWidth()/2.0f);
             }
         });
+        setClipToOutline(true);
+
+        imagePaint = new Paint();
+        imagePaint.setAntiAlias(true);
+        bgPaint = new Paint();
+        bgPaint.setAntiAlias(true);
+        bgPaint.setStyle(Paint.Style.FILL);
+        textPaint = new TextPaint();
+        if (!isInEditMode()) {  // I don't know why font resources can't be loaded in edit mode
+            if (poppinsBold == null) {
+                poppinsBold = ResourcesCompat.getFont(getContext(), R.font.poppins_bold);
+            }
+            textPaint.setTypeface(poppinsBold);
+        }
+        textPaint.setAntiAlias(true);
+
+        if (isInEditMode()) {
+            setUsername("zood");
+        }
     }
 
     @Override
     protected void onDraw(Canvas canvas) {
-        super.onDraw(canvas);
+        if (image == null && TextUtils.isEmpty(username)) {
+            canvas.drawColor(Color.WHITE);
+            return;
+        }
 
-        canvas.drawCircle(mWidth/2.0f, mHeight/2.0f, mRadius, mBorderPaint);
-        //noinspection SuspiciousNameCombination
-        canvas.drawRoundRect(mBorderWidth,
-                mBorderWidth,
-                mRadius * 2.0f,
-                mRadius * 2.0f,
-                mRadius,
-                mRadius,
-                mImgPaint);
+        if (image == null) {
+            // no image, so draw the letter
+//            canvas.drawColor(colors.background);
+            canvas.drawRoundRect(0, 0, width, height, width/2.0f, height/2.0f, bgPaint);
+            canvas.save();
+            canvas.translate((width - textWidth)/2.0f, 0);
+            layout.draw(canvas);
+            canvas.restore();
+        } else {
+            canvas.drawRoundRect(0, 0, width, height, width/2.0f, height/2.0f, imagePaint);
+        }
     }
 
     @Override
     protected void onSizeChanged(int w, int h, int oldw, int oldh) {
-        mWidth = w;
-        mHeight = h;
+        width = w;
+        height = h;
         handleSizeChanged();
     }
 
-    @UiThread
-    public void setBorderColor(@ColorInt int color) {
-        mBorderPaint.setColor(color);
-        invalidate();
-    }
-
-    @UiThread
-    public void setBorderColorRes(@ColorRes int color) {
-        setBorderColor(ContextCompat.getColor(getContext(), color));
-    }
-
-    @UiThread
     public void setImage(@Nullable Bitmap img) {
-        mImg = img;
+        this.image = img;
         if (img == null) {
-            mImgShader = null;
-            mImgPaint.setShader(null);
+            imagePaint.setShader(null);
+            shader = null;
         } else {
-            mImgShader = new BitmapShader(img, Shader.TileMode.CLAMP, Shader.TileMode.CLAMP);
-            mImgPaint.setShader(mImgShader);
+            shader = new BitmapShader(image, Shader.TileMode.CLAMP, Shader.TileMode.CLAMP);
+            imagePaint.setShader(shader);
         }
         handleSizeChanged();
         invalidate();
+    }
+
+    public void setUsername(@NonNull String username) {
+        this.username = username;
+        ColorPair colors = getColorPair(getMD5Hash(username)[15]);
+        textPaint.setColor(colors.foreground);
+        bgPaint.setColor(colors.background);
+        image = null;
+        imagePaint.setShader(null);
+
+        handleSizeChanged();
+        invalidate();
+    }
+
+    private static class ColorPair {
+        @ColorInt
+        final int foreground;
+        @ColorInt
+        final int background;
+
+        ColorPair(@ColorInt int background, @ColorInt int foreground) {
+            this.background = background;
+            this.foreground = foreground;
+        }
+    }
+
+    //region Picasso target
+
+    @Override
+    public void onBitmapFailed(Drawable errorDrawable) {
+        setImage(null);
     }
 
     @Override
@@ -167,13 +228,8 @@ public class AvatarView extends View implements Target {
     }
 
     @Override
-    public void onBitmapFailed(Drawable errorDrawable) {
-        // load the identicon instead
-        Bitmap bmp = Bitmap.createBitmap(getWidth(), getHeight(), Bitmap.Config.ARGB_8888);
-        Identicon.draw(bmp, username);
-        setImage(bmp);
-    }
-
-    @Override
     public void onPrepareLoad(Drawable placeHolderDrawable) {}
+
+    //endregion
+
 }

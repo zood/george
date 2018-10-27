@@ -2,14 +2,11 @@ package io.pijun.george;
 
 import android.content.Context;
 import android.content.res.Resources;
-import android.graphics.Bitmap;
-import android.graphics.drawable.Drawable;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
 import com.squareup.picasso.Picasso;
-import com.squareup.picasso.Target;
 
 import java.util.ArrayList;
 import java.util.Locale;
@@ -63,10 +60,10 @@ class AvatarsAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
     @Override
     public int getItemViewType(int position) {
         if (position == mFriends.size()) {
-            return R.layout.avatar_container_margin;
+            return R.layout.avatars_container_margin;
         }
 
-        return R.layout.avatar_preview;
+        return R.layout.avatar_item;
     }
 
     @UiThread
@@ -88,32 +85,15 @@ class AvatarsAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
     public void onBindViewHolder(@NonNull RecyclerView.ViewHolder holder, int position) {
         if (holder instanceof AvatarViewHolder) {
             AvatarViewHolder h = (AvatarViewHolder) holder;
-            Resources rsrcs = h.image.getResources();
-            int imgSize = rsrcs.getDimensionPixelSize(R.dimen.forty);
-            Context ctx = h.image.getContext();
+            Resources rsrcs = h.avatar.getResources();
+            int imgSize = rsrcs.getDimensionPixelSize(R.dimen.fortyEight);
+            Context ctx = h.avatar.getContext();
             FriendRecord friend = mFriends.get(position);
-            Target target = new Target() {
-                @Override
-                public void onBitmapLoaded(Bitmap bitmap, Picasso.LoadedFrom from) {
-                    h.image.setImage(bitmap);
-                }
-
-                @Override
-                public void onBitmapFailed(Drawable errorDrawable) {
-                    Bitmap bitmap = Bitmap.createBitmap(imgSize, imgSize, Bitmap.Config.ARGB_8888);
-                    Identicon.draw(bitmap, friend.user.username);
-                    h.image.setImage(bitmap);
-                }
-
-                @Override
-                public void onPrepareLoad(Drawable placeHolderDrawable) {}
-            };
-            h.image.setTag(target);
+            h.avatar.setUsername(friend.user.username);
             Picasso.with(ctx).
                     load(AvatarManager.getAvatar(ctx, friend.user.username)).
                     resize(imgSize, imgSize).
-                    into(target);
-            h.image.setBorderColorRes(friend.receivingBoxId != null ? R.color.colorPrimary : R.color.ui_tint_gray);
+                    into(h.avatar);
         }
     }
 
@@ -121,11 +101,11 @@ class AvatarsAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
     @NonNull
     public RecyclerView.ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
         LayoutInflater inflater = LayoutInflater.from(parent.getContext());
-        if (viewType == R.layout.avatar_container_margin) {
-            View view = inflater.inflate(R.layout.avatar_container_margin, parent, false);
+        if (viewType == R.layout.avatars_container_margin) {
+            View view = inflater.inflate(R.layout.avatars_container_margin, parent, false);
             return new AvatarContainerMarginViewHolder(view);
-        } else if (viewType == R.layout.avatar_preview) {
-            View view = inflater.inflate(R.layout.avatar_preview, parent, false);
+        } else if (viewType == R.layout.avatar_item) {
+            View view = inflater.inflate(R.layout.avatar_item, parent, false);
             final AvatarViewHolder h = new AvatarViewHolder(view);
             h.itemView.setOnClickListener(v -> {
                 FriendRecord friend = mFriends.get(h.getAdapterPosition());
@@ -172,12 +152,12 @@ class AvatarsAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
     }
 
     private static class AvatarViewHolder extends RecyclerView.ViewHolder {
-        final AvatarView image;
+        final AvatarView avatar;
 
         AvatarViewHolder(View itemView) {
             super(itemView);
 
-            image = itemView.findViewById(R.id.avatar_image);
+            avatar = itemView.findViewById(R.id.avatar_image);
         }
     }
 

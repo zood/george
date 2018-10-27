@@ -102,7 +102,7 @@ public class SettingsFragment extends Fragment implements SettingsAdapter.Listen
         Intent intent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
         Context ctx = requireContext();
         if (intent.resolveActivity(ctx.getPackageManager()) == null) {
-            // no camera, so just show the image picke
+            // no camera, so just show the avatar picke
             startImagePicker();
             return;
         }
@@ -193,7 +193,7 @@ public class SettingsFragment extends Fragment implements SettingsAdapter.Listen
         } else if (requestCode == REQUEST_IMAGE_FILE) {
             Uri uri = data.getData();
             if (uri == null) {
-                L.i("image file data is null");
+                L.i("avatar file data is null");
                 return;
             }
             L.i("img uri: " + uri.toString());
@@ -223,7 +223,7 @@ public class SettingsFragment extends Fragment implements SettingsAdapter.Listen
         Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
         intent.putExtra(Intent.EXTRA_LOCAL_ONLY, true);
         intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
-        intent.setType("image/*");
+        intent.setType("avatar/*");
         startActivityForResult(intent, REQUEST_IMAGE_FILE);
     }
 

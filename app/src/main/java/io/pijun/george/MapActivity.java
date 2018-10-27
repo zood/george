@@ -10,6 +10,7 @@ import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
+import android.graphics.Outline;
 import android.graphics.drawable.Drawable;
 import android.location.Location;
 import android.os.Bundle;
@@ -17,6 +18,7 @@ import android.os.Looper;
 import android.text.TextUtils;
 import android.text.format.DateUtils;
 import android.view.View;
+import android.view.ViewOutlineProvider;
 import android.widget.CompoundButton;
 import android.widget.EditText;
 import android.widget.Toast;
@@ -139,6 +141,14 @@ public final class MapActivity extends AppCompatActivity implements OnMapReadyCa
         binding.avatars.setLayoutManager(llm);
         avatarsAdapter = new AvatarsAdapter(this);
         binding.avatars.setAdapter(avatarsAdapter);
+
+        binding.infoPanel.setClipToOutline(true);
+        binding.infoPanel.setOutlineProvider(new ViewOutlineProvider() {
+            @Override
+            public void getOutline(View view, Outline outline) {
+                outline.setRoundRect(0, 0, view.getWidth(), view.getHeight(), 8 * getResources().getDisplayMetrics().density);
+            }
+        });
 
         final View myLocFab = findViewById(R.id.my_location_fab);
         myLocFab.setOnClickListener(v -> {
@@ -367,6 +377,9 @@ public final class MapActivity extends AppCompatActivity implements OnMapReadyCa
             @Override
             public void onMapClick(LatLng latLng) {
                 L.i("onMapClick");
+                selectedAvatarFriendId = -1;
+                friendForCameraToTrack = -1;
+                findViewById(R.id.my_location_fab).setSelected(false);
                 hideInfoPanel();
             }
         });
@@ -441,12 +454,8 @@ public final class MapActivity extends AppCompatActivity implements OnMapReadyCa
         try {
             bmp = Picasso.with(this).load(AvatarManager.getAvatar(this, friend.user.username)).resize(thirtySix, thirtySix).get();
         } catch (IOException ignore) {}
-        if (bmp == null) {
-            bmp = Bitmap.createBitmap(thirtySix, thirtySix, Bitmap.Config.ARGB_8888);
-            Identicon.draw(bmp, friend.user.username);
-        }
-
         final Bitmap img = bmp;
+
         App.runOnUiThread(new UiRunnable() {
             @Override
             public void run() {
@@ -457,10 +466,12 @@ public final class MapActivity extends AppCompatActivity implements OnMapReadyCa
                 }
 
                 AvatarView avView = new AvatarView(MapActivity.this);
-                avView.setBorderColor(Color.WHITE);
+                avView.setUsername(friend.user.username);
                 int spec = View.MeasureSpec.makeMeasureSpec(thirtySix, View.MeasureSpec.AT_MOST);
                 avView.measure(spec, spec);
-                avView.setImage(img);
+                if (img != null) {
+                    avView.setImage(img);
+                }
                 Bitmap avatar = Bitmap.createBitmap(thirtySix, thirtySix, Bitmap.Config.ARGB_8888);
                 avView.layout(0, 0, thirtySix, thirtySix);
                 Canvas c = new Canvas(avatar);
@@ -756,9 +767,6 @@ public final class MapActivity extends AppCompatActivity implements OnMapReadyCa
             showInfoPanel(fr, null);
             return;
         }
-
-//        binding.infoPanel.setVisibility(View.VISIBLE);
-//        binding.username.setText(fr.user.username);
 
         // Is the avatar info already showing for this user? If so, just center the camera and follow
         if (selectedAvatarFriendId == fr.id) {

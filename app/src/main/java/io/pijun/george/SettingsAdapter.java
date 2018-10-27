@@ -69,7 +69,7 @@ public class SettingsAdapter extends RecyclerView.Adapter {
         switch ((int) item.id) {
             case PROFILE_ID: {
                 ProfileListItemViewHolder h = (ProfileListItemViewHolder) holder;
-                h.avatar.username = username;
+                h.avatar.setUsername(username);
                 File myImg = AvatarManager.getMyAvatar(h.avatar.getContext());
                 Picasso.with(h.avatar.getContext()).load(myImg).into(h.avatar);
 

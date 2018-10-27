@@ -8,6 +8,6 @@
         android:id="@+id/avatar_image"
         android:elevation="6dp"
         android:layout_gravity="center"
-        android:layout_width="40dp"
-        android:layout_height="40dp" />
+        android:layout_width="48dp"
+        android:layout_height="48dp" />
 </FrameLayout>

@@ -123,7 +123,7 @@ public class AvatarManager {
                 return false;
             }
         }
-        // make sure this image can be decoded
+        // make sure this avatar can be decoded
         if (BitmapFactory.decodeByteArray(imgData, 0, imgData.length) == null) {
             L.w("Unable to decode bitmap from " + username);
             return false;
@@ -168,7 +168,7 @@ public class AvatarManager {
         }
         boolean success = img.compress(Bitmap.CompressFormat.JPEG, 80, fos);
         if (!success) {
-            L.w("Failed to compress avatar image to file");
+            L.w("Failed to compress avatar avatar to file");
             return false;
         }
         fos.flush();
@@ -226,7 +226,7 @@ public class AvatarManager {
         byte []buffer = new byte[(int) avatarFile.length()];
         int read = fis.read(buffer);
         if (read < avatarFile.length()) {
-            L.w("Did not read entire avatar image");
+            L.w("Did not read entire avatar");
             return;
         }
         UserComm comm = UserComm.newAvatarUpdate(buffer);
