@@ -118,7 +118,7 @@ public class SettingsFragment extends Fragment implements SettingsAdapter.Listen
                 } else if (item.getItemId() == R.id.images) {
                     startImagePicker();
                 }
-                return false;
+                return true;
             }
         });
         menu.show();

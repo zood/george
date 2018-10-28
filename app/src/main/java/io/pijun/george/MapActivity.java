@@ -4,6 +4,7 @@ import android.Manifest;
 import android.animation.ObjectAnimator;
 import android.animation.ValueAnimator;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentSender;
 import android.content.pm.PackageManager;
@@ -17,10 +18,12 @@ import android.os.Bundle;
 import android.os.Looper;
 import android.text.TextUtils;
 import android.text.format.DateUtils;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewOutlineProvider;
 import android.widget.CompoundButton;
 import android.widget.EditText;
+import android.widget.PopupMenu;
 import android.widget.Toast;
 
 import com.google.android.gms.common.api.ApiException;
@@ -605,6 +608,13 @@ public final class MapActivity extends AppCompatActivity implements OnMapReadyCa
         binding.infoPanel.setVisibility(View.GONE);
     }
 
+    private boolean isInfoPanelVisible() {
+        if (binding == null) {
+            return false;
+        }
+        return binding.infoPanel.getVisibility() == View.VISIBLE;
+    }
+
     @UiThread
     private void showInfoPanel(@NonNull FriendRecord friend, @Nullable FriendLocation loc) {
         if (binding == null) {
@@ -820,6 +830,66 @@ public final class MapActivity extends AppCompatActivity implements OnMapReadyCa
     }
 
     @UiThread
+    public void onInfoOverflowAction(View v) {
+        L.i("onInfoOverflowAction");
+        PopupMenu menu = new PopupMenu(this, v);
+        getMenuInflater().inflate(R.menu.info_panel_overflow, menu.getMenu());
+        menu.setOnMenuItemClickListener(new PopupMenu.OnMenuItemClickListener() {
+            @Override
+            public boolean onMenuItemClick(MenuItem item) {
+                if (item.getItemId() == R.id.remove_friend) {
+                    onRemoveFriendAction();
+                }
+                return true;
+            }
+        });
+        menu.show();
+    }
+
+    @UiThread
+    private void onRemoveFriendAction() {
+        final FriendRecord friend = (FriendRecord) binding.infoPanel.getTag();
+        AlertDialog.Builder builder = new AlertDialog.Builder(this, R.style.AlertDialogTheme);
+        builder.setTitle(R.string.remove_friend_interrogative)
+                .setMessage(R.string.remove_friend_prompt_msg)
+                .setPositiveButton(R.string.remove, new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        App.runInBackground(new WorkerRunnable() {
+                            @Override
+                            public void run() {
+                                try {
+                                    DB.get().removeFriend(friend);
+                                } catch (DB.DBException ex) {
+                                    L.w("Error removing friend: " + friend, ex);
+                                    Utils.showAlert(MapActivity.this, R.string.unexpected_error, R.string.remove_friend_error_msg);
+                                }
+                            }
+                        });
+                    }
+                })
+                .setNegativeButton(R.string.cancel, null)
+                .setCancelable(true)
+                .show();
+    }
+
+    @UiThread
+    private void removeFriendFromMap(long friendId) {
+        Marker marker = mMarkerTracker.removeMarker(friendId);
+        if (marker != null) {
+            marker.remove();
+        }
+        if (mCurrentCircle != null) {
+            Long circleFriendId = (Long) mCurrentCircle.getTag();
+            if (circleFriendId != null) {
+                if (circleFriendId == friendId) {
+                    mCurrentCircle.remove();
+                }
+            }
+        }
+    }
+
+    @UiThread
     private void showAddFriendDialog() {
         AlertDialog.Builder builder = new AlertDialog.Builder(this, R.style.AlertDialogTheme);
         builder.setTitle(R.string.add_friend);
@@ -855,8 +925,8 @@ public final class MapActivity extends AppCompatActivity implements OnMapReadyCa
         // check if there is already a circle
         if (mCurrentCircle != null) {
             // does this circle already belong to this friend?
-            long friendId = (long)mCurrentCircle.getTag();
-            if (friendId != loc.friendId) {
+            Long friendId = (Long) mCurrentCircle.getTag();
+            if (friendId == null || friendId != loc.friendId) {
                 // nope! Remove it.
                 mCurrentCircle.remove();
                 mCurrentCircle = null;
@@ -1165,8 +1235,8 @@ public final class MapActivity extends AppCompatActivity implements OnMapReadyCa
 
             // if there is an error circle being shown on this marker, adjust it too
             if (mCurrentCircle != null) {
-                long friendId = (long) mCurrentCircle.getTag();
-                if (loc.friendId == friendId) {
+                Long friendId = (Long) mCurrentCircle.getTag();
+                if (friendId != null && loc.friendId == friendId) {
                     if (loc.accuracy != null) {
                         mCurrentCircle.setRadius(loc.accuracy);
                         mCurrentCircle.setCenter(new LatLng(loc.latitude, loc.longitude));
@@ -1186,11 +1256,16 @@ public final class MapActivity extends AppCompatActivity implements OnMapReadyCa
 
     @Override
     public void onFriendRemoved(long friendId) {
-        Marker marker = mMarkerTracker.removeMarker(friendId);
-        if (marker != null) {
-            marker.remove();
-        }
+        removeFriendFromMap(friendId);
         avatarsAdapter.removeFriend(friendId);
+        // if the info panel is showing their info, hide it
+        if (!isInfoPanelVisible()) {
+            return;
+        }
+        FriendRecord friend = (FriendRecord) binding.infoPanel.getTag();
+        if (friend.id == friendId) {
+            hideInfoPanel();
+        }
     }
 
     @Override
@@ -1232,11 +1307,7 @@ public final class MapActivity extends AppCompatActivity implements OnMapReadyCa
             return;
         }
         App.runOnUiThread(() -> {
-            Marker marker = mMarkerTracker.removeMarker(friend.id);
-            if (marker == null) {
-                return;
-            }
-            marker.remove();
+            removeFriendFromMap(friend.id);
 
             // If the friend is currently visible on the info panel, update the panel
             if (selectedAvatarFriendId == friend.id && binding != null && binding.infoPanel.getVisibility() == View.VISIBLE) {
@@ -1244,6 +1315,12 @@ public final class MapActivity extends AppCompatActivity implements OnMapReadyCa
             }
         });
     }
+
+    @Override
+    public void onStartedSharingWithUser(long userId) {
+        // TODO: This is when we add a friend, or when we re-enable sharing with a friend
+    }
+
     //endregion
 
     //region AuthenticationManager.Listener
