@@ -346,8 +346,8 @@ public final class MapActivity extends AppCompatActivity implements OnMapReadyCa
             return;
         }
         CameraPosition cp = new CameraPosition.Builder()
+                .zoom(mGoogMap.getCameraPosition().zoom)
                 .target(mMeMarker.getPosition())
-                .zoom(Constants.DEFAULT_ZOOM_LEVEL)
                 .bearing(0)
                 .tilt(0).build();
         CameraUpdate cu = CameraUpdateFactory.newCameraPosition(cp);
@@ -791,7 +791,7 @@ public final class MapActivity extends AppCompatActivity implements OnMapReadyCa
         findViewById(R.id.my_location_fab).setSelected(false);
         CameraPosition cp = new CameraPosition.Builder()
                 .target(marker.getPosition())
-                .zoom(Constants.DEFAULT_ZOOM_LEVEL)
+                .zoom(mGoogMap.getCameraPosition().zoom)
                 .bearing(0)
                 .tilt(0).build();
         CameraUpdate cu = CameraUpdateFactory.newCameraPosition(cp);
@@ -1321,7 +1321,7 @@ public final class MapActivity extends AppCompatActivity implements OnMapReadyCa
         // This is called when we add a friend, or when we re-enable sharing with a friend
         FriendRecord friend = DB.get().getFriendByUserId(userId);
         if (friend == null) {
-            L.i("MapActivity.onStartedSharingWithUser couldn't obtain FriendRecord");
+            L.w("MapActivity.onStartedSharingWithUser couldn't obtain a FriendRecord");
             return;
         }
         // We need to make sure the friend is in the avatar adapter
