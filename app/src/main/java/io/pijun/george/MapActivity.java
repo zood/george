@@ -149,6 +149,7 @@ public final class MapActivity extends AppCompatActivity implements OnMapReadyCa
                 outline.setRoundRect(0, 0, view.getWidth(), view.getHeight(), 8 * getResources().getDisplayMetrics().density);
             }
         });
+        binding.battery.setCompoundDrawablePadding(20);
 
         final View myLocFab = findViewById(R.id.my_location_fab);
         myLocFab.setOnClickListener(v -> {
@@ -636,6 +637,7 @@ public final class MapActivity extends AppCompatActivity implements OnMapReadyCa
             binding.motion.setVisibility(View.GONE);
             binding.updateTime.setVisibility(View.INVISIBLE);
             binding.battery.setVisibility(View.INVISIBLE);
+            binding.batteryIcon.setVisibility(View.INVISIBLE);
             return;
         }
 
@@ -647,6 +649,7 @@ public final class MapActivity extends AppCompatActivity implements OnMapReadyCa
             binding.bearing.setVisibility(View.GONE);
             binding.motion.setVisibility(View.GONE);
             binding.battery.setVisibility(View.INVISIBLE);
+            binding.batteryIcon.setVisibility(View.INVISIBLE);
             return;
         }
 
@@ -663,7 +666,7 @@ public final class MapActivity extends AppCompatActivity implements OnMapReadyCa
                     DateUtils.MINUTE_IN_MILLIS,
                     DateUtils.FORMAT_ABBREV_RELATIVE);
         }
-        binding.updateTime.setText(String.format("(%s)", relTime));
+        binding.updateTime.setText(String.format("%s", relTime));
         binding.updateTime.setVisibility(View.VISIBLE);
 
         // refresh status
@@ -722,13 +725,10 @@ public final class MapActivity extends AppCompatActivity implements OnMapReadyCa
                 batteryImg = R.drawable.ic_sharp_battery_20_20dp;
             }
             Drawable battery = getDrawable(batteryImg);
-            if (battery != null) {
-                battery.setTint(ContextCompat.getColor(this, R.color.pijun_grey));
-            }
-            binding.battery.setCompoundDrawablesRelativeWithIntrinsicBounds(battery, null, null, null);
+            binding.batteryIcon.setImageDrawable(battery);
         } else {
             binding.battery.setText(null);
-            binding.battery.setCompoundDrawablesRelative(null, null, null, null);
+            binding.batteryIcon.setImageDrawable(null);
         }
 
         // the address
