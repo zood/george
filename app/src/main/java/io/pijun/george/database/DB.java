@@ -765,7 +765,7 @@ public class DB {
 
         @WorkerThread default void onLocationSharingRevoked(long userId) {}
 
-        @UiThread default void onStartedSharingWithUser(long userId) {}
+        @WorkerThread default void onStartedSharingWithUser(long userId) {}
 
         @UiThread default void onStoppedSharingWithUser(long userId) {}
     }
@@ -794,7 +794,7 @@ public class DB {
 
     @AnyThread
     private void notifyStartedSharingWithUser(long userId) {
-        App.runOnUiThread(new UiRunnable() {
+        App.runInBackground(new WorkerRunnable() {
             @Override
             public void run() {
                 for (WeakReference<Listener> ref : listeners) {

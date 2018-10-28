@@ -1318,7 +1318,15 @@ public final class MapActivity extends AppCompatActivity implements OnMapReadyCa
 
     @Override
     public void onStartedSharingWithUser(long userId) {
-        // TODO: This is when we add a friend, or when we re-enable sharing with a friend
+        // This is called when we add a friend, or when we re-enable sharing with a friend
+        FriendRecord friend = DB.get().getFriendByUserId(userId);
+        if (friend == null) {
+            L.i("MapActivity.onStartedSharingWithUser couldn't obtain FriendRecord");
+            return;
+        }
+        // We need to make sure the friend is in the avatar adapter
+        // The adapter handles the case if the friend is already in there.
+        avatarsAdapter.addFriend(friend);
     }
 
     //endregion
