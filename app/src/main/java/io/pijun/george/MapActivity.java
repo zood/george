@@ -9,7 +9,6 @@ import android.content.Intent;
 import android.content.IntentSender;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
-import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Outline;
 import android.graphics.drawable.Drawable;
@@ -49,7 +48,6 @@ import com.google.android.gms.maps.model.CircleOptions;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
-import com.squareup.picasso.Picasso;
 
 import java.io.IOException;
 import java.security.SecureRandom;
@@ -90,7 +88,7 @@ import io.pijun.george.database.UserRecord;
 import io.pijun.george.databinding.ActivityMapBinding;
 import io.pijun.george.service.BackupDatabaseJob;
 import io.pijun.george.service.LimitedShareService;
-import io.pijun.george.view.AvatarView;
+import io.pijun.george.view.AvatarRenderer;
 import io.pijun.george.view.MyLocationView;
 import retrofit2.Response;
 
@@ -345,8 +343,9 @@ public final class MapActivity extends AppCompatActivity implements OnMapReadyCa
         if (mMeMarker == null) {
             return;
         }
+        float zoom = Math.max(mGoogMap.getCameraPosition().zoom, Constants.DEFAULT_ZOOM_LEVEL);
         CameraPosition cp = new CameraPosition.Builder()
-                .zoom(mGoogMap.getCameraPosition().zoom)
+                .zoom(zoom)
                 .target(mMeMarker.getPosition())
                 .bearing(0)
                 .tilt(0).build();
@@ -453,12 +452,8 @@ public final class MapActivity extends AppCompatActivity implements OnMapReadyCa
         if (mGoogMap == null) {
             return;
         }
-        int thirtySix = getResources().getDimensionPixelSize(R.dimen.thirtySix);
-        Bitmap bmp = null;
-        try {
-            bmp = Picasso.with(this).load(AvatarManager.getAvatar(this, friend.user.username)).resize(thirtySix, thirtySix).get();
-        } catch (IOException ignore) {}
-        final Bitmap img = bmp;
+
+        BitmapDescriptor icon = AvatarRenderer.getBitmapDescriptor(this, friend.user.username, R.dimen.thirtySix);
 
         App.runOnUiThread(new UiRunnable() {
             @Override
@@ -468,23 +463,9 @@ public final class MapActivity extends AppCompatActivity implements OnMapReadyCa
                     // don't add another one
                     return;
                 }
-
-                AvatarView avView = new AvatarView(MapActivity.this);
-                avView.setUsername(friend.user.username);
-                int spec = View.MeasureSpec.makeMeasureSpec(thirtySix, View.MeasureSpec.AT_MOST);
-                avView.measure(spec, spec);
-                if (img != null) {
-                    avView.setImage(img);
-                }
-                Bitmap avatar = Bitmap.createBitmap(thirtySix, thirtySix, Bitmap.Config.ARGB_8888);
-                avView.layout(0, 0, thirtySix, thirtySix);
-                Canvas c = new Canvas(avatar);
-                avView.draw(c);
-
-                BitmapDescriptor descriptor = BitmapDescriptorFactory.fromBitmap(avatar);
                 MarkerOptions opts = new MarkerOptions()
                         .position(new LatLng(loc.latitude, loc.longitude))
-                        .icon(descriptor)
+                        .icon(icon)
                         .anchor(0.5f, 0.5f)
                         .title(friend.user.username);
                 Marker marker = mGoogMap.addMarker(opts);
@@ -789,9 +770,10 @@ public final class MapActivity extends AppCompatActivity implements OnMapReadyCa
         friendForCameraToTrack = fr.id;
         selectedAvatarFriendId = fr.id;
         findViewById(R.id.my_location_fab).setSelected(false);
+        float zoom = Math.max(mGoogMap.getCameraPosition().zoom, Constants.DEFAULT_ZOOM_LEVEL);
         CameraPosition cp = new CameraPosition.Builder()
                 .target(marker.getPosition())
-                .zoom(mGoogMap.getCameraPosition().zoom)
+                .zoom(zoom)
                 .bearing(0)
                 .tilt(0).build();
         CameraUpdate cu = CameraUpdateFactory.newCameraPosition(cp);
@@ -1192,7 +1174,35 @@ public final class MapActivity extends AppCompatActivity implements OnMapReadyCa
     private AvatarManager.Listener avatarListener = new AvatarManager.Listener() {
         @Override
         public void onAvatarUpdated(@Nullable String username) {
+            if (username == null) {
+                return;
+            }
             avatarsAdapter.onAvatarUpdated(username);
+            App.runInBackground(new WorkerRunnable() {
+                @Override
+                public void run() {
+                    UserRecord user = DB.get().getUser(username);
+                    if (user == null) {
+                        L.w("MapActivity.onAvatarUpdated for a user we don't know about: " + username);
+                        return;
+                    }
+                    FriendRecord friend = DB.get().getFriendByUserId(user.id);
+                    if (friend == null) {
+                        // This person is no friend of ours. Get outta here.
+                        return;
+                    }
+                    BitmapDescriptor icon = AvatarRenderer.getBitmapDescriptor(MapActivity.this, username, R.dimen.thirtySix);
+                    App.runOnUiThread(new UiRunnable() {
+                        @Override
+                        public void run() {
+                            Marker marker = mMarkerTracker.getById(friend.id);
+                            if (marker != null) {
+                                marker.setIcon(icon);
+                            }
+                        }
+                    });
+                }
+            });
         }
     };
     //endregion

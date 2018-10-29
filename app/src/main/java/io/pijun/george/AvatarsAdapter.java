@@ -77,6 +77,7 @@ class AvatarsAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
             FriendRecord f = mFriends.get(i);
             if (f.user.username.toLowerCase(Locale.US).equals(username)) {
                 notifyItemChanged(i);
+                return;
             }
         }
     }

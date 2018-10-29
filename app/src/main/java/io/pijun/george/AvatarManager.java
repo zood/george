@@ -99,7 +99,7 @@ public class AvatarManager {
 
     @CheckResult
     @NonNull @AnyThread
-    static File getAvatar(@NonNull Context ctx, @NonNull String username) {
+    public static File getAvatar(@NonNull Context ctx, @NonNull String username) {
         File filesDir = ctx.getFilesDir();
         File avatarsDir = new File(filesDir, AVATAR_DIR);
         return new File(avatarsDir, username.toLowerCase(Locale.US) + ".jpg");
