@@ -2,6 +2,9 @@
     <!-- Default screen margins, per the Android Design guidelines. -->
     <dimen name="activity_horizontal_margin">16dp</dimen>
     <dimen name="activity_vertical_margin">16dp</dimen>
+    <dimen name="one">1dp</dimen>
+    <dimen name="two">2dp</dimen>
+    <dimen name="four">4dp</dimen>
     <dimen name="eight">8dp</dimen>
     <dimen name="sixteen">16dp</dimen>
     <dimen name="twentyFour">24dp</dimen>
@@ -14,4 +17,6 @@
     <dimen name="fortyEight">48dp</dimen>
     <dimen name="ninetySix">96dp</dimen>
     <dimen name="friends_sheet_peek_height">72dp</dimen>
+    <dimen name="radial_button">56dp</dimen>
+    <dimen name="radial_expanded">100dp</dimen>
 </resources>

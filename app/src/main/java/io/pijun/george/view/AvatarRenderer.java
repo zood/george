@@ -31,7 +31,6 @@ import androidx.annotation.Nullable;
 import androidx.core.content.res.ResourcesCompat;
 import io.pijun.george.AvatarManager;
 import io.pijun.george.Constants;
-import io.pijun.george.L;
 import io.pijun.george.R;
 
 /**
@@ -78,13 +77,11 @@ public class AvatarRenderer {
     @AnyThread
     void draw(@NonNull Canvas canvas) {
         if (image == null && TextUtils.isEmpty(username)) {
-            L.i("drawing nothing");
             canvas.drawColor(Color.WHITE);
             return;
         }
 
         if (image == null) {
-            L.i("drawing the letter");
             // no image, so draw the letter
             canvas.drawRoundRect(0, 0, diameter, diameter, radius, radius, bgPaint);
             canvas.save();
@@ -92,7 +89,6 @@ public class AvatarRenderer {
             layout.draw(canvas);
             canvas.restore();
         } else {
-            L.i("drawing the image");
             canvas.drawRoundRect(0, 0, diameter, diameter, radius, radius, imagePaint);
         }
     }

@@ -31,13 +31,14 @@
             android:layout_height="wrap_content"
             android:layout_marginStart="16dp"
             android:layout_marginEnd="16dp"
-            android:layout_marginBottom="76dp"
+            android:layout_marginBottom="4dp"
             android:background="@android:color/white"
             android:clickable="true"
             android:elevation="4dp"
             android:focusable="true"
             android:paddingBottom="12dp"
-            android:visibility="gone"
+            android:translationX="-400dp"
+            app:layout_constraintBottom_toTopOf="@id/avatars"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             tools:visibility="visible">
@@ -210,32 +211,57 @@
             app:layout_constraintTop_toTopOf="parent"
             tools:layout_editor_absoluteX="280dp" />
 
-        <Button
-            android:id="@+id/share_button"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="32dp"
-            android:onClick="onAddFriendAction"
-            android:text="Share"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent" />
+        <xyz.zood.george.widget.RadialMenuButton
+            android:id="@+id/radial_limited_share"
+            android:src="@drawable/ic_sharp_timer_24dp"
+            android:tint="@color/pijun_blue"
+            android:background="@drawable/radial_button_background"
+            android:onClick="onStartLimitedShareAction"
+            android:scaleType="center"
+            android:elevation="0dp"
+            app:layout_constraintEnd_toEndOf="@id/radial_primary"
+            app:layout_constraintBottom_toBottomOf="@id/radial_primary"
+            android:layout_width="@dimen/radial_button"
+            android:layout_height="@dimen/radial_button" />
 
-        <Button
-            android:id="@+id/layers_button"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Layers"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/share_button" />
+        <xyz.zood.george.widget.RadialMenuButton
+            android:id="@+id/radial_add_friend"
+            android:src="@drawable/ic_sharp_person_add_24dp"
+            android:tint="@color/pijun_blue"
+            android:background="@drawable/radial_button_background"
+            android:onClick="showAddFriendDialog"
+            android:scaleType="center"
+            android:elevation="0dp"
+            app:layout_constraintEnd_toEndOf="@id/radial_primary"
+            app:layout_constraintBottom_toBottomOf="@id/radial_primary"
+            android:layout_width="@dimen/radial_button"
+            android:layout_height="@dimen/radial_button"/>
 
-        <Button
-            android:id="@+id/settings_button"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
+        <xyz.zood.george.widget.RadialMenuButton
+            android:id="@+id/radial_settings"
+            android:src="@drawable/ic_sharp_settings_24dp"
+            android:tint="@color/pijun_blue"
+            android:background="@drawable/radial_button_background"
+            android:scaleType="center"
+            android:elevation="0dp"
             android:onClick="onShowSettings"
-            android:text="Settings"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/layers_button" />
+            app:layout_constraintEnd_toEndOf="@id/radial_primary"
+            app:layout_constraintBottom_toBottomOf="@id/radial_primary"
+            android:layout_width="@dimen/radial_button"
+            android:layout_height="@dimen/radial_button" />
+
+        <xyz.zood.george.widget.RadialMenuButton
+            android:id="@+id/radial_primary"
+            android:background="@drawable/radial_button_background"
+            android:src="@drawable/ic_sharp_more_vert_24dp"
+            android:tint="@color/pijun_blue"
+            android:scaleType="center"
+            android:translationZ="4dp"
+            android:layout_margin="24dp"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintBottom_toTopOf="@id/avatars"
+            android:layout_width="@dimen/radial_button"
+            android:layout_height="@dimen/radial_button" />
 
         <!-- It's positioning gets controlled by the fragment -->
         <androidx.recyclerview.widget.RecyclerView

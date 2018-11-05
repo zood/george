@@ -66,6 +66,9 @@ import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 import androidx.core.graphics.drawable.DrawableCompat;
 import androidx.databinding.DataBindingUtil;
+import androidx.dynamicanimation.animation.DynamicAnimation;
+import androidx.dynamicanimation.animation.SpringAnimation;
+import androidx.dynamicanimation.animation.SpringForce;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import io.pijun.george.animation.DoubleEvaluator;
 import io.pijun.george.animation.LatLngEvaluator;
@@ -91,6 +94,7 @@ import io.pijun.george.service.LimitedShareService;
 import io.pijun.george.view.AvatarRenderer;
 import io.pijun.george.view.MyLocationView;
 import retrofit2.Response;
+import xyz.zood.george.widget.RadialMenu;
 
 public final class MapActivity extends AppCompatActivity implements OnMapReadyCallback, GoogleMap.OnMarkerClickListener, AvatarsAdapter.Listener, DB.Listener, AuthenticationManager.Listener {
 
@@ -114,6 +118,7 @@ public final class MapActivity extends AppCompatActivity implements OnMapReadyCa
     private Circle mCurrentCircle;
     private boolean isStarted = false;
     private AvatarsAdapter avatarsAdapter;
+    private RadialMenu radialMenu;
 
     public static Intent newIntent(Context ctx) {
         return new Intent(ctx, MapActivity.class);
@@ -151,6 +156,7 @@ public final class MapActivity extends AppCompatActivity implements OnMapReadyCa
             }
         });
         binding.battery.setCompoundDrawablePadding(20);
+        radialMenu = new RadialMenu(binding.root);
 
         final View myLocFab = findViewById(R.id.my_location_fab);
         myLocFab.setOnClickListener(v -> {
@@ -373,6 +379,7 @@ public final class MapActivity extends AppCompatActivity implements OnMapReadyCa
                 if (reason == REASON_GESTURE) {
                     friendForCameraToTrack = -1;
                     findViewById(R.id.my_location_fab).setSelected(false);
+                    radialMenu.flyBack();
                 }
             }
         });
@@ -384,6 +391,7 @@ public final class MapActivity extends AppCompatActivity implements OnMapReadyCa
                 friendForCameraToTrack = -1;
                 findViewById(R.id.my_location_fab).setSelected(false);
                 hideInfoPanel();
+                radialMenu.flyBack();
             }
         });
 
@@ -585,24 +593,44 @@ public final class MapActivity extends AppCompatActivity implements OnMapReadyCa
         if (binding == null) {
             return;
         }
+        radialMenu.setVisible(true);
+
         binding.infoPanel.setTag(null);
-        binding.infoPanel.setVisibility(View.GONE);
+
+        float xOffset = -binding.infoPanel.getRight();
+        SpringForce xSpring = new SpringForce(xOffset)
+                .setDampingRatio(SpringForce.DAMPING_RATIO_LOW_BOUNCY)
+                .setStiffness(SpringForce.STIFFNESS_MEDIUM);
+        new SpringAnimation(binding.infoPanel, DynamicAnimation.TRANSLATION_X)
+                .setSpring(xSpring)
+                .setStartVelocity(1000)
+                .start();
     }
 
     private boolean isInfoPanelVisible() {
         if (binding == null) {
             return false;
         }
-        return binding.infoPanel.getVisibility() == View.VISIBLE;
+
+        return binding.infoPanel.getTranslationX() == 0;
     }
 
     @UiThread
     private void showInfoPanel(@NonNull FriendRecord friend, @Nullable FriendLocation loc) {
-        if (binding == null) {
+        if (binding == null || radialMenu == null) {
             return;
         }
 
-        binding.infoPanel.setVisibility(View.VISIBLE);
+        radialMenu.setVisible(false);
+
+        SpringForce xSpring = new SpringForce(0)
+                .setDampingRatio(SpringForce.DAMPING_RATIO_LOW_BOUNCY)
+                .setStiffness(SpringForce.STIFFNESS_MEDIUM);
+        new SpringAnimation(binding.infoPanel, DynamicAnimation.TRANSLATION_X)
+                .setSpring(xSpring)
+                .setStartVelocity(1000)
+                .start();
+
         binding.infoPanel.setTag(friend);
 
         // common stuff
@@ -752,7 +780,6 @@ public final class MapActivity extends AppCompatActivity implements OnMapReadyCa
     @UiThread
     public void onAvatarSelected(FriendRecord fr) {
         Marker marker = mMarkerTracker.getById(fr.id);
-        binding.infoPanel.setVisibility(View.VISIBLE);
         if (marker == null) {
             selectedAvatarFriendId = -1;
             showInfoPanel(fr, null);
@@ -799,16 +826,10 @@ public final class MapActivity extends AppCompatActivity implements OnMapReadyCa
         });
     }
 
-    public void onAddFriendAction(View v) {
-        L.i("onAddFriendAction");
-        AlertDialog.Builder builder = new AlertDialog.Builder(this, R.style.AlertDialogTheme);
-        builder.setPositiveButton("Add friend", (dialog, which) -> showAddFriendDialog())
-                .setNeutralButton("Limited Share", (dialog, which) -> {
-                    Intent i = LimitedShareService.newIntent(this, LimitedShareService.ACTION_START);
-                    ContextCompat.startForegroundService(this, i);
-                })
-                .setNegativeButton("Cancel", null)
-                .setCancelable(true).setMessage("Add friend?").show();
+    public void onStartLimitedShareAction(View v) {
+        radialMenu.flyBack();
+        Intent i = LimitedShareService.newIntent(this, LimitedShareService.ACTION_START);
+        ContextCompat.startForegroundService(this, i);
     }
 
     @UiThread
@@ -872,7 +893,8 @@ public final class MapActivity extends AppCompatActivity implements OnMapReadyCa
     }
 
     @UiThread
-    private void showAddFriendDialog() {
+    public void showAddFriendDialog(View v) {
+        radialMenu.flyBack();
         AlertDialog.Builder builder = new AlertDialog.Builder(this, R.style.AlertDialogTheme);
         builder.setTitle(R.string.add_friend);
         builder.setView(R.layout.friend_request_form);
@@ -934,6 +956,7 @@ public final class MapActivity extends AppCompatActivity implements OnMapReadyCa
 
     public void onShowSettings(View v) {
         startActivityForResult(SettingsActivity.newIntent(this), SettingsActivity.REQUEST_EXIT);
+        radialMenu.flyBack();
     }
 
     @WorkerThread
