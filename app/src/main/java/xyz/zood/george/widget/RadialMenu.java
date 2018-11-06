@@ -267,34 +267,13 @@ public class RadialMenu {
             SpringForce xSpring = new SpringForce(xOffset)
                     .setDampingRatio(dampingRatio)
                     .setStiffness(stiffness);
-//            SpringForce ySpring = new SpringForce(0)
-//                    .setDampingRatio(dampingRatio)
-//                    .setStiffness(stiffness);
-//            SpringForce zSpring = new SpringForce(0)
-//                    .setDampingRatio(dampingRatio)
-//                    .setStiffness(stiffness);
 
             for (RadialMenuButton b : buttons) {
                 new SpringAnimation(b, DynamicAnimation.TRANSLATION_X)
                         .setSpring(xSpring)
                         .setStartVelocity(velocity)
                         .start();
-//                new SpringAnimation(b, DynamicAnimation.TRANSLATION_Y)
-//                        .setSpring(ySpring)
-//                        .setStartVelocity(velocity)
-//                        .start();
-//                if (b != primary) {
-//                    new SpringAnimation(b, DynamicAnimation.TRANSLATION_Z)
-//                            .setSpring(zSpring)
-//                            .setStartVelocity(velocity)
-//                            .start();
-//                }
             }
-
-            // make sure to reset the rotation of the primary button, in case we were expanded
-//            new SpringAnimation(primary, DynamicAnimation.ROTATION)
-//                    .setStartVelocity(velocity)
-//                    .animateToFinalPosition(0f);
         }
     }
 

@@ -13,7 +13,7 @@ import io.pijun.george.api.UserComm;
 
 public class UpdateStatusTracker {
 
-    enum State {
+    public enum State {
         NotRequested,
         Requested,
         RequestedAndUnresponsive,
@@ -45,7 +45,7 @@ public class UpdateStatusTracker {
 
     @CheckResult
     @AnyThread
-    static State getFriendState(long friendId) {
+    public static State getFriendState(long friendId) {
         long now = System.currentTimeMillis();
         Long reqTime = requestTimes.get(friendId);
         // if this is old data, remove it

@@ -10,19 +10,13 @@ import android.content.IntentSender;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.Color;
-import android.graphics.Outline;
-import android.graphics.drawable.Drawable;
 import android.location.Location;
 import android.os.Bundle;
 import android.os.Looper;
 import android.text.TextUtils;
 import android.text.format.DateUtils;
-import android.view.MenuItem;
 import android.view.View;
-import android.view.ViewOutlineProvider;
-import android.widget.CompoundButton;
 import android.widget.EditText;
-import android.widget.PopupMenu;
 import android.widget.Toast;
 
 import com.google.android.gms.common.api.ApiException;
@@ -54,8 +48,6 @@ import java.security.SecureRandom;
 import java.util.ArrayList;
 
 import androidx.annotation.AnyThread;
-import androidx.annotation.ColorRes;
-import androidx.annotation.DrawableRes;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.UiThread;
@@ -64,11 +56,7 @@ import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
-import androidx.core.graphics.drawable.DrawableCompat;
 import androidx.databinding.DataBindingUtil;
-import androidx.dynamicanimation.animation.DynamicAnimation;
-import androidx.dynamicanimation.animation.SpringAnimation;
-import androidx.dynamicanimation.animation.SpringForce;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import io.pijun.george.animation.DoubleEvaluator;
 import io.pijun.george.animation.LatLngEvaluator;
@@ -80,8 +68,6 @@ import io.pijun.george.api.OscarSocket;
 import io.pijun.george.api.PushNotification;
 import io.pijun.george.api.SearchUserResult;
 import io.pijun.george.api.UserComm;
-import io.pijun.george.api.locationiq.RevGeocoding;
-import io.pijun.george.api.locationiq.ReverseGeocodingCache;
 import io.pijun.george.crypto.EncryptedData;
 import io.pijun.george.crypto.KeyPair;
 import io.pijun.george.database.DB;
@@ -94,6 +80,7 @@ import io.pijun.george.service.LimitedShareService;
 import io.pijun.george.view.AvatarRenderer;
 import io.pijun.george.view.MyLocationView;
 import retrofit2.Response;
+import xyz.zood.george.widget.InfoPanel;
 import xyz.zood.george.widget.RadialMenu;
 
 public final class MapActivity extends AppCompatActivity implements OnMapReadyCallback, GoogleMap.OnMarkerClickListener, AvatarsAdapter.Listener, DB.Listener, AuthenticationManager.Listener {
@@ -119,6 +106,7 @@ public final class MapActivity extends AppCompatActivity implements OnMapReadyCa
     private boolean isStarted = false;
     private AvatarsAdapter avatarsAdapter;
     private RadialMenu radialMenu;
+    private InfoPanel infoPanel;
 
     public static Intent newIntent(Context ctx) {
         return new Intent(ctx, MapActivity.class);
@@ -139,6 +127,9 @@ public final class MapActivity extends AppCompatActivity implements OnMapReadyCa
 
         binding = DataBindingUtil.setContentView(this, R.layout.activity_map);
 
+        infoPanel = new InfoPanel(binding.infoPanel, this, infoPanelListener);
+        radialMenu = new RadialMenu(binding.root);
+
         mMapView = findViewById(R.id.map);
         mMapView.onCreate(savedInstanceState);
         mMapView.getMapAsync(this);
@@ -148,16 +139,6 @@ public final class MapActivity extends AppCompatActivity implements OnMapReadyCa
         avatarsAdapter = new AvatarsAdapter(this);
         binding.avatars.setAdapter(avatarsAdapter);
 
-        binding.infoPanel.setClipToOutline(true);
-        binding.infoPanel.setOutlineProvider(new ViewOutlineProvider() {
-            @Override
-            public void getOutline(View view, Outline outline) {
-                outline.setRoundRect(0, 0, view.getWidth(), view.getHeight(), 8 * getResources().getDisplayMetrics().density);
-            }
-        });
-        binding.battery.setCompoundDrawablePadding(20);
-        radialMenu = new RadialMenu(binding.root);
-
         final View myLocFab = findViewById(R.id.my_location_fab);
         myLocFab.setOnClickListener(v -> {
             myLocFab.setSelected(true);
@@ -166,7 +147,8 @@ public final class MapActivity extends AppCompatActivity implements OnMapReadyCa
 
             // if we're showing the avatar info, hide it
             selectedAvatarFriendId = -1;
-            hideInfoPanel();
+            infoPanel.hide();
+            radialMenu.setVisible(true);
         });
 
         mLocationProviderClient = LocationServices.getFusedLocationProviderClient(this);
@@ -183,35 +165,6 @@ public final class MapActivity extends AppCompatActivity implements OnMapReadyCa
         AvatarManager.addListener(avatarListener);
 
         oscarSocket = new OscarSocket(oscarSocketListener);
-    }
-
-    public void onRequestLocation(View v) {
-        L.i("onRequestLocation " + selectedAvatarFriendId + " (manual)");
-        if (selectedAvatarFriendId < 1) {
-            return;
-        }
-        long friendId = selectedAvatarFriendId;
-        App.runInBackground(new WorkerRunnable() {
-            @Override
-            public void run() {
-                FriendRecord friend = DB.get().getFriendById(friendId);
-                if (friend == null) {
-                    L.w("no friend found with id " + friendId);
-                    return;
-                }
-                if (friend.receivingBoxId == null) {
-                    L.w(friend.user.username + " doesn't share their location with us");
-                    return;
-                }
-                L.i("requesting location from " + friend.user.username);
-                UserComm comm = UserComm.newLocationUpdateRequest();
-                UpdateStatusTracker.setLastRequestTime(friendId, System.currentTimeMillis());
-                String errMsg = OscarClient.queueSendMessage(MapActivity.this, friend.user, comm, true, true);
-                if (errMsg != null) {
-                    L.w("manual location request failed: " + errMsg);
-                }
-            }
-        });
     }
 
     @Override
@@ -386,11 +339,11 @@ public final class MapActivity extends AppCompatActivity implements OnMapReadyCa
         mGoogMap.setOnMapClickListener(new GoogleMap.OnMapClickListener() {
             @Override
             public void onMapClick(LatLng latLng) {
-                L.i("onMapClick");
                 selectedAvatarFriendId = -1;
                 friendForCameraToTrack = -1;
                 findViewById(R.id.my_location_fab).setSelected(false);
-                hideInfoPanel();
+                infoPanel.hide();
+                radialMenu.setVisible(true);
                 radialMenu.flyBack();
             }
         });
@@ -551,14 +504,16 @@ public final class MapActivity extends AppCompatActivity implements OnMapReadyCa
     @UiThread
     public boolean onMarkerClick(@NonNull final Marker marker) {
         if (marker.equals(mMeMarker)) {
-            hideInfoPanel();
+            infoPanel.hide();
+            radialMenu.setVisible(true);
             return true;
         }
 
         final FriendLocation loc = mMarkerTracker.getLocation(marker);
         if (loc == null) {
             // should never happen
-            hideInfoPanel();
+            infoPanel.hide();
+            radialMenu.setVisible(true);
             return true;
         }
         L.i("onMarkerClick found friend " + loc.friendId);
@@ -589,191 +544,10 @@ public final class MapActivity extends AppCompatActivity implements OnMapReadyCa
         return true;
     }
 
-    private void hideInfoPanel() {
-        if (binding == null) {
-            return;
-        }
-        radialMenu.setVisible(true);
-
-        binding.infoPanel.setTag(null);
-
-        float xOffset = -binding.infoPanel.getRight();
-        SpringForce xSpring = new SpringForce(xOffset)
-                .setDampingRatio(SpringForce.DAMPING_RATIO_LOW_BOUNCY)
-                .setStiffness(SpringForce.STIFFNESS_MEDIUM);
-        new SpringAnimation(binding.infoPanel, DynamicAnimation.TRANSLATION_X)
-                .setSpring(xSpring)
-                .setStartVelocity(1000)
-                .start();
-    }
-
-    private boolean isInfoPanelVisible() {
-        if (binding == null) {
-            return false;
-        }
-
-        return binding.infoPanel.getTranslationX() == 0;
-    }
-
     @UiThread
     private void showInfoPanel(@NonNull FriendRecord friend, @Nullable FriendLocation loc) {
-        if (binding == null || radialMenu == null) {
-            return;
-        }
-
         radialMenu.setVisible(false);
-
-        SpringForce xSpring = new SpringForce(0)
-                .setDampingRatio(SpringForce.DAMPING_RATIO_LOW_BOUNCY)
-                .setStiffness(SpringForce.STIFFNESS_MEDIUM);
-        new SpringAnimation(binding.infoPanel, DynamicAnimation.TRANSLATION_X)
-                .setSpring(xSpring)
-                .setStartVelocity(1000)
-                .start();
-
-        binding.infoPanel.setTag(friend);
-
-        // common stuff
-        binding.username.setText(friend.user.username);
-        binding.shareSwitch.setOnCheckedChangeListener(null);
-        if (friend.sendingBoxId != null) {
-            binding.shareSwitch.setChecked(true);
-            binding.shareSwitch.setText(R.string.sharing);
-        } else {
-            binding.shareSwitch.setChecked(false);
-            binding.shareSwitch.setText(R.string.not_sharing);
-        }
-        binding.shareSwitch.setOnCheckedChangeListener(shareCheckedChangeListener);
-        binding.address.setTag(loc);
-
-        // If they're not sharing with us
-        if (friend.receivingBoxId == null) {
-            // show the empty state and get out of here
-            binding.address.setText(R.string.not_sharing_with_you);
-            binding.refreshProgressBar.setVisibility(View.INVISIBLE);
-            binding.refreshButton.setVisibility(View.INVISIBLE);
-            binding.bearing.setVisibility(View.GONE);
-            binding.motion.setVisibility(View.GONE);
-            binding.updateTime.setVisibility(View.INVISIBLE);
-            binding.battery.setVisibility(View.INVISIBLE);
-            binding.batteryIcon.setVisibility(View.INVISIBLE);
-            return;
-        }
-
-        // If we don't have location info yet (from a new friend)
-        if (loc == null) {
-            binding.address.setText(R.string.waiting_for_location_ellipsis);
-            binding.refreshButton.setVisibility(View.VISIBLE);
-            binding.updateTime.setVisibility(View.INVISIBLE);
-            binding.bearing.setVisibility(View.GONE);
-            binding.motion.setVisibility(View.GONE);
-            binding.battery.setVisibility(View.INVISIBLE);
-            binding.batteryIcon.setVisibility(View.INVISIBLE);
-            return;
-        }
-
-        // == They are sharing with us ==
-        // update time
-        long now = System.currentTimeMillis();
-        final CharSequence relTime;
-        if (loc.time >= now-60*DateUtils.SECOND_IN_MILLIS) {
-            relTime = getString(R.string.now);
-        } else {
-            relTime = DateUtils.getRelativeTimeSpanString(
-                    loc.time,
-                    System.currentTimeMillis(),
-                    DateUtils.MINUTE_IN_MILLIS,
-                    DateUtils.FORMAT_ABBREV_RELATIVE);
-        }
-        binding.updateTime.setText(String.format("%s", relTime));
-        binding.updateTime.setVisibility(View.VISIBLE);
-
-        // refresh status
-        updateStatusTrackerListener.onUpdateStatusChanged(loc.friendId);
-
-        // friend activity info
-        @DrawableRes int movement = 0;
-        switch (loc.movement) {
-            case Bicycle:
-                movement = R.drawable.ic_sharp_bike_20dp;
-                break;
-            case OnFoot:
-            case Running:
-            case Walking:
-                movement = R.drawable.ic_sharp_walk_20dp;
-                break;
-            case Vehicle:
-                movement = R.drawable.ic_sharp_car_20dp;
-                break;
-            default:
-                break;
-        }
-        if (movement != 0) {
-            binding.motion.setImageResource(movement);
-            binding.motion.setVisibility(View.VISIBLE);
-        } else {
-            binding.motion.setImageBitmap(null);
-            binding.motion.setVisibility(View.GONE);
-        }
-
-        // friend bearing
-        if (loc.bearing != null) {
-            binding.bearing.setVisibility(View.VISIBLE);
-            binding.bearing.setRotation(loc.bearing);
-        } else {
-            binding.bearing.setVisibility(View.GONE);
-        }
-
-        // battery status
-        if (loc.batteryLevel != null) {
-            binding.battery.setText(getString(R.string.number_percent_msg, loc.batteryLevel));
-            @DrawableRes int batteryImg;
-            if (loc.batteryLevel >= 95) {
-                batteryImg = R.drawable.ic_sharp_battery_full_20dp;
-            } else if (loc.batteryLevel >= 85) {
-                batteryImg = R.drawable.ic_sharp_battery_90_20dp;
-            } else if (loc.batteryLevel >= 70) {
-                batteryImg = R.drawable.ic_sharp_battery_80_20dp;
-            } else if (loc.batteryLevel >= 55) {
-                batteryImg = R.drawable.ic_sharp_battery_60_20dp;
-            } else if (loc.batteryLevel >= 40) {
-                batteryImg = R.drawable.ic_sharp_battery_50_20dp;
-            } else if (loc.batteryLevel >= 25) {
-                batteryImg = R.drawable.ic_sharp_battery_30_20dp;
-            } else {
-                batteryImg = R.drawable.ic_sharp_battery_20_20dp;
-            }
-            Drawable battery = getDrawable(batteryImg);
-            binding.batteryIcon.setImageDrawable(battery);
-        } else {
-            binding.battery.setText(null);
-            binding.batteryIcon.setImageDrawable(null);
-        }
-
-        // the address
-        RevGeocoding rg = ReverseGeocodingCache.get(loc.latitude, loc.longitude);
-        if (rg != null) {
-            binding.address.setText(rg.getAddress());
-        } else {
-            binding.address.setText(R.string.loading_ellipsis);
-            ReverseGeocodingCache.fetch(MapActivity.this, loc.latitude, loc.longitude, new ReverseGeocodingCache.OnCachedListener() {
-                @Override
-                public void onReverseGeocodingCached(@Nullable RevGeocoding rg) {
-                    if (rg == null) {
-                        return;
-                    }
-                    FriendLocation savedLoc = (FriendLocation) binding.address.getTag();
-                    if (savedLoc == null) {
-                        return;
-                    }
-                    if (savedLoc.latitude == loc.latitude && savedLoc.longitude == loc.longitude) {
-                        binding.address.setText(rg.getAddress());
-                    }
-                }
-            });
-        }
-
-        binding.refreshButton.setVisibility(View.VISIBLE);
+        infoPanel.show(friend, loc);
     }
 
     @Override
@@ -830,50 +604,6 @@ public final class MapActivity extends AppCompatActivity implements OnMapReadyCa
         radialMenu.flyBack();
         Intent i = LimitedShareService.newIntent(this, LimitedShareService.ACTION_START);
         ContextCompat.startForegroundService(this, i);
-    }
-
-    @UiThread
-    public void onInfoOverflowAction(View v) {
-        L.i("onInfoOverflowAction");
-        PopupMenu menu = new PopupMenu(this, v);
-        getMenuInflater().inflate(R.menu.info_panel_overflow, menu.getMenu());
-        menu.setOnMenuItemClickListener(new PopupMenu.OnMenuItemClickListener() {
-            @Override
-            public boolean onMenuItemClick(MenuItem item) {
-                if (item.getItemId() == R.id.remove_friend) {
-                    onRemoveFriendAction();
-                }
-                return true;
-            }
-        });
-        menu.show();
-    }
-
-    @UiThread
-    private void onRemoveFriendAction() {
-        final FriendRecord friend = (FriendRecord) binding.infoPanel.getTag();
-        AlertDialog.Builder builder = new AlertDialog.Builder(this, R.style.AlertDialogTheme);
-        builder.setTitle(R.string.remove_friend_interrogative)
-                .setMessage(R.string.remove_friend_prompt_msg)
-                .setPositiveButton(R.string.remove, new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
-                        App.runInBackground(new WorkerRunnable() {
-                            @Override
-                            public void run() {
-                                try {
-                                    DB.get().removeFriend(friend);
-                                } catch (DB.DBException ex) {
-                                    L.w("Error removing friend: " + friend, ex);
-                                    Utils.showAlert(MapActivity.this, R.string.unexpected_error, R.string.remove_friend_error_msg);
-                                }
-                            }
-                        });
-                    }
-                })
-                .setNegativeButton(R.string.cancel, null)
-                .setCancelable(true)
-                .show();
     }
 
     @UiThread
@@ -1089,44 +819,10 @@ public final class MapActivity extends AppCompatActivity implements OnMapReadyCa
     private UpdateStatusTracker.Listener updateStatusTrackerListener = new UpdateStatusTracker.Listener() {
         @Override
         public void onUpdateStatusChanged(long friendId) {
-            if (friendId != selectedAvatarFriendId || binding == null) {
+            if (friendId != selectedAvatarFriendId || infoPanel == null) {
                 return;
             }
-            UpdateStatusTracker.State status = UpdateStatusTracker.getFriendState(friendId);
-            int vis;
-            @ColorRes int colorId = 0;
-            switch (status) {
-                case NotRequested:
-                    vis = View.GONE;
-                    break;
-                case Requested:
-                    vis = View.VISIBLE;
-                    colorId = R.color.pijun_canary;
-                    break;
-                case RequestedAndUnresponsive:
-                    vis = View.VISIBLE;
-                    colorId = R.color.pijun_grey;
-                    break;
-                case RequestDenied:
-                    vis = View.VISIBLE;
-                    colorId = R.color.pijun_red;
-                    break;
-                case RequestAcknowledged:
-                    vis = View.VISIBLE;
-                    colorId = R.color.pijun_blue;
-                    break;
-                case RequestFulfilled:
-                    vis = View.GONE;
-                    break;
-                default:
-                    vis = View.GONE;
-                    break;
-            }
-            if (colorId != 0) {
-                DrawableCompat.setTint(binding.refreshProgressBar.getIndeterminateDrawable(),
-                        ContextCompat.getColor(MapActivity.this, colorId));
-            }
-            binding.refreshProgressBar.setVisibility(vis);
+            infoPanel.updateRefreshProgressBarState(friendId);
         }
     };
 
@@ -1292,12 +988,13 @@ public final class MapActivity extends AppCompatActivity implements OnMapReadyCa
         removeFriendFromMap(friendId);
         avatarsAdapter.removeFriend(friendId);
         // if the info panel is showing their info, hide it
-        if (!isInfoPanelVisible()) {
+        if (infoPanel.isHidden()) {
             return;
         }
         FriendRecord friend = (FriendRecord) binding.infoPanel.getTag();
         if (friend.id == friendId) {
-            hideInfoPanel();
+            infoPanel.hide();
+            radialMenu.setVisible(true);
         }
     }
 
@@ -1454,20 +1151,67 @@ public final class MapActivity extends AppCompatActivity implements OnMapReadyCa
     };
     //endregion
 
-    //region Share switch checked change listener
-    private CompoundButton.OnCheckedChangeListener shareCheckedChangeListener = new CompoundButton.OnCheckedChangeListener() {
+    //region InfoPanel listener
+    private InfoPanel.Listener infoPanelListener = new InfoPanel.Listener() {
+
         @Override
-        public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-            FriendRecord friend = (FriendRecord) binding.infoPanel.getTag();
-            if (friend == null) {
-                L.i("Share switch changed, but no FriendRecord found");
-                return;
-            }
-            if (isChecked) {
-                startSharingWith(friend);
-            } else {
-                stopSharingWith(friend);
-            }
+        public void onInfoPanelLocationRequested(@NonNull FriendRecord friend) {
+            App.runInBackground(new WorkerRunnable() {
+                @Override
+                public void run() {
+                    if (friend.receivingBoxId == null) {
+                        L.w(friend.user.username + " doesn't share their location with us");
+                        return;
+                    }
+                    L.i("requesting location from " + friend.user.username);
+                    UserComm comm = UserComm.newLocationUpdateRequest();
+                    UpdateStatusTracker.setLastRequestTime(friend.id, System.currentTimeMillis());
+                    String errMsg = OscarClient.queueSendMessage(MapActivity.this, friend.user, comm, true, true);
+                    if (errMsg != null) {
+                        L.w("manual location request failed: " + errMsg);
+                    }
+                }
+            });
+        }
+
+        @Override
+        public void onInfoPanelRemoveFriend(@NonNull FriendRecord friend) {
+            AlertDialog.Builder builder = new AlertDialog.Builder(MapActivity.this, R.style.AlertDialogTheme);
+            builder.setTitle(R.string.remove_friend_interrogative)
+                    .setMessage(R.string.remove_friend_prompt_msg)
+                    .setPositiveButton(R.string.remove, new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                            App.runInBackground(new WorkerRunnable() {
+                                @Override
+                                public void run() {
+                                    try {
+                                        DB.get().removeFriend(friend);
+                                    } catch (DB.DBException ex) {
+                                        L.w("Error removing friend: " + friend, ex);
+                                        Utils.showAlert(MapActivity.this, R.string.unexpected_error, R.string.remove_friend_error_msg);
+                                    }
+                                }
+                            });
+                        }
+                    })
+                    .setNegativeButton(R.string.cancel, null)
+                    .setCancelable(true)
+                    .show();
+        }
+
+        @Override
+        public void onInfoPanelShareToggled(@NonNull FriendRecord friend, boolean shouldShare) {
+            App.runInBackground(new WorkerRunnable() {
+                @Override
+                public void run() {
+                    if (shouldShare) {
+                        startSharingWith(friend);
+                    } else {
+                        stopSharingWith(friend);
+                    }
+                }
+            });
         }
     };
     //endregion

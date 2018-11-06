@@ -135,7 +135,6 @@
                 android:paddingBottom="6dp"
                 android:src="@drawable/ic_sharp_more_vert_24dp"
                 android:tint="@color/pijun_navy"
-                android:onClick="onInfoOverflowAction"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintTop_toTopOf="parent" />
 
@@ -172,7 +171,6 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="0dp"
-                android:onClick="onRequestLocation"
                 android:text="@string/refresh"
                 android:textColor="@color/pijun_blue"
                 app:layout_constraintStart_toStartOf="@id/username"
