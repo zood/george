@@ -189,18 +189,23 @@ public class OscarClient {
             L.w(msg);
             return msg;
         }
+
+        return queueSendMessage(context, user, keyPair, token, msgBytes, urgent, isTransient);
+    }
+
+    public static String queueSendMessage(@NonNull Context ctx, @NonNull UserRecord user, @NonNull KeyPair keyPair, @NonNull String accessToken, @NonNull byte[] msgBytes, boolean urgent, boolean isTransient) {
         EncryptedData encMsg = Sodium.publicKeyEncrypt(msgBytes, user.publicKey, keyPair.secretKey);
         if (encMsg == null) {
             String msg = "Encrypting msg to " + user.username + " failed.";
             L.w(msg);
             return msg;
         }
-        SendMessageTask smt = new SendMessageTask(token);
+        SendMessageTask smt = new SendMessageTask(accessToken);
         smt.hexUserId = Hex.toHexString(user.userId);
         smt.message = encMsg;
         smt.urgent = urgent;
         smt.isTransient = isTransient;
-        getQueue(context).offer(smt);
+        getQueue(ctx).offer(smt);
 
         return null;
     }

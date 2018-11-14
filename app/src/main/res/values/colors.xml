@@ -2,7 +2,7 @@
 <resources>
     <color name="colorPrimary">@color/pijun_blue</color>
     <color name="colorPrimaryDark">@color/pijun_navy</color>
-    <color name="colorAccent">@color/pijun_red</color>
+    <color name="colorAccent">@color/pijun_blue</color>
 
     <color name="friend_item_black">#555555</color>
     <color name="friend_item_gray">#AAAAAA</color>

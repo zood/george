@@ -142,6 +142,15 @@ public class InfoPanel {
         return (FriendRecord) panel.getTag();
     }
 
+    public long getFriendId() {
+        FriendRecord friend = getFriend();
+        if (friend != null) {
+            return friend.id;
+        }
+
+        return -1;
+    }
+
     @UiThread
     public void hide() {
         panel.setTag(null);

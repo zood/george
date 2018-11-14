@@ -204,6 +204,18 @@ public class AvatarManager {
 
     @WorkerThread
     private static void sendAvatarToUsers(@NonNull Context ctx, @NonNull List<UserRecord> users) throws IOException {
+        Prefs prefs = Prefs.get(ctx);
+        String token = prefs.getAccessToken();
+        KeyPair keyPair = prefs.getKeyPair();
+        if (token == null || keyPair == null) {
+            L.i("AvatarManager.sendAvatarToUsers missing token or keypair");
+            return;
+        }
+
+        sendAvatarToUsers(ctx, users, keyPair, token);
+    }
+
+    public static void sendAvatarToUsers(@NonNull Context ctx, @NonNull List<UserRecord> users, @NonNull KeyPair keyPair, @NonNull String accessToken) throws IOException {
         StringBuilder sb = new StringBuilder("sendAvatarToUsers: ");
         for (UserRecord u : users) {
             sb.append(u.username);
@@ -215,13 +227,7 @@ public class AvatarManager {
         if (!avatarFile.exists()) {
             return;
         }
-        Prefs prefs = Prefs.get(ctx);
-        String token = prefs.getAccessToken();
-        KeyPair keyPair = prefs.getKeyPair();
-        if (token == null || keyPair == null) {
-            L.i("AvatarManager.sendAvatarToUser missing token or keypair");
-            return;
-        }
+
         FileInputStream fis = new FileInputStream(avatarFile);
         byte []buffer = new byte[(int) avatarFile.length()];
         int read = fis.read(buffer);
@@ -231,7 +237,7 @@ public class AvatarManager {
         }
         UserComm comm = UserComm.newAvatarUpdate(buffer);
         for (UserRecord u : users) {
-            String errMsg = OscarClient.queueSendMessage(ctx, u, comm, false, false);
+            String errMsg = OscarClient.queueSendMessage(ctx, u, keyPair, accessToken, comm.toJSON(), false, false);
             if (errMsg != null) {
                 L.w(errMsg);
             }

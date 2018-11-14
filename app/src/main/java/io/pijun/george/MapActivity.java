@@ -13,10 +13,8 @@ import android.graphics.Color;
 import android.location.Location;
 import android.os.Bundle;
 import android.os.Looper;
-import android.text.TextUtils;
 import android.text.format.DateUtils;
 import android.view.View;
-import android.widget.EditText;
 import android.widget.Toast;
 
 import com.google.android.gms.common.api.ApiException;
@@ -66,10 +64,8 @@ import io.pijun.george.api.OscarClient;
 import io.pijun.george.api.OscarError;
 import io.pijun.george.api.OscarSocket;
 import io.pijun.george.api.PushNotification;
-import io.pijun.george.api.SearchUserResult;
 import io.pijun.george.api.UserComm;
 import io.pijun.george.crypto.EncryptedData;
-import io.pijun.george.crypto.KeyPair;
 import io.pijun.george.database.DB;
 import io.pijun.george.database.FriendLocation;
 import io.pijun.george.database.FriendRecord;
@@ -80,6 +76,7 @@ import io.pijun.george.service.LimitedShareService;
 import io.pijun.george.view.AvatarRenderer;
 import io.pijun.george.view.MyLocationView;
 import retrofit2.Response;
+import xyz.zood.george.AddFriendDialog;
 import xyz.zood.george.widget.InfoPanel;
 import xyz.zood.george.widget.RadialMenu;
 
@@ -100,8 +97,6 @@ public final class MapActivity extends AppCompatActivity implements OnMapReadyCa
     private Marker mMeMarker;
     private Circle mMyCircle;
     private long friendForCameraToTrack = -1;
-    private long selectedAvatarFriendId = -1;
-    private EditText mUsernameField;
     private Circle mCurrentCircle;
     private boolean isStarted = false;
     private AvatarsAdapter avatarsAdapter;
@@ -146,7 +141,6 @@ public final class MapActivity extends AppCompatActivity implements OnMapReadyCa
             flyCameraToMyLocation();
 
             // if we're showing the avatar info, hide it
-            selectedAvatarFriendId = -1;
             infoPanel.hide();
             radialMenu.setVisible(true);
         });
@@ -339,7 +333,6 @@ public final class MapActivity extends AppCompatActivity implements OnMapReadyCa
         mGoogMap.setOnMapClickListener(new GoogleMap.OnMapClickListener() {
             @Override
             public void onMapClick(LatLng latLng) {
-                selectedAvatarFriendId = -1;
                 friendForCameraToTrack = -1;
                 findViewById(R.id.my_location_fab).setSelected(false);
                 infoPanel.hide();
@@ -532,7 +525,6 @@ public final class MapActivity extends AppCompatActivity implements OnMapReadyCa
                 });
             }
         });
-        selectedAvatarFriendId = loc.friendId;
         friendForCameraToTrack = loc.friendId;
 
         if (mGoogMap != null) {
@@ -555,13 +547,12 @@ public final class MapActivity extends AppCompatActivity implements OnMapReadyCa
     public void onAvatarSelected(FriendRecord fr) {
         Marker marker = mMarkerTracker.getById(fr.id);
         if (marker == null) {
-            selectedAvatarFriendId = -1;
             showInfoPanel(fr, null);
             return;
         }
 
-        // Is the avatar info already showing for this user? If so, just center the camera and follow
-        if (selectedAvatarFriendId == fr.id) {
+        // Is the info panel already showing for this user? If so, just center the camera and follow
+        if (infoPanel.getFriendId() == fr.id) {
             friendForCameraToTrack = fr.id;
             CameraUpdate update = CameraUpdateFactory.newLatLng(marker.getPosition());
             mGoogMap.animateCamera(update);
@@ -569,7 +560,6 @@ public final class MapActivity extends AppCompatActivity implements OnMapReadyCa
         }
 
         friendForCameraToTrack = fr.id;
-        selectedAvatarFriendId = fr.id;
         findViewById(R.id.my_location_fab).setSelected(false);
         float zoom = Math.max(mGoogMap.getCameraPosition().zoom, Constants.DEFAULT_ZOOM_LEVEL);
         CameraPosition cp = new CameraPosition.Builder()
@@ -625,19 +615,13 @@ public final class MapActivity extends AppCompatActivity implements OnMapReadyCa
     @UiThread
     public void showAddFriendDialog(View v) {
         radialMenu.flyBack();
-        AlertDialog.Builder builder = new AlertDialog.Builder(this, R.style.AlertDialogTheme);
-        builder.setTitle(R.string.add_friend);
-        builder.setView(R.layout.friend_request_form);
-        builder.setPositiveButton(R.string.send, (dialog, which) -> {
-            final String username = mUsernameField.getText().toString();
-            App.runInBackground(() -> attemptLocationGrant(username));
-        });
-        builder.setNegativeButton(R.string.cancel, null);
-        builder.setCancelable(true);
-        AlertDialog dialog = builder.create();
-        dialog.show();
 
-        mUsernameField = dialog.findViewById(R.id.username);
+        AddFriendDialog fragment = AddFriendDialog.newInstance();
+        getSupportFragmentManager()
+                .beginTransaction()
+                .add(fragment, null)
+                .addToBackStack(null)
+                .commit();
     }
 
     @UiThread
@@ -684,81 +668,10 @@ public final class MapActivity extends AppCompatActivity implements OnMapReadyCa
 
     }
 
+    @UiThread
     public void onShowSettings(View v) {
         startActivityForResult(SettingsActivity.newIntent(this), SettingsActivity.REQUEST_EXIT);
         radialMenu.flyBack();
-    }
-
-    @WorkerThread
-    private void attemptLocationGrant(String username) {
-        Prefs prefs = Prefs.get(this);
-        String accessToken = prefs.getAccessToken();
-        if (TextUtils.isEmpty(accessToken)) {
-            Utils.showStringAlert(this, null, "How are you not logged in right now? (missing access token)");
-            return;
-        }
-        KeyPair keyPair = prefs.getKeyPair();
-        if (keyPair == null) {
-            Utils.showStringAlert(this, null, "How are you not logged in right now? (missing key pair)");
-            return;
-        }
-        OscarAPI api = OscarClient.newInstance(accessToken);
-        try {
-            DB db = DB.get();
-            UserRecord userRecord = db.getUser(username);
-            if (userRecord == null) {
-                Response<SearchUserResult> searchResponse = api.searchForUser(username).execute();
-                if (!searchResponse.isSuccessful()) {
-                    OscarError err = OscarError.fromResponse(searchResponse);
-                    Utils.showStringAlert(this, null, "Unable to find username: " + err);
-                    return;
-                }
-                SearchUserResult userToRequest = searchResponse.body();
-                if (userToRequest == null) {
-                    Utils.showStringAlert(this, null, "Unknown error while retrieving info about username");
-                    return;
-                }
-                userRecord = db.addUser(userToRequest.id, userToRequest.username, userToRequest.publicKey);
-                BackupDatabaseJob.scheduleBackup(this);
-            }
-
-            // check if we already have this user as a friend, and if we're already sharing with them
-            final FriendRecord friend = db.getFriendByUserId(userRecord.id);
-            if (friend != null) {
-                if (friend.sendingBoxId != null) {
-                    // send the sending box id to this person one more time, just in case
-                    UserComm comm = UserComm.newLocationSharingGrant(friend.sendingBoxId);
-                    String errMsg = OscarClient.queueSendMessage(this, userRecord, comm, false, false);
-                    if (errMsg != null) {
-                        CloudLogger.log(errMsg);
-                    }
-                    Utils.showStringAlert(this, null, "You're already sharing your location with " + username);
-                    return;
-                }
-            }
-
-            byte[] sendingBoxId = new byte[Constants.DROP_BOX_ID_LENGTH];
-            new SecureRandom().nextBytes(sendingBoxId);
-            UserComm comm = UserComm.newLocationSharingGrant(sendingBoxId);
-            String errMsg = OscarClient.queueSendMessage(this, userRecord, comm, false, false);
-            if (errMsg != null) {
-                Utils.showStringAlert(this, null, "Unable to create sharing grant: " + errMsg);
-                return;
-            }
-
-            db.startSharingWith(userRecord, sendingBoxId);
-            try { AvatarManager.sendAvatarToUser(this, userRecord); }
-            catch (IOException ex) {
-                CloudLogger.log(ex);
-            }
-            BackupDatabaseJob.scheduleBackup(this);
-            Utils.showStringAlert(this, null, "You're now sharing with " + username);
-        } catch (IOException ex) {
-            Utils.showStringAlert(this, null, "Network problem trying to share your location. Check your connection then try again.");
-        } catch (DB.DBException dbe) {
-            Utils.showStringAlert(this, null, "Error adding friend into database");
-            CloudLogger.log(dbe);
-        }
     }
 
     @WorkerThread
@@ -819,10 +732,9 @@ public final class MapActivity extends AppCompatActivity implements OnMapReadyCa
     private UpdateStatusTracker.Listener updateStatusTrackerListener = new UpdateStatusTracker.Listener() {
         @Override
         public void onUpdateStatusChanged(long friendId) {
-            if (friendId != selectedAvatarFriendId || infoPanel == null) {
-                return;
+            if (infoPanel.getFriendId() == friendId) {
+                infoPanel.updateRefreshProgressBarState(friendId);
             }
-            infoPanel.updateRefreshProgressBarState(friendId);
         }
     };
 
@@ -929,7 +841,8 @@ public final class MapActivity extends AppCompatActivity implements OnMapReadyCa
     //region DB.Listener
     @Override
     public void onFriendLocationUpdated(final FriendLocation loc) {
-        if (selectedAvatarFriendId == loc.friendId) {
+        // If the info panel is already showing for this friend, update it
+        if (infoPanel.getFriendId() == loc.friendId) {
             App.runInBackground(new WorkerRunnable() {
                 @Override
                 public void run() {
@@ -994,6 +907,7 @@ public final class MapActivity extends AppCompatActivity implements OnMapReadyCa
         FriendRecord friend = (FriendRecord) binding.infoPanel.getTag();
         if (friend.id == friendId) {
             infoPanel.hide();
+            friendForCameraToTrack = -1;
             radialMenu.setVisible(true);
         }
     }
@@ -1021,7 +935,7 @@ public final class MapActivity extends AppCompatActivity implements OnMapReadyCa
         App.runOnUiThread(new UiRunnable() {
             @Override
             public void run() {
-                if (selectedAvatarFriendId == friend.id && binding != null && binding.infoPanel.getVisibility() == View.VISIBLE) {
+                if (infoPanel.getFriendId() == friend.id) {
                     showInfoPanel(friend, null);
                 }
             }
@@ -1040,7 +954,7 @@ public final class MapActivity extends AppCompatActivity implements OnMapReadyCa
             removeFriendFromMap(friend.id);
 
             // If the friend is currently visible on the info panel, update the panel
-            if (selectedAvatarFriendId == friend.id && binding != null && binding.infoPanel.getVisibility() == View.VISIBLE) {
+            if (infoPanel.getFriendId() == friend.id) {
                 showInfoPanel(friend, null);
             }
         });
@@ -1185,6 +1099,7 @@ public final class MapActivity extends AppCompatActivity implements OnMapReadyCa
                             App.runInBackground(new WorkerRunnable() {
                                 @Override
                                 public void run() {
+                                    stopSharingWith(friend);
                                     try {
                                         DB.get().removeFriend(friend);
                                     } catch (DB.DBException ex) {
