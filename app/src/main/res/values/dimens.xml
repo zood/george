@@ -20,4 +20,7 @@
     <dimen name="radial_button">56dp</dimen>
     <dimen name="radial_expanded">100dp</dimen>
     <dimen name="dialog_width">280dp</dimen>
+
+    <dimen name="dialog_message_text">15sp</dimen>
+    <dimen name="dialog_title_text">19sp</dimen>
 </resources>

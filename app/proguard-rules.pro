@@ -25,7 +25,13 @@
 -keep class io.pijun.** {
     public protected private *;
 }
+-keep class xyz.zood.** {
+    public protected private *;
+}
 # Inner class protection
 -keep class io.pijun.*$* {
+    *;
+}
+-keep class xyz.zood.*$* {
     *;
 }

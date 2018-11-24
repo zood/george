@@ -4,7 +4,6 @@ import android.Manifest;
 import android.animation.ObjectAnimator;
 import android.animation.ValueAnimator;
 import android.content.Context;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentSender;
 import android.content.pm.PackageManager;
@@ -50,7 +49,6 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.UiThread;
 import androidx.annotation.WorkerThread;
-import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
@@ -77,8 +75,10 @@ import io.pijun.george.view.AvatarRenderer;
 import io.pijun.george.view.MyLocationView;
 import retrofit2.Response;
 import xyz.zood.george.AddFriendDialog;
+import xyz.zood.george.widget.BackgroundDataRestrictionNotifier;
 import xyz.zood.george.widget.InfoPanel;
 import xyz.zood.george.widget.RadialMenu;
+import xyz.zood.george.widget.ZoodDialog;
 
 public final class MapActivity extends AppCompatActivity implements OnMapReadyCallback, GoogleMap.OnMarkerClickListener, AvatarsAdapter.Listener, DB.Listener, AuthenticationManager.Listener {
 
@@ -159,6 +159,8 @@ public final class MapActivity extends AppCompatActivity implements OnMapReadyCa
         AvatarManager.addListener(avatarListener);
 
         oscarSocket = new OscarSocket(oscarSocketListener);
+
+        getLifecycle().addObserver(new BackgroundDataRestrictionNotifier(this, binding.banners));
     }
 
     @Override
@@ -241,14 +243,6 @@ public final class MapActivity extends AppCompatActivity implements OnMapReadyCa
             Prefs.get(this).setCameraPosition(pos);
         }
 
-        // hide visible info windows, so outdated info is not visible in case the activity is
-        // brought back into view
-        for (Marker m : mMarkerTracker.getMarkers()) {
-            if (m.isInfoWindowShown()) {
-                m.hideInfoWindow();
-            }
-        }
-
         // stop receiving location updates
         mLocationProviderClient.removeLocationUpdates(mLocationCallbackHelper);
 
@@ -308,7 +302,7 @@ public final class MapActivity extends AppCompatActivity implements OnMapReadyCa
 
     @Override
     @UiThread
-    public void onMapReady(GoogleMap mapboxMap ) {
+    public void onMapReady(GoogleMap mapboxMap) {
         if (mapboxMap == null) {
             L.i("onMapReady has a null map arg");
             return;
@@ -437,14 +431,18 @@ public final class MapActivity extends AppCompatActivity implements OnMapReadyCa
 
         if (ActivityCompat.shouldShowRequestPermissionRationale(this, Manifest.permission.ACCESS_FINE_LOCATION)) {
             // show the reasoning
-            AlertDialog.Builder builder = new AlertDialog.Builder(this, R.style.AlertDialogTheme);
-            builder.setTitle("Permission request");
-            builder.setMessage("Pijun uses your location to show your position on the map, and to securely share it with friends that you've authorized. It's never used for any other purpose.");
-            builder.setPositiveButton(R.string.ok, (dialog, which) -> ActivityCompat.requestPermissions(
-                    MapActivity.this,
-                    new String[]{Manifest.permission.ACCESS_FINE_LOCATION},
-                    REQUEST_LOCATION_PERMISSION));
-            builder.show();
+            ZoodDialog dialog = ZoodDialog.newInstance(getString(R.string.location_permission_reason_msg));
+            dialog.setTitle(getString(R.string.permission_request));
+            dialog.setButton1(getString(R.string.ok), new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    ActivityCompat.requestPermissions(
+                            MapActivity.this,
+                            new String[]{Manifest.permission.ACCESS_FINE_LOCATION},
+                            REQUEST_LOCATION_PERMISSION);
+                }
+            });
+            dialog.show(getSupportFragmentManager(), null);
         } else {
             ActivityCompat.requestPermissions(
                     this,
@@ -1090,29 +1088,27 @@ public final class MapActivity extends AppCompatActivity implements OnMapReadyCa
 
         @Override
         public void onInfoPanelRemoveFriend(@NonNull FriendRecord friend) {
-            AlertDialog.Builder builder = new AlertDialog.Builder(MapActivity.this, R.style.AlertDialogTheme);
-            builder.setTitle(R.string.remove_friend_interrogative)
-                    .setMessage(R.string.remove_friend_prompt_msg)
-                    .setPositiveButton(R.string.remove, new DialogInterface.OnClickListener() {
+            ZoodDialog dialog = ZoodDialog.newInstance(getString(R.string.remove_friend_prompt_msg));
+            dialog.setTitle(getString(R.string.remove_friend_interrogative));
+            dialog.setButton1(getString(R.string.remove), new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    App.runInBackground(new WorkerRunnable() {
                         @Override
-                        public void onClick(DialogInterface dialog, int which) {
-                            App.runInBackground(new WorkerRunnable() {
-                                @Override
-                                public void run() {
-                                    stopSharingWith(friend);
-                                    try {
-                                        DB.get().removeFriend(friend);
-                                    } catch (DB.DBException ex) {
-                                        L.w("Error removing friend: " + friend, ex);
-                                        Utils.showAlert(MapActivity.this, R.string.unexpected_error, R.string.remove_friend_error_msg);
-                                    }
-                                }
-                            });
+                        public void run() {
+                            stopSharingWith(friend);
+                            try {
+                                DB.get().removeFriend(friend);
+                            } catch (DB.DBException ex) {
+                                L.w("Error removing friend: " + friend, ex);
+                                Utils.showAlert(MapActivity.this, R.string.unexpected_error, R.string.remove_friend_error_msg, getSupportFragmentManager());
+                            }
                         }
-                    })
-                    .setNegativeButton(R.string.cancel, null)
-                    .setCancelable(true)
-                    .show();
+                    });
+                }
+            });
+            dialog.setButton2(getString(R.string.cancel), null);
+            dialog.show(getSupportFragmentManager(), null);
         }
 
         @Override

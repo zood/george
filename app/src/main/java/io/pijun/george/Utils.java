@@ -10,10 +10,12 @@ import java.util.Map;
 import java.util.regex.Pattern;
 
 import androidx.annotation.AnyThread;
+import androidx.annotation.IntRange;
 import androidx.annotation.Nullable;
 import androidx.annotation.StringRes;
 import androidx.annotation.UiThread;
-import androidx.appcompat.app.AlertDialog;
+import androidx.fragment.app.FragmentManager;
+import xyz.zood.george.widget.ZoodDialog;
 
 @SuppressWarnings("WeakerAccess")
 public final class Utils {
@@ -33,48 +35,44 @@ public final class Utils {
 
     @SuppressLint("WrongThread")
     @AnyThread
-    public static void showAlert(final Context ctx, @StringRes final int titleId, @StringRes final int msgId) {
+    public static void showAlert(final Context ctx, @StringRes final int titleId, @StringRes final int msgId, FragmentManager fm) {
         if (Looper.myLooper() != Looper.getMainLooper()) {
-            App.runOnUiThread(() -> _showAlert(ctx, titleId, msgId));
+            App.runOnUiThread(() -> _showAlert(ctx, titleId, msgId, fm));
             return;
         }
 
-        _showAlert(ctx, titleId, msgId);
+        _showAlert(ctx, titleId, msgId, fm);
     }
 
     @UiThread
-    private static void _showAlert(Context ctx, @StringRes int titleId, @StringRes int msgId) {
-        AlertDialog.Builder builder = new AlertDialog.Builder(ctx, R.style.AlertDialogTheme);
+    private static void _showAlert(Context ctx, @StringRes int titleId, @StringRes @IntRange(from=1) int msgId, FragmentManager fm) {
+        ZoodDialog dialog = ZoodDialog.newInstance(ctx.getString(msgId));
         if (titleId != 0) {
-            builder.setTitle(titleId);
+            dialog.setTitle(ctx.getString(titleId));
         }
-        if (msgId != 0) {
-            builder.setMessage(msgId);
-        }
-        builder.setPositiveButton(R.string.ok, null);
-        builder.show();
+        dialog.setButton1(ctx.getString(R.string.ok), null);
+        dialog.show(fm, null);
     }
 
     @SuppressLint("WrongThread")
     @AnyThread
-    public static void showStringAlert(final Context ctx, final CharSequence title, final CharSequence msg) {
+    public static void showStringAlert(final Context ctx, final CharSequence title, final CharSequence msg, FragmentManager fm) {
         if (Looper.myLooper() != Looper.getMainLooper()) {
-            App.runOnUiThread(() -> _showStringAlert(ctx, title, msg));
+            App.runOnUiThread(() -> _showStringAlert(ctx, title, msg, fm));
             return;
         }
 
-        _showStringAlert(ctx, title, msg);
+        _showStringAlert(ctx, title, msg, fm);
     }
 
     @UiThread
-    private static void _showStringAlert(final Context ctx, CharSequence title, CharSequence msg) {
-        AlertDialog.Builder builder = new AlertDialog.Builder(ctx, R.style.AlertDialogTheme);
+    private static void _showStringAlert(final Context ctx, CharSequence title, CharSequence msg, FragmentManager fm) {
+        ZoodDialog dialog = ZoodDialog.newInstance(msg.toString());
         if (title != null) {
-            builder.setTitle(title);
+            dialog.setTitle(title.toString());
         }
-        builder.setMessage(msg);
-        builder.setPositiveButton(R.string.ok, null);
-        builder.show();
+        dialog.setButton1(ctx.getString(R.string.ok), null);
+        dialog.show(fm, null);
     }
 
     public static int dpsToPix(Context ctx, int dps) {

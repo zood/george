@@ -8,7 +8,7 @@
     <string name="create_an_account">Create an account</string>
     <string name="log_in">Log in</string>
     <string name="password_mismatch_msg">The passwords don\'t match. Please check and try again.</string>
-    <string name="ok">OK</string>
+    <string name="ok">Ok</string>
     <string name="password_too_short_msg">That password is too short. Create a password that is at least 6 characters long. At least 12 character is even better.</string>
     <string name="keypair_generation_error">Error generating key pair.</string>
     <string name="username_too_short_msg">The username you entered is too short. Make sure it\'s at least 5 characters long.</string>
@@ -115,4 +115,12 @@
     <string name="not_logged_in_access_token_msg">You\'re not logged in (access token)</string>
     <string name="not_logged_in_key_pair_msg">You\'re not logged in (key pair)</string>
     <string name="unknown_error_getting_user_info">Unknown error getting user info</string>
+    <string name="permission_request">Permission request</string>
+    <string name="location_permission_reason_msg">Zood uses your location to show your position on the map, and to securely share it with friends that you\'ve authorized. It\'s never used for any other purpose.</string>
+    <string name="background_data_is_restricted">Background data is restricted</string>
+    <string name="fix">Fix</string>
+    <string name="background_data_restricted_msg">Background data for Zood Location was disabled, so it can\'t share your location while in the background. To fix this, go to \'Data usage\' then enable \'Background data\' in the app\'s settings.</string>
+    <string name="ignore">Ignore</string>
+    <string name="data_restricted">Data restricted</string>
+    <string name="zood_settings">Zood settings</string>
 </resources>

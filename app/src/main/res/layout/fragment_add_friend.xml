@@ -14,10 +14,10 @@
         android:gravity="bottom"
         android:text="@string/add_friend"
         android:textColor="@android:color/black"
-        android:textSize="21sp"
+        android:textSize="@dimen/dialog_title_text"
         android:layout_marginStart="24dp"
         android:layout_marginEnd="24dp"
-        android:layout_marginTop="15dp"
+        android:layout_marginTop="17dp"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
@@ -26,10 +26,10 @@
         android:text="@string/add_friend_dialog_msg"
         app:layout_constraintTop_toBottomOf="@id/title"
         android:fontFamily="@font/poppins"
-        android:textSize="16sp"
+        android:textSize="@dimen/dialog_message_text"
         android:layout_marginStart="24dp"
         android:layout_marginEnd="24dp"
-        android:layout_marginTop="7dp"
+        android:layout_marginTop="10dp"
         android:layout_width="match_parent"
         android:layout_height="wrap_content" />
 
@@ -49,7 +49,7 @@
         <com.google.android.material.textfield.TextInputEditText
             android:id="@+id/username"
             style="@style/Widget.MaterialComponents.TextInputEditText.OutlinedBox"
-            android:textSize="16sp"
+            android:textSize="@dimen/dialog_message_text"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:fontFamily="@font/poppins"
@@ -74,10 +74,12 @@
 
     <com.google.android.material.button.MaterialButton
         android:id="@+id/add"
-        style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+        style="@style/Widget.MaterialComponents.Button.TextButton.Dialog"
+        android:fontFamily="@font/poppins_bold"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="@string/add"
+        android:textAllCaps="false"
         android:layout_marginEnd="8dp"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toBottomOf="@id/username_layout" />

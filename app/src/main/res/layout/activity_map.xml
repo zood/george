@@ -11,6 +11,15 @@
         android:fitsSystemWindows="true"
         tools:context=".MapActivity">
 
+        <xyz.zood.george.widget.BannerView
+            android:id="@+id/banners"
+            android:orientation="vertical"
+            app:layout_constraintTop_toTopOf="parent"
+            tools:layout_height="48dp"
+            tools:background="@color/pijun_red"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content" />
+
         <com.google.android.gms.maps.MapView
             android:id="@+id/map"
             android:layout_width="0dp"
@@ -22,7 +31,7 @@
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintHorizontal_bias="1.0"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/banners"
             tools:background="@android:color/holo_green_light" />
 
         <androidx.constraintlayout.widget.ConstraintLayout
@@ -173,6 +182,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="0dp"
                 android:text="@string/refresh"
+                android:fontFamily="@font/poppins_bold"
                 app:layout_constraintStart_toStartOf="@id/username"
                 app:layout_constraintTop_toBottomOf="@id/update_time" />
 
@@ -206,7 +216,7 @@
             app:elevation="4dp"
             app:fabSize="normal"
             app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/banners"
             tools:layout_editor_absoluteX="280dp" />
 
         <xyz.zood.george.widget.RadialMenuButton

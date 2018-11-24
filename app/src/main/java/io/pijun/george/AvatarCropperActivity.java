@@ -155,7 +155,7 @@ public class AvatarCropperActivity extends AppCompatActivity implements MoveGest
                     App.runOnUiThread(new UiRunnable() {
                         @Override
                         public void run() {
-                            Utils.showStringAlert(AvatarCropperActivity.this, "Save error", "There was a problem saving your profile avatar. Try again, and if the problem persists, contact support.");
+                            Utils.showStringAlert(AvatarCropperActivity.this, "Save error", "There was a problem saving your profile avatar. Try again, and if the problem persists, contact support.", getSupportFragmentManager());
                             mBinding.done.setEnabled(true);
                             mBinding.cancel.setEnabled(true);
                         }
@@ -164,7 +164,7 @@ public class AvatarCropperActivity extends AppCompatActivity implements MoveGest
                     App.runOnUiThread(new UiRunnable() {
                         @Override
                         public void run() {
-                            Utils.showStringAlert(AvatarCropperActivity.this, "Save error", "We couldn't save your profile avatar. Make sure you have enough free space on your device, then try again.");
+                            Utils.showStringAlert(AvatarCropperActivity.this, "Save error", "We couldn't save your profile avatar. Make sure you have enough free space on your device, then try again.", getSupportFragmentManager());
                             mBinding.done.setEnabled(true);
                             mBinding.cancel.setEnabled(true);
                         }

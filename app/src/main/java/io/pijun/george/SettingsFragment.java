@@ -2,9 +2,7 @@ package io.pijun.george;
 
 import android.app.Activity;
 import android.content.Context;
-import android.content.DialogInterface;
 import android.content.Intent;
-import android.graphics.Typeface;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
@@ -14,7 +12,6 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.PopupMenu;
-import android.widget.TextView;
 
 import java.io.File;
 import java.text.SimpleDateFormat;
@@ -23,11 +20,12 @@ import java.util.Locale;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.appcompat.app.AlertDialog;
 import androidx.core.content.FileProvider;
 import androidx.fragment.app.Fragment;
+import androidx.fragment.app.FragmentManager;
 import io.pijun.george.crypto.KeyPair;
 import io.pijun.george.databinding.FragmentSettingsBinding;
+import xyz.zood.george.widget.ZoodDialog;
 
 public class SettingsFragment extends Fragment implements SettingsAdapter.Listener, AvatarManager.Listener {
 
@@ -126,13 +124,10 @@ public class SettingsFragment extends Fragment implements SettingsAdapter.Listen
 
     @Override
     public void onLogOutAction() {
-        AlertDialog.Builder builder = new AlertDialog.Builder(requireContext(), R.style.AlertDialogTheme);
-        builder.setMessage(R.string.confirm_log_out_msg);
-        builder.setCancelable(true);
-        builder.setNegativeButton(R.string.no, null);
-        builder.setPositiveButton(R.string.log_out, new DialogInterface.OnClickListener() {
+        ZoodDialog dialog = ZoodDialog.newInstance(getString(R.string.confirm_log_out_msg));
+        dialog.setButton1(getString(R.string.log_out), new View.OnClickListener() {
             @Override
-            public void onClick(DialogInterface dialog, int which) {
+            public void onClick(View v) {
                 AuthenticationManager.get().logOut(requireContext(), new AuthenticationManager.LogoutWatcher() {
                     @Override
                     public void onUserLoggedOut() {
@@ -141,7 +136,12 @@ public class SettingsFragment extends Fragment implements SettingsAdapter.Listen
                 });
             }
         });
-        builder.show();
+        dialog.setButton2(getString(R.string.no), null);
+        FragmentManager fm = getFragmentManager();
+        if (fm == null) {
+            throw new RuntimeException("How is the fragment manager null right now?");
+        }
+        dialog.show(fm, null);
     }
 
     @Override
@@ -150,8 +150,6 @@ public class SettingsFragment extends Fragment implements SettingsAdapter.Listen
         if (kp == null) {
             return;
         }
-        AlertDialog.Builder builder = new AlertDialog.Builder(requireContext(), R.style.AlertDialogTheme);
-        builder.setTitle(R.string.your_public_key);
         String hexPK = Hex.toHexString(kp.publicKey);
         StringBuilder sb = new StringBuilder();
         int i=0;
@@ -165,19 +163,19 @@ public class SettingsFragment extends Fragment implements SettingsAdapter.Listen
             }
             sb.append("\n");
         }
-        builder.setMessage(sb.toString());
-        builder.setPositiveButton(R.string.ok, null);
-        AlertDialog dialog = builder.show();
-        TextView msgView = dialog.findViewById(android.R.id.message);
-        if (msgView != null) {
-            msgView.setTypeface(Typeface.MONOSPACE);
+        ZoodDialog dialog = ZoodDialog.newInstance(sb.toString());
+        dialog.setTitle(getString(R.string.your_public_key));
+        dialog.setButton1(getString(R.string.ok), null);
+        FragmentManager fm = getFragmentManager();
+        if (fm == null) {
+            throw new RuntimeException("Where is the FragmentManager?");
         }
+        dialog.show(fm, null);
     }
 
     //endregion
 
     //region Profile photo taking/selection
-
 
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent data) {

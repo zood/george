@@ -23,6 +23,7 @@ import androidx.annotation.UiThread;
 import androidx.annotation.WorkerThread;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.databinding.DataBindingUtil;
+import androidx.fragment.app.FragmentManager;
 import io.pijun.george.api.CreateUserResponse;
 import io.pijun.george.api.OscarAPI;
 import io.pijun.george.api.OscarClient;
@@ -121,6 +122,7 @@ public class WelcomeActivity extends AppCompatActivity implements WelcomeViewHol
         AuthenticationManager.get().logIn(this, username, password, new AuthenticationManager.LoginWatcher() {
             @Override
             public void onUserLoggedIn(@NonNull AuthenticationManager.Error err, @Nullable String detail) {
+                FragmentManager fm = getSupportFragmentManager();
                 switch (err) {
                     case None:
                         showMapActivity();
@@ -128,71 +130,71 @@ public class WelcomeActivity extends AppCompatActivity implements WelcomeViewHol
                     case AuthenticationChallengeFailed:
                         Utils.showStringAlert(WelcomeActivity.this,
                                 getString(R.string.login_failed),
-                                detail != null ? detail : getString(R.string.unknown_error_completing_challenge_response_msg));
+                                detail != null ? detail : getString(R.string.unknown_error_completing_challenge_response_msg), fm);
                         break;
                     case DatabaseBackupDecryptionFailed:
-                        Utils.showStringAlert(WelcomeActivity.this, null, "Unable to restore profile. Did your symmetric key change?");
+                        Utils.showStringAlert(WelcomeActivity.this, null, "Unable to restore profile. Did your symmetric key change?", fm);
                         break;
                     case DatabaseBackupParsingFailed:
-                        Utils.showStringAlert(WelcomeActivity.this, null, "Unable to decode your profile");
+                        Utils.showStringAlert(WelcomeActivity.this, null, "Unable to decode your profile", fm);
                         break;
                     case DatabaseRestoreFailed:
-                        Utils.showStringAlert(WelcomeActivity.this, null, "Unable to rebuild your profile. This is a bug and it has been reported to our engineers.");
+                        Utils.showStringAlert(WelcomeActivity.this, null, "Unable to rebuild your profile. This is a bug and it has been reported to our engineers.", fm);
                         break;
                     case AuthenticationChallengeCreationFailed:
-                        Utils.showStringAlert(WelcomeActivity.this, null, "Unable to start log in process: " + detail);
+                        Utils.showStringAlert(WelcomeActivity.this, null, "Unable to start log in process: " + detail, fm);
                         break;
                     case IncorrectPassword:
                         setLoginError(binding.siPasswordContainer, R.string.incorrect_password);
                         break;
                     case MalformedAuthenticationChallengeResponse:
-                        Utils.showStringAlert(WelcomeActivity.this, null, "Server returned a malformed authentication challenge. Try again later, and contact support if the problem persists.");
+                        Utils.showStringAlert(WelcomeActivity.this, null, "Server returned a malformed authentication challenge. Try again later, and contact support if the problem persists.", fm);
                         break;
                     case MalformedDatabaseBackupResponse:
-                        Utils.showStringAlert(WelcomeActivity.this, null, "The server returned a malformed response when retrieving your profile. Try again later, and if it still fails, contact support.");
+                        Utils.showStringAlert(WelcomeActivity.this, null, "The server returned a malformed response when retrieving your profile. Try again later, and if it still fails, contact support.", fm);
                         break;
                     case MalformedLoginResponse:
                         Utils.showStringAlert(WelcomeActivity.this,
                                 null,
-                                "The server returned a malformed login response. Try again later, and if it continues, contact support.");
+                                "The server returned a malformed login response. Try again later, and if it continues, contact support.", fm);
                         break;
                     case MalformedServerKeyResponse:
-                        Utils.showAlert(WelcomeActivity.this, 0, R.string.server_key_retrieval_bad_response_msg);
+                        Utils.showAlert(WelcomeActivity.this, 0, R.string.server_key_retrieval_bad_response_msg, fm);
                         break;
                     case NetworkErrorCompletingAuthenticationChallenge:
-                        Utils.showAlert(WelcomeActivity.this, R.string.network_error, R.string.login_failure_network_msg);
+                        Utils.showAlert(WelcomeActivity.this, R.string.network_error, R.string.login_failure_network_msg, fm);
                         break;
                     case NetworkErrorRetrievingDatabaseBackup:
-                        Utils.showAlert(WelcomeActivity.this, R.string.login_failed, R.string.network_failure_profile_restore_msg);
+                        Utils.showAlert(WelcomeActivity.this, R.string.login_failed, R.string.network_failure_profile_restore_msg, fm);
                         break;
                     case NetworkErrorRetrievingServerKey:
-                        Utils.showAlert(WelcomeActivity.this, 0, R.string.server_key_retrieval_network_error_msg);
+                        Utils.showAlert(WelcomeActivity.this, 0, R.string.server_key_retrieval_network_error_msg, fm);
                         break;
                     case NullPasswordHash:
                         CloudLogger.log("Password was null");
-                        Utils.showAlert(WelcomeActivity.this, R.string.unexpected_error, R.string.null_password_hash_msg);
+                        Utils.showAlert(WelcomeActivity.this, R.string.unexpected_error, R.string.null_password_hash_msg, fm);
                         break;
                     case OutdatedClient:
-                        Utils.showStringAlert(WelcomeActivity.this, null, "This version of Pijun is too old. Update to the latest version then try logging in again.");
+                        Utils.showStringAlert(WelcomeActivity.this, null, "This version of Pijun is too old. Update to the latest version then try logging in again.", fm);
                         break;
                     case UserNotFound:
                         setLoginError(binding.siUsernameContainer, R.string.unknown_username);
                         break;
                     case UnknownErrorRetrievingDatabaseBackup:
-                        Utils.showAlert(WelcomeActivity.this, R.string.login_failed, R.string.unknown_failure_profile_restore_msg);
+                        Utils.showAlert(WelcomeActivity.this, R.string.login_failed, R.string.unknown_failure_profile_restore_msg, fm);
                         break;
                     case UnknownErrorRetrievingServerKey:
-                        Utils.showAlert(WelcomeActivity.this, 0, R.string.server_key_retrieval_unknown_error_msg);
+                        Utils.showAlert(WelcomeActivity.this, 0, R.string.server_key_retrieval_unknown_error_msg, fm);
                         break;
                     case UnknownPasswordHashAlgorithm:
-                        Utils.showAlert(WelcomeActivity.this, 0, R.string.unknown_password_hash_algorithm_msg);
+                        Utils.showAlert(WelcomeActivity.this, 0, R.string.unknown_password_hash_algorithm_msg, fm);
                         break;
                     case SymmetricKeyDecryptionFailed:
-                        Utils.showAlert(WelcomeActivity.this, R.string.login_failed, R.string.symmetric_key_unwrap_failure_msg);
+                        Utils.showAlert(WelcomeActivity.this, R.string.login_failed, R.string.symmetric_key_unwrap_failure_msg, fm);
                         break;
                     case Unknown:
                         default:
-                            Utils.showStringAlert(WelcomeActivity.this, null, "Unknown error");
+                            Utils.showStringAlert(WelcomeActivity.this, null, "Unknown error", fm);
                             break;
                 }
             }
@@ -208,7 +210,7 @@ public class WelcomeActivity extends AppCompatActivity implements WelcomeViewHol
         KeyPair kp = new KeyPair();
         int result = Sodium.generateKeyPair(kp);
         if (result != 0) {
-            Utils.showAlert(this, 0, R.string.keypair_generation_error);
+            Utils.showAlert(this, 0, R.string.keypair_generation_error, getSupportFragmentManager());
             L.i("failed to generate key pair");
             return null;
         }
@@ -263,12 +265,13 @@ public class WelcomeActivity extends AppCompatActivity implements WelcomeViewHol
     @WorkerThread
     private void registerUser(User user, String password) {
         OscarAPI api = OscarClient.newInstance(null);
+        FragmentManager fm = getSupportFragmentManager();
         try {
             final Response<CreateUserResponse> response = api.createUser(user).execute();
             if (response.isSuccessful()) {
                 CreateUserResponse resp = response.body();
                 if (resp == null) {
-                    Utils.showStringAlert(this, null, "The server returned a malformed response when creating your account. Try again later or contact support if the problem continues.");
+                    Utils.showStringAlert(this, null, "The server returned a malformed response when creating your account. Try again later or contact support if the problem continues.", fm);
                     return;
                 }
                 Prefs prefs = Prefs.get(this);
@@ -280,16 +283,16 @@ public class WelcomeActivity extends AppCompatActivity implements WelcomeViewHol
                 OscarError err = OscarError.fromResponse(response);
                 if (err != null) {
                     if (err.code == OscarError.ERROR_USERNAME_NOT_AVAILABLE) {
-                        Utils.showAlert(WelcomeActivity.this, 0, R.string.username_not_available_msg);
+                        Utils.showAlert(WelcomeActivity.this, 0, R.string.username_not_available_msg, fm);
                     } else {
-                        Utils.showStringAlert(WelcomeActivity.this, null, err.message);
+                        Utils.showStringAlert(WelcomeActivity.this, null, err.message, fm);
                     }
                 } else {
-                    Utils.showStringAlert(WelcomeActivity.this, null, "unknown error occurred when attempting to register account");
+                    Utils.showStringAlert(WelcomeActivity.this, null, "unknown error occurred when attempting to register account", fm);
                 }
             }
         } catch (IOException e) {
-            Utils.showStringAlert(this, null, "Serious error creating account: " + e.getLocalizedMessage());
+            Utils.showStringAlert(this, null, "Serious error creating account: " + e.getLocalizedMessage(), fm);
         }
     }
 
@@ -349,7 +352,7 @@ public class WelcomeActivity extends AppCompatActivity implements WelcomeViewHol
             public void run() {
                 final User user = generateUser(username, password.toString());
                 if (user == null) {
-                    Utils.showAlert(WelcomeActivity.this, 0, R.string.unknown_user_generation_error_msg);
+                    Utils.showAlert(WelcomeActivity.this, 0, R.string.unknown_user_generation_error_msg, getSupportFragmentManager());
                     return;
                 }
                 registerUser(user, password.toString());
@@ -379,9 +382,8 @@ public class WelcomeActivity extends AppCompatActivity implements WelcomeViewHol
             return;
         }
 
-        //noinspection ConstantConditions
+
         String username = usernameText.toString();
-        //noinspection ConstantConditions
         String password = passwordText.toString();
 
         App.runInBackground(new WorkerRunnable() {

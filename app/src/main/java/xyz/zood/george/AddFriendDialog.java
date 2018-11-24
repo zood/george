@@ -219,7 +219,7 @@ public class AddFriendDialog extends DialogFragment {
             @Override
             public void run() {
                 if (errMsg == null) {
-                    getDialog().dismiss();
+                    dismiss();
                     return;
                 }
 
