@@ -43,8 +43,23 @@ public class BannerView extends LinearLayout {
 
     @UiThread
     public void addItem(@NonNull String msg, @NonNull String action, int itemId, @NonNull ItemClickListener listener) {
+        // Check if we already have a view for this item. If so, update it
+        ItemHolder holder = items.get(itemId);
+        if (holder != null) {
+            holder.textView.setText(msg);
+            holder.button.setText(action);
+            holder.button.setOnClickListener(new OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    listener.onBannerItemClick(itemId);
+                }
+            });
+            return;
+        }
+
+        // we don't have the view, so inflate a new one and add it
         ConstraintLayout itemView = (ConstraintLayout) LayoutInflater.from(getContext()).inflate(R.layout.banner_item, this, false);
-        ItemHolder holder = new ItemHolder(itemView, itemId);
+        holder = new ItemHolder(itemView, itemId);
         holder.textView.setText(msg);
         holder.button.setText(action);
         holder.button.setOnClickListener(new OnClickListener() {
@@ -54,14 +69,6 @@ public class BannerView extends LinearLayout {
             }
         });
 
-        // remove the old item, if there was one
-        ItemHolder old = items.get(itemId);
-        if (old != null) {
-            items.delete(itemId);
-            removeView(old.view);
-        }
-
-        // and place the new one
         items.put(itemId, holder);
         addView(itemView, LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT);
     }

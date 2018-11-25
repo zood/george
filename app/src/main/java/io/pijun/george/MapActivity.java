@@ -76,6 +76,7 @@ import io.pijun.george.view.MyLocationView;
 import retrofit2.Response;
 import xyz.zood.george.AddFriendDialog;
 import xyz.zood.george.widget.BackgroundDataRestrictionNotifier;
+import xyz.zood.george.widget.BannerView;
 import xyz.zood.george.widget.InfoPanel;
 import xyz.zood.george.widget.RadialMenu;
 import xyz.zood.george.widget.ZoodDialog;
@@ -183,6 +184,7 @@ public final class MapActivity extends AppCompatActivity implements OnMapReadyCa
                 }
 
                 oscarSocket.connect(token);
+
                 ArrayList<FriendRecord> friends = DB.get().getFriends();
                 avatarsAdapter.setFriends(friends);
                 for (FriendRecord fr: friends) {
@@ -987,11 +989,39 @@ public final class MapActivity extends AppCompatActivity implements OnMapReadyCa
     //region OscarSocket.Listener
 
     private OscarSocket.Listener oscarSocketListener = new OscarSocket.Listener() {
+
+        private static final int NoConnectionBannerId = 110348;
+
+        @Override
+        public void onConnect() {
+            L.i("OSListener.onConnect");
+            App.runOnUiThread(new UiRunnable() {
+                @Override
+                public void run() {
+                    binding.banners.removeItem(NoConnectionBannerId);
+                }
+            });
+        }
+
         @Override
         public void onDisconnect(int code, String reason) {
+            L.i("OSListener.onDisconnect: " + reason);
             if (!isStarted) {
                 return;
             }
+            App.runOnUiThread(new UiRunnable() {
+                @Override
+                public void run() {
+                    binding.banners.addItem(getString(R.string.unable_to_connect_to_zood_servers), getString(R.string.info), NoConnectionBannerId, new BannerView.ItemClickListener() {
+                        @Override
+                        public void onBannerItemClick(int id) {
+                            ZoodDialog d = ZoodDialog.newInstance(getString(R.string.unable_to_connect_msg));
+                            d.setButton1(getString(R.string.ok), null);
+                            d.show(getSupportFragmentManager(), null);
+                        }
+                    });
+                }
+            });
             try {
                 Thread.sleep(5000);
             } catch (InterruptedException ignore) {}

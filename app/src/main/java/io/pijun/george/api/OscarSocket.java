@@ -227,6 +227,16 @@ public class OscarSocket {
                 L.w("OscarSocket.ISL exception", t);
             }
         }
+
+        @Override
+        public void onOpen(WebSocket webSocket, Response response) {
+            App.runInBackground(new WorkerRunnable() {
+                @Override
+                public void run() {
+                    listener.onConnect();
+                }
+            });
+        }
     }
 
     //endregion
@@ -234,6 +244,8 @@ public class OscarSocket {
     //region Listener interface
 
     public interface Listener {
+        @WorkerThread
+        void onConnect();
         @WorkerThread
         void onDisconnect(int code, String reason);
         @WorkerThread
