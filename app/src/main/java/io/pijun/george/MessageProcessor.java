@@ -1,6 +1,7 @@
 package io.pijun.george;
 
 import android.content.Context;
+import android.content.Intent;
 import android.os.Build;
 import android.text.TextUtils;
 import android.text.format.DateUtils;
@@ -32,6 +33,7 @@ import io.pijun.george.queue.PersistentQueue;
 import io.pijun.george.service.BackupDatabaseJob;
 import io.pijun.george.service.PositionService;
 import retrofit2.Response;
+import xyz.zood.george.service.ScreamerService;
 
 public class MessageProcessor {
 
@@ -172,6 +174,7 @@ public class MessageProcessor {
                 return handleLocationUpdateRequest(context, user, token, keyPair);
             case LocationUpdateRequestReceived:
                 return handleLocationUpdateRequestReceived(user, comm);
+            case Scream:
             default:
                 L.i("The invalid comm should have been caught during the isValid() check: " +
                         user.username + " - " + comm);
@@ -408,9 +411,56 @@ public class MessageProcessor {
             case DeviceInfo:
                 // We don't care. Only useful for the web client
                 return Result.Success;
+            case Scream:
+                return handleScreamRequest(context, token, keyPair, ourId);
             default:
                 return Result.ErrorInvalidCommunication;
         }
+    }
+
+    private static Result handleScreamRequest(@NonNull Context context, @NonNull String accessToken, @NonNull KeyPair keyPair, @NonNull @Size(Constants.USER_ID_LENGTH) byte[] ourId) {
+        Intent i = ScreamerService.newStartIntent(context);
+        ContextCompat.startForegroundService(context, i);
+
+        UserComm c = UserComm.newScreamBegan();
+        // make sure we have everything we need
+        EncryptedData encrypted = Sodium.publicKeyEncrypt(c.toJSON(), keyPair.publicKey, keyPair.secretKey);
+        if (encrypted == null) {
+            L.w("Failed to encrypt device info message to myself");
+            return Result.ErrorEncryptionFailed;
+        }
+        OutboundMessage om = new OutboundMessage();
+        om.cipherText = encrypted.cipherText;
+        om.nonce = encrypted.nonce;
+        om.urgent = true;
+        om.isTransient = true;
+
+        OscarAPI api = OscarClient.newInstance(accessToken);
+        try {
+            Response<Void> response = api.sendMessage(Hex.toHexString(ourId), om).execute();
+            if (response.isSuccessful()) {
+                return Result.Success;
+            }
+
+            OscarError err = OscarError.fromResponse(response);
+            if (err != null) {
+                L.w(err.toString());
+            } else {
+                L.w("Unknown server error received while sending scream_began");
+            }
+        } catch (IOException ex) {
+            L.i("Network error while trying to send scream_began");
+        }
+
+        // something happened, so we'll queue it to try again later.
+        SendMessageTask smt = new SendMessageTask(accessToken);
+        smt.hexUserId = Hex.toHexString(ourId);
+        smt.message = encrypted;
+        smt.urgent = true;
+        smt.isTransient = true;
+        OscarClient.getQueue(context).offer(smt);
+
+        return Result.Success;
     }
 
     @SuppressWarnings("InfiniteLoopStatement")

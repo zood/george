@@ -144,6 +144,20 @@ public class UserComm {
         return c;
     }
 
+    public static UserComm newScream() {
+        UserComm c = new UserComm();
+        c.type = CommType.Scream;
+
+        return c;
+    }
+
+    public static UserComm newScreamBegan() {
+        UserComm c = new UserComm();
+        c.type = CommType.ScreamBegan;
+
+        return c;
+    }
+
     @SuppressWarnings({"RedundantIfStatement", "BooleanMethodIsAlwaysInverted"})
     public boolean isValid() {
         if (type == null) {
@@ -184,7 +198,6 @@ public class UserComm {
                 if (longitude < -180 || longitude > 180) {
                     return false;
                 }
-                //noinspection RedundantIfStatement
                 if (time <= 0) {
                     return false;
                 }
@@ -205,6 +218,10 @@ public class UserComm {
                         !locationUpdateRequestAction.equals(LOCATION_UPDATE_REQUEST_ACTION_FINISHED)) {
                     return false;
                 }
+                return true;
+            case Scream:
+                return true;
+            case ScreamBegan:
                 return true;
             default:
                 L.i("encountered unknown commtype. probably from a different version of Zood");

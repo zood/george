@@ -173,7 +173,6 @@ public class OscarSocket {
         @Override
         @WorkerThread
         public void onClosed(WebSocket webSocket, int code, String reason) {
-            L.i("ISL.onClosed");
             handler.post(new WorkerRunnable() {
                 @Override
                 public void run() {

@@ -994,7 +994,6 @@ public final class MapActivity extends AppCompatActivity implements OnMapReadyCa
 
         @Override
         public void onConnect() {
-            L.i("OSListener.onConnect");
             App.runOnUiThread(new UiRunnable() {
                 @Override
                 public void run() {
@@ -1005,7 +1004,6 @@ public final class MapActivity extends AppCompatActivity implements OnMapReadyCa
 
         @Override
         public void onDisconnect(int code, String reason) {
-            L.i("OSListener.onDisconnect: " + reason);
             if (!isStarted) {
                 return;
             }

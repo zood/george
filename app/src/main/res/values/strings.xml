@@ -126,4 +126,7 @@
     <string name="unable_to_connect_to_zood_servers">Unable to connect to Zood servers</string>
     <string name="info">Info</string>
     <string name="unable_to_connect_msg">Zood Location is unable to connect to the Zood servers. Make sure your phone\'s internet connection is working then come back to the app. Zood will automatically try to reconnect.</string>
+    <string name="screamer_channel_description_msg">Used to play a sound when you\'re looking for your phone.</string>
+    <string name="find_my_phone">Find my phone</string>
+    <string name="screamer_notification_msg">Of course! This is where you left your phone. ;-)</string>
 </resources>

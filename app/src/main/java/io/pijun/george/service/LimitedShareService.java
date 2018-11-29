@@ -57,10 +57,10 @@ public class LimitedShareService extends Service /* implements LocationListener 
     public static final String ACTION_COPY_LINK = "copy_link";
     public static final String LIMITED_SHARE_CHANNEL_ID = "limited_share_01";
     /**
-     * IsRunning is checked by LocationUploader. In the event that the process is cleaned
+     * IsRunning is checked by LocationUtils. In the event that the process is cleaned
      * up without notice, the record of this limited share would still exist in the database
      * when the app comes back, and location data will continue to be shared with the limited share.
-     * That's bad, so LocationUploader checks this to see if the service is actually running,
+     * That's bad, so LocationUtils checks this to see if the service is actually running,
      * and if it's not, it will wipe the limited share data from the db.
      */
     public static volatile boolean IsRunning = false;

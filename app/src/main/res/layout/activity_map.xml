@@ -271,7 +271,6 @@
             android:layout_width="@dimen/radial_button"
             android:layout_height="@dimen/radial_button" />
 
-        <!-- It's positioning gets controlled by the fragment -->
         <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/avatars"
             android:layout_width="match_parent"

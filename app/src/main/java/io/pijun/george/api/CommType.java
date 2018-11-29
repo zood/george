@@ -12,6 +12,8 @@ public enum CommType {
     LocationUpdateRequest("location_update_request"),
     LocationUpdateRequestReceived("location_update_request_received"),
     LocationSharingRevocation("location_sharing_revocation"),
+    Scream("scream"),
+    ScreamBegan("scream_began"),
     Unknown("unknown");
 
     public final String val;
