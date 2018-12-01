@@ -13,16 +13,17 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.PopupMenu;
 
-import java.io.File;
-import java.text.SimpleDateFormat;
-import java.util.Date;
-import java.util.Locale;
-
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.core.content.FileProvider;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
+
+import java.io.File;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.Locale;
+
 import io.pijun.george.crypto.KeyPair;
 import io.pijun.george.databinding.FragmentSettingsBinding;
 import xyz.zood.george.widget.ZoodDialog;
@@ -183,10 +184,12 @@ public class SettingsFragment extends Fragment implements SettingsAdapter.Listen
         if (resultCode != Activity.RESULT_OK) {
             return;
         }
+
         Context ctx = requireContext();
         if (requestCode == REQUEST_IMAGE_CAPTURE) {
             Uri uri = Uri.fromFile(new File(imgCapturePath));
-            Intent i = AvatarCropperActivity.newIntent(ctx, uri);
+
+            Intent i = AvatarCropperActivity2.newIntent(ctx, uri);
             startActivity(i);
         } else if (requestCode == REQUEST_IMAGE_FILE) {
             Uri uri = data.getData();
@@ -195,7 +198,8 @@ public class SettingsFragment extends Fragment implements SettingsAdapter.Listen
                 return;
             }
             L.i("img uri: " + uri.toString());
-            Intent i = AvatarCropperActivity.newIntent(ctx, uri);
+
+            Intent i = AvatarCropperActivity2.newIntent(ctx, uri);
             startActivity(i);
         }
     }
@@ -221,7 +225,7 @@ public class SettingsFragment extends Fragment implements SettingsAdapter.Listen
         Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
         intent.putExtra(Intent.EXTRA_LOCAL_ONLY, true);
         intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
-        intent.setType("avatar/*");
+        intent.setType("image/*");
         startActivityForResult(intent, REQUEST_IMAGE_FILE);
     }
 

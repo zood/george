@@ -8,7 +8,7 @@
     <string name="create_an_account">Create an account</string>
     <string name="log_in">Log in</string>
     <string name="password_mismatch_msg">The passwords don\'t match. Please check and try again.</string>
-    <string name="ok">Ok</string>
+    <string name="ok">OK</string>
     <string name="password_too_short_msg">That password is too short. Create a password that is at least 6 characters long. At least 12 character is even better.</string>
     <string name="keypair_generation_error">Error generating key pair.</string>
     <string name="username_too_short_msg">The username you entered is too short. Make sure it\'s at least 5 characters long.</string>
@@ -82,7 +82,7 @@
     <string name="camera">Camera</string>
     <string name="photos">Photos</string>
     <string name="images">Images</string>
-    <string name="crop_instructions_msg">Move and zoom photo\nto fit the square.</string>
+    <string name="crop_instructions_msg">Move and resize the square to crop your avatar.</string>
     <string name="done">Done</string>
     <string name="location_broadcast">Location broadcast</string>
     <string name="error_loading_key">Error loading key</string>
@@ -129,4 +129,7 @@
     <string name="screamer_channel_description_msg">Used to play a sound when you\'re looking for your phone.</string>
     <string name="find_my_phone">Find my phone</string>
     <string name="screamer_notification_msg">Of course! This is where you left your phone. ;-)</string>
+    <string name="save_error">Save error</string>
+    <string name="unknown_avatar_save_error_msg">There was a problem saving your profile avatar. Try again, and if the problem persists, contact support.</string>
+    <string name="avatar_save_io_error_msg">Unable to save your profile avatar. Make sure you have enough free space on your device, then try again.</string>
 </resources>

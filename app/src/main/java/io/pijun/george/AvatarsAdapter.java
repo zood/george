@@ -68,6 +68,7 @@ class AvatarsAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
 
     @UiThread
     void onAvatarUpdated(@Nullable String username) {
+        L.i("AvatarsAdapter.onAvatarUpdated");
         if (username == null) {
             return;
         }
@@ -76,6 +77,7 @@ class AvatarsAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
         for (int i=0; i<mFriends.size(); i++) {
             FriendRecord f = mFriends.get(i);
             if (f.user.username.toLowerCase(Locale.US).equals(username)) {
+                L.i("\tfound the matching avatar to update: " + username);
                 notifyItemChanged(i);
                 return;
             }

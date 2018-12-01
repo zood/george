@@ -35,3 +35,6 @@
 -keep class xyz.zood.*$* {
     *;
 }
+
+# For Android-Image-Croper library
+-keep class android.support.v7.widget.** { *; }

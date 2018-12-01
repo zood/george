@@ -45,6 +45,12 @@
         <activity android:name=".SettingsActivity"
             android:screenOrientation="portrait"
             android:theme="@style/AppTheme" />
+        <activity android:name="com.theartofdev.edmodo.cropper.CropImageActivity"
+            android:screenOrientation="portrait"
+            android:theme="@style/AppTheme" />
+        <activity android:name=".AvatarCropperActivity2"
+            android:screenOrientation="portrait"
+            android:theme="@style/AppTheme" />
 
         <!-- BEGIN SERVICES -->
         <service android:name=".service.FcmMessageReceiver">

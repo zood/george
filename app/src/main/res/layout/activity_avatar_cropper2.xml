@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools">
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:background="@android:color/black"
+        tools:context=".AvatarCropperActivity2"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+        <com.theartofdev.edmodo.cropper.CropImageView
+            android:id="@+id/crop_image_view"
+            app:cropAspectRatioX="1"
+            app:cropAspectRatioY="1"
+            app:cropFlipHorizontally="false"
+            app:cropFlipVertically="false"
+            app:cropFixAspectRatio="true"
+            app:cropMultiTouchEnabled="true"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"/>
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/done"
+            android:text="@string/done"
+            android:onClick="onDone"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            android:layout_margin="16dp"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content" />
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/cancel"
+            app:icon="@drawable/ic_close_black_24dp"
+            android:onClick="onCancel"
+            android:tint="#FFFFFF"
+            style="@style/Widget.MaterialComponents.Button.TextButton.Icon"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            android:layout_margin="16dp"
+            android:layout_width="44dp"
+            android:layout_height="48dp" />
+        <TextView
+            android:id="@+id/instructions"
+            android:textColor="@android:color/white"
+            android:textAlignment="center"
+            android:text="@string/crop_instructions_msg"
+            android:textSize="24sp"
+            app:layout_constraintTop_toBottomOf="@id/done"
+            app:layout_constraintWidth_percent="0.75"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            android:layout_margin="16dp"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content" />
+    </androidx.constraintlayout.widget.ConstraintLayout>
+</layout>
