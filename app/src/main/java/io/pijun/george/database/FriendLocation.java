@@ -1,6 +1,7 @@
 package io.pijun.george.database;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 
 public class FriendLocation {
 
@@ -14,8 +15,9 @@ public class FriendLocation {
     public final Float bearing;
     public final MovementType movement;
     public Integer batteryLevel;
+    public Boolean batteryCharging;
 
-    FriendLocation(long id, double lat, double lng, long time, Float accuracy, Float speed, Float bearing, MovementType movement, Integer batteryLevel) {
+    FriendLocation(long id, double lat, double lng, long time, Float accuracy, Float speed, Float bearing, MovementType movement, Integer batteryLevel, @Nullable Boolean batteryCharging) {
         this.friendId = id;
         this.latitude = lat;
         this.longitude = lng;
@@ -25,6 +27,7 @@ public class FriendLocation {
         this.bearing = bearing;
         this.movement = movement;
         this.batteryLevel = batteryLevel;
+        this.batteryCharging = batteryCharging;
     }
 
     @Override
@@ -40,6 +43,7 @@ public class FriendLocation {
                 ", bearing=" + bearing +
                 ", movement='" + movement + '\'' +
                 ", batteryLevel=" + batteryLevel +
+                ", batteryCharging=" + batteryCharging +
                 '}';
     }
 

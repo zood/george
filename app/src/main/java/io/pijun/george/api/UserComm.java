@@ -36,6 +36,7 @@ public class UserComm {
     @Nullable public Float bearing;
     @Nullable public String movement;
     @Nullable public Integer batteryLevel;
+    @Nullable public Boolean batteryCharging;
 
     // location_update_request_received
     @LocationUpdateRequestAction public String locationUpdateRequestAction;
@@ -123,7 +124,7 @@ public class UserComm {
     }
 
     @NonNull @CheckResult
-    public static UserComm newLocationInfo(@NonNull Location l, @Nullable MovementType movement, @IntRange(from=0, to=100) Integer batteryLevel) {
+    public static UserComm newLocationInfo(@NonNull Location l, @Nullable MovementType movement, @IntRange(from=0, to=100) Integer batteryLevel, @NonNull Boolean batteryCharging) {
         UserComm c = new UserComm();
         c.type = CommType.LocationInfo;
         c.latitude = l.getLatitude();
@@ -140,6 +141,7 @@ public class UserComm {
         }
         c.movement = movement == null ? null : movement.val;
         c.batteryLevel = batteryLevel;
+        c.batteryCharging = batteryCharging;
 
         return c;
     }
@@ -258,13 +260,14 @@ public class UserComm {
                 Objects.equals(bearing, userComm.bearing) &&
                 Objects.equals(movement, userComm.movement) &&
                 Objects.equals(batteryLevel, userComm.batteryLevel) &&
+                Objects.equals(batteryCharging, userComm.batteryCharging) &&
                 Objects.equals(locationUpdateRequestAction, userComm.locationUpdateRequestAction) &&
                 Objects.equals(debugData, userComm.debugData);
     }
 
     @Override
     public int hashCode() {
-        int result = Objects.hash(type, latitude, longitude, time, accuracy, speed, bearing, movement, batteryLevel, locationUpdateRequestAction, debugData, deviceInfo);
+        int result = Objects.hash(type, latitude, longitude, time, accuracy, speed, bearing, movement, batteryLevel, batteryCharging, locationUpdateRequestAction, debugData, deviceInfo);
         result = 31 * result + Arrays.hashCode(dropBox);
         result = 31 * result + Arrays.hashCode(avatar);
         return result;

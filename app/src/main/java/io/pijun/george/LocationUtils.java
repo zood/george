@@ -83,11 +83,8 @@ public class LocationUtils {
                 continue;
             }
 
-            Integer batteryLevel = Battery.getLevel(ctx);
-            if (batteryLevel == -1) {
-                batteryLevel = null;
-            }
-            UserComm locMsg = UserComm.newLocationInfo(loc, prefs.getCurrentMovement(), batteryLevel);
+            Battery.State batteryState = Battery.getState(ctx);
+            UserComm locMsg = UserComm.newLocationInfo(loc, prefs.getCurrentMovement(), batteryState.level, batteryState.isCharging);
             byte[] msgBytes = locMsg.toJSON();
             // share to our friends
             ArrayList<FriendRecord> friends = DB.get().getFriendsToShareWith();

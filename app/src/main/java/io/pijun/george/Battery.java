@@ -4,36 +4,37 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.os.BatteryManager;
-import android.os.Bundle;
-import android.text.format.DateUtils;
 
 import androidx.annotation.CheckResult;
-import androidx.annotation.IntRange;
 import androidx.annotation.NonNull;
 
 class Battery {
 
-    private static long lastCheckTime = 0;
-    private static int lastLevel = -1;
+    static class State {
+        int level = -1;
+        boolean isCharging;
 
+        private State() {
+        }
+    }
+
+    @NonNull
     @CheckResult
-    @IntRange(from=-1, to=100)
-    static int getLevel(@NonNull Context context) {
-        long now = System.currentTimeMillis();
-        long since = now - lastCheckTime;
-        if (since > 3 * DateUtils.MINUTE_IN_MILLIS) {
-            IntentFilter filter = new IntentFilter(Intent.ACTION_BATTERY_CHANGED);
-            Intent status = context.registerReceiver(null, filter);
-            if (status != null) {
-                Bundle extras = status.getExtras();
-                if (extras != null) {
-                    lastCheckTime = now;
-                    lastLevel = extras.getInt(BatteryManager.EXTRA_LEVEL, -1);
-                }
-            }
+    static State getState(Context context) {
+        State state = new State();
+
+        IntentFilter filter = new IntentFilter(Intent.ACTION_BATTERY_CHANGED);
+        Intent status = context.registerReceiver(null, filter);
+        if (status == null) {
+            return state;
         }
 
-        return lastLevel;
+        state.level = status.getIntExtra(BatteryManager.EXTRA_LEVEL, -1);
+        int chargingState = status.getIntExtra(BatteryManager.EXTRA_STATUS, -1);
+        state.isCharging =  chargingState == BatteryManager.BATTERY_STATUS_CHARGING ||
+                            chargingState == BatteryManager.BATTERY_STATUS_FULL;
+
+        return state;
     }
 
 }

@@ -71,6 +71,7 @@ public class DB {
     private static final String LOCATIONS_COL_BEARING = "bearing";
     private static final String LOCATIONS_COL_MOVEMENT = "movement";
     private static final String LOCATIONS_COL_BATTERY_LEVEL = "battery_level";
+    private static final String LOCATIONS_COL_BATTERY_CHARGING = "battery_charging";
     private static final String[] LOCATIONS_COLUMNS = new String[]{
             LOCATIONS_COL_FRIEND_ID,
             LOCATIONS_COL_LATITUDE,
@@ -81,6 +82,7 @@ public class DB {
             LOCATIONS_COL_BEARING,
             LOCATIONS_COL_MOVEMENT,
             LOCATIONS_COL_BATTERY_LEVEL,
+            LOCATIONS_COL_BATTERY_CHARGING
     };
 
     private static final String USERS_TABLE = "users";
@@ -290,7 +292,12 @@ public class DB {
                 if (!c.isNull(batteryLevelIdx)) {
                     batteryLevel = c.getInt(batteryLevelIdx);
                 }
-                fl = new FriendLocation(friendRecordId, lat, lng, time, acc, speed, bearing, movement, batteryLevel);
+                Boolean batteryCharging = null;
+                int batteryChargingIdx = c.getColumnIndexOrThrow(LOCATIONS_COL_BATTERY_CHARGING);
+                if (!c.isNull(batteryChargingIdx)) {
+                    batteryCharging = (c.getInt(batteryChargingIdx) > 0);
+                }
+                fl = new FriendLocation(friendRecordId, lat, lng, time, acc, speed, bearing, movement, batteryLevel, batteryCharging);
             }
         }
 
@@ -602,7 +609,7 @@ public class DB {
     }
 
     @WorkerThread
-    public void setFriendLocation(long friendId, double lat, double lng, long time, @Nullable Float accuracy, @Nullable Float speed, @Nullable Float bearing, @Nullable String movement, @Nullable Integer batteryLevel) throws DBException {
+    public void setFriendLocation(long friendId, double lat, double lng, long time, @Nullable Float accuracy, @Nullable Float speed, @Nullable Float bearing, @Nullable String movement, @Nullable Integer batteryLevel, @Nullable Boolean batteryCharging) throws DBException {
         SQLiteDatabase db = mDbHelper.getWritableDatabase();
         ContentValues cv = new ContentValues();
         cv.put(LOCATIONS_COL_FRIEND_ID, friendId);
@@ -624,12 +631,15 @@ public class DB {
         if (batteryLevel != null) {
             cv.put(LOCATIONS_COL_BATTERY_LEVEL, batteryLevel);
         }
+        if (batteryCharging != null) {
+            cv.put(LOCATIONS_COL_BATTERY_CHARGING, batteryCharging);
+        }
         long result = db.replace(LOCATIONS_TABLE, null, cv);
         if (result == -1) {
             throw new DBException("Error occurred while setting friend location");
         }
 
-        notifyFriendLocationUpdated(new FriendLocation(friendId, lat, lng, time, accuracy, speed, bearing, MovementType.get(movement), batteryLevel));
+        notifyFriendLocationUpdated(new FriendLocation(friendId, lat, lng, time, accuracy, speed, bearing, MovementType.get(movement), batteryLevel, batteryCharging));
     }
 
     @WorkerThread
@@ -729,7 +739,8 @@ public class DB {
                     + LOCATIONS_COL_SPEED + " REAL, "
                     + LOCATIONS_COL_BEARING + " REAL, "
                     + LOCATIONS_COL_MOVEMENT + " TEXT, "
-                    + LOCATIONS_COL_BATTERY_LEVEL + " INTEGER)";
+                    + LOCATIONS_COL_BATTERY_LEVEL + " INTEGER, "
+                    + LOCATIONS_COL_BATTERY_CHARGING + " INTEGER)";
             db.execSQL(createLocations);
 
             String createUsers = "CREATE TABLE "

@@ -307,20 +307,38 @@ public class InfoPanel {
         if (loc.batteryLevel != null) {
             battery.setText(activity.getString(R.string.number_percent_msg, loc.batteryLevel));
             @DrawableRes int batteryImg;
-            if (loc.batteryLevel >= 95) {
-                batteryImg = R.drawable.ic_sharp_battery_full_20dp;
-            } else if (loc.batteryLevel >= 85) {
-                batteryImg = R.drawable.ic_sharp_battery_90_20dp;
-            } else if (loc.batteryLevel >= 70) {
-                batteryImg = R.drawable.ic_sharp_battery_80_20dp;
-            } else if (loc.batteryLevel >= 55) {
-                batteryImg = R.drawable.ic_sharp_battery_60_20dp;
-            } else if (loc.batteryLevel >= 40) {
-                batteryImg = R.drawable.ic_sharp_battery_50_20dp;
-            } else if (loc.batteryLevel >= 25) {
-                batteryImg = R.drawable.ic_sharp_battery_30_20dp;
+            if (loc.batteryCharging != null && loc.batteryCharging) {
+                if (loc.batteryLevel >= 95) {
+                    batteryImg = R.drawable.ic_sharp_battery_charging_full_20dp;
+                } else if (loc.batteryLevel >= 85) {
+                    batteryImg = R.drawable.ic_sharp_battery_charging_90_20dp;
+                } else if (loc.batteryLevel >= 70) {
+                    batteryImg = R.drawable.ic_sharp_battery_charging_80_20dp;
+                } else if (loc.batteryLevel >= 55) {
+                    batteryImg = R.drawable.ic_sharp_battery_charging_60_20dp;
+                } else if (loc.batteryLevel >= 40) {
+                    batteryImg = R.drawable.ic_sharp_battery_charging_50_20dp;
+                } else if (loc.batteryLevel >= 25) {
+                    batteryImg = R.drawable.ic_sharp_battery_charging_30_20dp;
+                } else {
+                    batteryImg = R.drawable.ic_sharp_battery_charging_20_20dp;
+                }
             } else {
-                batteryImg = R.drawable.ic_sharp_battery_20_20dp;
+                if (loc.batteryLevel >= 95) {
+                    batteryImg = R.drawable.ic_sharp_battery_full_20dp;
+                } else if (loc.batteryLevel >= 85) {
+                    batteryImg = R.drawable.ic_sharp_battery_90_20dp;
+                } else if (loc.batteryLevel >= 70) {
+                    batteryImg = R.drawable.ic_sharp_battery_80_20dp;
+                } else if (loc.batteryLevel >= 55) {
+                    batteryImg = R.drawable.ic_sharp_battery_60_20dp;
+                } else if (loc.batteryLevel >= 40) {
+                    batteryImg = R.drawable.ic_sharp_battery_50_20dp;
+                } else if (loc.batteryLevel >= 25) {
+                    batteryImg = R.drawable.ic_sharp_battery_30_20dp;
+                } else {
+                    batteryImg = R.drawable.ic_sharp_battery_20_20dp;
+                }
             }
             Drawable drawable = activity.getDrawable(batteryImg);
             batteryIcon.setImageDrawable(drawable);
