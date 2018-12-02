@@ -335,6 +335,10 @@ public final class MapActivity extends AppCompatActivity implements OnMapReadyCa
                 infoPanel.hide();
                 radialMenu.setVisible(true);
                 radialMenu.flyBack();
+                if (mCurrentCircle != null) {
+                    mCurrentCircle.remove();
+                    mCurrentCircle = null;
+                }
             }
         });
 
