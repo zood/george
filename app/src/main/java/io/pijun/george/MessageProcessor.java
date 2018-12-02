@@ -33,6 +33,7 @@ import io.pijun.george.queue.PersistentQueue;
 import io.pijun.george.service.BackupDatabaseJob;
 import io.pijun.george.service.PositionService;
 import retrofit2.Response;
+import xyz.zood.george.AvatarManager;
 import xyz.zood.george.service.ScreamerService;
 
 public class MessageProcessor {

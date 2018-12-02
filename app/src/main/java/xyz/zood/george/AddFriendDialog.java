@@ -28,7 +28,6 @@ import androidx.annotation.WorkerThread;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.DialogFragment;
 import io.pijun.george.App;
-import io.pijun.george.AvatarManager;
 import io.pijun.george.CloudLogger;
 import io.pijun.george.Constants;
 import io.pijun.george.L;

@@ -13,18 +13,14 @@ android {
         multiDexEnabled true
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         resConfigs "en"
-        packagingOptions {
-            exclude "lib/mips/*"
-//            exclude "lib/x86/*"
-//            exclude "lib/x86_64/*"
-        }
         externalNativeBuild {
             cmake {
-                cppFlags ""
                 cFlags "-Os -fvisibility=hidden"
-//                abiFilters 'x86', 'x86_64', 'armeabi-v7a', 'arm64-v8a'
-                abiFilters 'armeabi-v7a', 'arm64-v8a'
             }
+        }
+        ndk {
+            abiFilters 'x86', 'x86_64', 'armeabi-v7a', 'arm64-v8a'
+//            abiFilters 'armeabi-v7a', 'arm64-v8a'
         }
     }
     buildTypes {
@@ -35,6 +31,7 @@ android {
         }
         debug {
             jniDebuggable = true
+            renderscriptDebuggable = false
         }
     }
     sourceSets {
@@ -75,10 +72,9 @@ dependencies {
     // used for Google maps view
     implementation 'com.google.android.gms:play-services-maps:16.0.0'
     // cloud messaging
-    implementation 'com.google.firebase:firebase-messaging:17.3.3'
-//    implementation ('com.google.firebase:firebase-messaging:17.3.4', {
-//        exclude group: 'com.google.firebase', module: 'firebase-core'
-//    })
+    implementation ('com.google.firebase:firebase-messaging:17.3.3', {
+        exclude group: 'com.google.firebase', module: 'firebase-core'
+    })
 
     implementation 'com.squareup.retrofit2:retrofit:2.4.0'
     implementation 'com.squareup.retrofit2:converter-gson:2.4.0'

@@ -28,7 +28,7 @@ import androidx.annotation.Size;
 import androidx.annotation.UiThread;
 import androidx.annotation.WorkerThread;
 import io.pijun.george.App;
-import io.pijun.george.AvatarManager;
+import xyz.zood.george.AvatarManager;
 import io.pijun.george.CloudLogger;
 import io.pijun.george.Constants;
 import io.pijun.george.Hex;

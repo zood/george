@@ -38,17 +38,13 @@
             android:name=".LogActivity"
             android:windowSoftInputMode="adjustResize"
             android:theme="@style/AppTheme" />
-        <activity
-            android:name=".AvatarCropperActivity"
-            android:screenOrientation="portrait"
-            android:theme="@style/AppTheme" />
         <activity android:name=".SettingsActivity"
             android:screenOrientation="portrait"
             android:theme="@style/AppTheme" />
         <activity android:name="com.theartofdev.edmodo.cropper.CropImageActivity"
             android:screenOrientation="portrait"
             android:theme="@style/AppTheme" />
-        <activity android:name=".AvatarCropperActivity2"
+        <activity android:name="xyz.zood.george.AvatarCropperActivity"
             android:screenOrientation="portrait"
             android:theme="@style/AppTheme" />
 

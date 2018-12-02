@@ -1,4 +1,4 @@
-package io.pijun.george;
+package xyz.zood.george;
 
 import android.content.Context;
 import android.graphics.Bitmap;
@@ -25,6 +25,13 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.UiThread;
 import androidx.annotation.WorkerThread;
+
+import io.pijun.george.App;
+import io.pijun.george.CloudLogger;
+import io.pijun.george.L;
+import io.pijun.george.Prefs;
+import io.pijun.george.UiRunnable;
+import io.pijun.george.WorkerRunnable;
 import io.pijun.george.api.OscarClient;
 import io.pijun.george.api.UserComm;
 import io.pijun.george.crypto.KeyPair;
@@ -42,7 +49,7 @@ public class AvatarManager {
     //region Listener management
 
     @AnyThread
-    static void addListener(@NonNull Listener listener) {
+    public static void addListener(@NonNull Listener listener) {
         WeakReference<Listener> ref = new WeakReference<>(listener);
         listeners.add(ref);
     }
@@ -67,7 +74,7 @@ public class AvatarManager {
     }
 
     @AnyThread
-    static void removeListener(@NonNull Listener listener) {
+    public static void removeListener(@NonNull Listener listener) {
         int i=0;
         while (i < listeners.size()) {
             WeakReference<Listener> ref = listeners.get(i);
@@ -83,7 +90,7 @@ public class AvatarManager {
     //endregion
 
     @WorkerThread
-    static void deleteAll(@NonNull Context ctx) {
+    public static void deleteAll(@NonNull Context ctx) {
         File filesDir = ctx.getFilesDir();
         File avatarsDir = new File(filesDir, AVATAR_DIR);
         File[] avatars = avatarsDir.listFiles();
@@ -198,7 +205,7 @@ public class AvatarManager {
     }
 
     @WorkerThread
-    static void sendAvatarToUser(@NonNull Context ctx, @NonNull UserRecord user) throws IOException {
+    public static void sendAvatarToUser(@NonNull Context ctx, @NonNull UserRecord user) throws IOException {
         sendAvatarToUsers(ctx, Collections.singletonList(user));
     }
 
@@ -215,7 +222,7 @@ public class AvatarManager {
         sendAvatarToUsers(ctx, users, keyPair, token);
     }
 
-    public static void sendAvatarToUsers(@NonNull Context ctx, @NonNull List<UserRecord> users, @NonNull KeyPair keyPair, @NonNull String accessToken) throws IOException {
+    static void sendAvatarToUsers(@NonNull Context ctx, @NonNull List<UserRecord> users, @NonNull KeyPair keyPair, @NonNull String accessToken) throws IOException {
         StringBuilder sb = new StringBuilder("sendAvatarToUsers: ");
         for (UserRecord u : users) {
             sb.append(u.username);
@@ -244,7 +251,7 @@ public class AvatarManager {
         }
     }
 
-    interface Listener {
+    public interface Listener {
         @UiThread
         void onAvatarUpdated(@Nullable String username);
     }

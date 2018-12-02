@@ -35,6 +35,7 @@ import io.pijun.george.receiver.UserActivityReceiver;
 import io.pijun.george.service.LocationJobService;
 import io.pijun.george.sodium.HashConfig;
 import retrofit2.Response;
+import xyz.zood.george.AvatarManager;
 
 public class AuthenticationManager {
 

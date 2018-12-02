@@ -15,6 +15,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import io.pijun.george.view.ProfileListItemViewHolder;
 import io.pijun.george.view.RecyclerViewAdapterItem;
 import io.pijun.george.view.SimpleListItemViewHolder;
+import xyz.zood.george.AvatarManager;
 
 public class SettingsAdapter extends RecyclerView.Adapter {
 

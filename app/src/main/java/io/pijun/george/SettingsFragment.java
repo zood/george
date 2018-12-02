@@ -26,6 +26,8 @@ import java.util.Locale;
 
 import io.pijun.george.crypto.KeyPair;
 import io.pijun.george.databinding.FragmentSettingsBinding;
+import xyz.zood.george.AvatarCropperActivity;
+import xyz.zood.george.AvatarManager;
 import xyz.zood.george.widget.ZoodDialog;
 
 public class SettingsFragment extends Fragment implements SettingsAdapter.Listener, AvatarManager.Listener {
@@ -189,7 +191,7 @@ public class SettingsFragment extends Fragment implements SettingsAdapter.Listen
         if (requestCode == REQUEST_IMAGE_CAPTURE) {
             Uri uri = Uri.fromFile(new File(imgCapturePath));
 
-            Intent i = AvatarCropperActivity2.newIntent(ctx, uri);
+            Intent i = AvatarCropperActivity.newIntent(ctx, uri);
             startActivity(i);
         } else if (requestCode == REQUEST_IMAGE_FILE) {
             Uri uri = data.getData();
@@ -199,7 +201,7 @@ public class SettingsFragment extends Fragment implements SettingsAdapter.Listen
             }
             L.i("img uri: " + uri.toString());
 
-            Intent i = AvatarCropperActivity2.newIntent(ctx, uri);
+            Intent i = AvatarCropperActivity.newIntent(ctx, uri);
             startActivity(i);
         }
     }

@@ -75,6 +75,7 @@ import io.pijun.george.view.AvatarRenderer;
 import io.pijun.george.view.MyLocationView;
 import retrofit2.Response;
 import xyz.zood.george.AddFriendDialog;
+import xyz.zood.george.AvatarManager;
 import xyz.zood.george.widget.BackgroundDataRestrictionNotifier;
 import xyz.zood.george.widget.BannerView;
 import xyz.zood.george.widget.InfoPanel;

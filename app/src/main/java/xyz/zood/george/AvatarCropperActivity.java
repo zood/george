@@ -1,4 +1,4 @@
-package io.pijun.george;
+package xyz.zood.george;
 
 import android.content.Context;
 import android.content.Intent;
@@ -17,16 +17,22 @@ import com.theartofdev.edmodo.cropper.CropImageView;
 
 import java.io.IOException;
 
-import io.pijun.george.databinding.ActivityAvatarCropper2Binding;
+import io.pijun.george.App;
+import io.pijun.george.L;
+import io.pijun.george.R;
+import io.pijun.george.UiRunnable;
+import io.pijun.george.Utils;
+import io.pijun.george.WorkerRunnable;
+import io.pijun.george.databinding.ActivityAvatarCropperBinding;
 
-public class AvatarCropperActivity2 extends AppCompatActivity implements CropImageView.OnCropImageCompleteListener {
+public class AvatarCropperActivity extends AppCompatActivity implements CropImageView.OnCropImageCompleteListener {
 
     private static String ARG_URI = "uri";
 
-    private ActivityAvatarCropper2Binding binding;
+    private ActivityAvatarCropperBinding binding;
 
     public static Intent newIntent(@NonNull Context ctx, @NonNull Uri uri) {
-        Intent i = new Intent(ctx, AvatarCropperActivity2.class);
+        Intent i = new Intent(ctx, AvatarCropperActivity.class);
         i.putExtra(ARG_URI, uri);
         return i;
     }
@@ -40,7 +46,7 @@ public class AvatarCropperActivity2 extends AppCompatActivity implements CropIma
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        binding = DataBindingUtil.setContentView(this, R.layout.activity_avatar_cropper2);
+        binding = DataBindingUtil.setContentView(this, R.layout.activity_avatar_cropper);
 
         Bundle extras = getIntent().getExtras();
         if (extras == null) {
@@ -73,14 +79,14 @@ public class AvatarCropperActivity2 extends AppCompatActivity implements CropIma
             @Override
             public void run() {
                 try {
-                    boolean success = AvatarManager.setMyAvatar(AvatarCropperActivity2.this, bmp);
+                    boolean success = AvatarManager.setMyAvatar(AvatarCropperActivity.this, bmp);
                     App.runOnUiThread(new UiRunnable() {
                         @Override
                         public void run() {
                             if (success) {
                                 finish();
                             } else {
-                                Utils.showAlert(AvatarCropperActivity2.this, R.string.save_error,  R.string.unknown_avatar_save_error_msg, getSupportFragmentManager());
+                                Utils.showAlert(AvatarCropperActivity.this, R.string.save_error,  R.string.unknown_avatar_save_error_msg, getSupportFragmentManager());
                                 binding.done.setEnabled(true);
                                 binding.cancel.setEnabled(true);
                                 binding.cropImageView.setEnabled(true);
@@ -91,7 +97,7 @@ public class AvatarCropperActivity2 extends AppCompatActivity implements CropIma
                     App.runOnUiThread(new UiRunnable() {
                         @Override
                         public void run() {
-                            Utils.showAlert(AvatarCropperActivity2.this, R.string.save_error, R.string.avatar_save_io_error_msg, getSupportFragmentManager());
+                            Utils.showAlert(AvatarCropperActivity.this, R.string.save_error, R.string.avatar_save_io_error_msg, getSupportFragmentManager());
                             binding.done.setEnabled(true);
                             binding.cancel.setEnabled(true);
                             binding.cropImageView.setEnabled(true);
