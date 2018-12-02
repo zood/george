@@ -33,10 +33,13 @@ import io.pijun.george.crypto.EncryptedData;
 import io.pijun.george.crypto.KeyPair;
 import io.pijun.george.database.UserRecord;
 import io.pijun.george.queue.PersistentQueue;
+import okhttp3.CipherSuite;
+import okhttp3.ConnectionSpec;
 import okhttp3.Interceptor;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
+import okhttp3.TlsVersion;
 import retrofit2.Retrofit;
 import retrofit2.converter.gson.GsonConverterFactory;
 
@@ -72,12 +75,19 @@ public class OscarClient {
 
         String url = "https://" + Config.apiAddress() + "/alpha/";
         OkHttpClient.Builder httpBuilder = new OkHttpClient.Builder();
+        ConnectionSpec connSpec = new ConnectionSpec.Builder(ConnectionSpec.MODERN_TLS)
+                .tlsVersions(TlsVersion.TLS_1_2)
+                .cipherSuites(
+                        CipherSuite.TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,
+                        CipherSuite.TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256)
+                .build();
+        httpBuilder.connectionSpecs(Collections.singletonList(connSpec));
 //        HttpLoggingInterceptor interceptor = new HttpLoggingInterceptor();
 //        interceptor.setLevel(HttpLoggingInterceptor.Level.BODY);
 //        httpBuilder.addInterceptor(interceptor);
         if (accessToken != null) {
             httpBuilder.addInterceptor(new Interceptor() {
-                @Override
+                @Override @NonNull
                 public Response intercept(@NonNull Chain chain) throws IOException {
                     Request request = chain.request();
                     request = request.newBuilder()

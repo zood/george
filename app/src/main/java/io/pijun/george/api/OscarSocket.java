@@ -6,6 +6,7 @@ import android.os.HandlerThread;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.util.Collections;
 import java.util.concurrent.TimeUnit;
 
 import androidx.annotation.AnyThread;
@@ -17,10 +18,13 @@ import io.pijun.george.Constants;
 import io.pijun.george.L;
 import io.pijun.george.WorkerRunnable;
 import io.pijun.george.crypto.EncryptedData;
+import okhttp3.CipherSuite;
+import okhttp3.ConnectionSpec;
 import okhttp3.Interceptor;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
+import okhttp3.TlsVersion;
 import okhttp3.WebSocket;
 import okhttp3.WebSocketListener;
 import okio.ByteString;
@@ -57,8 +61,15 @@ public class OscarSocket {
             public void run() {
                 try {
                     OkHttpClient.Builder clientBuilder = new OkHttpClient.Builder();
+                    ConnectionSpec connSpec = new ConnectionSpec.Builder(ConnectionSpec.MODERN_TLS)
+                            .tlsVersions(TlsVersion.TLS_1_2)
+                            .cipherSuites(
+                                    CipherSuite.TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,
+                                    CipherSuite.TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256)
+                            .build();
+                    clientBuilder.connectionSpecs(Collections.singletonList(connSpec));
                     clientBuilder.addInterceptor(new Interceptor() {
-                        @Override
+                        @Override @NonNull
                         public Response intercept(@NonNull Chain chain) throws IOException {
                             Request request = chain.request();
                             request = request.newBuilder().addHeader("Sec-Websocket-Protocol", accessToken).build();
