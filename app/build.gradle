@@ -76,11 +76,11 @@ dependencies {
         exclude group: 'com.google.firebase', module: 'firebase-core'
     })
 
-    implementation 'com.squareup.retrofit2:retrofit:2.4.0'
-    implementation 'com.squareup.retrofit2:converter-gson:2.4.0'
+    implementation 'com.squareup.retrofit2:retrofit:2.5.0'
+    implementation 'com.squareup.retrofit2:converter-gson:2.5.0'
 
     // explicitly include okhttp in case retrofit's dependency doesn't get updated to the latest
-    implementation 'com.squareup.okhttp3:okhttp:3.11.0'
+    implementation 'com.squareup.okhttp3:okhttp:3.12.0'
 //    implementation 'com.squareup.okhttp3:logging-interceptor:3.11.0'
 
     implementation 'com.squareup.picasso:picasso:2.5.2'
