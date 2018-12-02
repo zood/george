@@ -27,8 +27,11 @@ import androidx.core.graphics.drawable.DrawableCompat;
 import androidx.dynamicanimation.animation.DynamicAnimation;
 import androidx.dynamicanimation.animation.SpringAnimation;
 import androidx.dynamicanimation.animation.SpringForce;
+
+import io.pijun.george.App;
 import io.pijun.george.L;
 import io.pijun.george.R;
+import io.pijun.george.UiRunnable;
 import io.pijun.george.UpdateStatusTracker;
 import io.pijun.george.api.locationiq.RevGeocoding;
 import io.pijun.george.api.locationiq.ReverseGeocodingCache;
@@ -37,8 +40,14 @@ import io.pijun.george.database.FriendRecord;
 
 public class InfoPanel {
 
+    private static long REFRESH_INTERVAL = 15 * DateUtils.SECOND_IN_MILLIS;
+
     private final Activity activity;
     private final Listener listener;
+
+    private FriendRecord currFriend;
+    private FriendLocation currLoc;
+    private long showId = 1;
 
     // Views
     @NonNull private final TextView address;
@@ -136,16 +145,32 @@ public class InfoPanel {
         }
     }
 
+    @UiThread
+    private void calculateAndSetUpdateTime(long currTime) {
+        final CharSequence relTime;
+        if (currLoc.time >= currTime-60* DateUtils.SECOND_IN_MILLIS) {
+            relTime = activity.getString(R.string.now);
+        } else {
+            relTime = DateUtils.getRelativeTimeSpanString(
+                    currLoc.time,
+                    System.currentTimeMillis(),
+                    DateUtils.MINUTE_IN_MILLIS,
+                    DateUtils.FORMAT_ABBREV_RELATIVE);
+        }
+        updateTime.setText(String.format("%s", relTime));
+        updateTime.setVisibility(View.VISIBLE);
+    }
+
     @Nullable
     @UiThread
     public FriendRecord getFriend() {
-        return (FriendRecord) panel.getTag();
+        return currFriend;
     }
 
+    @UiThread
     public long getFriendId() {
-        FriendRecord friend = getFriend();
-        if (friend != null) {
-            return friend.id;
+        if (currFriend != null) {
+            return currFriend.id;
         }
 
         return -1;
@@ -153,7 +178,8 @@ public class InfoPanel {
 
     @UiThread
     public void hide() {
-        panel.setTag(null);
+        showId++;
+        currFriend = null;
 
         float xOffset = -panel.getRight();
         SpringForce xSpring = new SpringForce(xOffset)
@@ -170,6 +196,7 @@ public class InfoPanel {
         return panel.getTranslationX() != 0;
     }
 
+    @UiThread
     private void onInfoOverflowClicked() {
         final FriendRecord friend = getFriend();
         if (friend == null) {
@@ -189,6 +216,7 @@ public class InfoPanel {
         menu.show();
     }
 
+    @UiThread
     private void onRefreshClicked() {
         final FriendRecord friend = getFriend();
         if (friend == null) {
@@ -210,7 +238,9 @@ public class InfoPanel {
                     .start();
         }
 
-        panel.setTag(friend);
+        currFriend = friend;
+        currLoc = loc;
+        // confusingly, but appropriately, the showId gets incremented in hide()
 
         // common stuff
         username.setText(friend.user.username);
@@ -223,7 +253,6 @@ public class InfoPanel {
             shareSwitch.setText(R.string.not_sharing);
         }
         shareSwitch.setOnCheckedChangeListener(shareCheckedChangeListener);
-        address.setTag(loc);
 
         // If they're not sharing with us
         if (friend.receivingBoxId == null) {
@@ -254,18 +283,13 @@ public class InfoPanel {
         // == They are sharing with us ==
         // update time
         long now = System.currentTimeMillis();
-        final CharSequence relTime;
-        if (loc.time >= now-60* DateUtils.SECOND_IN_MILLIS) {
-            relTime = activity.getString(R.string.now);
+        calculateAndSetUpdateTime(now);
+        // if it's been less than 3 minutes since the last update, hide the refresh button
+        if ((now - loc.time) < 3 * DateUtils.MINUTE_IN_MILLIS) {
+            refreshButton.setVisibility(View.INVISIBLE);
         } else {
-            relTime = DateUtils.getRelativeTimeSpanString(
-                    loc.time,
-                    System.currentTimeMillis(),
-                    DateUtils.MINUTE_IN_MILLIS,
-                    DateUtils.FORMAT_ABBREV_RELATIVE);
+            refreshButton.setVisibility(View.VISIBLE);
         }
-        updateTime.setText(String.format("%s", relTime));
-        updateTime.setVisibility(View.VISIBLE);
 
         // refresh status
         updateRefreshProgressBarState(loc.friendId);
@@ -361,18 +385,17 @@ public class InfoPanel {
                     if (rg == null) {
                         return;
                     }
-                    FriendLocation savedLoc = (FriendLocation) address.getTag();
-                    if (savedLoc == null) {
+                    if (currLoc == null) {
                         return;
                     }
-                    if (savedLoc.latitude == loc.latitude && savedLoc.longitude == loc.longitude) {
+                    if (currLoc.latitude == loc.latitude && currLoc.longitude == loc.longitude) {
                         address.setText(rg.getAddress());
                     }
                 }
             });
         }
 
-        refreshButton.setVisibility(View.VISIBLE);
+        App.runOnUiThread(new InfoPanelRefresher(showId), REFRESH_INTERVAL);
     }
 
     @UiThread
@@ -418,13 +441,12 @@ public class InfoPanel {
     private CompoundButton.OnCheckedChangeListener shareCheckedChangeListener = new CompoundButton.OnCheckedChangeListener() {
         @Override
         public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-            FriendRecord friend = (FriendRecord) panel.getTag();
-            if (friend == null) {
-                L.i("Share switch changed, but no FriendRecord found in tag");
+            if (currFriend == null) {
+                L.i("Share switch changed, but no FriendRecord found");
                 return;
             }
 
-            listener.onInfoPanelShareToggled(friend, isChecked);
+            listener.onInfoPanelShareToggled(currFriend, isChecked);
         }
     };
 
@@ -435,6 +457,33 @@ public class InfoPanel {
         void onInfoPanelRemoveFriend(@NonNull FriendRecord friend);
         @UiThread
         void onInfoPanelShareToggled(@NonNull FriendRecord friend, boolean shouldShare);
+    }
+
+    private class InfoPanelRefresher implements UiRunnable {
+        private long id;
+
+        private InfoPanelRefresher(long id) {
+            this.id = id;
+        }
+
+        @Override
+        public void run() {
+            if (showId != id) {
+                return;
+            }
+
+            // update the relative time, and refresh button
+            long now = System.currentTimeMillis();
+            calculateAndSetUpdateTime(now);
+            // if it's been less than 3 minutes since the last update, hide the refresh button
+            if ((now - currLoc.time) < 3 * DateUtils.MINUTE_IN_MILLIS) {
+                refreshButton.setVisibility(View.INVISIBLE);
+            } else {
+                refreshButton.setVisibility(View.VISIBLE);
+            }
+
+            App.runOnUiThread(this, REFRESH_INTERVAL);
+        }
     }
 
 }

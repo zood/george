@@ -909,8 +909,8 @@ public final class MapActivity extends AppCompatActivity implements OnMapReadyCa
         if (infoPanel.isHidden()) {
             return;
         }
-        FriendRecord friend = (FriendRecord) binding.infoPanel.getTag();
-        if (friend.id == friendId) {
+        FriendRecord friend = infoPanel.getFriend();
+        if (friend != null && friend.id == friendId) {
             infoPanel.hide();
             friendForCameraToTrack = -1;
             radialMenu.setVisible(true);
