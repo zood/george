@@ -82,7 +82,7 @@ import xyz.zood.george.widget.InfoPanel;
 import xyz.zood.george.widget.RadialMenu;
 import xyz.zood.george.widget.ZoodDialog;
 
-public final class MapActivity extends AppCompatActivity implements OnMapReadyCallback, GoogleMap.OnMarkerClickListener, AvatarsAdapter.Listener, DB.Listener, AuthenticationManager.Listener {
+public final class MapActivity extends AppCompatActivity implements OnMapReadyCallback, GoogleMap.OnMarkerClickListener, DB.Listener, AuthenticationManager.Listener {
 
     private static final int REQUEST_LOCATION_PERMISSION = 18;
     private static final int REQUEST_LOCATION_SETTINGS = 20;
@@ -133,7 +133,7 @@ public final class MapActivity extends AppCompatActivity implements OnMapReadyCa
 
         LinearLayoutManager llm = new LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false);
         binding.avatars.setLayoutManager(llm);
-        avatarsAdapter = new AvatarsAdapter(this);
+        avatarsAdapter = new AvatarsAdapter(avatarsSelectionListener);
         binding.avatars.setAdapter(avatarsAdapter);
 
         final View myLocFab = findViewById(R.id.my_location_fab);
@@ -545,54 +545,6 @@ public final class MapActivity extends AppCompatActivity implements OnMapReadyCa
     private void showInfoPanel(@NonNull FriendRecord friend, @Nullable FriendLocation loc) {
         radialMenu.setVisible(false);
         infoPanel.show(friend, loc);
-    }
-
-    @Override
-    @UiThread
-    public void onAvatarSelected(FriendRecord fr) {
-        Marker marker = mMarkerTracker.getById(fr.id);
-        if (marker == null) {
-            showInfoPanel(fr, null);
-            return;
-        }
-
-        // Is the info panel already showing for this user? If so, just center the camera and follow
-        if (infoPanel.getFriendId() == fr.id) {
-            friendForCameraToTrack = fr.id;
-            CameraUpdate update = CameraUpdateFactory.newLatLng(marker.getPosition());
-            mGoogMap.animateCamera(update);
-            return;
-        }
-
-        friendForCameraToTrack = fr.id;
-        findViewById(R.id.my_location_fab).setSelected(false);
-        float zoom = Math.max(mGoogMap.getCameraPosition().zoom, Constants.DEFAULT_ZOOM_LEVEL);
-        CameraPosition cp = new CameraPosition.Builder()
-                .target(marker.getPosition())
-                .zoom(zoom)
-                .bearing(0)
-                .tilt(0).build();
-        CameraUpdate cu = CameraUpdateFactory.newCameraPosition(cp);
-        mGoogMap.animateCamera(cu);
-
-        App.runInBackground(new WorkerRunnable() {
-            @Override
-            public void run() {
-                FriendLocation loc = DB.get().getFriendLocation(fr.id);
-                if (loc == null) {
-                    // shouldn't happen
-                    return;
-                }
-
-                App.runOnUiThread(new UiRunnable() {
-                    @Override
-                    public void run() {
-                        showInfoPanel(fr, loc);
-                        showFriendErrorCircle(loc);
-                    }
-                });
-            }
-        });
     }
 
     public void onStartLimitedShareAction(View v) {
@@ -1159,4 +1111,58 @@ public final class MapActivity extends AppCompatActivity implements OnMapReadyCa
         }
     };
     //endregion
+
+    //region AvatarsAdapter.Listener
+
+    private AvatarsAdapter.Listener avatarsSelectionListener = new AvatarsAdapter.Listener() {
+        @Override
+        public void onAvatarSelected(FriendRecord fr) {
+            Marker marker = mMarkerTracker.getById(fr.id);
+            if (marker == null) {
+                showInfoPanel(fr, null);
+                return;
+            }
+
+            // Is the info panel already showing for this user? If so, just center the camera and follow
+            if (infoPanel.getFriendId() == fr.id) {
+                friendForCameraToTrack = fr.id;
+                CameraUpdate update = CameraUpdateFactory.newLatLng(marker.getPosition());
+                mGoogMap.animateCamera(update);
+                return;
+            }
+
+            friendForCameraToTrack = fr.id;
+            findViewById(R.id.my_location_fab).setSelected(false);
+            float zoom = Math.max(mGoogMap.getCameraPosition().zoom, Constants.DEFAULT_ZOOM_LEVEL);
+            CameraPosition cp = new CameraPosition.Builder()
+                    .target(marker.getPosition())
+                    .zoom(zoom)
+                    .bearing(0)
+                    .tilt(0).build();
+            CameraUpdate cu = CameraUpdateFactory.newCameraPosition(cp);
+            mGoogMap.animateCamera(cu);
+
+            App.runInBackground(new WorkerRunnable() {
+                @Override
+                public void run() {
+                    FriendLocation loc = DB.get().getFriendLocation(fr.id);
+                    if (loc == null) {
+                        // shouldn't happen
+                        return;
+                    }
+
+                    App.runOnUiThread(new UiRunnable() {
+                        @Override
+                        public void run() {
+                            showInfoPanel(fr, loc);
+                            showFriendErrorCircle(loc);
+                        }
+                    });
+                }
+            });
+        }
+    };
+
+    //endregion
+
 }

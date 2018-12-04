@@ -47,6 +47,8 @@ public class InfoPanel {
 
     private FriendRecord currFriend;
     private FriendLocation currLoc;
+    // Needs to be incremented in show() and hide() because both methods can cause a change of the
+    // friend and it's location object
     private long showId = 1;
 
     // Views
@@ -157,7 +159,7 @@ public class InfoPanel {
                     DateUtils.MINUTE_IN_MILLIS,
                     DateUtils.FORMAT_ABBREV_RELATIVE);
         }
-        updateTime.setText(String.format("%s", relTime));
+        updateTime.setText(relTime);
         updateTime.setVisibility(View.VISIBLE);
     }
 
@@ -178,8 +180,9 @@ public class InfoPanel {
 
     @UiThread
     public void hide() {
-        showId++;
+        showId++;   // needs to be incremented here as well
         currFriend = null;
+        currLoc = null;
 
         float xOffset = -panel.getRight();
         SpringForce xSpring = new SpringForce(xOffset)
@@ -240,7 +243,7 @@ public class InfoPanel {
 
         currFriend = friend;
         currLoc = loc;
-        // confusingly, but appropriately, the showId gets incremented in hide()
+        showId++;
 
         // common stuff
         username.setText(friend.user.username);
@@ -371,6 +374,8 @@ public class InfoPanel {
         } else {
             battery.setText(null);
             batteryIcon.setImageDrawable(null);
+            battery.setVisibility(View.INVISIBLE);
+            batteryIcon.setVisibility(View.INVISIBLE);
         }
 
         // the address

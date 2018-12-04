@@ -47,6 +47,7 @@
             android:focusable="true"
             android:paddingBottom="12dp"
             android:translationX="-400dp"
+            tools:translationX="0dp"
             app:layout_constraintBottom_toTopOf="@id/avatars"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintStart_toStartOf="parent"
