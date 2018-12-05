@@ -678,6 +678,7 @@ public final class MapActivity extends AppCompatActivity implements OnMapReadyCa
                     } else {
                         // no accuracy, so remove the circle
                         mCurrentCircle.remove();
+                        mCurrentCircle = null;
                     }
                 }
             }
@@ -800,7 +801,6 @@ public final class MapActivity extends AppCompatActivity implements OnMapReadyCa
         final FriendRecord friend = infoPanel.getFriend();
         if (friend != null && friend.id == loc.friendId) {
             showInfoPanel(friend, loc);
-            return;
         }
 
         updateMarker(loc);
