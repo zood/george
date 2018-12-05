@@ -36,7 +36,6 @@ import io.pijun.george.L;
 import io.pijun.george.UiRunnable;
 import io.pijun.george.WorkerRunnable;
 
-@SuppressWarnings("WeakerAccess")
 public class DB {
 
     private static final String FRIENDS_TABLE = "friends";
@@ -481,6 +480,7 @@ public class DB {
     @Nullable
     @CheckResult
     public UserRecord getUser(@NonNull String username) {
+        username = username.toLowerCase(Locale.US);
         UserRecord ur = null;
         SQLiteDatabase db = mDbHelper.getReadableDatabase();
         String selection = USERS_COL_USERNAME + "=?";

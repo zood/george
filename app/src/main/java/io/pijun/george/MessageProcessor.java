@@ -64,6 +64,7 @@ public class MessageProcessor {
         queue = new PersistentQueue<>(App.getApp(), QUEUE_FILENAME, new MessageConverter());
     }
 
+    @WorkerThread
     public static Result decryptAndProcess(@NonNull Context context, @NonNull byte[] senderId, @NonNull byte[] cipherText, @NonNull byte[] nonce) {
 //        L.i("MessageUtils.decryptAndProcess");
         //noinspection ConstantConditions

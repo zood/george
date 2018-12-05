@@ -82,7 +82,7 @@ import xyz.zood.george.widget.InfoPanel;
 import xyz.zood.george.widget.RadialMenu;
 import xyz.zood.george.widget.ZoodDialog;
 
-public final class MapActivity extends AppCompatActivity implements OnMapReadyCallback, GoogleMap.OnMarkerClickListener, DB.Listener, AuthenticationManager.Listener {
+public final class MapActivity extends AppCompatActivity implements OnMapReadyCallback, DB.Listener, AuthenticationManager.Listener {
 
     private static final int REQUEST_LOCATION_PERMISSION = 18;
     private static final int REQUEST_LOCATION_SETTINGS = 20;
@@ -315,7 +315,7 @@ public final class MapActivity extends AppCompatActivity implements OnMapReadyCa
         if (pos != null) {
             mGoogMap.moveCamera(CameraUpdateFactory.newCameraPosition(pos));
         }
-        mGoogMap.setOnMarkerClickListener(this);
+        mGoogMap.setOnMarkerClickListener(markerClickListener);
         mGoogMap.getUiSettings().setCompassEnabled(false);
         mGoogMap.setOnCameraMoveStartedListener(new GoogleMap.OnCameraMoveStartedListener() {
             @Override
@@ -424,6 +424,7 @@ public final class MapActivity extends AppCompatActivity implements OnMapReadyCa
                         .anchor(0.5f, 0.5f)
                         .title(friend.user.username);
                 Marker marker = mGoogMap.addMarker(opts);
+                marker.setTag(loc);
                 mMarkerTracker.add(marker, friend.id, loc);
             }
         });
@@ -496,49 +497,6 @@ public final class MapActivity extends AppCompatActivity implements OnMapReadyCa
                 });
 
         beginLocationUpdates();
-    }
-
-    @Override
-    @UiThread
-    public boolean onMarkerClick(@NonNull final Marker marker) {
-        if (marker.equals(mMeMarker)) {
-            infoPanel.hide();
-            radialMenu.setVisible(true);
-            return true;
-        }
-
-        final FriendLocation loc = mMarkerTracker.getLocation(marker);
-        if (loc == null) {
-            // should never happen
-            infoPanel.hide();
-            radialMenu.setVisible(true);
-            return true;
-        }
-        L.i("onMarkerClick found friend " + loc.friendId);
-        App.runInBackground(new WorkerRunnable() {
-            @Override
-            public void run() {
-                FriendRecord friend = DB.get().getFriendById(loc.friendId);
-                if (friend == null) {
-                    return;
-                }
-                App.runOnUiThread(new UiRunnable() {
-                    @Override
-                    public void run() {
-                        showInfoPanel(friend, loc);
-                    }
-                });
-            }
-        });
-        friendForCameraToTrack = loc.friendId;
-
-        if (mGoogMap != null) {
-            CameraUpdate update = CameraUpdateFactory.newLatLng(new LatLng(loc.latitude, loc.longitude));
-            mGoogMap.animateCamera(update);
-        }
-
-        showFriendErrorCircle(loc);
-        return true;
     }
 
     @UiThread
@@ -686,6 +644,46 @@ public final class MapActivity extends AppCompatActivity implements OnMapReadyCa
         }
     }
 
+    @UiThread
+    private void updateMarker(@NonNull FriendLocation loc) {
+        // check if we already have a marker for this friend
+        Marker marker = mMarkerTracker.getById(loc.friendId);
+        if (marker == null) {
+            App.runInBackground(new WorkerRunnable() {
+                @Override
+                public void run() {
+                    FriendRecord friend = DB.get().getFriendById(loc.friendId);
+                    if (friend == null) {
+                        // should never happen
+                        return;
+                    }
+                    addMapMarker(friend, loc);
+                }
+            });
+            if (friendForCameraToTrack == loc.friendId) {
+                showFriendErrorCircle(loc);
+            }
+        } else {
+            marker.setPosition(new LatLng(loc.latitude, loc.longitude));
+            marker.setTag(loc);
+            mMarkerTracker.updateLocation(loc.friendId, loc);
+
+            // if there is an error circle being shown on this marker, adjust it too
+            if (mCurrentCircle != null) {
+                Long friendId = (Long) mCurrentCircle.getTag();
+                if (friendId != null && loc.friendId == friendId) {
+                    if (loc.accuracy != null) {
+                        mCurrentCircle.setRadius(loc.accuracy);
+                        mCurrentCircle.setCenter(new LatLng(loc.latitude, loc.longitude));
+                    } else {
+                        // no accuracy, so remove the circle
+                        mCurrentCircle.remove();
+                    }
+                }
+            }
+        }
+    }
+
     private UpdateStatusTracker.Listener updateStatusTrackerListener = new UpdateStatusTracker.Listener() {
         @Override
         public void onUpdateStatusChanged(long friendId) {
@@ -799,53 +797,13 @@ public final class MapActivity extends AppCompatActivity implements OnMapReadyCa
     @Override
     public void onFriendLocationUpdated(final FriendLocation loc) {
         // If the info panel is already showing for this friend, update it
-        if (infoPanel.getFriendId() == loc.friendId) {
-            App.runInBackground(new WorkerRunnable() {
-                @Override
-                public void run() {
-                    FriendRecord friend = DB.get().getFriendById(loc.friendId);
-                    if (friend != null) {
-                        App.runOnUiThread(new UiRunnable() {
-                            @Override
-                            public void run() {
-                                showInfoPanel(friend, loc);
-                            }
-                        });
-                    }
-                }
-            });
+        final FriendRecord friend = infoPanel.getFriend();
+        if (friend != null && friend.id == loc.friendId) {
+            showInfoPanel(friend, loc);
+            return;
         }
 
-        // check if we already have a marker for this friend
-        Marker marker = mMarkerTracker.getById(loc.friendId);
-        if (marker == null) {
-            App.runInBackground(() -> {
-                final FriendRecord friend = DB.get().getFriendById(loc.friendId);
-                if (friend != null) {
-                    addMapMarker(friend, loc);
-                }
-            });
-        } else {
-            if (marker.isInfoWindowShown()) {
-                marker.hideInfoWindow();
-            }
-            marker.setPosition(new LatLng(loc.latitude, loc.longitude));
-            mMarkerTracker.updateLocation(loc.friendId, loc);
-
-            // if there is an error circle being shown on this marker, adjust it too
-            if (mCurrentCircle != null) {
-                Long friendId = (Long) mCurrentCircle.getTag();
-                if (friendId != null && loc.friendId == friendId) {
-                    if (loc.accuracy != null) {
-                        mCurrentCircle.setRadius(loc.accuracy);
-                        mCurrentCircle.setCenter(new LatLng(loc.latitude, loc.longitude));
-                    } else {
-                        // no accuracy, so remove the circle
-                        mCurrentCircle.remove();
-                    }
-                }
-            }
-        }
+        updateMarker(loc);
 
         if (friendForCameraToTrack == loc.friendId && mGoogMap != null) {
             CameraUpdate update = CameraUpdateFactory.newLatLng(new LatLng(loc.latitude, loc.longitude));
@@ -1142,24 +1100,61 @@ public final class MapActivity extends AppCompatActivity implements OnMapReadyCa
             CameraUpdate cu = CameraUpdateFactory.newCameraPosition(cp);
             mGoogMap.animateCamera(cu);
 
+            FriendLocation loc = (FriendLocation) marker.getTag();
+            if (loc == null) {
+                throw new RuntimeException("Marker location should never be null. Should contain the friend's location");
+            }
+            showInfoPanel(fr, loc);
+            showFriendErrorCircle(loc);
+        }
+    };
+
+    //endregion
+
+    //region GoogleMap.OnMarkerClickListener
+
+    private GoogleMap.OnMarkerClickListener markerClickListener = new GoogleMap.OnMarkerClickListener() {
+        @Override
+        @UiThread
+        public boolean onMarkerClick(@NonNull final Marker marker) {
+            if (marker.equals(mMeMarker)) {
+                infoPanel.hide();
+                radialMenu.setVisible(true);
+                return true;
+            }
+
+            final FriendLocation loc = mMarkerTracker.getLocation(marker);
+            if (loc == null) {
+                // should never happen
+                infoPanel.hide();
+                radialMenu.setVisible(true);
+                return true;
+            }
+            L.i("onMarkerClick found friend " + loc.friendId);
             App.runInBackground(new WorkerRunnable() {
                 @Override
                 public void run() {
-                    FriendLocation loc = DB.get().getFriendLocation(fr.id);
-                    if (loc == null) {
-                        // shouldn't happen
+                    FriendRecord friend = DB.get().getFriendById(loc.friendId);
+                    if (friend == null) {
                         return;
                     }
-
                     App.runOnUiThread(new UiRunnable() {
                         @Override
                         public void run() {
-                            showInfoPanel(fr, loc);
-                            showFriendErrorCircle(loc);
+                            showInfoPanel(friend, loc);
                         }
                     });
                 }
             });
+            friendForCameraToTrack = loc.friendId;
+
+            if (mGoogMap != null) {
+                CameraUpdate update = CameraUpdateFactory.newLatLng(new LatLng(loc.latitude, loc.longitude));
+                mGoogMap.animateCamera(update);
+            }
+
+            showFriendErrorCircle(loc);
+            return true;
         }
     };
 
