@@ -295,7 +295,7 @@ public class AddFriendDialog extends DialogFragment {
 
     //region TextWatcher
 
-    private TextWatcher usernameWatcher = new TextWatcher() {
+    private final TextWatcher usernameWatcher = new TextWatcher() {
         @Override
         public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
 

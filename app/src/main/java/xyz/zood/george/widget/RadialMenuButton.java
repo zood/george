@@ -58,7 +58,7 @@ public class RadialMenuButton extends androidx.appcompat.widget.AppCompatImageVi
         this.listener = l;
     }
 
-    private GestureDetector.SimpleOnGestureListener gestureListener = new GestureDetector.SimpleOnGestureListener() {
+    private final GestureDetector.SimpleOnGestureListener gestureListener = new GestureDetector.SimpleOnGestureListener() {
         @Override
         public boolean onDown(MotionEvent e) {
             isDown = true;

@@ -1,5 +1,7 @@
 package io.pijun.george.api;
 
+import androidx.annotation.NonNull;
+
 import io.pijun.george.Hex;
 
 public class LoginResponse {
@@ -9,6 +11,7 @@ public class LoginResponse {
     public byte[] wrappedSymmetricKey;
     public byte[] wrappedSymmetricKeyNonce;
 
+    @NonNull
     @Override
     public String toString() {
         return "LoginResponse{" +

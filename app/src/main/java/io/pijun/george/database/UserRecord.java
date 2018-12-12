@@ -1,5 +1,7 @@
 package io.pijun.george.database;
 
+import androidx.annotation.NonNull;
+
 import io.pijun.george.Hex;
 
 public class UserRecord {
@@ -9,6 +11,7 @@ public class UserRecord {
     public String username;
     public byte[] publicKey;
 
+    @NonNull
     @Override
     public String toString() {
         return "UserRecord{" +

@@ -25,9 +25,9 @@ public class Snapshot {
     }
 
     @NonNull
-    public ArrayList<Friend> friends = new ArrayList<>();
+    public final ArrayList<Friend> friends = new ArrayList<>();
     @NonNull
-    public ArrayList<User> users = new ArrayList<>();
+    public final ArrayList<User> users = new ArrayList<>();
     @Nullable
     public byte[] avatar;
 

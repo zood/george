@@ -70,8 +70,8 @@ public class LimitedShareService extends Service /* implements LocationListener 
     private byte[] mSendingBoxId;
     private FusedLocationProviderClient mLocationProviderClient;
 
-    private static Looper sServiceLooper;
-    private static Handler sServiceHandler;
+    private static final Looper sServiceLooper;
+    private static final Handler sServiceHandler;
     static {
         HandlerThread thread = new HandlerThread("LimitedShareService");
         thread.start();
@@ -298,7 +298,7 @@ public class LimitedShareService extends Service /* implements LocationListener 
         }
     }
 
-    private LocationCallback mLocationCallbackHelper = new LocationCallback() {
+    private final LocationCallback mLocationCallbackHelper = new LocationCallback() {
         @Override
         @WorkerThread
         public void onLocationResult(LocationResult result) {

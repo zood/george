@@ -44,7 +44,7 @@ public class AvatarManager {
 
     private static final String AVATAR_DIR = "avatars";
     public static final String MY_AVATAR = "me";
-    private static CopyOnWriteArrayList<WeakReference<Listener>> listeners = new CopyOnWriteArrayList<>();
+    private static final CopyOnWriteArrayList<WeakReference<Listener>> listeners = new CopyOnWriteArrayList<>();
 
     //region Listener management
 

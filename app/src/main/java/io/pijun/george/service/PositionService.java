@@ -66,7 +66,7 @@ public class PositionService extends Service {
     private PowerManager.WakeLock wakeLock;
     private long notifyUserId = -1;
 
-    private static Handler serviceHandler;
+    private static final Handler serviceHandler;
     static {
         HandlerThread thread = new HandlerThread("PositionService");
         thread.start();
@@ -280,7 +280,7 @@ public class PositionService extends Service {
         LocationUtils.upload(l);
     }
 
-    private LocationCallback callback = new LocationCallback() {
+    private final LocationCallback callback = new LocationCallback() {
         @Override
         @WorkerThread
         public void onLocationResult(LocationResult result) {

@@ -91,7 +91,7 @@ public final class MapActivity extends AppCompatActivity implements OnMapReadyCa
     private MapView mMapView;
     private GoogleMap mGoogMap;
     private OscarSocket oscarSocket;
-    private MarkerTracker mMarkerTracker = new MarkerTracker();
+    private final MarkerTracker mMarkerTracker = new MarkerTracker();
     private FusedLocationProviderClient mLocationProviderClient;
     private SettingsClient mSettingsClient;
     private LocationRequest mLocationRequest;
@@ -685,7 +685,7 @@ public final class MapActivity extends AppCompatActivity implements OnMapReadyCa
         }
     }
 
-    private UpdateStatusTracker.Listener updateStatusTrackerListener = new UpdateStatusTracker.Listener() {
+    private final UpdateStatusTracker.Listener updateStatusTrackerListener = new UpdateStatusTracker.Listener() {
         @Override
         public void onUpdateStatusChanged(long friendId) {
             if (infoPanel.getFriendId() == friendId) {
@@ -694,7 +694,7 @@ public final class MapActivity extends AppCompatActivity implements OnMapReadyCa
         }
     };
 
-    private LocationCallback mLocationCallbackHelper = new LocationCallback() {
+    private final LocationCallback mLocationCallbackHelper = new LocationCallback() {
         @Override
         @UiThread
         public void onLocationResult(LocationResult result) {
@@ -758,7 +758,7 @@ public final class MapActivity extends AppCompatActivity implements OnMapReadyCa
     };
 
     //region AvatarManager.Listener
-    private AvatarManager.Listener avatarListener = new AvatarManager.Listener() {
+    private final AvatarManager.Listener avatarListener = new AvatarManager.Listener() {
         @Override
         public void onAvatarUpdated(@Nullable String username) {
             if (username == null) {
@@ -903,7 +903,7 @@ public final class MapActivity extends AppCompatActivity implements OnMapReadyCa
 
     //region OscarSocket.Listener
 
-    private OscarSocket.Listener oscarSocketListener = new OscarSocket.Listener() {
+    private final OscarSocket.Listener oscarSocketListener = new OscarSocket.Listener() {
 
         private static final int NoConnectionBannerId = 110348;
 
@@ -1007,7 +1007,7 @@ public final class MapActivity extends AppCompatActivity implements OnMapReadyCa
     //endregion
 
     //region InfoPanel listener
-    private InfoPanel.Listener infoPanelListener = new InfoPanel.Listener() {
+    private final InfoPanel.Listener infoPanelListener = new InfoPanel.Listener() {
 
         @Override
         public void onInfoPanelLocationRequested(@NonNull FriendRecord friend) {
@@ -1072,7 +1072,7 @@ public final class MapActivity extends AppCompatActivity implements OnMapReadyCa
 
     //region AvatarsAdapter.Listener
 
-    private AvatarsAdapter.Listener avatarsSelectionListener = new AvatarsAdapter.Listener() {
+    private final AvatarsAdapter.Listener avatarsSelectionListener = new AvatarsAdapter.Listener() {
         @Override
         public void onAvatarSelected(FriendRecord fr) {
             Marker marker = mMarkerTracker.getById(fr.id);
@@ -1113,7 +1113,7 @@ public final class MapActivity extends AppCompatActivity implements OnMapReadyCa
 
     //region GoogleMap.OnMarkerClickListener
 
-    private GoogleMap.OnMarkerClickListener markerClickListener = new GoogleMap.OnMarkerClickListener() {
+    private final GoogleMap.OnMarkerClickListener markerClickListener = new GoogleMap.OnMarkerClickListener() {
         @Override
         @UiThread
         public boolean onMarkerClick(@NonNull final Marker marker) {

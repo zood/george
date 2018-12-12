@@ -1,5 +1,7 @@
 package io.pijun.george.crypto;
 
+import androidx.annotation.NonNull;
+
 import java.util.Arrays;
 import java.util.Objects;
 
@@ -24,6 +26,7 @@ public class KeyPair {
         return Objects.hash(publicKey, secretKey);
     }
 
+    @NonNull
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder();

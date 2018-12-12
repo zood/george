@@ -400,8 +400,8 @@ public class WelcomeActivity extends AppCompatActivity implements WelcomeViewHol
 
     private abstract class StandardWatcher implements TextWatcher {
 
-        TextInputLayout mLayout;
-        TextInputEditText mEditText;
+        final TextInputLayout mLayout;
+        final TextInputEditText mEditText;
 
         StandardWatcher(@NonNull TextInputLayout layout, @NonNull TextInputEditText editText) {
             mLayout = layout;
@@ -470,7 +470,7 @@ public class WelcomeActivity extends AppCompatActivity implements WelcomeViewHol
     }
 
     private class ErrorDisabler implements TextWatcher {
-        private TextInputLayout mLayout;
+        private final TextInputLayout mLayout;
         ErrorDisabler(@NonNull TextInputLayout layout) {
             mLayout = layout;
         }

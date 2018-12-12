@@ -1,5 +1,7 @@
 package io.pijun.george.api.task;
 
+import androidx.annotation.NonNull;
+
 import java.util.Map;
 
 public class AddFcmTokenTask extends OscarTask {
@@ -10,6 +12,7 @@ public class AddFcmTokenTask extends OscarTask {
         super(NAME, accessToken);
     }
 
+    @NonNull
     @Override
     public String toString() {
         return "AddFcmTokenTask{" +

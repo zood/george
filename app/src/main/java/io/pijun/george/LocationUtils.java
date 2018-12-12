@@ -46,7 +46,7 @@ public class LocationUtils {
 
     @Nullable
     private static UserComm lastLocationMessage = null;
-    private static PriorityBlockingQueue<Location> locationsQueue = new PriorityBlockingQueue<>(5, new Comparator<Location>() {
+    private static final PriorityBlockingQueue<Location> locationsQueue = new PriorityBlockingQueue<>(5, new Comparator<Location>() {
         @Override
         public int compare(Location o1, Location o2) {
             // We want the largest timestamp to be at the front/head of the queue

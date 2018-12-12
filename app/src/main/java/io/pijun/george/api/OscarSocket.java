@@ -41,7 +41,7 @@ public class OscarSocket {
     private static final byte SocketMsgPushNotification = 2;
 
     @NonNull final private Listener listener;
-    private static Handler handler;
+    private static final Handler handler;
     private WebSocket socket;
 
     static {

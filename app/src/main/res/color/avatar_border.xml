@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<selector xmlns:android="http://schemas.android.com/apk/res/android">
+<selector xmlns:tools="http://schemas.android.com/tools" xmlns:android="http://schemas.android.com/apk/res/android" tools:keep="@color/avatar_border">
     <item android:color="@color/colorPrimary" android:state_activated="true" />
     <item android:color="#AAB9C6" android:state_activated="false" />
 </selector>

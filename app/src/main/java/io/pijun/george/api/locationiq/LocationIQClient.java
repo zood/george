@@ -32,6 +32,7 @@ public class LocationIQClient {
 //        httpBuilder.addInterceptor(interceptor);
 
         httpBuilder.addInterceptor(new Interceptor() {
+            @NonNull
             @Override
             public Response intercept(@NonNull Chain chain) throws IOException {
                 Request request = chain.request();

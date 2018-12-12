@@ -30,7 +30,7 @@ public class SettingsAdapter extends RecyclerView.Adapter {
     String username;
     byte[] publicKey;
     @NonNull
-    private SettingsAdapter.Listener listener;
+    private final SettingsAdapter.Listener listener;
 
     SettingsAdapter(@NonNull Listener listener) {
         this.listener = listener;

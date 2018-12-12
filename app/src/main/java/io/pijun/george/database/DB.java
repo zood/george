@@ -96,7 +96,7 @@ public class DB {
             USERS_COL_PUBLIC_KEY
     };
 
-    private static DB sDb = new DB();
+    private static final DB sDb = new DB();
 
     public static class DBException extends Exception {
         DBException(String msg) {
@@ -109,7 +109,7 @@ public class DB {
     }
 
     private DBHelper mDbHelper;
-    private CopyOnWriteArrayList<WeakReference<Listener>> listeners = new CopyOnWriteArrayList<>();
+    private final CopyOnWriteArrayList<WeakReference<Listener>> listeners = new CopyOnWriteArrayList<>();
 
     @WorkerThread
     private DB() {}

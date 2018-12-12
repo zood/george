@@ -19,7 +19,7 @@ import io.pijun.george.R;
 
 public class BannerView extends LinearLayout {
 
-    private SparseArray<ItemHolder> items = new SparseArray<>();
+    private final SparseArray<ItemHolder> items = new SparseArray<>();
 
     public BannerView(Context context) {
         super(context);

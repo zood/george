@@ -14,8 +14,8 @@ public class FriendLocation {
     // The person's bearing, in degrees
     public final Float bearing;
     public final MovementType movement;
-    public Integer batteryLevel;
-    public Boolean batteryCharging;
+    public final Integer batteryLevel;
+    public final Boolean batteryCharging;
 
     FriendLocation(long id, double lat, double lng, long time, Float accuracy, Float speed, Float bearing, MovementType movement, Integer batteryLevel, @Nullable Boolean batteryCharging) {
         this.friendId = id;

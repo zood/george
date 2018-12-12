@@ -47,10 +47,5 @@
         <item name="android:colorControlHighlight">@color/welcome_edittext_text</item>
         <item name="android:fontFamily">@font/poppins_regular</item>
     </style>
-    
-    <style name="PijunSwitch">
-        <item name="android:colorControlActivated">@color/colorPrimaryDark</item>
-        <item name="android:thumbTint">@android:color/white</item>
-    </style>
 
 </resources>

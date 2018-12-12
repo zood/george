@@ -64,7 +64,7 @@ public class AuthenticationManager {
         SymmetricKeyDecryptionFailed,
     }
 
-    private CopyOnWriteArrayList<WeakReference<Listener>> listeners = new CopyOnWriteArrayList<>();
+    private final CopyOnWriteArrayList<WeakReference<Listener>> listeners = new CopyOnWriteArrayList<>();
     private static AuthenticationManager singleton;
 
     public static AuthenticationManager get() {

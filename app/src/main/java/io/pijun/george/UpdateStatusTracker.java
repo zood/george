@@ -33,9 +33,9 @@ public class UpdateStatusTracker {
         }
     }
 
-    private static HashSet<Listener> listeners = new HashSet<>();
-    private static LongSparseArray<Long> requestTimes = new LongSparseArray<>();
-    private static LongSparseArray<Response> responses = new LongSparseArray<>();
+    private static final HashSet<Listener> listeners = new HashSet<>();
+    private static final LongSparseArray<Long> requestTimes = new LongSparseArray<>();
+    private static final LongSparseArray<Response> responses = new LongSparseArray<>();
 
     static void addListener(@NonNull Listener l) {
         synchronized (UpdateStatusTracker.class) {

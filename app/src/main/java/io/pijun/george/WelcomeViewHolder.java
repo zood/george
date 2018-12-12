@@ -27,7 +27,7 @@ public class WelcomeViewHolder implements ViewTreeObserver.OnGlobalLayoutListene
 
     // Default is true, because the clouds should start moving right away
     private boolean areCloudsMoving = true;
-    private ActivityWelcomeBinding binding;
+    private final ActivityWelcomeBinding binding;
     private State state = State.Main;
     private float displayDensity = 0;
     @NonNull private final Listener listener;

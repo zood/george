@@ -14,9 +14,9 @@ import io.pijun.george.database.FriendLocation;
 
 public class MarkerTracker {
 
-    private LongSparseArray<Marker> mIdToMarker = new LongSparseArray<>();
-    private LongSparseArray<FriendLocation> mIdToLocation = new LongSparseArray<>();
-    private HashMap<Marker, Long> mMarkerToId = new HashMap<>();
+    private final LongSparseArray<Marker> mIdToMarker = new LongSparseArray<>();
+    private final LongSparseArray<FriendLocation> mIdToLocation = new LongSparseArray<>();
+    private final HashMap<Marker, Long> mMarkerToId = new HashMap<>();
 
     @UiThread
     public void add(Marker marker, long friendId, FriendLocation loc) {

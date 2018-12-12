@@ -20,7 +20,7 @@ public class L {
     private static volatile FileOutputStream sLogStream;
     private static final SimpleDateFormat sDateFormat = new SimpleDateFormat("MM-dd HH:mm:ss.SSS", Locale.US);
     static final String LOG_FILENAME = "logs.txt";
-    private static ReadWriteLock sLogLock = new ReentrantReadWriteLock(false);
+    private static final ReadWriteLock sLogLock = new ReentrantReadWriteLock(false);
 
     public static void i(@NonNull String msg) {
         Log.i(TAG, msg);

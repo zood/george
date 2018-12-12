@@ -22,13 +22,13 @@ public class RadialMenu {
     private float openLength;
     private RadialMenuButton addFriend;
     private RadialMenuButton limitedShare;
-    private RadialMenuButton primary;
+    private final RadialMenuButton primary;
     private RadialMenuButton settings;
-    private float velocity = 1000;
-    private float stiffness = SpringForce.STIFFNESS_MEDIUM;
-    private float dampingRatio = SpringForce.DAMPING_RATIO_LOW_BOUNCY;
+    private final float velocity = 1000;
+    private final float stiffness = SpringForce.STIFFNESS_MEDIUM;
+    private final float dampingRatio = SpringForce.DAMPING_RATIO_LOW_BOUNCY;
     private boolean isVisible = true;
-    private ArrayList<RadialMenuButton> buttons = new ArrayList<>();
+    private final ArrayList<RadialMenuButton> buttons = new ArrayList<>();
 
     @SuppressLint("ClickableViewAccessibility")
     public RadialMenu(@NonNull ViewGroup root) {

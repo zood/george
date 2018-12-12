@@ -16,8 +16,8 @@ import retrofit2.Response;
 
 public class ReverseGeocodingCache {
 
-    private static ConcurrentHashMap<LatLng, RevGeocoding> cache = new ConcurrentHashMap<>();
-    private static ConcurrentHashMap<LatLng, CopyOnWriteArrayList<OnCachedListener>> ongoingRequests = new ConcurrentHashMap<>();
+    private static final ConcurrentHashMap<LatLng, RevGeocoding> cache = new ConcurrentHashMap<>();
+    private static final ConcurrentHashMap<LatLng, CopyOnWriteArrayList<OnCachedListener>> ongoingRequests = new ConcurrentHashMap<>();
 
     private ReverseGeocodingCache() {}
 

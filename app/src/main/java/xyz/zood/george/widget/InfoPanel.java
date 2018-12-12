@@ -40,7 +40,7 @@ import io.pijun.george.database.FriendRecord;
 
 public class InfoPanel {
 
-    private static long REFRESH_INTERVAL = 15 * DateUtils.SECOND_IN_MILLIS;
+    private static final long REFRESH_INTERVAL = 15 * DateUtils.SECOND_IN_MILLIS;
 
     private final Activity activity;
     private final Listener listener;
@@ -443,7 +443,7 @@ public class InfoPanel {
         refreshProgressBar.setVisibility(vis);
     }
 
-    private CompoundButton.OnCheckedChangeListener shareCheckedChangeListener = new CompoundButton.OnCheckedChangeListener() {
+    private final CompoundButton.OnCheckedChangeListener shareCheckedChangeListener = new CompoundButton.OnCheckedChangeListener() {
         @Override
         public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
             if (currFriend == null) {
@@ -465,7 +465,7 @@ public class InfoPanel {
     }
 
     private class InfoPanelRefresher implements UiRunnable {
-        private long id;
+        private final long id;
 
         private InfoPanelRefresher(long id) {
             this.id = id;

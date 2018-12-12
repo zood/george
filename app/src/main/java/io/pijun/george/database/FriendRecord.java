@@ -1,5 +1,7 @@
 package io.pijun.george.database;
 
+import androidx.annotation.NonNull;
+
 import io.pijun.george.Hex;
 
 public class FriendRecord {
@@ -27,6 +29,7 @@ public class FriendRecord {
         return (int) (id ^ (id >>> 32));
     }
 
+    @NonNull
     @Override
     public String toString() {
         return "FriendRecord{" +

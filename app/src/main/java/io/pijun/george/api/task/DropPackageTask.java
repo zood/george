@@ -1,5 +1,7 @@
 package io.pijun.george.api.task;
 
+import androidx.annotation.NonNull;
+
 import io.pijun.george.crypto.EncryptedData;
 
 public class DropPackageTask extends OscarTask {
@@ -11,6 +13,7 @@ public class DropPackageTask extends OscarTask {
         super(NAME, accessToken);
     }
 
+    @NonNull
     @Override
     public String toString() {
         return "DropPackageTask{" +

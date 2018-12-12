@@ -1,5 +1,7 @@
 package io.pijun.george.api;
 
+import androidx.annotation.NonNull;
+
 import io.pijun.george.Hex;
 
 public class Message {
@@ -10,6 +12,7 @@ public class Message {
     public byte[] nonce;
     public long sentDate;
 
+    @NonNull
     @Override
     public String toString() {
         return "Message{" +

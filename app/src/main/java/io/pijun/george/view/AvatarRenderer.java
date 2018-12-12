@@ -45,11 +45,11 @@ public class AvatarRenderer {
     private float diameter;
     private float radius;
     private Bitmap image;
-    private Paint imagePaint;
-    private Paint bgPaint;
+    private final Paint imagePaint;
+    private final Paint bgPaint;
     private StaticLayout layout;
     private BitmapShader shader;
-    private TextPaint textPaint;
+    private final TextPaint textPaint;
     private int textWidth;
     private String username;
 

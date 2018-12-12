@@ -27,7 +27,7 @@ import io.pijun.george.databinding.ActivityAvatarCropperBinding;
 
 public class AvatarCropperActivity extends AppCompatActivity implements CropImageView.OnCropImageCompleteListener {
 
-    private static String ARG_URI = "uri";
+    private static final String ARG_URI = "uri";
 
     private ActivityAvatarCropperBinding binding;
 

@@ -4,8 +4,6 @@
     <color name="colorPrimaryDark">@color/pijun_navy</color>
     <color name="colorAccent">@color/pijun_blue</color>
 
-    <color name="friend_item_black">#555555</color>
-    <color name="friend_item_gray">#AAAAAA</color>
     <color name="cloud_outline">#4d34cc54</color>
     <color name="ui_tint_gray">#aab9c6</color>
     <color name="shade">#A0000000</color>
