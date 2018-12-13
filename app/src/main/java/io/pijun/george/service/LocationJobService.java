@@ -14,6 +14,7 @@ import androidx.core.content.ContextCompat;
 import io.pijun.george.App;
 import io.pijun.george.AuthenticationManager;
 import io.pijun.george.L;
+import io.pijun.george.Prefs;
 import io.pijun.george.WorkerRunnable;
 
 public class LocationJobService extends JobService {
@@ -64,6 +65,12 @@ public class LocationJobService extends JobService {
         // only launch the service if the app isn't already in the foreground
         if (App.isInForeground || App.isLimitedShareRunning) {
             L.i("  skipping PositionService start, because App.isInForeground || App.isLimitedShareRunning");
+            return false;
+        }
+        // if we already uploaded our location within the last 3 minutes - get out of here
+        long now = System.currentTimeMillis();
+        long timeSince = Prefs.get(this).getLastLocationUpdateTime();
+        if (timeSince < 3 * DateUtils.MINUTE_IN_MILLIS) {
             return false;
         }
 

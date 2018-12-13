@@ -206,7 +206,7 @@ public class Prefs {
                 .apply();
     }
 
-    long getLastLocationUpdateTime() {
+    public long getLastLocationUpdateTime() {
         return mPrefs.getLong(KEY_LAST_LOCATION_UPDATE_TIME, 0);
     }
 
