@@ -145,6 +145,7 @@ public final class MapActivity extends AppCompatActivity implements OnMapReadyCa
             // if we're showing the avatar info, hide it
             infoPanel.hide();
             radialMenu.setVisible(true);
+            radialMenu.flyBack();
         });
 
         mLocationProviderClient = LocationServices.getFusedLocationProviderClient(this);
@@ -886,6 +887,39 @@ public final class MapActivity extends AppCompatActivity implements OnMapReadyCa
         // We need to make sure the friend is in the avatar adapter
         // The adapter handles the case if the friend is already in there.
         avatarsAdapter.addFriend(friend);
+
+        // update the FriendRecord in the info panel, if necessary
+        App.runOnUiThread(new UiRunnable() {
+            @Override
+            public void run() {
+                if (infoPanel.getFriendId() == friend.id) {
+                    infoPanel.updateFriendRecord(friend);
+                }
+            }
+        });
+    }
+
+    @Override
+    public void onStoppedSharingWithUser(long userId) {
+        // This is called when we stopped sharing with another user
+        // e.g. we toggled the share switch on the info panel
+        FriendRecord friend = DB.get().getFriendByUserId(userId);
+        if (friend == null) {
+            L.w("MapActivity.onStoppedSharingWithUser couldn't obtain a FriendRecord");
+            return;
+        }
+        // Update the FriendRecord in our avatar list
+        avatarsAdapter.addFriend(friend);
+
+        // update the FriendRecord in the info panel, if necessary
+        App.runOnUiThread(new UiRunnable() {
+            @Override
+            public void run() {
+                if (infoPanel.getFriendId() == friend.id) {
+                    infoPanel.updateFriendRecord(friend);
+                }
+            }
+        });
     }
 
     //endregion
@@ -1120,6 +1154,7 @@ public final class MapActivity extends AppCompatActivity implements OnMapReadyCa
             if (marker.equals(mMeMarker)) {
                 infoPanel.hide();
                 radialMenu.setVisible(true);
+                radialMenu.flyBack();
                 return true;
             }
 
@@ -1128,6 +1163,7 @@ public final class MapActivity extends AppCompatActivity implements OnMapReadyCa
                 // should never happen
                 infoPanel.hide();
                 radialMenu.setVisible(true);
+                radialMenu.flyBack();
                 return true;
             }
             L.i("onMarkerClick found friend " + loc.friendId);

@@ -404,6 +404,17 @@ public class InfoPanel {
     }
 
     @UiThread
+    public void updateFriendRecord(@NonNull FriendRecord update) {
+        if (currFriend == null) {
+            return;
+        }
+
+        if (currFriend.id == update.id) {
+            currFriend = update;
+        }
+    }
+
+    @UiThread
     public void updateRefreshProgressBarState(long friendId) {
         UpdateStatusTracker.State status = UpdateStatusTracker.getFriendState(friendId);
 

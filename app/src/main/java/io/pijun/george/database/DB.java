@@ -778,7 +778,7 @@ public class DB {
 
         @WorkerThread default void onStartedSharingWithUser(long userId) {}
 
-        @UiThread default void onStoppedSharingWithUser(long userId) {}
+        @WorkerThread default void onStoppedSharingWithUser(long userId) {}
     }
 
     @AnyThread
@@ -821,7 +821,7 @@ public class DB {
 
     @AnyThread
     private void notifyStoppedSharingWithUser(long userId) {
-        App.runOnUiThread(new UiRunnable() {
+        App.runInBackground(new WorkerRunnable() {
             @Override
             public void run() {
                 for (WeakReference<Listener> ref : listeners) {
