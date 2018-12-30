@@ -11,6 +11,14 @@ import android.view.ViewGroup;
 import android.view.Window;
 import android.widget.ProgressBar;
 
+import androidx.annotation.AnyThread;
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.annotation.UiThread;
+import androidx.annotation.WorkerThread;
+import androidx.core.content.ContextCompat;
+import androidx.fragment.app.DialogFragment;
+
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.textfield.TextInputEditText;
 import com.google.android.material.textfield.TextInputLayout;
@@ -20,13 +28,6 @@ import java.security.SecureRandom;
 import java.util.Collections;
 import java.util.Locale;
 
-import androidx.annotation.AnyThread;
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
-import androidx.annotation.UiThread;
-import androidx.annotation.WorkerThread;
-import androidx.core.content.ContextCompat;
-import androidx.fragment.app.DialogFragment;
 import io.pijun.george.App;
 import io.pijun.george.CloudLogger;
 import io.pijun.george.Constants;
@@ -36,9 +37,7 @@ import io.pijun.george.R;
 import io.pijun.george.UiRunnable;
 import io.pijun.george.Utils;
 import io.pijun.george.WorkerRunnable;
-import io.pijun.george.api.OscarAPI;
 import io.pijun.george.api.OscarClient;
-import io.pijun.george.api.OscarError;
 import io.pijun.george.api.SearchUserResult;
 import io.pijun.george.api.UserComm;
 import io.pijun.george.crypto.KeyPair;
@@ -65,7 +64,6 @@ public class AddFriendDialog extends DialogFragment {
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
-        L.i("onCreate");
         super.onCreate(savedInstanceState);
 
         accessToken = Prefs.get(requireContext()).getAccessToken();
@@ -74,7 +72,6 @@ public class AddFriendDialog extends DialogFragment {
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
-        L.i("onCreateView");
         View view = inflater.inflate(R.layout.fragment_add_friend, container, false);
         usernameLayout = view.findViewById(R.id.username_layout);
         usernameEditText = view.findViewById(R.id.username);
@@ -91,11 +88,8 @@ public class AddFriendDialog extends DialogFragment {
 
         checkmark = ContextCompat.getDrawable(requireContext(), R.drawable.ic_check_black_24dp);
         if (checkmark != null) {
-            L.i("checkmark loaded");
             checkmark = checkmark.mutate();
             checkmark.setTint(ContextCompat.getColor(requireContext(), R.color.pijun_blue));
-        } else {
-            L.i("checkmark is null");
         }
 
         // give the window rounded corners
@@ -144,72 +138,57 @@ public class AddFriendDialog extends DialogFragment {
             addFriendFinished(getString(R.string.not_logged_in_key_pair_msg));
             return;
         }
-        OscarAPI api = OscarClient.newInstance(accessToken);
-        try {
-            DB db = DB.get();
-            UserRecord user = db.getUser(username);
-            if (user == null) {
-                Response<SearchUserResult> searchResponse = api.searchForUser(username).execute();
-                if (!searchResponse.isSuccessful()) {
-                    OscarError err = OscarError.fromResponse(searchResponse);
-                    if (err == null) {
-                        addFriendFinished(getString(R.string.unknown_error_getting_user_info));
-                        CloudLogger.log("Null response from a UNsuccessful addFriend attempt");
-                    } else if (err.code == OscarError.ERROR_USER_NOT_FOUND) {
-                        addFriendFinished(getString(R.string.not_a_user));
-                    } else {
-                        addFriendFinished(err.message);
-                    }
-                    return;
-                }
-                SearchUserResult userToReq = searchResponse.body();
-                if (userToReq == null) {
-                    addFriendFinished(getString(R.string.unknown_error_getting_user_info));
-                    CloudLogger.log("Failed to parse body from a successful addFriend attempt");
-                    return;
-                }
-                user = db.addUser(userToReq.id, userToReq.username, userToReq.publicKey);
-                BackupDatabaseJob.scheduleBackup(requireContext());
-            }
 
-            // check if we already have this user as a friend, and if we're already sharing with them
-            final FriendRecord friend = db.getFriendByUserId(user.id);
-            if (friend != null) {
-                if (friend.sendingBoxId != null) {
-                    // send the sending box id to this person one more time, just in case
-                    UserComm comm = UserComm.newLocationSharingGrant(friend.sendingBoxId);
-                    String errMsg = OscarClient.queueSendMessage(requireContext(), user, keyPair, accessToken, comm.toJSON(), false, false);
-                    if (errMsg != null) {
-                        CloudLogger.log(errMsg);
-                    }
-                    addFriendFinished(null);
-                    return;
-                }
-            }
+        DB db = DB.get();
+        UserRecord user = db.getUser(username);
+        if (user == null) {
+            // the user should already have been added by the 'search as you type' feature
+            addFriendFinished(getString(R.string.unknown_error_getting_user_info));
+            return;
+        }
 
-            byte[] sendingBoxId = new byte[Constants.DROP_BOX_ID_LENGTH];
-            new SecureRandom().nextBytes(sendingBoxId);
-            UserComm comm = UserComm.newLocationSharingGrant(sendingBoxId);
-            String errMsg = OscarClient.queueSendMessage(requireContext(), user, keyPair, accessToken, comm.toJSON(), false, false);
-            if (errMsg != null) {
-                addFriendFinished(getString(R.string.sharing_grant_failed_msg, errMsg));
+        // check if we already have this user as a friend, and if we're already sharing with them
+        final FriendRecord friend = db.getFriendByUserId(user.id);
+        if (friend != null) {
+            if (friend.sendingBoxId != null) {
+                // send the sending box id to this person one more time, just in case
+                UserComm comm = UserComm.newLocationSharingGrant(friend.sendingBoxId);
+                String errMsg = OscarClient.queueSendMessage(requireContext(), user, keyPair, accessToken, comm.toJSON(), false, false);
+                if (errMsg != null) {
+                    CloudLogger.log(errMsg);
+                }
+                addFriendFinished(null);
                 return;
             }
+        }
 
+        byte[] sendingBoxId = new byte[Constants.DROP_BOX_ID_LENGTH];
+        new SecureRandom().nextBytes(sendingBoxId);
+        UserComm comm = UserComm.newLocationSharingGrant(sendingBoxId);
+        String errMsg = OscarClient.queueSendMessage(requireContext(), user, keyPair, accessToken, comm.toJSON(), false, false);
+        if (errMsg != null) {
+            addFriendFinished(getString(R.string.sharing_grant_failed_msg, errMsg));
+            return;
+        }
+
+
+        try {
             db.startSharingWith(user, sendingBoxId);
-            try {
-                AvatarManager.sendAvatarToUsers(requireContext(), Collections.singletonList(user), keyPair, accessToken);
-            } catch (IOException ex) {
-                CloudLogger.log(ex);
-            }
-            BackupDatabaseJob.scheduleBackup(requireContext());
-            addFriendFinished(null);
-        } catch (IOException ioe) {
-            addFriendFinished(getString(R.string.network_error));
         } catch (DB.DBException dbe) {
             addFriendFinished(getString(R.string.database_error_msg, dbe.getLocalizedMessage()));
             CloudLogger.log(dbe);
+            return;
         }
+
+        try {
+            AvatarManager.sendAvatarToUsers(requireContext(), Collections.singletonList(user), keyPair, accessToken);
+        } catch (IOException ex) {
+            CloudLogger.log(ex);
+            // We're purposely not returning early here. This isn't a critical error.
+        }
+
+        addFriendFinished(null);
+        BackupDatabaseJob.scheduleBackup(requireContext());
     }
 
     @AnyThread
@@ -238,7 +217,7 @@ public class AddFriendDialog extends DialogFragment {
         if (text == null) {
             return; // never happens
         }
-        String username = text.toString();
+        String username = text.toString().trim().toLowerCase(Locale.US);
         L.i("adding '"+username+"'");
         getDialog().setCancelable(false);
         progressBar.setVisibility(View.VISIBLE);
@@ -256,11 +235,9 @@ public class AddFriendDialog extends DialogFragment {
 
     @AnyThread
     private void validateUsername(@NonNull final String username) {
-        L.i("validateUsername: " + username);
         OscarClient.newInstance(accessToken).searchForUser(username).enqueue(new Callback<SearchUserResult>() {
             @Override
             public void onResponse(@NonNull Call<SearchUserResult> call, @NonNull Response<SearchUserResult> response) {
-                L.i("vu.onResponse");
                 // check if the UI is still loaded
                 if (usernameEditText == null) {
                     return;
@@ -276,9 +253,34 @@ public class AddFriendDialog extends DialogFragment {
                     return;
                 }
                 if (response.isSuccessful()) {
-                    L.i("vu issuccessful");
                     usernameEditText.setCompoundDrawablesRelativeWithIntrinsicBounds(null, null, checkmark, null);
                     addButton.setEnabled(true);
+                    // add the user to our local database if not already there (TOFU!)
+                    SearchUserResult result = response.body();
+                    if (result != null) {
+                        App.runInBackground(new WorkerRunnable() {
+                            @Override
+                            public void run() {
+                                try {
+                                    UserRecord user = DB.get().getUser(result.username);
+                                    if (user == null) {
+                                        L.i("No user record for " + username + ". Adding it.");
+                                        // Make sure the server gave us a response with the same username.
+                                        // I'm not sure what type of attack this defends against, but it
+                                        // seems like a good idea.
+                                        if (!username.equals(result.username)) {
+                                            L.w("Received a SearchUserResult for '" + username + "' that contained the username '"+result.username+"'");
+                                            return;
+                                        }
+                                        DB.get().addUser(result.id, result.username, result.publicKey);
+                                        L.i("Successfully added " + result.username + "'s info into db");
+                                    }
+                                } catch (DB.DBException ex) {
+                                    L.w("unable to add user", ex);
+                                }
+                            }
+                        });
+                    }
                 } else {
                     usernameLayout.setError(getString(R.string.not_a_user));
                 }
@@ -305,7 +307,6 @@ public class AddFriendDialog extends DialogFragment {
             String username = s.toString().trim().toLowerCase(Locale.US);
             addButton.setEnabled(false);
             if (Utils.isValidUsername(username)) {
-                L.i(username + " is valid");
                 usernameLayout.setError(null);
                 validateUsername(username);
             } else {

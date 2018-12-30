@@ -110,10 +110,10 @@
     <string name="add_friend_dialog_msg">Enter your friend\'s username to start sharing your location with them. They\'ll be asked to start sharing with you.</string>
     <string name="invalid_username">Invalid username</string>
     <string name="not_a_user">Not a user</string>
-    <string name="database_error_msg">Database error: %s</string>
-    <string name="sharing_grant_failed_msg">Sharing grant failed: %s</string>
-    <string name="not_logged_in_access_token_msg">You\'re not logged in (access token)</string>
-    <string name="not_logged_in_key_pair_msg">You\'re not logged in (key pair)</string>
+    <string name="database_error_msg" translatable="false">Database error: %s</string>
+    <string name="sharing_grant_failed_msg" translatable="false">Sharing grant failed: %s</string>
+    <string name="not_logged_in_access_token_msg" translatable="false">You\'re not logged in (access token)</string>
+    <string name="not_logged_in_key_pair_msg" translatable="false">You\'re not logged in (key pair)</string>
     <string name="unknown_error_getting_user_info">Unknown error getting user info</string>
     <string name="permission_request">Permission request</string>
     <string name="location_permission_reason_msg">Zood uses your location to show your position on the map, and to securely share it with friends that you\'ve authorized. It\'s never used for any other purpose.</string>
