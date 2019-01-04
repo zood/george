@@ -15,7 +15,7 @@
             app:title="@string/settings"
             app:titleTextColor="@android:color/white"
             app:navigationIcon="@drawable/ic_arrow_back_24dp"
-            android:background="@color/pijun_blue"
+            android:background="@color/zood_blue"
             android:elevation="8dp"
             app:layout_constraintTop_toTopOf="parent"
             app:layout_constraintStart_toStartOf="parent"

@@ -89,7 +89,7 @@ public class AddFriendDialog extends DialogFragment {
         checkmark = ContextCompat.getDrawable(requireContext(), R.drawable.ic_check_black_24dp);
         if (checkmark != null) {
             checkmark = checkmark.mutate();
-            checkmark.setTint(ContextCompat.getColor(requireContext(), R.color.pijun_blue));
+            checkmark.setTint(ContextCompat.getColor(requireContext(), R.color.zood_blue));
         }
 
         // give the window rounded corners

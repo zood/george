@@ -16,7 +16,7 @@
             android:orientation="vertical"
             app:layout_constraintTop_toTopOf="parent"
             tools:layout_height="48dp"
-            tools:background="@color/pijun_red"
+            tools:background="@color/zood_red"
             android:layout_width="match_parent"
             android:layout_height="wrap_content" />
 
@@ -77,7 +77,7 @@
                 android:layout_marginStart="16dp"
                 android:layout_marginTop="16dp"
                 android:fontFamily="@font/poppins_bold"
-                android:textColor="@color/pijun_navy"
+                android:textColor="@color/zood_navy"
                 android:textSize="18sp"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toTopOf="parent"
@@ -90,7 +90,7 @@
                 android:layout_marginStart="8dp"
                 android:layout_marginTop="2dp"
                 android:contentDescription="@null"
-                android:tint="@color/pijun_navy"
+                android:tint="@color/zood_navy"
                 app:layout_constraintStart_toEndOf="@id/username"
                 app:layout_constraintTop_toTopOf="@id/username"
                 tools:src="@drawable/ic_sharp_walk_20dp" />
@@ -103,7 +103,7 @@
                 android:layout_marginTop="2dp"
                 android:contentDescription="@null"
                 android:src="@drawable/ic_sharp_navigation_20dp"
-                android:tint="@color/pijun_navy"
+                android:tint="@color/zood_navy"
                 app:layout_constraintDimensionRatio="1:1"
                 app:layout_constraintStart_toEndOf="@id/motion"
                 app:layout_constraintTop_toTopOf="@id/username" />
@@ -116,7 +116,7 @@
                 android:layout_marginStart="8dp"
                 android:layout_marginTop="2dp"
                 android:src="@drawable/ic_sharp_battery_50_20dp"
-                android:tint="@color/pijun_navy"
+                android:tint="@color/zood_navy"
                 app:layout_constraintDimensionRatio="1:1"
                 app:layout_constraintStart_toEndOf="@id/bearing"
                 app:layout_constraintTop_toTopOf="@id/username" />
@@ -128,11 +128,11 @@
                 android:layout_marginStart="8dp"
                 android:fontFamily="@font/poppins_bold"
                 android:gravity="center_vertical"
-                android:textColor="@color/pijun_navy"
+                android:textColor="@color/zood_navy"
                 android:textSize="12sp"
                 app:layout_constraintBaseline_toBaselineOf="@id/username"
                 app:layout_constraintStart_toEndOf="@id/battery_icon"
-                tools:drawableTint="@color/pijun_grey"
+                tools:drawableTint="@color/zood_grey"
                 tools:text="50%" />
 
             <ImageButton
@@ -145,7 +145,7 @@
                 android:padding="8dp"
                 android:paddingBottom="6dp"
                 android:src="@drawable/ic_sharp_more_vert_24dp"
-                android:tint="@color/pijun_navy"
+                android:tint="@color/zood_navy"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintTop_toTopOf="parent" />
 
@@ -156,7 +156,7 @@
                 android:layout_marginTop="4dp"
                 android:layout_marginEnd="16dp"
                 android:fontFamily="@font/poppins_light"
-                android:textColor="@color/pijun_grey"
+                android:textColor="@color/zood_grey"
                 android:textSize="12sp"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="@id/username"
@@ -170,7 +170,7 @@
                 android:layout_marginTop="4dp"
                 android:fontFamily="@font/poppins_light"
                 android:gravity="center_vertical"
-                android:textColor="@color/pijun_grey"
+                android:textColor="@color/zood_grey"
                 android:textSize="12sp"
                 app:layout_constraintStart_toStartOf="@id/address"
                 app:layout_constraintTop_toBottomOf="@id/address"
@@ -225,7 +225,7 @@
         <xyz.zood.george.widget.RadialMenuButton
             android:id="@+id/radial_limited_share"
             android:src="@drawable/ic_sharp_timer_24dp"
-            android:tint="@color/pijun_blue"
+            android:tint="@color/zood_blue"
             android:background="@drawable/radial_button_background"
             android:onClick="onStartLimitedShareAction"
             android:scaleType="center"
@@ -238,7 +238,7 @@
         <xyz.zood.george.widget.RadialMenuButton
             android:id="@+id/radial_add_friend"
             android:src="@drawable/ic_sharp_person_add_24dp"
-            android:tint="@color/pijun_blue"
+            android:tint="@color/zood_blue"
             android:background="@drawable/radial_button_background"
             android:onClick="showAddFriendDialog"
             android:scaleType="center"
@@ -251,7 +251,7 @@
         <xyz.zood.george.widget.RadialMenuButton
             android:id="@+id/radial_settings"
             android:src="@drawable/ic_sharp_settings_24dp"
-            android:tint="@color/pijun_blue"
+            android:tint="@color/zood_blue"
             android:background="@drawable/radial_button_background"
             android:scaleType="center"
             android:elevation="0dp"
@@ -265,7 +265,7 @@
             android:id="@+id/radial_primary"
             android:background="@drawable/radial_button_background"
             android:src="@drawable/ic_sharp_more_vert_24dp"
-            android:tint="@color/pijun_blue"
+            android:tint="@color/zood_blue"
             android:scaleType="center"
             android:translationZ="4dp"
             android:layout_margin="24dp"

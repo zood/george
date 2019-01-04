@@ -3,7 +3,7 @@
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
-    android:background="@color/pijun_red"
+    android:background="@color/zood_red"
     android:layout_width="match_parent"
     android:layout_height="wrap_content">
     <TextView
@@ -33,7 +33,7 @@
     <View
         android:id="@+id/divider"
         app:layout_constraintBottom_toBottomOf="parent"
-        android:background="@color/pijun_grey"
+        android:background="@color/zood_grey"
         android:layout_width="match_parent"
         android:layout_height="1px" />
 </androidx.constraintlayout.widget.ConstraintLayout>

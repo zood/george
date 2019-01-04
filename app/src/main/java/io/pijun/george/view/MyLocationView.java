@@ -30,7 +30,7 @@ public class MyLocationView {
 
         Paint green = new Paint();
         green.setStyle(Paint.Style.FILL);
-        green.setColor(ContextCompat.getColor(ctx, R.color.pijun_blue));
+        green.setColor(ContextCompat.getColor(ctx, R.color.zood_blue));
         green.setAntiAlias(true);
         float greenRadius = Utils.dpsToPix(ctx, 10)/2.0f;
         canvas.drawCircle(cx, cy, greenRadius, green);

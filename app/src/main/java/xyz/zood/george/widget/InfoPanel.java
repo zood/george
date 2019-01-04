@@ -426,19 +426,19 @@ public class InfoPanel {
                 break;
             case Requested:
                 vis = View.VISIBLE;
-                colorId = R.color.pijun_canary;
+                colorId = R.color.zood_canary;
                 break;
             case RequestedAndUnresponsive:
                 vis = View.VISIBLE;
-                colorId = R.color.pijun_grey;
+                colorId = R.color.zood_grey;
                 break;
             case RequestDenied:
                 vis = View.VISIBLE;
-                colorId = R.color.pijun_red;
+                colorId = R.color.zood_red;
                 break;
             case RequestAcknowledged:
                 vis = View.VISIBLE;
-                colorId = R.color.pijun_blue;
+                colorId = R.color.zood_blue;
                 break;
             case RequestFulfilled:
                 vis = View.GONE;
