@@ -4,6 +4,7 @@ import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
+import android.os.Looper;
 import android.text.Editable;
 import android.text.TextUtils;
 import android.text.TextWatcher;
@@ -34,6 +35,7 @@ import io.pijun.george.crypto.KeyPair;
 import io.pijun.george.databinding.ActivityWelcomeBinding;
 import io.pijun.george.sodium.HashConfig;
 import retrofit2.Response;
+import xyz.zood.george.widget.AuthenticationProgressDialog;
 
 public class WelcomeActivity extends AppCompatActivity implements WelcomeViewHolder.Listener {
 
@@ -43,6 +45,7 @@ public class WelcomeActivity extends AppCompatActivity implements WelcomeViewHol
 
     private ActivityWelcomeBinding binding;
     private WelcomeViewHolder viewHolder;
+    @Nullable private AuthenticationProgressDialog progressDialog;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -122,6 +125,7 @@ public class WelcomeActivity extends AppCompatActivity implements WelcomeViewHol
         AuthenticationManager.get().logIn(this, username, password, new AuthenticationManager.LoginWatcher() {
             @Override
             public void onUserLoggedIn(@NonNull AuthenticationManager.Error err, @Nullable String detail) {
+                showProgressDialog(false);
                 FragmentManager fm = getSupportFragmentManager();
                 switch (err) {
                     case None:
@@ -193,9 +197,9 @@ public class WelcomeActivity extends AppCompatActivity implements WelcomeViewHol
                         Utils.showAlert(WelcomeActivity.this, R.string.login_failed, R.string.symmetric_key_unwrap_failure_msg, fm);
                         break;
                     case Unknown:
-                        default:
-                            Utils.showStringAlert(WelcomeActivity.this, null, "Unknown error", fm);
-                            break;
+                    default:
+                       Utils.showStringAlert(WelcomeActivity.this, null, "Unknown error", fm);
+                       break;
                 }
             }
         });
@@ -271,6 +275,7 @@ public class WelcomeActivity extends AppCompatActivity implements WelcomeViewHol
             if (response.isSuccessful()) {
                 CreateUserResponse resp = response.body();
                 if (resp == null) {
+                    showProgressDialog(false);
                     Utils.showStringAlert(this, null, "The server returned a malformed response when creating your account. Try again later or contact support if the problem continues.", fm);
                     return;
                 }
@@ -280,6 +285,7 @@ public class WelcomeActivity extends AppCompatActivity implements WelcomeViewHol
 
                 login(user.username, password);
             } else {
+                showProgressDialog(false);
                 OscarError err = OscarError.fromResponse(response);
                 if (err != null) {
                     if (err.code == OscarError.ERROR_USERNAME_NOT_AVAILABLE) {
@@ -292,6 +298,7 @@ public class WelcomeActivity extends AppCompatActivity implements WelcomeViewHol
                 }
             }
         } catch (IOException e) {
+            showProgressDialog(false);
             Utils.showStringAlert(this, null, "Serious error creating account: " + e.getLocalizedMessage(), fm);
         }
     }
@@ -301,6 +308,42 @@ public class WelcomeActivity extends AppCompatActivity implements WelcomeViewHol
         Intent i = MapActivity.newIntent(this);
         startActivity(i);
         finish();
+    }
+
+    @UiThread
+    private void _showProgressDialog(boolean shouldShow) {
+        if (shouldShow) {
+            // check if we're already showing it
+            if (progressDialog != null) {
+                return;
+            }
+
+            progressDialog = new AuthenticationProgressDialog();
+            progressDialog.show(getSupportFragmentManager(), null);
+        } else {
+            // Make sure we're actually showing the dialog
+            if (progressDialog == null) {
+                return;
+            }
+            progressDialog.dismiss();
+            progressDialog = null;
+        }
+    }
+
+    @SuppressLint("WrongThread")
+    @AnyThread
+    private void showProgressDialog(boolean shouldShow) {
+        if (Looper.getMainLooper() == Looper.myLooper()) {
+            _showProgressDialog(shouldShow);
+        } else {
+            App.runOnUiThread(new UiRunnable() {
+                @Override
+                public void run() {
+                    _showProgressDialog(shouldShow);
+                }
+            });
+        }
+
     }
 
     public void onSignInAction(View v) {
@@ -347,11 +390,13 @@ public class WelcomeActivity extends AppCompatActivity implements WelcomeViewHol
         // for up above.
         String username = usernameText != null ? usernameText.toString() : "";
 
+        showProgressDialog(true);
         App.runInBackground(new WorkerRunnable() {
             @Override
             public void run() {
                 final User user = generateUser(username, password.toString());
                 if (user == null) {
+                    showProgressDialog(false);
                     Utils.showAlert(WelcomeActivity.this, 0, R.string.unknown_user_generation_error_msg, getSupportFragmentManager());
                     return;
                 }
@@ -386,6 +431,7 @@ public class WelcomeActivity extends AppCompatActivity implements WelcomeViewHol
         String username = usernameText.toString();
         String password = passwordText.toString();
 
+        showProgressDialog(true);
         App.runInBackground(new WorkerRunnable() {
             @Override
             public void run() {

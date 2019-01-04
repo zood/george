@@ -373,8 +373,8 @@ public class AuthenticationManager {
     }
 
     interface Listener extends LoginWatcher, LogoutWatcher {
-        default void onUserLoggedIn(@NonNull Error err, @Nullable String detail) {}
-        default void onUserLoggedOut() {}
+        @UiThread default void onUserLoggedIn(@NonNull Error err, @Nullable String detail) {}
+        @UiThread default void onUserLoggedOut() {}
     }
 
     public interface LoginWatcher {
