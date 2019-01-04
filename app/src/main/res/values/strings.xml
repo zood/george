@@ -132,4 +132,7 @@
     <string name="save_error">Save error</string>
     <string name="unknown_avatar_save_error_msg">There was a problem saving your profile avatar. Try again, and if the problem persists, contact support.</string>
     <string name="avatar_save_io_error_msg">Unable to save your profile avatar. Make sure you have enough free space on your device, then try again.</string>
+    <string name="location_permission_needed">Location permission needed</string>
+    <string name="grant_location_permission_msg">Zood needs permission to access your location in order to share it with your friends (only). Go to Permissions in the app settings screen to grant it.</string>
+    <string name="grant_location_permission">Grant location permission</string>
 </resources>

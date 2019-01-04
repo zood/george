@@ -79,6 +79,7 @@ import xyz.zood.george.AvatarManager;
 import xyz.zood.george.widget.BackgroundDataRestrictionNotifier;
 import xyz.zood.george.widget.BannerView;
 import xyz.zood.george.widget.InfoPanel;
+import xyz.zood.george.widget.LocationPermissionNotifier;
 import xyz.zood.george.widget.RadialMenu;
 import xyz.zood.george.widget.ZoodDialog;
 
@@ -104,6 +105,7 @@ public final class MapActivity extends AppCompatActivity implements OnMapReadyCa
     private AvatarsAdapter avatarsAdapter;
     private RadialMenu radialMenu;
     private InfoPanel infoPanel;
+    private LocationPermissionNotifier locationPermissionNotifier;
 
     public static Intent newIntent(Context ctx) {
         return new Intent(ctx, MapActivity.class);
@@ -164,6 +166,8 @@ public final class MapActivity extends AppCompatActivity implements OnMapReadyCa
         oscarSocket = new OscarSocket(oscarSocketListener);
 
         getLifecycle().addObserver(new BackgroundDataRestrictionNotifier(this, binding.banners));
+        locationPermissionNotifier = new LocationPermissionNotifier(this, binding.banners);
+        getLifecycle().addObserver(locationPermissionNotifier);
     }
 
     @Override
@@ -472,6 +476,7 @@ public final class MapActivity extends AppCompatActivity implements OnMapReadyCa
             locationPermissionVerified();
         } else {
             L.i("permission denied");
+            locationPermissionNotifier.show();
         }
     }
 
