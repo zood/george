@@ -76,6 +76,7 @@ import io.pijun.george.view.MyLocationView;
 import retrofit2.Response;
 import xyz.zood.george.AddFriendDialog;
 import xyz.zood.george.AvatarManager;
+import xyz.zood.george.SafetyNumberActivity;
 import xyz.zood.george.widget.BackgroundDataRestrictionNotifier;
 import xyz.zood.george.widget.BannerView;
 import xyz.zood.george.widget.InfoPanel;
@@ -1105,6 +1106,12 @@ public final class MapActivity extends AppCompatActivity implements OnMapReadyCa
                     }
                 }
             });
+        }
+
+        @Override
+        public void onInfoPanelViewSafetyNumber(@NonNull FriendRecord friend) {
+            Intent i = SafetyNumberActivity.newIntent(MapActivity.this, friend.user);
+            startActivity(i);
         }
     };
     //endregion

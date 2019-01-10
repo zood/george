@@ -1,4 +1,6 @@
-package io.pijun.george;
+package xyz.zood.george;
+
+import androidx.test.ext.junit.runners.AndroidJUnit4;
 
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -7,7 +9,8 @@ import org.junit.runner.RunWith;
 import java.security.SecureRandom;
 import java.util.Arrays;
 
-import androidx.test.runner.AndroidJUnit4;
+import io.pijun.george.Constants;
+import io.pijun.george.Sodium;
 import io.pijun.george.crypto.EncryptedData;
 import io.pijun.george.crypto.KeyPair;
 import io.pijun.george.sodium.HashConfig;

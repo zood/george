@@ -212,6 +212,8 @@ public class InfoPanel {
             public boolean onMenuItemClick(MenuItem item) {
                 if (item.getItemId() == R.id.remove_friend) {
                     listener.onInfoPanelRemoveFriend(friend);
+                } else if (item.getItemId() == R.id.view_safety_number) {
+                    listener.onInfoPanelViewSafetyNumber(friend);
                 }
                 return true;
             }
@@ -473,6 +475,8 @@ public class InfoPanel {
         void onInfoPanelRemoveFriend(@NonNull FriendRecord friend);
         @UiThread
         void onInfoPanelShareToggled(@NonNull FriendRecord friend, boolean shouldShare);
+        @UiThread
+        void onInfoPanelViewSafetyNumber(@NonNull FriendRecord friend);
     }
 
     private class InfoPanelRefresher implements UiRunnable {

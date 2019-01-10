@@ -40,7 +40,6 @@
     <string name="view_logs">View logs</string>
     <string name="share">Share</string>
     <string name="delete">Delete</string>
-    <string name="pijun">Pijun</string>
     <string name="email_hint_msg">Email (optional)</string>
     <string name="username_missing">Username missing</string>
     <string name="too_short">Too short</string>
@@ -95,7 +94,7 @@
     <string name="running">Running</string>
     <string name="in_the_car">In the car</string>
     <string name="walking">Walking</string>
-    <string name="unknown_password_hash_algorithm_msg">The password hash algorithm on your account isn\'t one this version of Pijun knows about. Make sure you have the latest version of Pijun, then try again.</string>
+    <string name="unknown_password_hash_algorithm_msg">The password hash algorithm on your account isn\'t one this version of Zood Location knows about. Make sure you have the latest version, then try again.</string>
     <string name="show_public_key">Show public key</string>
     <string name="your_public_key">Your public key</string>
     <string name="the_privacy_company">The privacy company</string>
@@ -136,4 +135,11 @@
     <string name="grant_location_permission_msg">Zood needs permission to access your location in order to share it with your friends (only). Go to Permissions in the app settings screen to grant it.</string>
     <string name="grant_location_permission">Grant location permission</string>
     <string name="reticulating_primes_ellipsis">Reticulating primes…</string>
+    <string name="view_safety_number">View safety number</string>
+    <string name="zood">Zood</string>
+    <string name="safety_number_instructions_msg">If you wish to verify the security of your encryption with %s, compare the number above with the number on their device.</string>
+    <string name="verify_safety_number">Verify safety number</string>
+    <string name="share_safety_number_msg">Our Zood Location safety number:\n%s</string>
+    <string name="share_safety_number_via_ellipsis">Share safety number via…</string>
+    <string name="back">Back</string>
 </resources>

@@ -1,4 +1,4 @@
-package io.pijun.george;
+package xyz.zood.george;
 
 import android.content.Context;
 
@@ -8,8 +8,10 @@ import org.junit.runner.RunWith;
 import java.security.SecureRandom;
 
 import androidx.annotation.NonNull;
-import androidx.test.InstrumentationRegistry;
-import androidx.test.runner.AndroidJUnit4;
+import androidx.test.ext.junit.runners.AndroidJUnit4;
+import androidx.test.platform.app.InstrumentationRegistry;
+
+import io.pijun.george.Constants;
 import io.pijun.george.queue.PersistentQueue;
 
 import static org.junit.Assert.assertArrayEquals;
@@ -50,7 +52,7 @@ public class PersistentQueueTest {
     private static final String element3 = "Allah-u-Abha, Abha Kingdom!";
 
     public static PersistentQueue<String> newStringQueue() {
-        Context ctx = InstrumentationRegistry.getTargetContext();
+        Context ctx = InstrumentationRegistry.getInstrumentation().getContext();
         return new PersistentQueue<>(ctx, null, stringConverter);
     }
 
@@ -126,7 +128,7 @@ public class PersistentQueueTest {
 
     @Test
     public void testChunkSizedObject() {
-        Context ctx = InstrumentationRegistry.getTargetContext();
+        Context ctx = InstrumentationRegistry.getInstrumentation().getContext();
         PersistentQueue<byte[]> queue = new PersistentQueue<>(ctx, null, bytesConverter);
         byte[] bytes = new byte[768 * 1024];
         new SecureRandom().nextBytes(bytes);
@@ -138,7 +140,7 @@ public class PersistentQueueTest {
 
     @Test
     public void testChunkSizedPlus1() {
-        Context ctx = InstrumentationRegistry.getTargetContext();
+        Context ctx = InstrumentationRegistry.getInstrumentation().getContext();
         PersistentQueue<byte[]> queue = new PersistentQueue<>(ctx, null, bytesConverter);
         byte[] bytes = new byte[(768 * 1024) + 1];
         new SecureRandom().nextBytes(bytes);
@@ -150,7 +152,7 @@ public class PersistentQueueTest {
 
     @Test
     public void test2xChunkSizeObject() {
-        Context ctx = InstrumentationRegistry.getTargetContext();
+        Context ctx = InstrumentationRegistry.getInstrumentation().getContext();
         PersistentQueue<byte[]> queue = new PersistentQueue<>(ctx, null, bytesConverter);
         byte[] bytes = new byte[768 * 1024 * 2];
         new SecureRandom().nextBytes(bytes);
@@ -162,7 +164,7 @@ public class PersistentQueueTest {
 
     @Test
     public void test1ByteObject() {
-        Context ctx = InstrumentationRegistry.getTargetContext();
+        Context ctx = InstrumentationRegistry.getInstrumentation().getContext();
         PersistentQueue<byte[]> queue = new PersistentQueue<>(ctx, null, bytesConverter);
         byte[] bytes = new byte[1];
         new SecureRandom().nextBytes(bytes);
@@ -174,7 +176,7 @@ public class PersistentQueueTest {
 
     @Test
     public void testZeroByteObject() {
-        Context ctx = InstrumentationRegistry.getTargetContext();
+        Context ctx = InstrumentationRegistry.getInstrumentation().getContext();
         PersistentQueue<byte[]> queue = new PersistentQueue<>(ctx, null, bytesConverter);
         byte[] bytes = new byte[0];
         queue.offer(bytes);

@@ -1,4 +1,4 @@
-package io.pijun.george;
+package xyz.zood.george;
 
 import android.content.Context;
 
@@ -11,8 +11,10 @@ import org.junit.runners.MethodSorters;
 import java.security.SecureRandom;
 import java.util.ArrayList;
 
-import androidx.test.InstrumentationRegistry;
-import androidx.test.runner.AndroidJUnit4;
+import androidx.test.ext.junit.runners.AndroidJUnit4;
+import androidx.test.platform.app.InstrumentationRegistry;
+
+import io.pijun.george.Constants;
 import io.pijun.george.database.DB;
 import io.pijun.george.database.FriendLocation;
 import io.pijun.george.database.FriendRecord;
@@ -58,7 +60,7 @@ public class DBTest {
 
     @BeforeClass
     public static void setUp() {
-        ctx = InstrumentationRegistry.getTargetContext();
+        ctx = InstrumentationRegistry.getInstrumentation().getContext();
         DB.init(ctx, true);
 
         SecureRandom rand = new SecureRandom();
@@ -290,7 +292,7 @@ public class DBTest {
         assertNull(loc);
 
         try {
-            DB.get().setFriendLocation(f1Id, 3, 3, 4, 1.0f, 8.0f, 90.0f, MovementType.Bicycle.val, 82);
+            DB.get().setFriendLocation(f1Id, 3, 3, 4, 1.0f, 8.0f, 90.0f, MovementType.Bicycle.val, 82, true);
         } catch (DB.DBException ex) {
             fail(ex.getLocalizedMessage());
             return;
