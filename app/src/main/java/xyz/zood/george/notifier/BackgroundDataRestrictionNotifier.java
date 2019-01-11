@@ -1,4 +1,4 @@
-package xyz.zood.george.widget;
+package xyz.zood.george.notifier;
 
 import android.content.Intent;
 import android.net.Uri;
@@ -12,6 +12,8 @@ import androidx.lifecycle.LifecycleObserver;
 import androidx.lifecycle.OnLifecycleEvent;
 import io.pijun.george.R;
 import io.pijun.george.network.Network;
+import xyz.zood.george.widget.BannerView;
+import xyz.zood.george.widget.ZoodDialog;
 
 public class BackgroundDataRestrictionNotifier implements LifecycleObserver {
 

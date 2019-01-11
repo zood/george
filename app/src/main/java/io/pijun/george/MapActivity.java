@@ -16,6 +16,17 @@ import android.text.format.DateUtils;
 import android.view.View;
 import android.widget.Toast;
 
+import androidx.annotation.AnyThread;
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.annotation.UiThread;
+import androidx.annotation.WorkerThread;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
+import androidx.databinding.DataBindingUtil;
+import androidx.recyclerview.widget.LinearLayoutManager;
+
 import com.google.android.gms.common.api.ApiException;
 import com.google.android.gms.common.api.ResolvableApiException;
 import com.google.android.gms.location.FusedLocationProviderClient;
@@ -44,16 +55,6 @@ import java.io.IOException;
 import java.security.SecureRandom;
 import java.util.ArrayList;
 
-import androidx.annotation.AnyThread;
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
-import androidx.annotation.UiThread;
-import androidx.annotation.WorkerThread;
-import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.app.ActivityCompat;
-import androidx.core.content.ContextCompat;
-import androidx.databinding.DataBindingUtil;
-import androidx.recyclerview.widget.LinearLayoutManager;
 import io.pijun.george.animation.DoubleEvaluator;
 import io.pijun.george.animation.LatLngEvaluator;
 import io.pijun.george.api.Message;
@@ -77,10 +78,10 @@ import retrofit2.Response;
 import xyz.zood.george.AddFriendDialog;
 import xyz.zood.george.AvatarManager;
 import xyz.zood.george.SafetyNumberActivity;
-import xyz.zood.george.widget.BackgroundDataRestrictionNotifier;
-import xyz.zood.george.widget.BannerView;
+import xyz.zood.george.notifier.BackgroundDataRestrictionNotifier;
+import xyz.zood.george.notifier.ClientNotConnectedNotifier;
+import xyz.zood.george.notifier.LocationPermissionNotifier;
 import xyz.zood.george.widget.InfoPanel;
-import xyz.zood.george.widget.LocationPermissionNotifier;
 import xyz.zood.george.widget.RadialMenu;
 import xyz.zood.george.widget.ZoodDialog;
 
@@ -89,7 +90,6 @@ public final class MapActivity extends AppCompatActivity implements OnMapReadyCa
     private static final int REQUEST_LOCATION_PERMISSION = 18;
     private static final int REQUEST_LOCATION_SETTINGS = 20;
 
-    private ActivityMapBinding binding;
     private MapView mMapView;
     private GoogleMap mGoogMap;
     private OscarSocket oscarSocket;
@@ -107,6 +107,7 @@ public final class MapActivity extends AppCompatActivity implements OnMapReadyCa
     private RadialMenu radialMenu;
     private InfoPanel infoPanel;
     private LocationPermissionNotifier locationPermissionNotifier;
+    private ClientNotConnectedNotifier notConnectedNotifier;
 
     public static Intent newIntent(Context ctx) {
         return new Intent(ctx, MapActivity.class);
@@ -125,7 +126,7 @@ public final class MapActivity extends AppCompatActivity implements OnMapReadyCa
             return;
         }
 
-        binding = DataBindingUtil.setContentView(this, R.layout.activity_map);
+        ActivityMapBinding binding = DataBindingUtil.setContentView(this, R.layout.activity_map);
 
         infoPanel = new InfoPanel(binding.infoPanel, this, infoPanelListener);
         radialMenu = new RadialMenu(binding.root);
@@ -169,6 +170,8 @@ public final class MapActivity extends AppCompatActivity implements OnMapReadyCa
         getLifecycle().addObserver(new BackgroundDataRestrictionNotifier(this, binding.banners));
         locationPermissionNotifier = new LocationPermissionNotifier(this, binding.banners);
         getLifecycle().addObserver(locationPermissionNotifier);
+
+        notConnectedNotifier = new ClientNotConnectedNotifier(this, binding.banners);
     }
 
     @Override
@@ -945,14 +948,12 @@ public final class MapActivity extends AppCompatActivity implements OnMapReadyCa
 
     private final OscarSocket.Listener oscarSocketListener = new OscarSocket.Listener() {
 
-        private static final int NoConnectionBannerId = 110348;
-
         @Override
         public void onConnect() {
             App.runOnUiThread(new UiRunnable() {
                 @Override
                 public void run() {
-                    binding.banners.removeItem(NoConnectionBannerId);
+                    notConnectedNotifier.hide();
                 }
             });
         }
@@ -965,17 +966,11 @@ public final class MapActivity extends AppCompatActivity implements OnMapReadyCa
             App.runOnUiThread(new UiRunnable() {
                 @Override
                 public void run() {
-                    binding.banners.addItem(getString(R.string.unable_to_connect_to_zood_servers), getString(R.string.info), NoConnectionBannerId, new BannerView.ItemClickListener() {
-                        @Override
-                        public void onBannerItemClick(int id) {
-                            ZoodDialog d = ZoodDialog.newInstance(getString(R.string.unable_to_connect_msg));
-                            d.setButton1(getString(R.string.ok), null);
-                            d.show(getSupportFragmentManager(), null);
-                        }
-                    });
+                    notConnectedNotifier.show();
                 }
             });
             try {
+                // sleep for a bit before attempting to reconnect
                 Thread.sleep(5000);
             } catch (InterruptedException ignore) {}
             // are we still running after our siesta?

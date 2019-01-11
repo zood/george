@@ -1,4 +1,4 @@
-package xyz.zood.george.widget;
+package xyz.zood.george.notifier;
 
 import android.Manifest;
 import android.content.Intent;
@@ -15,6 +15,8 @@ import androidx.lifecycle.LifecycleObserver;
 import androidx.lifecycle.OnLifecycleEvent;
 
 import io.pijun.george.R;
+import xyz.zood.george.widget.BannerView;
+import xyz.zood.george.widget.ZoodDialog;
 
 public class LocationPermissionNotifier implements LifecycleObserver {
 

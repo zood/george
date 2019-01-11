@@ -137,7 +137,7 @@
     <string name="reticulating_primes_ellipsis">Reticulating primes…</string>
     <string name="view_safety_number">View safety number</string>
     <string name="zood">Zood</string>
-    <string name="safety_number_instructions_msg">If you wish to verify the security of your encryption with %s, compare the number above with the number on their device.</string>
+    <string name="safety_number_instructions_msg">If you wish to verify the security of your encryption with %s, compare the number below with the number on their device.</string>
     <string name="verify_safety_number">Verify safety number</string>
     <string name="share_safety_number_msg">Our Zood Location safety number:\n%s</string>
     <string name="share_safety_number_via_ellipsis">Share safety number via…</string>
