@@ -85,7 +85,7 @@ public class SafetyNumberActivity extends AppCompatActivity implements Toolbar.O
                 System.arraycopy(firstKey, 0, bytes, 0, firstKey.length);
                 System.arraycopy(secondKey, 0, bytes, firstKey.length, secondKey.length);
 
-                safetyNumber = SafetyNumber.toSafetyNumber(bytes, 4);
+                safetyNumber = SafetyNumber.toSafetyNumber(bytes, 4, "  ");
                 App.runOnUiThread(new UiRunnable() {
                     @Override
                     public void run() {

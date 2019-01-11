@@ -18,7 +18,7 @@ public class SafetyNumberTest {
         // binary: 1011011000100100
 
         byte[] bytes = new byte[]{(byte)182, (byte)36};
-        String actual = SafetyNumber.toSafetyNumber(bytes, 1);
+        String actual = SafetyNumber.toSafetyNumber(bytes, 1, " ");
         assertEquals(expected, actual);
     }
 
@@ -28,7 +28,7 @@ public class SafetyNumberTest {
         // binary: 0001010010110101
 
         byte[] bytes = new byte[]{(byte)20, (byte)181};
-        String actual = SafetyNumber.toSafetyNumber(bytes, 1);
+        String actual = SafetyNumber.toSafetyNumber(bytes, 1, " ");
         assertEquals(expected, actual);
     }
 
@@ -36,7 +36,7 @@ public class SafetyNumberTest {
     public void testFourBytesTwoCols() {
         String expected = "46628 05301";
         byte[] bytes = new byte[]{(byte)182, (byte)36, (byte)20, (byte)181};
-        String actual = SafetyNumber.toSafetyNumber(bytes, 2);
+        String actual = SafetyNumber.toSafetyNumber(bytes, 2, " ");
         assertEquals(expected, actual);
     }
 
@@ -44,7 +44,7 @@ public class SafetyNumberTest {
     public void testFourBytesOneCol() {
         String expected = "46628\n05301";
         byte[] bytes = new byte[]{(byte)182, (byte)36, (byte)20, (byte)181};
-        String actual = SafetyNumber.toSafetyNumber(bytes, 1);
+        String actual = SafetyNumber.toSafetyNumber(bytes, 1, " ");
         assertEquals(expected, actual);
     }
 
@@ -52,7 +52,7 @@ public class SafetyNumberTest {
     public void test32BytesFourCols() {
         String expected = "28789 29728 28526 08308\n26725 08308 25964 27753\n25900 08276 20256 21576\n17696 16962 17185 08481";
         byte[] bytes = "put on the tellie, TO THE BBC!!!".getBytes(Constants.utf8);
-        String actual = SafetyNumber.toSafetyNumber(bytes, 4);
+        String actual = SafetyNumber.toSafetyNumber(bytes, 4, " ");
         assertEquals(expected, actual);
     }
 

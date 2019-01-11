@@ -9,7 +9,7 @@ import java.util.Locale;
 public class SafetyNumber {
 
     @NonNull @CheckResult @AnyThread
-    public static String toSafetyNumber(@NonNull byte[] bytes, int columns) {
+    public static String toSafetyNumber(@NonNull byte[] bytes, int columns, @NonNull String spacing) {
         if (bytes.length % 2 != 0) {
             throw new RuntimeException("Bytes count should be a multiple of 2");
         }
@@ -19,22 +19,17 @@ public class SafetyNumber {
 
         int col = 0;
         StringBuilder sn = new StringBuilder();
-        boolean startedRow = true;
         for (int i=0; i<bytes.length; i+=2) {
             int val = toUnsignedInt(bytes[i]) << 8;
             val |= toUnsignedInt(bytes[i+1]);
 
-            if (!startedRow) {
-                sn.append("  ");
-            }
             sn.append(String.format(Locale.US, "%05d", val));
             col += 1;
             if (col >= columns) {
                 sn.append('\n');
-                startedRow = true;
                 col = 0;
             } else {
-                startedRow = false;
+                sn.append(spacing);
             }
         }
 
