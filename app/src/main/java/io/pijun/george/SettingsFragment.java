@@ -3,7 +3,10 @@ package io.pijun.george;
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.PackageInfo;
+import android.content.pm.PackageManager;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
 import android.provider.MediaStore;
@@ -94,7 +97,21 @@ public class SettingsFragment extends Fragment implements SettingsAdapter.Listen
 
     @Override
     public void onAboutAction() {
-
+        PackageManager pkgMgr = requireContext().getPackageManager();
+        try {
+            PackageInfo pi = pkgMgr.getPackageInfo("io.pijun.george", 0);
+            long versionCode;
+            if (Build.VERSION.SDK_INT >= 28) {
+                versionCode = pi.getLongVersionCode();
+            } else {
+                //noinspection deprecation
+                versionCode = pi.versionCode;
+            }
+            String msg = getString(R.string.app_version_msg, pi.versionName, versionCode);
+            Utils.showStringAlert(requireContext(), getString(R.string.app_name), msg, getFragmentManager());
+        } catch (PackageManager.NameNotFoundException ignore) {
+            throw new RuntimeException("You need to specify the correct package name");
+        }
     }
 
     @Override

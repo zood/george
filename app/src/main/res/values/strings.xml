@@ -142,4 +142,6 @@
     <string name="share_safety_number_msg">Our Zood Location safety number:\n%s</string>
     <string name="share_safety_number_via_ellipsis">Share safety number via…</string>
     <string name="back">Back</string>
+    <string name="app_version_msg">Version %s (build %d)</string>
+    <string name="tap_to_change_avatar">Tap to change avatar</string>
 </resources>
