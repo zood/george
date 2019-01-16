@@ -513,6 +513,13 @@ public final class MapActivity extends AppCompatActivity implements OnMapReadyCa
     private void showInfoPanel(@NonNull FriendRecord friend, @Nullable FriendLocation loc) {
         radialMenu.setVisible(false);
         infoPanel.show(friend, loc);
+
+        // if the location data for the friend is really old, request a refresh
+        if (loc != null) {
+            if (System.currentTimeMillis() - loc.time > DateUtils.MINUTE_IN_MILLIS * 20) {
+                infoPanelListener.onInfoPanelLocationRequested(friend);
+            }
+        }
     }
 
     public void onStartLimitedShareAction(View v) {
