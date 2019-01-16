@@ -164,35 +164,6 @@ public class SettingsFragment extends Fragment implements SettingsAdapter.Listen
         dialog.show(fm, null);
     }
 
-    @Override
-    public void onShowPublicKey() {
-        KeyPair kp = Prefs.get(requireContext()).getKeyPair();
-        if (kp == null) {
-            return;
-        }
-        String hexPK = Hex.toHexString(kp.publicKey);
-        StringBuilder sb = new StringBuilder();
-        int i=0;
-        while (i < hexPK.length()) {
-            for (int j=0; j<4; j++) {
-                sb.append(hexPK.charAt(i++));
-                sb.append(hexPK.charAt(i++));
-                sb.append(hexPK.charAt(i++));
-                sb.append(hexPK.charAt(i++));
-                sb.append(" ");
-            }
-            sb.append("\n");
-        }
-        ZoodDialog dialog = ZoodDialog.newInstance(sb.toString());
-        dialog.setTitle(getString(R.string.your_public_key));
-        dialog.setButton1(getString(R.string.ok), null);
-        FragmentManager fm = getFragmentManager();
-        if (fm == null) {
-            throw new RuntimeException("Where is the FragmentManager?");
-        }
-        dialog.show(fm, null);
-    }
-
     //endregion
 
     //region Profile photo taking/selection

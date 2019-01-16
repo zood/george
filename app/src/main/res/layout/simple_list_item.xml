@@ -5,13 +5,15 @@
     tools:background="@android:color/white"
     android:background="?attr/selectableItemBackground"
     android:clickable="true"
+    android:focusable="true"
     android:orientation="vertical"
     android:layout_width="match_parent"
     android:layout_height="wrap_content">
     <TextView
         android:id="@+id/title"
         tools:text="Simple item title"
-        android:textColor="@color/settings_item_title"
+        android:textColor="@color/zood_navy"
+        android:fontFamily="@font/poppins"
         android:textSize="14sp"
         android:layout_marginStart="16dp"
         android:layout_marginEnd="16dp"
@@ -20,8 +22,8 @@
         android:layout_height="wrap_content" />
     <TextView
         android:id="@+id/detail"
-        tools:text="Simple item detail"
-        android:textColor="@color/settings_item_subtitle"
+        tools:text="Detail"
+        android:fontFamily="@font/poppins"
         android:textSize="13sp"
         android:layout_marginStart="16dp"
         android:layout_marginEnd="16dp"

@@ -84,7 +84,7 @@ public class SettingsAdapter extends RecyclerView.Adapter {
                 h.itemView.setOnClickListener(new View.OnClickListener() {
                     @Override
                     public void onClick(View v) {
-                        listener.onShowPublicKey();
+                        listener.onChangeProfilePhoto(h.avatar);
                     }
                 });
                 break;
@@ -125,7 +125,7 @@ public class SettingsAdapter extends RecyclerView.Adapter {
 
     private void rebuildRecycler() {
         adapterItems.add(new RecyclerViewAdapterItem(R.layout.profile_list_item, PROFILE_ID));
-        adapterItems.add(new RecyclerViewAdapterItem(R.layout.simple_list_item, BILLING_PLAN_ID));
+//        adapterItems.add(new RecyclerViewAdapterItem(R.layout.simple_list_item, BILLING_PLAN_ID));
         adapterItems.add(new RecyclerViewAdapterItem(R.layout.simple_list_item, LOG_OUT_ID));
         adapterItems.add(new RecyclerViewAdapterItem(R.layout.simple_list_item, ABOUT_ID));
     }
@@ -134,7 +134,6 @@ public class SettingsAdapter extends RecyclerView.Adapter {
         @UiThread void onAboutAction();
         @UiThread void onChangeProfilePhoto(View anchor);
         @UiThread void onLogOutAction();
-        @UiThread void onShowPublicKey();
     }
 
 }
