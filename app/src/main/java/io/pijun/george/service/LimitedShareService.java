@@ -196,7 +196,7 @@ public class LimitedShareService extends Service /* implements LocationListener 
         }
 
         NotificationCompat.Builder bldr = new NotificationCompat.Builder(this, LIMITED_SHARE_CHANNEL_ID);
-        bldr.setSmallIcon(R.mipmap.ic_launcher);
+        bldr.setSmallIcon(R.drawable.status_icon);
         bldr.setContentTitle("Location broadcast is on");
         bldr.setContentText("Share the link to let others view your location");
         int reqCode = (int) (System.currentTimeMillis() % 10000);
