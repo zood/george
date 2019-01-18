@@ -92,7 +92,6 @@ public class SettingsAdapter extends RecyclerView.Adapter {
             case LOG_OUT_ID: {
                 SimpleListItemViewHolder h = (SimpleListItemViewHolder) holder;
                 h.title.setText(R.string.log_out);
-                h.detail.setText(null);
                 h.itemView.setOnClickListener(new View.OnClickListener() {
                     @Override
                     public void onClick(View v) {
@@ -104,7 +103,6 @@ public class SettingsAdapter extends RecyclerView.Adapter {
             case ABOUT_ID: {
                 SimpleListItemViewHolder h = (SimpleListItemViewHolder) holder;
                 h.title.setText(R.string.about);
-                h.detail.setText(null);
                 h.itemView.setOnClickListener(new View.OnClickListener() {
                     @Override
                     public void onClick(View v) {
@@ -116,7 +114,6 @@ public class SettingsAdapter extends RecyclerView.Adapter {
             case BILLING_PLAN_ID: {
                 SimpleListItemViewHolder h = (SimpleListItemViewHolder) holder;
                 h.title.setText("Individual plan");
-                h.detail.setText("99¢/month");
             }
 
         }
