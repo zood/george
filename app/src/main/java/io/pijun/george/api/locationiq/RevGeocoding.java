@@ -25,6 +25,10 @@ public class RevGeocoding {
             return String.format("%s %s, %s", address.houseNumber, address.road, address.city);
         } else if (address.road != null && address.city != null) {
             return String.format("%s, %s", address.road, address.city);
+        } else if (address.city != null && address.county != null) {
+            return String.format("%s, %s", address.city, address.county);
+        } else if (address.city != null && address.state != null) {
+            return String.format("%s, %s", address.city, address.state);
         }
 
         return getArea();
