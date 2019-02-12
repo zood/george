@@ -67,7 +67,7 @@ dependencies {
     // used for fusion location
     implementation 'com.google.android.gms:play-services-location:16.0.0'
     // used for Google maps view
-    implementation 'com.google.android.gms:play-services-maps:16.0.0'
+    implementation 'com.google.android.gms:play-services-maps:16.1.0'
     // cloud messaging
     implementation ('com.google.firebase:firebase-messaging:17.3.3', {
         exclude group: 'com.google.firebase', module: 'firebase-core'
