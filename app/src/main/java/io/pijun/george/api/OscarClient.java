@@ -73,7 +73,7 @@ public class OscarClient {
             }
         }
 
-        String url = "https://" + Config.apiAddress() + "/alpha/";
+        String url = "https://" + Config.apiAddress() + "/1/";
         OkHttpClient.Builder httpBuilder = new OkHttpClient.Builder();
         ConnectionSpec connSpec = new ConnectionSpec.Builder(ConnectionSpec.MODERN_TLS)
                 .tlsVersions(TlsVersion.TLS_1_2)

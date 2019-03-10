@@ -82,7 +82,7 @@ public class OscarSocket {
                     clientBuilder.pingInterval(10, TimeUnit.SECONDS);
                     OkHttpClient client = clientBuilder.build();
 
-                    String url = "wss://" + Config.apiAddress() + "/alpha/sockets";
+                    String url = "wss://" + Config.apiAddress() + "/1/sockets";
                     Request req = new Request.
                             Builder().
                             url(url).
