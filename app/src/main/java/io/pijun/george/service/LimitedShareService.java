@@ -162,7 +162,7 @@ public class LimitedShareService extends Service /* implements LocationListener 
         // b = the drop box id locations will be dropped into/picked up from
         // i = id of the user sharing their location
         // u = username of the sharing user. not cryptographically required, just sent for presentation purposes
-        // https://t.pijun.app/#k=<hex>&b=<hex>&i=<hex>&u=<username>
+        // https://locationshare.zood.xyz/#k=<hex>&b=<hex>&i=<hex>&u=<username>
         Prefs prefs = Prefs.get(this);
         byte[] id = prefs.getUserId();
         if (id == null) {
@@ -172,7 +172,7 @@ public class LimitedShareService extends Service /* implements LocationListener 
         if (username == null) {
             throw new RuntimeException("How is the username null?");
         }
-        return String.format("https://t.pijun.app/#u=%s&k=%s&b=%s&i=%s",
+        return String.format("https://locationshare.zood.xyz/#u=%s&k=%s&b=%s&i=%s",
                 username,
                 Hex.toHexString(mKeyPair.secretKey),
                 Hex.toHexString(mSendingBoxId),
