@@ -10,6 +10,8 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentTransaction;
 
+import xyz.zood.george.R;
+
 public class SettingsActivity extends AppCompatActivity {
 
     public static final int REQUEST_EXIT = 22;

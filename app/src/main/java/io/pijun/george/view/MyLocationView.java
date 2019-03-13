@@ -8,8 +8,8 @@ import android.graphics.Paint;
 
 import androidx.annotation.NonNull;
 import androidx.core.content.ContextCompat;
-import io.pijun.george.R;
 import io.pijun.george.Utils;
+import xyz.zood.george.R;
 
 public class MyLocationView {
 

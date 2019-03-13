@@ -31,7 +31,7 @@ import androidx.annotation.Nullable;
 import androidx.core.content.res.ResourcesCompat;
 import xyz.zood.george.AvatarManager;
 import io.pijun.george.Constants;
-import io.pijun.george.R;
+import xyz.zood.george.R;
 
 /**
  * This does the heavy lifting for the AvatarView class. The functionality was separated out of the View

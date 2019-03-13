@@ -2,7 +2,7 @@
 <manifest
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
-    package="io.pijun.george">
+    package="xyz.zood.george">
 
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
@@ -13,7 +13,7 @@
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
 
     <application
-        android:name=".App"
+        android:name="io.pijun.george.App"
         android:allowBackup="false"
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
@@ -22,7 +22,7 @@
         android:extractNativeLibs="false"
         tools:ignore="GoogleAppIndexingWarning">
         <activity
-            android:name=".MapActivity"
+            android:name="io.pijun.george.MapActivity"
             android:screenOrientation="portrait"
             android:theme="@style/MapTheme">
             <intent-filter>
@@ -31,15 +31,15 @@
             </intent-filter>
         </activity>
         <activity
-            android:name=".WelcomeActivity"
+            android:name="io.pijun.george.WelcomeActivity"
             android:screenOrientation="portrait"
             android:windowSoftInputMode="adjustResize|stateHidden"
             android:theme="@style/WelcomeTheme" />
         <activity
-            android:name=".LogActivity"
+            android:name="io.pijun.george.LogActivity"
             android:windowSoftInputMode="adjustResize"
             android:theme="@style/AppTheme" />
-        <activity android:name=".SettingsActivity"
+        <activity android:name="io.pijun.george.SettingsActivity"
             android:screenOrientation="portrait"
             android:theme="@style/AppTheme" />
         <activity android:name="com.theartofdev.edmodo.cropper.CropImageActivity"
@@ -53,26 +53,26 @@
             android:theme="@style/AppTheme" />
 
         <!-- BEGIN SERVICES -->
-        <service android:name=".service.FcmMessageReceiver">
+        <service android:name="io.pijun.george.service.FcmMessageReceiver">
             <intent-filter>
                 <action android:name="com.google.firebase.MESSAGING_EVENT" />
             </intent-filter>
         </service>
-        <service android:name=".service.LimitedShareService" />
-        <service android:name=".service.LocationJobService" android:permission="android.permission.BIND_JOB_SERVICE" />
-        <service android:name=".service.BackupDatabaseJob" android:permission="android.permission.BIND_JOB_SERVICE" />
-        <service android:name=".service.PositionService" />
+        <service android:name="io.pijun.george.service.LimitedShareService" />
+        <service android:name="io.pijun.george.service.LocationJobService" android:permission="android.permission.BIND_JOB_SERVICE" />
+        <service android:name="io.pijun.george.service.BackupDatabaseJob" android:permission="android.permission.BIND_JOB_SERVICE" />
+        <service android:name="io.pijun.george.service.PositionService" />
         <service android:name="xyz.zood.george.service.ScreamerService" />
         <!-- END SERVICES -->
 
         <!-- BEGIN RECEIVERS -->
-        <receiver android:name=".service.BootReceiver">
+        <receiver android:name="io.pijun.george.service.BootReceiver">
             <intent-filter>
                 <action android:name="android.intent.action.BOOT_COMPLETED" />
             </intent-filter>
         </receiver>
-        <receiver android:name=".receiver.PassiveLocationReceiver" />
-        <receiver android:name=".receiver.UserActivityReceiver" />
+        <receiver android:name="io.pijun.george.receiver.PassiveLocationReceiver" />
+        <receiver android:name="io.pijun.george.receiver.UserActivityReceiver" />
         <!-- END RECEIVERS -->
 
         <!-- BEGIN PROVIDERS -->

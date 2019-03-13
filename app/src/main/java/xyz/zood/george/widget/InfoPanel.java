@@ -30,13 +30,13 @@ import androidx.dynamicanimation.animation.SpringForce;
 
 import io.pijun.george.App;
 import io.pijun.george.L;
-import io.pijun.george.R;
 import io.pijun.george.UiRunnable;
 import io.pijun.george.UpdateStatusTracker;
 import io.pijun.george.api.locationiq.RevGeocoding;
 import io.pijun.george.api.locationiq.ReverseGeocodingCache;
 import io.pijun.george.database.FriendLocation;
 import io.pijun.george.database.FriendRecord;
+import xyz.zood.george.R;
 
 public class InfoPanel {
 

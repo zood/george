@@ -16,13 +16,13 @@ import androidx.databinding.DataBindingUtil;
 import io.pijun.george.App;
 import io.pijun.george.L;
 import io.pijun.george.Prefs;
-import io.pijun.george.R;
 import io.pijun.george.UiRunnable;
 import io.pijun.george.WorkerRunnable;
 import io.pijun.george.crypto.KeyPair;
 import io.pijun.george.database.DB;
 import io.pijun.george.database.UserRecord;
-import io.pijun.george.databinding.ActivitySafetyNumberBinding;
+
+import xyz.zood.george.databinding.ActivitySafetyNumberBinding;
 
 public class SafetyNumberActivity extends AppCompatActivity implements Toolbar.OnMenuItemClickListener {
 

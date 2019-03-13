@@ -33,7 +33,6 @@ import io.pijun.george.CloudLogger;
 import io.pijun.george.Constants;
 import io.pijun.george.L;
 import io.pijun.george.Prefs;
-import io.pijun.george.R;
 import io.pijun.george.UiRunnable;
 import io.pijun.george.Utils;
 import io.pijun.george.WorkerRunnable;

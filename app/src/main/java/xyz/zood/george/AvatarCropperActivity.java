@@ -19,11 +19,11 @@ import java.io.IOException;
 
 import io.pijun.george.App;
 import io.pijun.george.L;
-import io.pijun.george.R;
 import io.pijun.george.UiRunnable;
 import io.pijun.george.Utils;
 import io.pijun.george.WorkerRunnable;
-import io.pijun.george.databinding.ActivityAvatarCropperBinding;
+
+import xyz.zood.george.databinding.ActivityAvatarCropperBinding;
 
 public class AvatarCropperActivity extends AppCompatActivity implements CropImageView.OnCropImageCompleteListener {
 

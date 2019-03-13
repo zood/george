@@ -4,8 +4,8 @@ import androidx.annotation.NonNull;
 import androidx.annotation.UiThread;
 import androidx.appcompat.app.AppCompatActivity;
 
-import io.pijun.george.R;
 import io.pijun.george.Utils;
+import xyz.zood.george.R;
 import xyz.zood.george.widget.BannerView;
 
 public class ClientNotConnectedNotifier implements BannerView.ItemClickListener {

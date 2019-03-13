@@ -6,7 +6,6 @@ import java.io.IOException;
 
 import androidx.annotation.AnyThread;
 import androidx.annotation.NonNull;
-import io.pijun.george.R;
 import io.pijun.george.api.OscarClient;
 import okhttp3.HttpUrl;
 import okhttp3.Interceptor;
@@ -15,6 +14,7 @@ import okhttp3.Request;
 import okhttp3.Response;
 import retrofit2.Retrofit;
 import retrofit2.converter.gson.GsonConverterFactory;
+import xyz.zood.george.R;
 
 public class LocationIQClient {
 

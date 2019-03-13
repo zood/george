@@ -36,13 +36,13 @@ import io.pijun.george.CloudLogger;
 import io.pijun.george.L;
 import io.pijun.george.LocationUtils;
 import io.pijun.george.Prefs;
-import io.pijun.george.R;
 import io.pijun.george.WorkerRunnable;
 import io.pijun.george.api.OscarClient;
 import io.pijun.george.api.UserComm;
 import io.pijun.george.crypto.KeyPair;
 import io.pijun.george.database.DB;
 import io.pijun.george.database.UserRecord;
+import xyz.zood.george.R;
 
 public class PositionService extends Service {
 

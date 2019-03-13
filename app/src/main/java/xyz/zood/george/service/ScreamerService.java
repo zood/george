@@ -28,8 +28,8 @@ import androidx.annotation.WorkerThread;
 import androidx.core.app.NotificationCompat;
 import io.pijun.george.App;
 import io.pijun.george.L;
-import io.pijun.george.R;
 import io.pijun.george.WorkerRunnable;
+import xyz.zood.george.R;
 import xyz.zood.george.receiver.ScreenOnReceiver;
 
 public class ScreamerService extends Service implements AudioManager.OnAudioFocusChangeListener {

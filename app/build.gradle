@@ -5,7 +5,7 @@ android {
     dataBinding.enabled = true
 
     defaultConfig {
-        applicationId "io.pijun.george"
+        applicationId "xyz.zood.george"
         minSdkVersion 21
         targetSdkVersion 28
         versionCode 23

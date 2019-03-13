@@ -22,6 +22,8 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 import androidx.recyclerview.widget.RecyclerView;
 
+import xyz.zood.george.R;
+
 public class LogActivity extends AppCompatActivity implements Toolbar.OnMenuItemClickListener {
 
     public static Intent newIntent(@NonNull Context context) {

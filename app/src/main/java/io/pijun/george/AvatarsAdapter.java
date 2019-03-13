@@ -19,6 +19,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import io.pijun.george.database.FriendRecord;
 import io.pijun.george.view.AvatarView;
 import xyz.zood.george.AvatarManager;
+import xyz.zood.george.R;
 
 class AvatarsAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
 

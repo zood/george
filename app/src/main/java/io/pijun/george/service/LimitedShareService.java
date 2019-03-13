@@ -42,11 +42,11 @@ import io.pijun.george.Hex;
 import io.pijun.george.L;
 import io.pijun.george.LocationUtils;
 import io.pijun.george.Prefs;
-import io.pijun.george.R;
 import io.pijun.george.Sodium;
 import io.pijun.george.WorkerRunnable;
 import io.pijun.george.crypto.KeyPair;
 import io.pijun.george.database.DB;
+import xyz.zood.george.R;
 
 public class LimitedShareService extends Service /* implements LocationListener */ {
 

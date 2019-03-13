@@ -32,9 +32,10 @@ import io.pijun.george.api.OscarError;
 import io.pijun.george.api.User;
 import io.pijun.george.crypto.EncryptedData;
 import io.pijun.george.crypto.KeyPair;
-import io.pijun.george.databinding.ActivityWelcomeBinding;
 import io.pijun.george.sodium.HashConfig;
 import retrofit2.Response;
+import xyz.zood.george.R;
+import xyz.zood.george.databinding.ActivityWelcomeBinding;
 import xyz.zood.george.widget.AuthenticationProgressDialog;
 
 public class WelcomeActivity extends AppCompatActivity implements WelcomeViewHolder.Listener {

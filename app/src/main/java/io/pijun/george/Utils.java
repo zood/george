@@ -15,6 +15,8 @@ import androidx.annotation.Nullable;
 import androidx.annotation.StringRes;
 import androidx.annotation.UiThread;
 import androidx.fragment.app.FragmentManager;
+
+import xyz.zood.george.R;
 import xyz.zood.george.widget.ZoodDialog;
 
 @SuppressWarnings("WeakerAccess")

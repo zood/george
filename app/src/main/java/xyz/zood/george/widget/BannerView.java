@@ -15,7 +15,8 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.UiThread;
 import androidx.constraintlayout.widget.ConstraintLayout;
-import io.pijun.george.R;
+
+import xyz.zood.george.R;
 
 public class BannerView extends LinearLayout {
 

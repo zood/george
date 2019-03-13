@@ -28,9 +28,10 @@ import java.util.Date;
 import java.util.Locale;
 
 import io.pijun.george.crypto.KeyPair;
-import io.pijun.george.databinding.FragmentSettingsBinding;
 import xyz.zood.george.AvatarCropperActivity;
 import xyz.zood.george.AvatarManager;
+import xyz.zood.george.R;
+import xyz.zood.george.databinding.FragmentSettingsBinding;
 import xyz.zood.george.widget.ZoodDialog;
 
 public class SettingsFragment extends Fragment implements SettingsAdapter.Listener, AvatarManager.Listener {

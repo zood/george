@@ -14,7 +14,9 @@ import androidx.annotation.DrawableRes;
 import androidx.annotation.NonNull;
 import androidx.annotation.UiThread;
 import androidx.core.content.ContextCompat;
-import io.pijun.george.databinding.ActivityWelcomeBinding;
+
+import xyz.zood.george.R;
+import xyz.zood.george.databinding.ActivityWelcomeBinding;
 
 public class WelcomeViewHolder implements ViewTreeObserver.OnGlobalLayoutListener {
 

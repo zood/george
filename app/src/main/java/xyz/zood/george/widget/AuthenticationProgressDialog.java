@@ -10,7 +10,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.DialogFragment;
 
-import io.pijun.george.R;
+import xyz.zood.george.R;
 
 public class AuthenticationProgressDialog extends DialogFragment {
 
