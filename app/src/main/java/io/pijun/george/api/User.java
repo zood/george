@@ -12,5 +12,6 @@ public class User {
     public byte[] wrappedSecretKeyNonce;
     public byte[] wrappedSymmetricKey;
     public byte[] wrappedSymmetricKeyNonce;
+    public String email;
 
 }

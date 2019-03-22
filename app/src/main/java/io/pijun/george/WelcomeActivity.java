@@ -208,10 +208,11 @@ public class WelcomeActivity extends AppCompatActivity implements WelcomeViewHol
 
     @WorkerThread
     @Nullable
-    public User generateUser(@NonNull String username, @NonNull String password) {
+    private User generateUser(@NonNull String username, @NonNull String password, @Nullable String email) {
         L.i("generateUser");
         User u = new User();
         u.username = username;
+        u.email = email;
         KeyPair kp = new KeyPair();
         int result = Sodium.generateKeyPair(kp);
         if (result != 0) {
@@ -373,12 +374,15 @@ public class WelcomeActivity extends AppCompatActivity implements WelcomeViewHol
         }
 
         final Editable emailEditable = binding.regEmail.getText();
+        String emailTmp = null;
         if (emailEditable != null) {
-            String email = emailEditable.toString().trim();
-            if (!TextUtils.isEmpty(email)) {
-                if (!Utils.isValidEmail(email)) {
+            String txt = emailEditable.toString().trim();
+            if (!TextUtils.isEmpty(txt)) {
+                if (!Utils.isValidEmail(txt)) {
                     binding.regEmailContainer.setError(getString(R.string.invalid_address));
                     foundError = true;
+                } else {
+                    emailTmp = txt;
                 }
             }
         }
@@ -390,12 +394,13 @@ public class WelcomeActivity extends AppCompatActivity implements WelcomeViewHol
         // This will always result in storing the username, because a null username gets checked
         // for up above.
         String username = usernameText != null ? usernameText.toString() : "";
+        final String email = emailTmp;
 
         showProgressDialog(true);
         App.runInBackground(new WorkerRunnable() {
             @Override
             public void run() {
-                final User user = generateUser(username, password.toString());
+                final User user = generateUser(username, password.toString(), email);
                 if (user == null) {
                     showProgressDialog(false);
                     Utils.showAlert(WelcomeActivity.this, 0, R.string.unknown_user_generation_error_msg, getSupportFragmentManager());
