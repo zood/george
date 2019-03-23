@@ -5,6 +5,8 @@ import android.content.Context;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.firebase.iid.FirebaseInstanceId;
 import com.google.firebase.iid.InstanceIdResult;
+import com.squareup.picasso.Picasso;
+import com.squareup.picasso.PicassoTools;
 
 import java.io.IOException;
 import java.lang.ref.WeakReference;
@@ -319,6 +321,7 @@ public class AuthenticationManager {
                 App.runOnUiThread(new UiRunnable() {
                     @Override
                     public void run() {
+                        PicassoTools.clearCache(Picasso.with(App.getApp()));
                         if (completion != null) {
                             completion.onUserLoggedOut();
                         }
