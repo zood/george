@@ -16,7 +16,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 import androidx.annotation.NonNull;
 
 public class L {
-    private static final String TAG = "Pijun";
+    private static final String TAG = "ZoodLoc";
     private static volatile FileOutputStream sLogStream;
     private static final SimpleDateFormat sDateFormat = new SimpleDateFormat("MM-dd HH:mm:ss.SSS", Locale.US);
     static final String LOG_FILENAME = "logs.txt";

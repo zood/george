@@ -1,4 +1,4 @@
 <?xml version="1.0" encoding="utf-8"?>
 <paths xmlns:android="http://schemas.android.com/apk/res/android">
-    <external-path name="captured_images" path="Android/data/io.pijun.george/files/Pictures" />
+    <external-path name="captured_images" path="Android/data/xyz.zood.george/files/Pictures" />
 </paths>

@@ -268,7 +268,6 @@ public class LimitedShareService extends Service /* implements LocationListener 
 
         // copy the link to the user's clipboard
         String url = getUrl();
-        L.i("share url: " + url);
         ClipboardManager cm = (ClipboardManager) getSystemService(CLIPBOARD_SERVICE);
         if (cm != null) {
             ClipData clipData = ClipData.newRawUri("Pijun URL", Uri.parse(url));

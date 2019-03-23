@@ -77,7 +77,7 @@
 
         <!-- BEGIN PROVIDERS -->
         <provider
-            android:authorities="io.pijun.george.fileprovider"
+            android:authorities="xyz.zood.george.fileprovider"
             android:name="androidx.core.content.FileProvider"
             android:exported="false"
             android:grantUriPermissions="true">

@@ -203,7 +203,7 @@ public class SettingsFragment extends Fragment implements SettingsAdapter.Listen
             File storageDir = ctx.getExternalFilesDir(Environment.DIRECTORY_PICTURES);
             File imgFile = File.createTempFile(timeStamp, ".jpg", storageDir);
             imgCapturePath = imgFile.getAbsolutePath();
-            Uri photoUri  = FileProvider.getUriForFile(ctx, "io.pijun.george.fileprovider", imgFile);
+            Uri photoUri  = FileProvider.getUriForFile(ctx, "xyz.zood.george.fileprovider", imgFile);
             intent.putExtra(MediaStore.EXTRA_OUTPUT, photoUri);
             startActivityForResult(intent, REQUEST_IMAGE_CAPTURE);
         } catch (Throwable t) {
