@@ -95,7 +95,11 @@ public class BackupDatabaseJob extends JobService {
             return;
         }
 
-        EncryptedData encData = Sodium.symmetricKeyEncrypt(snapshot.toJson(), symmetricKey);
+        byte[] snapshotBytes = snapshot.toJson();
+        if (snapshotBytes == null) {
+            throw new RuntimeException("Snapshot data is null");
+        }
+        EncryptedData encData = Sodium.symmetricKeyEncrypt(snapshotBytes, symmetricKey);
         if (mShouldStop) {
             return;
         }

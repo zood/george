@@ -27,11 +27,11 @@ JNIEXPORT jint Java_io_pijun_george_Sodium_init(JNIEnv *env, jclass cls) {
 JNIEXPORT jbyteArray  JNICALL Java_io_pijun_george_Sodium_stretchPassword(
         JNIEnv *env, jclass cls, jint hashSizeBytes, jbyteArray password, jbyteArray salt, jint algId, jlong opsLimit, jlong memLimit) {
     if (password == NULL) {
-        __android_log_print(ANDROID_LOG_INFO, "Pijun", "stretchPassword: password is NULL. returning");
+        __android_log_print(ANDROID_LOG_INFO, "ZoodLoc", "stretchPassword: password is NULL. returning");
         return NULL;
     }
     if (salt == NULL) {
-        __android_log_print(ANDROID_LOG_INFO, "Pijun", "stretchPassword: salt is NULL. returning");
+        __android_log_print(ANDROID_LOG_INFO, "ZoodLoc", "stretchPassword: salt is NULL. returning");
         return NULL;
     }
 
@@ -49,8 +49,8 @@ JNIEXPORT jbyteArray  JNICALL Java_io_pijun_george_Sodium_stretchPassword(
     free(passwordUChar);
     free(saltUChar);
     if (result != 0) {
-        __android_log_print(ANDROID_LOG_INFO, "Pijun", "createHashFromPassword returned non-zero value: %d", result);
-        __android_log_print(ANDROID_LOG_INFO, "Pijun", "errno is: %d", errno);
+        __android_log_print(ANDROID_LOG_INFO, "ZoodLoc", "createHashFromPassword returned non-zero value: %d", result);
+        __android_log_print(ANDROID_LOG_INFO, "ZoodLoc", "errno is: %d", errno);
         return NULL;
     }
 
@@ -79,8 +79,8 @@ JNIEXPORT jint JNICALL Java_io_pijun_george_Sodium_generateKeyPair(
         return result;
     }
 
-    jbyteArray pubKeyArray = byteArray(env, pubKey, crypto_box_PUBLICKEYBYTES);
-    jbyteArray secKeyArray = byteArray(env, secKey, crypto_box_SECRETKEYBYTES);
+    jbyteArray pubKeyArray = byteArray(env, pubKey, sizeof pubKey);
+    jbyteArray secKeyArray = byteArray(env, secKey, sizeof secKey);
 
     jclass keyPairClass = (*env)->GetObjectClass(env, keyPair);
     jfieldID pubKeyId = (*env)->GetFieldID(env, keyPairClass, "publicKey", "[B");
@@ -100,7 +100,7 @@ JNIEXPORT jobject JNICALL Java_io_pijun_george_Sodium_symmetricKeyEncrypt(
     unsigned char* msgUChar = ucharArray(env, msg);
     unsigned char nonceUChar[crypto_secretbox_NONCEBYTES];
     unsigned char* keyUChar = ucharArray(env, key);
-    randombytes_buf(nonceUChar, crypto_secretbox_NONCEBYTES);
+    randombytes_buf(nonceUChar, sizeof nonceUChar);
     int result = crypto_secretbox_easy((unsigned char*)cipherText,
                                        msgUChar,
                                        msgLen,
@@ -132,7 +132,7 @@ JNIEXPORT jbyteArray JNICALL Java_io_pijun_george_Sodium_symmetricKeyDecrypt(
     JNIEnv *env, jclass cls, jbyteArray cipherText, jbyteArray nonce, jbyteArray key) {
     int msgLen = (*env)->GetArrayLength(env, cipherText) - crypto_secretbox_MACBYTES;
     if (msgLen < 1) {
-        __android_log_print(ANDROID_LOG_INFO, "Pijun", "symmetricKeyDecrypt: message is too short");
+        __android_log_print(ANDROID_LOG_INFO, "ZoodLoc", "symmetricKeyDecrypt: message is too short");
         return NULL;
     }
 
@@ -149,7 +149,7 @@ JNIEXPORT jbyteArray JNICALL Java_io_pijun_george_Sodium_symmetricKeyDecrypt(
     free(nonceUChar);
     free(keyUChar);
     if (result != 0) {
-        __android_log_print(ANDROID_LOG_INFO, "Pijun", "symmetricKeyDecrypt: non-zero result (%d)", result);
+        __android_log_print(ANDROID_LOG_INFO, "ZoodLoc", "symmetricKeyDecrypt: non-zero result (%d)", result);
         return NULL;
     }
 
@@ -164,7 +164,7 @@ JNIEXPORT jobject JNICALL Java_io_pijun_george_Sodium_publicKeyEncrypt(
     int cipherTextLen = crypto_box_MACBYTES + msgLen;
     unsigned char cipherText[cipherTextLen];
     unsigned char nonce[crypto_box_NONCEBYTES];
-    randombytes_buf(nonce, crypto_box_NONCEBYTES);
+    randombytes_buf(nonce, sizeof nonce);
     unsigned char* msgUChar = ucharArray(env, msg);
     unsigned char* rcvrKeyUChar = ucharArray(env, rcvrPubKey);
     unsigned char* sndrKeyUChar = ucharArray(env, sndrSecKey);
@@ -178,7 +178,7 @@ JNIEXPORT jobject JNICALL Java_io_pijun_george_Sodium_publicKeyEncrypt(
     free(rcvrKeyUChar);
     free(sndrKeyUChar);
     if (result != 0) {
-        __android_log_print(ANDROID_LOG_INFO, "Pijun", "publicKeyEncrypt: non-zero result (%d)", result);
+        __android_log_print(ANDROID_LOG_INFO, "ZoodLoc", "publicKeyEncrypt: non-zero result (%d)", result);
         return NULL;
     }
 
@@ -191,7 +191,7 @@ JNIEXPORT jobject JNICALL Java_io_pijun_george_Sodium_publicKeyEncrypt(
     (*env)->SetObjectField(env, skem, cipherTextFieldId, cipherTextByteArray);
 
     jfieldID nonceFieldId = (*env)->GetFieldID(env, skemCls, "nonce", "[B");
-    jbyteArray nonceByteArray = byteArray(env, nonce, crypto_box_NONCEBYTES);
+    jbyteArray nonceByteArray = byteArray(env, nonce, sizeof nonce);
     (*env)->SetObjectField(env, skem, nonceFieldId, nonceByteArray);
 
     return skem;
@@ -203,7 +203,7 @@ JNIEXPORT jbyteArray JNICALL Java_io_pijun_george_Sodium_publicKeyDecrypt(
     int cipherTextLen = (*env)->GetArrayLength(env, cipherText);
     int msgLen = cipherTextLen - crypto_box_MACBYTES;
     if (msgLen < 1) {
-        __android_log_print(ANDROID_LOG_INFO, "Pijun", "publicKeyDecrypt: message is too short");
+        __android_log_print(ANDROID_LOG_INFO, "ZoodLoc", "publicKeyDecrypt: message is too short");
         return NULL;
     }
     unsigned char msg[msgLen];
@@ -222,7 +222,7 @@ JNIEXPORT jbyteArray JNICALL Java_io_pijun_george_Sodium_publicKeyDecrypt(
     free(pubKeyUChar);
     free(secKeyUChar);
     if (result != 0) {
-        __android_log_print(ANDROID_LOG_INFO, "Pijun", "publicKeyDecrypt: non-zero result (%d)", result);
+        __android_log_print(ANDROID_LOG_INFO, "ZoodLoc", "publicKeyDecrypt: non-zero result (%d)", result);
         return NULL;
     }
 

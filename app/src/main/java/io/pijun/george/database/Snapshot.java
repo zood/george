@@ -1,11 +1,12 @@
 package io.pijun.george.database;
 
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+
 import java.io.ByteArrayInputStream;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
 
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
 import io.pijun.george.CloudLogger;
 import io.pijun.george.Constants;
 import io.pijun.george.api.OscarClient;
@@ -34,7 +35,6 @@ public class Snapshot {
     public int schemaVersion;
     public long timestamp;
 
-    @NonNull
     public byte[] toJson() {
         String s = OscarClient.sGson.toJson(this);
         return s.getBytes(Constants.utf8);
