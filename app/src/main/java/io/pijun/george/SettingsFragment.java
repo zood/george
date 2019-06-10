@@ -100,7 +100,7 @@ public class SettingsFragment extends Fragment implements SettingsAdapter.Listen
     public void onAboutAction() {
         PackageManager pkgMgr = requireContext().getPackageManager();
         try {
-            PackageInfo pi = pkgMgr.getPackageInfo("io.pijun.george", 0);
+            PackageInfo pi = pkgMgr.getPackageInfo("xyz.zood.george", 0);
             long versionCode;
             if (Build.VERSION.SDK_INT >= 28) {
                 versionCode = pi.getLongVersionCode();
