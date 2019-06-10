@@ -121,7 +121,7 @@
     <string name="background_data_restricted_msg">Background data for Zood Location was disabled, so it can\'t share your location while in the background. To fix this, go to \'Data usage\' then enable \'Background data\' in the app\'s settings.</string>
     <string name="ignore">Ignore</string>
     <string name="data_restricted">Data restricted</string>
-    <string name="zood_settings">Zood settings</string>
+    <string name="system_settings">System settings</string>
     <string name="unable_to_connect_to_zood_servers">Unable to connect to Zood servers</string>
     <string name="info">Info</string>
     <string name="unable_to_connect_msg">Zood Location is unable to connect to the Zood servers. Make sure your phone\'s internet connection is working then come back to the app. Zood will automatically try to reconnect.</string>

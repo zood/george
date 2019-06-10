@@ -2,10 +2,12 @@ package xyz.zood.george.notifier;
 
 import android.content.Intent;
 import android.net.Uri;
+import android.os.Build;
 import android.provider.Settings;
 import android.view.View;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.lifecycle.Lifecycle;
 import androidx.lifecycle.LifecycleObserver;
@@ -43,11 +45,12 @@ public class BackgroundDataRestrictionNotifier implements LifecycleObserver {
     private void onBannerItemClicked() {
         ZoodDialog dialog = ZoodDialog.newInstance(activity.getString(R.string.background_data_restricted_msg));
         dialog.setTitle(activity.getString(R.string.data_restricted));
-        dialog.setButton1(activity.getString(R.string.zood_settings), new View.OnClickListener() {
+        dialog.setButton1(activity.getString(R.string.system_settings), new View.OnClickListener() {
+            @RequiresApi(api = Build.VERSION_CODES.N)
             @Override
             public void onClick(View v) {
                 Intent i = new Intent();
-                i.setAction(Settings.ACTION_APPLICATION_DETAILS_SETTINGS);
+                i.setAction(Settings.ACTION_IGNORE_BACKGROUND_DATA_RESTRICTIONS_SETTINGS);
                 Uri uri = Uri.fromParts("package", activity.getPackageName(), null);
                 i.setData(uri);
                 activity.startActivity(i);

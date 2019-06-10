@@ -8,8 +8,8 @@ android {
         applicationId "xyz.zood.george"
         minSdkVersion 21
         targetSdkVersion 28
-        versionCode 27
-        versionName "0.27"
+        versionCode 28
+        versionName "0.28"
         multiDexEnabled true
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         resConfigs "en"
@@ -73,20 +73,20 @@ dependencies {
         exclude group: 'com.google.firebase', module: 'firebase-core'
     })
 
-    implementation 'com.squareup.retrofit2:retrofit:2.5.0'
-    implementation 'com.squareup.retrofit2:converter-gson:2.5.0'
+    implementation 'com.squareup.retrofit2:retrofit:2.6.0'
+    implementation 'com.squareup.retrofit2:converter-gson:2.6.0'
 
     // explicitly include okhttp in case retrofit's dependency doesn't get updated to the latest
-    implementation 'com.squareup.okhttp3:okhttp:3.12.1'
+    implementation 'com.squareup.okhttp3:okhttp:3.14.2'
 //    implementation 'com.squareup.okhttp3:logging-interceptor:3.12.1'
 
     implementation 'com.squareup.picasso:picasso:2.5.2'
 
     implementation 'com.theartofdev.edmodo:android-image-cropper:2.8.0'
 
-    androidTestImplementation 'androidx.test:runner:1.1.1'
-    androidTestImplementation 'androidx.test:rules:1.1.1'
-    androidTestImplementation 'androidx.test.ext:junit:1.1.0'
+    androidTestImplementation 'androidx.test:runner:1.2.0'
+    androidTestImplementation 'androidx.test:rules:1.2.0'
+    androidTestImplementation 'androidx.test.ext:junit:1.1.1'
 }
 
 apply plugin: 'com.google.gms.google-services'
