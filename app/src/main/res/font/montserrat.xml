@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<font-family
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <!--Bold-->
+    <font
+        android:fontStyle="normal"
+        android:fontWeight="700"
+        android:font="@font/montserrat_bold"
+        app:fontStyle="normal"
+        app:fontWeight="700"
+        app:font="@font/montserrat_bold" />
+
+    <!--Bold-->
+    <font
+        android:fontStyle="normal"
+        android:fontWeight="800"
+        android:font="@font/montserrat_extra_bold"
+        app:fontStyle="normal"
+        app:fontWeight="800"
+        app:font="@font/montserrat_extra_bold" />
+
+</font-family>

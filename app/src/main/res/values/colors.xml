@@ -9,11 +9,22 @@
     <color name="shade">#A0000000</color>
     <color name="error_circle_fill">#3032b6f4</color>
 
+    <color name="zood_blue_light">#8ddfff</color>
     <color name="zood_blue">#5cd1ff</color>
+    <color name="zood_blue_dark">#09a8e6</color>
+
     <color name="zood_blue_50">#805cd1ff</color>
+
+    <color name="zood_red_light">#ff5d58</color>
     <color name="zood_red">#e41c16</color>
+    <color name="zood_red_dark">#b80c06</color>
+
     <color name="zood_navy">#3c4466</color>
+
     <color name="zood_orange">#f6921e</color>
+
+    <color name="zood_green">#3cdd56</color>
+
     <color name="zood_canary">#ffe422</color>
     <color name="zood_grey">#46585e</color>
     <color name="zood_grey_50">#8046585e</color>

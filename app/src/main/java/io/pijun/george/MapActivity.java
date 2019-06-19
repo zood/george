@@ -48,6 +48,7 @@ import com.google.android.gms.maps.model.CameraPosition;
 import com.google.android.gms.maps.model.Circle;
 import com.google.android.gms.maps.model.CircleOptions;
 import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.MapStyleOptions;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 
@@ -315,12 +316,16 @@ public final class MapActivity extends AppCompatActivity implements OnMapReadyCa
 
     @Override
     @UiThread
-    public void onMapReady(GoogleMap mapboxMap) {
-        if (mapboxMap == null) {
+    public void onMapReady(GoogleMap googMap) {
+        if (googMap == null) {
             L.i("onMapReady has a null map arg");
             return;
         }
-        mGoogMap = mapboxMap;
+        mGoogMap = googMap;
+        boolean success = mGoogMap.setMapStyle(MapStyleOptions.loadRawResourceStyle(this, R.raw.map_style));
+        if (!success) {
+            L.w("Map style parsing failed");
+        }
         CameraPosition pos = Prefs.get(this).getCameraPosition();
         if (pos != null) {
             mGoogMap.moveCamera(CameraUpdateFactory.newCameraPosition(pos));
