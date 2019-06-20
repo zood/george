@@ -15,6 +15,13 @@ import android.text.StaticLayout;
 import android.text.TextPaint;
 import android.text.TextUtils;
 
+import androidx.annotation.AnyThread;
+import androidx.annotation.ColorInt;
+import androidx.annotation.DimenRes;
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.core.content.res.ResourcesCompat;
+
 import com.google.android.gms.maps.model.BitmapDescriptor;
 import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.squareup.picasso.Picasso;
@@ -22,15 +29,10 @@ import com.squareup.picasso.Picasso;
 import java.io.IOException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.Locale;
 
-import androidx.annotation.AnyThread;
-import androidx.annotation.ColorInt;
-import androidx.annotation.DimenRes;
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
-import androidx.core.content.res.ResourcesCompat;
-import xyz.zood.george.AvatarManager;
 import io.pijun.george.Constants;
+import xyz.zood.george.AvatarManager;
 import xyz.zood.george.R;
 
 /**
@@ -40,7 +42,7 @@ import xyz.zood.george.R;
  */
 public class AvatarRenderer {
 
-    private static Typeface poppinsBold;
+    private static Typeface montserratBold;
 
     private float diameter;
     private float radius;
@@ -51,6 +53,7 @@ public class AvatarRenderer {
     private BitmapShader shader;
     private final TextPaint textPaint;
     private int textWidth;
+    private float fontDescent;
     private String username;
 
     @AnyThread
@@ -62,10 +65,11 @@ public class AvatarRenderer {
         bgPaint.setStyle(Paint.Style.FILL);
         textPaint = new TextPaint();
         if (!isInEditMode) {  // I don't know why font resources can't be loaded in edit mode
-            if (poppinsBold == null) {
-                poppinsBold = ResourcesCompat.getFont(ctx, R.font.poppins_bold);
+            if (montserratBold == null) {
+                montserratBold = ResourcesCompat.getFont(ctx, R.font.montserrat_bold);
             }
-            textPaint.setTypeface(poppinsBold);
+            textPaint.setTypeface(montserratBold);
+            fontDescent = textPaint.getFontMetrics().descent;
         }
         textPaint.setAntiAlias(true);
 
@@ -85,7 +89,7 @@ public class AvatarRenderer {
             // no image, so draw the letter
             canvas.drawRoundRect(0, 0, diameter, diameter, radius, radius, bgPaint);
             canvas.save();
-            canvas.translate((diameter - textWidth)/2.0f, 0);
+            canvas.translate((diameter - textWidth)/2.0f, fontDescent*3);
             layout.draw(canvas);
             canvas.restore();
         } else {
@@ -147,19 +151,18 @@ public class AvatarRenderer {
     }
 
     private void recalculateDrawVariables() {
-        textPaint.setTextSize(diameter * 0.7f);
+        textPaint.setTextSize(diameter * 0.6f);
         if (!TextUtils.isEmpty(username)) {
             String txt = username.charAt(0) + "";
+            txt = txt.toUpperCase(Locale.US);
             textWidth = (int)textPaint.measureText(txt);
             if (Build.VERSION.SDK_INT >= 23) {
                 layout = StaticLayout.Builder.obtain(txt, 0, 1, textPaint, textWidth)
                         .setAlignment(Layout.Alignment.ALIGN_CENTER)
-                        .setLineSpacing(0, 1f)
-                        .setIncludePad(false)
+                        .setIncludePad(true)
                         .build();
             } else {
-                //noinspection deprecation
-                layout = new StaticLayout(txt, textPaint, textWidth, Layout.Alignment.ALIGN_CENTER, 1.0f, 0, false);
+                layout = new StaticLayout(txt, textPaint, textWidth, Layout.Alignment.ALIGN_CENTER, 0, 0, true);
             }
         } else {
             layout = null;
