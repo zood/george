@@ -6,6 +6,8 @@
     <dimen name="two">2dp</dimen>
     <dimen name="four">4dp</dimen>
     <dimen name="eight">8dp</dimen>
+    <dimen name="ten">10dp</dimen>
+    <dimen name="twelve">12dp</dimen>
     <dimen name="sixteen">16dp</dimen>
     <dimen name="twentyFour">24dp</dimen>
     <dimen name="twentyEight">28dp</dimen>

@@ -2,12 +2,12 @@
 <FrameLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     android:background="?android:attr/selectableItemBackground"
-    android:layout_width="56dp"
-    android:layout_height="72dp">
+    android:layout_width="52dp"
+    android:layout_height="64dp">
     <io.pijun.george.view.AvatarView
         android:id="@+id/avatar_image"
         android:elevation="6dp"
         android:layout_gravity="center"
-        android:layout_width="48dp"
-        android:layout_height="48dp" />
+        android:layout_width="40dp"
+        android:layout_height="40dp" />
 </FrameLayout>

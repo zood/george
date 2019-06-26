@@ -152,7 +152,7 @@
         <com.google.android.material.textfield.TextInputEditText
             android:id="@+id/si_username"
             style="@style/WelcomeEditText"
-            android:theme="@style/WelcomeTheme.EditText"
+            android:theme="@style/AppTheme.EditText"
             tools:text="foo"
             android:imeOptions="actionNext"
             android:layout_width="match_parent"
@@ -180,7 +180,7 @@
             android:id="@+id/si_password"
             style="@style/WelcomeEditText"
             android:imeOptions="actionGo"
-            android:theme="@style/WelcomeTheme.EditText"
+            android:theme="@style/AppTheme.EditText"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:hint="@string/password"
@@ -226,7 +226,7 @@
         <com.google.android.material.textfield.TextInputEditText
             android:id="@+id/reg_username"
             style="@style/WelcomeEditText"
-            android:theme="@style/WelcomeTheme.EditText"
+            android:theme="@style/AppTheme.EditText"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:hint="@string/username"
@@ -252,7 +252,7 @@
         <com.google.android.material.textfield.TextInputEditText
             android:id="@+id/reg_password"
             style="@style/WelcomeEditText"
-            android:theme="@style/WelcomeTheme.EditText"
+            android:theme="@style/AppTheme.EditText"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:imeOptions="actionNext"
@@ -275,7 +275,7 @@
         <com.google.android.material.textfield.TextInputEditText
             android:id="@+id/reg_email"
             style="@style/WelcomeEditText"
-            android:theme="@style/WelcomeTheme.EditText"
+            android:theme="@style/AppTheme.EditText"
             android:hint="@string/email_hint_msg"
             android:imeOptions="actionGo"
             android:inputType="textEmailAddress"

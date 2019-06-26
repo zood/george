@@ -94,7 +94,7 @@
     <string name="running">Running</string>
     <string name="in_the_car">In the car</string>
     <string name="walking">Walking</string>
-    <string name="unknown_password_hash_algorithm_msg">The password hash algorithm on your account isn\'t one this version of Zood Location knows about. Make sure you have the latest version, then try again.</string>
+    <string name="unknown_password_hash_algorithm_msg">The password hash algorithm on your account isn\'t one this version of Zood\u00A0Location knows about. Make sure you have the latest version, then try again.</string>
     <string name="show_public_key">Show public key</string>
     <string name="your_public_key">Your public key</string>
     <string name="the_privacy_company">The privacy company</string>
@@ -118,13 +118,13 @@
     <string name="location_permission_reason_msg">Zood uses your location to show your position on the map, and to securely share it with friends that you\'ve authorized. It\'s never used for any other purpose.</string>
     <string name="background_data_is_restricted">Background data is restricted</string>
     <string name="fix">Fix</string>
-    <string name="background_data_restricted_msg">Background data for Zood Location was disabled, so it can\'t share your location while in the background. To fix this, go to \'Data usage\' then enable \'Background data\' in the app\'s settings.</string>
+    <string name="background_data_restricted_msg">Background data for Zood\u00A0Location was disabled, so it can\'t share your location while in the background. To fix this, go to \'Data usage\' then enable \'Background data\' in the app\'s settings.</string>
     <string name="ignore">Ignore</string>
     <string name="data_restricted">Data restricted</string>
     <string name="system_settings">System settings</string>
     <string name="unable_to_connect_to_zood_servers">Unable to connect to Zood servers</string>
     <string name="info">Info</string>
-    <string name="unable_to_connect_msg">Zood Location is unable to connect to the Zood servers. Make sure your phone\'s internet connection is working then come back to the app. Zood will automatically try to reconnect.</string>
+    <string name="unable_to_connect_msg">Zood\u00A0Location is unable to connect to the Zood servers. Make sure your phone\'s internet connection is working then come back to the app. Zood will automatically try to reconnect.</string>
     <string name="screamer_channel_description_msg">Used to play a sound when you\'re looking for your phone.</string>
     <string name="find_my_phone">Find my phone</string>
     <string name="screamer_notification_msg">Of course! This is where you left your phone. ;-)</string>
@@ -139,9 +139,14 @@
     <string name="zood">Zood</string>
     <string name="safety_number_instructions_msg">If you wish to verify the security of your encryption with %s, compare the number below with the number on their device.</string>
     <string name="verify_safety_number">Verify safety number</string>
-    <string name="share_safety_number_msg">Our Zood Location safety number:\n%s</string>
+    <string name="share_safety_number_msg">Our Zood\u00A0Location safety number:\n%s</string>
     <string name="share_safety_number_via_ellipsis">Share safety number via…</string>
     <string name="back">Back</string>
     <string name="app_version_msg">Version %s (build %d)</string>
     <string name="tap_to_change_avatar">Tap to change avatar</string>
+    <string name="timed_sharing">Timed sharing</string>
+    <string name="timed_share_subtitle_msg">Temporarily share your location with someone that doesn\'t have Zood\u00A0Location by sending them a link.</string>
+    <string name="copy_link">Copy link</string>
+    <string name="share_link">Share link</string>
+    <string name="close">close</string>
 </resources>

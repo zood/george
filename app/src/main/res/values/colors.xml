@@ -29,6 +29,14 @@
     <color name="zood_grey">#46585e</color>
     <color name="zood_grey_50">#8046585e</color>
 
+    <color name="black">#000000</color>
+    <color name="black_80">#333333</color>
+    <color name="black_60">#666666</color>
+    <color name="black_40">#999999</color>
+    <color name="black_20">#cccccc</color>
+    <color name="black_10">#e5e5e5</color>
+    <color name="black_05">#f2f2f2</color>
+
     <color name="settings_item_title">#252525</color>
     <color name="settings_item_subtitle">#727272</color>
 </resources>

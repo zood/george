@@ -24,7 +24,7 @@
         <activity
             android:name="io.pijun.george.MapActivity"
             android:screenOrientation="portrait"
-            android:theme="@style/MapTheme">
+            android:theme="@style/AppTheme">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
@@ -34,7 +34,7 @@
             android:name="io.pijun.george.WelcomeActivity"
             android:screenOrientation="portrait"
             android:windowSoftInputMode="adjustResize|stateHidden"
-            android:theme="@style/WelcomeTheme" />
+            android:theme="@style/AppTheme" />
         <activity
             android:name="io.pijun.george.LogActivity"
             android:windowSoftInputMode="adjustResize"

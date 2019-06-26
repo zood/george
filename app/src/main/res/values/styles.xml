@@ -4,30 +4,17 @@
         <item name="colorPrimary">@color/colorPrimary</item>
         <item name="colorPrimaryDark">@color/colorPrimaryDark</item>
         <item name="colorAccent">@color/colorAccent</item>
-    </style>
 
-    <style name="MapTheme" parent="Theme.MaterialComponents.Light.NoActionBar">
-        <item name="colorPrimary">@color/colorPrimary</item>
-        <item name="colorPrimaryDark">@color/colorPrimaryDark</item>
-        <item name="colorAccent">@color/colorAccent</item>
-        <!--<item name="android:statusBarColor">#33000000</item>-->
-    </style>
 
-    <style name="WelcomeTheme" parent="Theme.MaterialComponents.Light.NoActionBar">
-        <item name="colorPrimary">@color/colorPrimary</item>
-        <item name="colorPrimaryDark">@color/colorPrimaryDark</item>
-        <item name="colorAccent">@color/colorAccent</item>
-    </style>
-
-    <style name="AlertDialogTheme" parent="Theme.MaterialComponents.Light.Dialog.Alert">
-        <!--<item name="colorPrimary">@color/colorPrimary</item>-->
-        <!--<item name="colorPrimaryDark">@color/colorPrimaryDark</item>-->
-        <!--<item name="colorAccent">@color/colorAccent</item>-->
-    </style>
-
-    <style name="ToolbarTheme">
-        <item name="android:textColor">@android:color/white</item>
-        <!--<item name="android:titleTextColor">@android:color/white</item>-->
+        <!--Typography-->
+        <item name="textAppearanceHeadline4">@style/Zood.Headline4</item>
+        <item name="textAppearanceHeadline5">@style/Zood.Headline5</item>
+        <item name="textAppearanceHeadline6">@style/Zood.Headline6</item>
+        <item name="textAppearanceBody1">@style/Zood.Body1</item>
+        <item name="textAppearanceBody2">@style/Zood.Body2</item>
+        <item name="textAppearanceButton">@style/Zood.Button</item>
+        <item name="textAppearanceCaption">@style/Zood.Caption</item>
+        <item name="textAppearanceOverline">@style/Zood.Overline</item>
     </style>
 
     <style name="WelcomeEditText" parent="Widget.Design.TextInputLayout">
@@ -41,11 +28,12 @@
         <item name="android:textColor">@color/welcome_edittext_text</item>
     </style>
 
-    <style name="WelcomeTheme.EditText">
+    <style name="AppTheme.EditText">
         <item name="android:colorControlNormal">@color/welcome_edittext_text</item>
         <item name="android:colorControlActivated">@color/welcome_edittext_text</item>
         <item name="android:colorControlHighlight">@color/welcome_edittext_text</item>
         <item name="android:fontFamily">@font/poppins_regular</item>
     </style>
+
 
 </resources>

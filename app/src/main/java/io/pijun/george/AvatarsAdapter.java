@@ -91,7 +91,7 @@ class AvatarsAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
         if (holder instanceof AvatarViewHolder) {
             AvatarViewHolder h = (AvatarViewHolder) holder;
             Resources rsrcs = h.avatar.getResources();
-            int imgSize = rsrcs.getDimensionPixelSize(R.dimen.fortyEight);
+            int imgSize = rsrcs.getDimensionPixelSize(R.dimen.forty);
             Context ctx = h.avatar.getContext();
             FriendRecord friend = mFriends.get(position);
             h.avatar.setUsername(friend.user.username);
