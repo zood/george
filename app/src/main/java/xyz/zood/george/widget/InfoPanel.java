@@ -48,7 +48,7 @@ public class InfoPanel {
     private FriendRecord currFriend;
     private FriendLocation currLoc;
     // Needs to be incremented in show() and hide() because both methods can cause a change of the
-    // friend and it's location object
+    // friend and its location object
     private long showId = 1;
 
     // Views
@@ -74,7 +74,7 @@ public class InfoPanel {
         panel.setOutlineProvider(new ViewOutlineProvider() {
             @Override
             public void getOutline(View view, Outline outline) {
-                outline.setRoundRect(0, 0, view.getWidth(), view.getHeight(), activity.getResources().getDimension(R.dimen.eight));
+                outline.setRoundRect(0, 0, view.getWidth(), view.getHeight(), view.getContext().getResources().getDimension(R.dimen.eight));
             }
         });
 

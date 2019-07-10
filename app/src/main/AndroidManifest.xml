@@ -24,6 +24,7 @@
         <activity
             android:name="io.pijun.george.MapActivity"
             android:screenOrientation="portrait"
+            android:launchMode="singleInstance"
             android:theme="@style/AppTheme">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -58,7 +59,7 @@
                 <action android:name="com.google.firebase.MESSAGING_EVENT" />
             </intent-filter>
         </service>
-        <service android:name="io.pijun.george.service.LimitedShareService" />
+        <service android:name="io.pijun.george.service.TimedShareService" />
         <service android:name="io.pijun.george.service.LocationJobService" android:permission="android.permission.BIND_JOB_SERVICE" />
         <service android:name="io.pijun.george.service.BackupDatabaseJob" android:permission="android.permission.BIND_JOB_SERVICE" />
         <service android:name="io.pijun.george.service.PositionService" />

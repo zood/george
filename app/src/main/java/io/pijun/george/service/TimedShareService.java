@@ -5,13 +5,10 @@ import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.Service;
-import android.content.ClipData;
-import android.content.ClipboardManager;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.location.Location;
-import android.net.Uri;
 import android.os.Build;
 import android.os.Handler;
 import android.os.HandlerThread;
@@ -20,14 +17,6 @@ import android.os.Looper;
 import android.text.format.DateUtils;
 import android.widget.Toast;
 
-import com.google.android.gms.location.FusedLocationProviderClient;
-import com.google.android.gms.location.LocationCallback;
-import com.google.android.gms.location.LocationRequest;
-import com.google.android.gms.location.LocationResult;
-import com.google.android.gms.location.LocationServices;
-
-import java.security.SecureRandom;
-
 import androidx.annotation.AnyThread;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -35,27 +24,40 @@ import androidx.annotation.UiThread;
 import androidx.annotation.WorkerThread;
 import androidx.core.app.NotificationCompat;
 import androidx.core.content.ContextCompat;
+
+import com.google.android.gms.location.FusedLocationProviderClient;
+import com.google.android.gms.location.LocationCallback;
+import com.google.android.gms.location.LocationRequest;
+import com.google.android.gms.location.LocationResult;
+import com.google.android.gms.location.LocationServices;
+
+import java.lang.ref.WeakReference;
+import java.security.SecureRandom;
+import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.Future;
+
 import io.pijun.george.App;
 import io.pijun.george.CloudLogger;
 import io.pijun.george.Constants;
 import io.pijun.george.Hex;
 import io.pijun.george.L;
 import io.pijun.george.LocationUtils;
+import io.pijun.george.MapActivity;
 import io.pijun.george.Prefs;
 import io.pijun.george.Sodium;
+import io.pijun.george.UiRunnable;
 import io.pijun.george.WorkerRunnable;
 import io.pijun.george.crypto.KeyPair;
 import io.pijun.george.database.DB;
 import xyz.zood.george.R;
 
-public class LimitedShareService extends Service /* implements LocationListener */ {
+public class TimedShareService extends Service {
 
     private static final String ARG_SERVICE_ACTION = "service_action";
     private static final int NOTIFICATION_ID = 22;  // arbitrary number
     public static final String ACTION_START = "start";
-    public static final String ACTION_END = "end";
     public static final String ACTION_COPY_LINK = "copy_link";
-    public static final String LIMITED_SHARE_CHANNEL_ID = "limited_share_01";
+    public static final String TIMED_SHARE_CHANNEL_ID = "limited_share_01";
     /**
      * IsRunning is checked by LocationUtils. In the event that the process is cleaned
      * up without notice, the record of this limited share would still exist in the database
@@ -64,20 +66,36 @@ public class LimitedShareService extends Service /* implements LocationListener 
      * and if it's not, it will wipe the limited share data from the db.
      */
     public static volatile boolean IsRunning = false;
+    private long startTime = 0;
+    private long shareDuration = 0;
 
-    private boolean mIsStarted = false;
+    private boolean isStarted = false;
     private KeyPair mKeyPair;
     private byte[] mSendingBoxId;
     private FusedLocationProviderClient mLocationProviderClient;
+    private static final CopyOnWriteArrayList<WeakReference<Listener>> listeners = new CopyOnWriteArrayList<>();
+    private Future<?> stopTask;
 
     private static final Looper sServiceLooper;
     private static final Handler sServiceHandler;
     static {
-        HandlerThread thread = new HandlerThread("LimitedShareService");
+        HandlerThread thread = new HandlerThread("TimedShareService");
         thread.start();
 
         sServiceLooper = thread.getLooper();
         sServiceHandler = new Handler(sServiceLooper);
+    }
+
+    /*
+    Service binding is an unreliable mess. Just make this a global. It greatly
+    simplifies the ViewModel and TimedShareFragment.
+     */
+    private static volatile TimedShareService singleton = null;
+
+    @Nullable
+    @AnyThread
+    public static TimedShareService get() {
+        return singleton;
     }
 
     @AnyThread
@@ -88,7 +106,6 @@ public class LimitedShareService extends Service /* implements LocationListener 
 
         switch (action) {
             case ACTION_START:
-            case ACTION_END:
             case ACTION_COPY_LINK:
                 return true;
             default:
@@ -102,7 +119,7 @@ public class LimitedShareService extends Service /* implements LocationListener 
         if (!isValidServiceAction(action)) {
             throw new IllegalArgumentException("Invalid service action");
         }
-        Intent i = new Intent(context, LimitedShareService.class);
+        Intent i = new Intent(context, TimedShareService.class);
         i.putExtra(ARG_SERVICE_ACTION, action);
 
         return i;
@@ -116,48 +133,57 @@ public class LimitedShareService extends Service /* implements LocationListener 
     }
 
     @Override
+    public void onCreate() {
+        super.onCreate();
+
+        singleton = this;
+    }
+
+    @Override
     @UiThread
     public void onDestroy() {
-        L.i("LSS.onDestroy");
-        IsRunning = false;
-        stopLimitedShare(false);
+        if (isStarted) {
+            shutdown();
+        }
+        TimedShareService.singleton = null;
+
+        super.onDestroy();
     }
 
     @Override
     @UiThread
     public int onStartCommand(Intent intent, int flags, int startId) {
-        L.i("LSS.onStartCommand {Intent: " + intent + ", extras:" + intent.getExtras() + ", flags: " + flags + ", startId: " + startId + "}");
         String action = intent.getStringExtra(ARG_SERVICE_ACTION);
         if (action == null) {
             throw new IllegalArgumentException("You must provide a service action");
         }
 
-        switch (action) {
-            case ACTION_START:
-                if (!mIsStarted) {
-                    mIsStarted = true;
-                    sServiceHandler.post(new WorkerRunnable() {
-                        @Override
-                        public void run() {
-                            startLimitedShare();
-                        }
-                    });
+        if (!isStarted) {
+            isStarted = true;
+            sServiceHandler.post(new WorkerRunnable() {
+                @Override
+                public void run() {
+                    startLimitedShare();
                 }
-                break;
-            case ACTION_COPY_LINK:
-                shareLink();
-                break;
-            case ACTION_END:
-                stopLimitedShare(true);
-                break;
+            });
         }
-        L.i("  service_action: " + action);
+
         return START_NOT_STICKY;
     }
 
     @AnyThread
+    public long getShareDuration() {
+        return shareDuration;
+    }
+
+    @AnyThread
+    public long getStartTime() {
+        return startTime;
+    }
+
+    @AnyThread
     @NonNull
-    private String getUrl() {
+    public String getUrl() {
         // k = the secret key created for this limited share
         // b = the drop box id locations will be dropped into/picked up from
         // i = id of the user sharing their location
@@ -180,14 +206,35 @@ public class LimitedShareService extends Service /* implements LocationListener 
     }
 
     @AnyThread
+    public boolean isRunning() {
+        return isStarted;
+    }
+
+    private void scheduleStopTask() {
+        // Copy the task into another pointer, to avoid the race conditoin
+        // with the null check.
+        Future<?> task = stopTask;
+        if (task != null) {
+            task.cancel(true);
+        }
+        stopTask = null;
+        stopTask = App.runOnUiThreadCancellable(shareDuration, new UiRunnable() {
+            @Override
+            public void run() {
+                stopTask = null;
+                stopSelf();
+            }
+        });
+    }
+
+    @AnyThread
     private void showNotification() {
         // if we're on Android O, we need to create the notification channel
         if (Build.VERSION.SDK_INT >= 26) {
             NotificationManager mgr = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
             if (mgr != null) {
-                String name = getString(R.string.location_broadcast);
-                NotificationChannel channel = new NotificationChannel(
-                        LIMITED_SHARE_CHANNEL_ID,
+                String name = getString(R.string.timed_share);
+                NotificationChannel channel = new NotificationChannel(TIMED_SHARE_CHANNEL_ID,
                         name,
                         NotificationManager.IMPORTANCE_LOW);
                 channel.setDescription("Used only for the location broadcast notification.");
@@ -195,54 +242,40 @@ public class LimitedShareService extends Service /* implements LocationListener 
             }
         }
 
-        NotificationCompat.Builder bldr = new NotificationCompat.Builder(this, LIMITED_SHARE_CHANNEL_ID);
+        NotificationCompat.Builder bldr = new NotificationCompat.Builder(this, TIMED_SHARE_CHANNEL_ID);
         bldr.setSmallIcon(R.drawable.status_icon);
-        bldr.setContentTitle("Location broadcast is on");
-        bldr.setContentText("Share the link to let others view your location");
+        bldr.setContentTitle("Timed share is running");
+        bldr.setPriority(NotificationCompat.PRIORITY_MIN);
         int reqCode = (int) (System.currentTimeMillis() % 10000);
-        PendingIntent shareIntent = PendingIntent.getService(
-                this,
+        PendingIntent openIntent = PendingIntent.getActivity(this,
                 reqCode,
-                LimitedShareService.newIntent(this, LimitedShareService.ACTION_COPY_LINK),
+                MapActivity.newIntent(this),
                 PendingIntent.FLAG_UPDATE_CURRENT);
-        bldr.addAction(R.drawable.ic_content_copy_black_24px, "Share link", shareIntent);
-        PendingIntent stopIntent = PendingIntent.getService(
-                this,
-                reqCode + 1,
-                LimitedShareService.newIntent(this, LimitedShareService.ACTION_END),
-                PendingIntent.FLAG_UPDATE_CURRENT);
-        bldr.addAction(R.drawable.ic_clear_black_24px, "Stop broadcasting", stopIntent);
+        bldr.setContentIntent(openIntent);
 
         startForeground(NOTIFICATION_ID, bldr.build());
-    }
-
-    @AnyThread
-    private void shareLink() {
-        Intent sendIntent = new Intent();
-        sendIntent.setAction(Intent.ACTION_SEND);
-        sendIntent.putExtra(Intent.EXTRA_TITLE, "Track location");
-        sendIntent.putExtra(Intent.EXTRA_TEXT, getUrl());
-        sendIntent.setType("text/plain");
-        startActivity(Intent.createChooser(sendIntent, "Send to"));
     }
 
     @WorkerThread
     private void startLimitedShare() {
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-            // should never happen
             Toast.makeText(this, "Need location permission", Toast.LENGTH_SHORT).show();
             stopSelf();
             return;
         }
 
+        startTime = System.currentTimeMillis();
+        // 30 minutes + 30 seconds. The 30 seconds is so the countdown timer shows
+        // 30m for at least a little while. It looks weird to start with '29m'.
+        shareDuration = 30 * 60 * 1000 + (30 * 1000);
+//        shareDuration = 16000;
         App.isLimitedShareRunning = true;
         showNotification();
         // create a user
         mKeyPair = new KeyPair();
         int result = Sodium.generateKeyPair(mKeyPair);
         if (result != 0) {
-            L.w("Error generating a keypair for limited sharing: " + result);
-            // TODO: handle this
+            CloudLogger.log("TimedShareService failed to generate a keypair - result: " + result);
             return;
         }
         mSendingBoxId = new byte[Constants.DROP_BOX_ID_LENGTH];
@@ -254,11 +287,13 @@ public class LimitedShareService extends Service /* implements LocationListener 
         } catch (DB.DBException dbe) {
             L.e("Unable to add limited share to db", dbe);
             CloudLogger.log(dbe);
-            // TODO: handle this
             return;
         }
 
-        LimitedShareService.IsRunning = true;
+        TimedShareService.IsRunning = true;
+        isStarted = true;
+
+        notifyShareStarted(startTime, shareDuration);
 
         mLocationProviderClient = LocationServices.getFusedLocationProviderClient(this);
         LocationRequest request = LocationRequest.create();
@@ -266,42 +301,58 @@ public class LimitedShareService extends Service /* implements LocationListener 
         request.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
         mLocationProviderClient.requestLocationUpdates(request, mLocationCallbackHelper, sServiceLooper);
 
-        // copy the link to the user's clipboard
-        String url = getUrl();
-        ClipboardManager cm = (ClipboardManager) getSystemService(CLIPBOARD_SERVICE);
-        if (cm != null) {
-            ClipData clipData = ClipData.newRawUri("Pijun URL", Uri.parse(url));
-            cm.setPrimaryClip(clipData);
-            // create a toast to let the user know it's done
-            Toast.makeText(this, "Link copied to clipboard", Toast.LENGTH_SHORT).show();
-        }
+        // schedule a runnable to shut us down
+        scheduleStopTask();
     }
 
-    @AnyThread
-    private void stopLimitedShare(boolean userStopped) {
+    @UiThread
+    private void shutdown() {
+        isStarted = false;
+        if (stopTask != null) {
+            stopTask.cancel(true);
+            stopTask = null;
+        }
+
+        startTime = 0;
+        shareDuration = 0;
         App.isLimitedShareRunning = false;
         stopForeground(true);
 
         mLocationProviderClient.removeLocationUpdates(mLocationCallbackHelper);
-
         App.runInBackground(new WorkerRunnable() {
             @Override
             public void run() {
                 DB.get().deleteLimitedShares();
             }
         });
-        LimitedShareService.IsRunning = false;
 
-        if (userStopped) {
-            stopSelf();
+        TimedShareService.IsRunning = false;
+        notifyShareFinished();
+    }
+
+    /**
+     * Change the duration of the timed share.
+     * @param duration The new duration.
+     */
+    @UiThread
+    public void updateDuration(long duration) {
+        if (!isStarted) {
+            return;
         }
+
+        if (duration <= 0) {
+            stopSelf();
+            return;
+        }
+        shareDuration = duration;
+        notifyDurationChanged(shareDuration);
+        scheduleStopTask();
     }
 
     private final LocationCallback mLocationCallbackHelper = new LocationCallback() {
         @Override
         @WorkerThread
         public void onLocationResult(LocationResult result) {
-            L.i("LSS.onLocationChanged");
             Location location = result.getLastLocation();
             if (location == null) {
                 return;
@@ -310,4 +361,81 @@ public class LimitedShareService extends Service /* implements LocationListener 
             LocationUtils.upload(location);
         }
     };
+
+    //region Listener
+
+    public interface Listener {
+        @WorkerThread default void onTimedShareStarted(long startTime, long duration) {}
+        @WorkerThread default void onTimedShareFinished() {}
+        @WorkerThread default void onTimedShareDurationChanged(long duration) {}
+    }
+
+    @AnyThread
+    public static void addListener(@NonNull Listener listener) {
+        WeakReference<Listener> ref = new WeakReference<>(listener);
+        listeners.add(ref);
+    }
+
+    private void notifyDurationChanged(long duration) {
+        App.runInBackground(new WorkerRunnable() {
+            @Override
+            public void run() {
+                for (WeakReference<Listener> ref : listeners) {
+                    Listener l = ref.get();
+                    if (l == null) {
+                        continue;
+                    }
+                    l.onTimedShareDurationChanged(duration);
+                }
+            }
+        });
+    }
+
+    @AnyThread
+    private void notifyShareFinished() {
+        App.runInBackground(new WorkerRunnable() {
+            @Override
+            public void run() {
+                for (WeakReference<Listener> ref : listeners) {
+                    Listener l = ref.get();
+                    if (l == null) {
+                        continue;
+                    }
+                    l.onTimedShareFinished();
+                }
+            }
+        });
+    }
+
+    @AnyThread
+    private void notifyShareStarted(long startTime, long duration) {
+        App.runInBackground(new WorkerRunnable() {
+            @Override
+            public void run() {
+                for (WeakReference<Listener> ref : listeners) {
+                    Listener l = ref.get();
+                    if (l == null) {
+                        continue;
+                    }
+                    l.onTimedShareStarted(startTime, duration);
+                }
+            }
+        });
+    }
+
+    @AnyThread
+    public static void removeListener(@NonNull Listener listener) {
+        int i=0;
+        while (i<listeners.size()) {
+            WeakReference<Listener> ref = listeners.get(i);
+            Listener l = ref.get();
+            if (l == null || l == listener) {
+                listeners.remove(i);
+                continue;
+            }
+            i++;
+        }
+    }
+
+    //endregion
 }

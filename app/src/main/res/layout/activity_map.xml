@@ -27,7 +27,7 @@
             android:elevation="0dp"
             android:outlineProvider="bounds"
             android:transformPivotX="0px"
-            app:layout_constraintBottom_toTopOf="@+id/avatars"
+            app:layout_constraintBottom_toTopOf="@+id/friends_bar_fragment"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintHorizontal_bias="1.0"
             app:layout_constraintStart_toStartOf="parent"
@@ -48,7 +48,7 @@
             android:paddingBottom="12dp"
             android:translationX="-400dp"
             tools:translationX="0dp"
-            app:layout_constraintBottom_toTopOf="@id/avatars"
+            app:layout_constraintBottom_toTopOf="@id/friends_bar_fragment"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             tools:visibility="visible">
@@ -206,12 +206,27 @@
         </androidx.constraintlayout.widget.ConstraintLayout>
 
         <com.google.android.material.floatingactionbutton.FloatingActionButton
+            android:id="@+id/settings"
+            android:onClick="onShowSettings"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_margin="16dp"
+            android:src="@drawable/ic_settings"
+            android:backgroundTint="@color/fab_background"
+            android:tint="@color/black_60"
+            android:transformPivotX="0px"
+            app:borderWidth="0dp"
+            android:elevation="4dp"
+            app:fabSize="normal"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/banners" />
+
+        <com.google.android.material.floatingactionbutton.FloatingActionButton
             android:id="@+id/my_location_fab"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="24dp"
-            android:layout_marginEnd="24dp"
-            android:backgroundTint="@color/my_location_fab_background"
+            android:layout_margin="16dp"
+            android:backgroundTint="@color/fab_background"
             android:src="@drawable/ic_my_location_black_24dp"
             android:tint="@color/my_location_fab_tint"
             android:transformPivotX="0px"
@@ -219,69 +234,37 @@
             app:elevation="4dp"
             app:fabSize="normal"
             app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/banners"
+            app:layout_constraintTop_toBottomOf="@+id/settings"
             tools:layout_editor_absoluteX="280dp" />
 
-        <xyz.zood.george.widget.RadialMenuButton
-            android:id="@+id/radial_limited_share"
+        <com.google.android.material.floatingactionbutton.FloatingActionButton
+            android:id="@+id/timed_share_fab"
             android:src="@drawable/ic_sharp_timer_24dp"
-            android:tint="@color/zood_blue"
-            android:background="@drawable/radial_button_background"
-            android:onClick="onStartLimitedShareAction"
-            android:scaleType="center"
-            android:elevation="0dp"
-            app:layout_constraintEnd_toEndOf="@id/radial_primary"
-            app:layout_constraintBottom_toBottomOf="@id/radial_primary"
-            android:layout_width="@dimen/radial_button"
-            android:layout_height="@dimen/radial_button" />
 
-        <xyz.zood.george.widget.RadialMenuButton
-            android:id="@+id/radial_add_friend"
-            android:src="@drawable/ic_sharp_person_add_24dp"
-            android:tint="@color/zood_blue"
-            android:background="@drawable/radial_button_background"
-            android:onClick="showAddFriendDialog"
-            android:scaleType="center"
-            android:elevation="0dp"
-            app:layout_constraintEnd_toEndOf="@id/radial_primary"
-            app:layout_constraintBottom_toBottomOf="@id/radial_primary"
-            android:layout_width="@dimen/radial_button"
-            android:layout_height="@dimen/radial_button"/>
-
-        <xyz.zood.george.widget.RadialMenuButton
-            android:id="@+id/radial_settings"
-            android:src="@drawable/ic_sharp_settings_24dp"
-            android:tint="@color/zood_blue"
-            android:background="@drawable/radial_button_background"
-            android:scaleType="center"
-            android:elevation="0dp"
-            android:onClick="onShowSettings"
-            app:layout_constraintEnd_toEndOf="@id/radial_primary"
-            app:layout_constraintBottom_toBottomOf="@id/radial_primary"
-            android:layout_width="@dimen/radial_button"
-            android:layout_height="@dimen/radial_button" />
-
-        <xyz.zood.george.widget.RadialMenuButton
-            android:id="@+id/radial_primary"
-            android:background="@drawable/radial_button_background"
-            android:src="@drawable/ic_sharp_more_vert_24dp"
-            android:tint="@color/zood_blue"
-            android:scaleType="center"
-            android:translationZ="4dp"
-            android:layout_margin="24dp"
+            android:backgroundTint="@color/fab_background"
+            app:fabSize="normal"
+            app:elevation="4dp"
             app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintBottom_toTopOf="@id/avatars"
-            android:layout_width="@dimen/radial_button"
-            android:layout_height="@dimen/radial_button" />
+            app:layout_constraintBottom_toTopOf="@id/friends_bar_fragment"
+            android:layout_margin="16dp"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content" />
 
-        <androidx.recyclerview.widget.RecyclerView
-            android:id="@+id/avatars"
+        <fragment
+            android:id="@+id/timed_share_fragment"
+            android:name="xyz.zood.george.TimedShareFragment"
+            app:layout_constraintTop_toTopOf="@id/friends_bar_fragment"
             android:layout_width="match_parent"
-            android:layout_height="64dp"
-            android:background="@android:color/white"
+            android:layout_height="wrap_content" />
+
+        <fragment
+            android:id="@+id/friends_bar_fragment"
+            android:name="xyz.zood.george.FriendBarFragment"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent" />
+            app:layout_constraintStart_toStartOf="parent"
+            android:layout_width="match_parent"
+            android:layout_height="64dp" />
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 </layout>

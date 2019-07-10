@@ -21,18 +21,18 @@ import io.pijun.george.view.AvatarView;
 import xyz.zood.george.AvatarManager;
 import xyz.zood.george.R;
 
-class AvatarsAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
+public class FriendsBarAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
 
     private ArrayList<FriendRecord> mFriends = new ArrayList<>();
     @NonNull
     private final Listener listener;
 
-    AvatarsAdapter(@NonNull Listener l) {
+    public FriendsBarAdapter(@NonNull Listener l) {
         this.listener = l;
     }
 
     @AnyThread
-    void addFriend(final FriendRecord friend) {
+    public void addFriend(final FriendRecord friend) {
         App.runOnUiThread(new UiRunnable() {
             @Override
             public void run() {
@@ -69,7 +69,7 @@ class AvatarsAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
     }
 
     @UiThread
-    void onAvatarUpdated(@Nullable String username) {
+    public void onAvatarUpdated(@Nullable String username) {
         L.i("AvatarsAdapter.onAvatarUpdated");
         if (username == null) {
             return;
@@ -114,7 +114,7 @@ class AvatarsAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
             final AvatarViewHolder h = new AvatarViewHolder(view);
             h.itemView.setOnClickListener(v -> {
                 FriendRecord friend = mFriends.get(h.getAdapterPosition());
-                listener.onAvatarSelected(friend);
+                listener.onFriendSelected(friend);
             });
             return h;
         }
@@ -123,7 +123,7 @@ class AvatarsAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
     }
 
     @UiThread
-    void removeFriend(long friendId) {
+    public void removeFriend(long friendId) {
         for (int i=0; i<mFriends.size(); i++) {
             FriendRecord friend = mFriends.get(i);
             if (friend.id == friendId) {
@@ -135,7 +135,7 @@ class AvatarsAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
     }
 
     @AnyThread
-    void setFriends(final ArrayList<FriendRecord> friends) {
+    public void setFriends(final ArrayList<FriendRecord> friends) {
         App.runOnUiThread(new UiRunnable() {
             @Override
             public void run() {
@@ -166,8 +166,8 @@ class AvatarsAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
         }
     }
 
-    interface Listener {
+    public interface Listener {
         @UiThread
-        void onAvatarSelected(FriendRecord fr);
+        void onFriendSelected(FriendRecord fr);
     }
 }

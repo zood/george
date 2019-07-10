@@ -15,3 +15,4 @@ app/src/debug/res/values/secrets.xml
 .idea/assetWizardSettings.xml
 .idea/render.experimental.xml
 .cxx/
+.stignore

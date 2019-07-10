@@ -17,6 +17,7 @@
     <dimen name="fortyTwo">42dp</dimen>
     <dimen name="fortyFive">45dp</dimen>
     <dimen name="fortyEight">48dp</dimen>
+    <dimen name="sixtyFour">64dp</dimen>
     <dimen name="ninetySix">96dp</dimen>
     <dimen name="radial_button">56dp</dimen>
     <dimen name="radial_expanded">100dp</dimen>

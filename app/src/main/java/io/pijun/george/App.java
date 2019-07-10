@@ -5,6 +5,7 @@ import android.os.Handler;
 
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 
 import androidx.annotation.AnyThread;
 import androidx.annotation.NonNull;
@@ -66,6 +67,20 @@ public class App extends Application {
 
     public static void runOnUiThread(@NonNull UiRunnable r, long delay) {
         sApp.mUiThreadHandler.postDelayed(r, delay);
+    }
+
+    public static Future<?> runOnUiThreadCancellable(long delay, @NonNull UiRunnable r) {
+        return sApp.mExecutor.submit(new WorkerRunnable() {
+            @Override
+            public void run() {
+                try {
+                    Thread.sleep(delay);
+                } catch (InterruptedException ignore) {
+                    return;
+                }
+                sApp.mUiThreadHandler.post(r);
+            }
+        });
     }
 
     @AnyThread

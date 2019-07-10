@@ -5,7 +5,6 @@
     <color name="colorAccent">@color/zood_blue</color>
 
     <color name="cloud_outline">#4d34cc54</color>
-    <color name="ui_tint_gray">#aab9c6</color>
     <color name="shade">#A0000000</color>
     <color name="error_circle_fill">#3032b6f4</color>
 

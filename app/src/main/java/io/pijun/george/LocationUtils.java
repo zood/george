@@ -25,7 +25,7 @@ import io.pijun.george.crypto.KeyPair;
 import io.pijun.george.database.DB;
 import io.pijun.george.database.FriendRecord;
 import io.pijun.george.database.LimitedShare;
-import io.pijun.george.service.LimitedShareService;
+import io.pijun.george.service.TimedShareService;
 import retrofit2.Response;
 
 public class LocationUtils {
@@ -99,8 +99,7 @@ public class LocationUtils {
             }
             LimitedShare ls = DB.get().getLimitedShare();
             if (ls != null) {
-                L.i("LUtils.upload: to limited share");
-                if (LimitedShareService.IsRunning) {
+                if (TimedShareService.IsRunning) {
                     EncryptedData encMsg = Sodium.publicKeyEncrypt(msgBytes, ls.publicKey, keyPair.secretKey);
                     if (encMsg != null) {
                         pkgs.put(Hex.toHexString(ls.sendingBoxId), encMsg);

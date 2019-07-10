@@ -83,7 +83,7 @@
     <string name="images">Images</string>
     <string name="crop_instructions_msg">Move and resize the square to crop your avatar.</string>
     <string name="done">Done</string>
-    <string name="location_broadcast">Location broadcast</string>
+    <string name="timed_share">Timed share</string>
     <string name="error_loading_key">Error loading key</string>
     <string name="close_drawer">Close drawer</string>
     <string name="dismiss">Dismiss</string>
@@ -148,5 +148,11 @@
     <string name="timed_share_subtitle_msg">Temporarily share your location with someone that doesn\'t have Zood\u00A0Location by sending them a link.</string>
     <string name="copy_link">Copy link</string>
     <string name="share_link">Share link</string>
-    <string name="close">close</string>
+    <string name="close">Close</string>
+    <string name="off">Off</string>
+    <string name="hours_abbreviated_msg">%dh</string>
+    <string name="minutes_abbreviated_msg">%dm</string>
+    <string name="less_than_1_minute_msg"><![CDATA[<1m]]></string>
+    <string name="seconds_abbreviated_msg">%ds</string>
+    <string name="send_to">Send to</string>
 </resources>

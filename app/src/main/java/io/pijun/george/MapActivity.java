@@ -25,7 +25,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 import androidx.databinding.DataBindingUtil;
-import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.lifecycle.ViewModelProviders;
 
 import com.google.android.gms.common.api.ApiException;
 import com.google.android.gms.common.api.ResolvableApiException;
@@ -51,6 +51,7 @@ import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MapStyleOptions;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
+import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
 import java.io.IOException;
 import java.security.SecureRandom;
@@ -71,20 +72,19 @@ import io.pijun.george.database.FriendLocation;
 import io.pijun.george.database.FriendRecord;
 import io.pijun.george.database.UserRecord;
 import io.pijun.george.service.BackupDatabaseJob;
-import io.pijun.george.service.LimitedShareService;
 import io.pijun.george.view.AvatarRenderer;
 import io.pijun.george.view.MyLocationView;
 import retrofit2.Response;
 import xyz.zood.george.AddFriendDialog;
 import xyz.zood.george.AvatarManager;
 import xyz.zood.george.R;
-import xyz.zood.george.databinding.ActivityMapBinding;
 import xyz.zood.george.SafetyNumberActivity;
+import xyz.zood.george.databinding.ActivityMapBinding;
 import xyz.zood.george.notifier.BackgroundDataRestrictionNotifier;
 import xyz.zood.george.notifier.ClientNotConnectedNotifier;
 import xyz.zood.george.notifier.LocationPermissionNotifier;
+import xyz.zood.george.viewmodels.MainViewModel;
 import xyz.zood.george.widget.InfoPanel;
-import xyz.zood.george.widget.RadialMenu;
 import xyz.zood.george.widget.ZoodDialog;
 
 public final class MapActivity extends AppCompatActivity implements OnMapReadyCallback, DB.Listener, AuthenticationManager.Listener {
@@ -105,8 +105,7 @@ public final class MapActivity extends AppCompatActivity implements OnMapReadyCa
     private long friendForCameraToTrack = -1;
     private Circle mCurrentCircle;
     private boolean isStarted = false;
-    private AvatarsAdapter avatarsAdapter;
-    private RadialMenu radialMenu;
+    private FloatingActionButton timedShareFAB;
     private InfoPanel infoPanel;
     private LocationPermissionNotifier locationPermissionNotifier;
     private ClientNotConnectedNotifier notConnectedNotifier;
@@ -131,27 +130,32 @@ public final class MapActivity extends AppCompatActivity implements OnMapReadyCa
         ActivityMapBinding binding = DataBindingUtil.setContentView(this, R.layout.activity_map);
 
         infoPanel = new InfoPanel(binding.infoPanel, this, infoPanelListener);
-        radialMenu = new RadialMenu(binding.root);
+        timedShareFAB = binding.timedShareFab;
 
         mMapView = findViewById(R.id.map);
         mMapView.onCreate(savedInstanceState);
         mMapView.getMapAsync(this);
 
-        LinearLayoutManager llm = new LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false);
-        binding.avatars.setLayoutManager(llm);
-        avatarsAdapter = new AvatarsAdapter(avatarsSelectionListener);
-        binding.avatars.setAdapter(avatarsAdapter);
+        MainViewModel mainViewModel = ViewModelProviders.of(this).get(MainViewModel.class);
+        mainViewModel.getSelectedFriend().observe(this, this::onFriendSelected);
 
-        final View myLocFab = findViewById(R.id.my_location_fab);
-        myLocFab.setOnClickListener(v -> {
-            myLocFab.setSelected(true);
-            friendForCameraToTrack = 0;
-            flyCameraToMyLocation();
+        binding.myLocationFab.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                binding.myLocationFab.setSelected(true);
+                friendForCameraToTrack = 0;
+                flyCameraToMyLocation();
 
-            // if we're showing the avatar info, hide it
-            infoPanel.hide();
-            radialMenu.setVisible(true);
-            radialMenu.flyBack();
+                // if we're showing the avatar info, hide it
+                infoPanel.hide();
+                timedShareFAB.setVisibility(View.VISIBLE);
+            }
+        });
+        binding.timedShareFab.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                mainViewModel.notifyTimedShareClicked();
+            }
         });
 
         mLocationProviderClient = LocationServices.getFusedLocationProviderClient(this);
@@ -198,7 +202,6 @@ public final class MapActivity extends AppCompatActivity implements OnMapReadyCa
                 oscarSocket.connect(token);
 
                 ArrayList<FriendRecord> friends = DB.get().getFriends();
-                avatarsAdapter.setFriends(friends);
                 for (FriendRecord fr: friends) {
                     if (fr.receivingBoxId != null) {
                         oscarSocket.watch(fr.receivingBoxId);
@@ -272,7 +275,6 @@ public final class MapActivity extends AppCompatActivity implements OnMapReadyCa
         AuthenticationManager.get().removeListener(this);
         AvatarManager.removeListener(avatarListener);
         mMarkerTracker.clear();
-        avatarsAdapter = null;
 
         super.onDestroy();
         if (mMapView != null) {
@@ -283,7 +285,7 @@ public final class MapActivity extends AppCompatActivity implements OnMapReadyCa
 
     @Override
     @UiThread
-    protected void onSaveInstanceState(Bundle outState) {
+    protected void onSaveInstanceState(@NonNull Bundle outState) {
         super.onSaveInstanceState(outState);
 
         mMapView.onSaveInstanceState(outState);
@@ -338,7 +340,6 @@ public final class MapActivity extends AppCompatActivity implements OnMapReadyCa
                 if (reason == REASON_GESTURE) {
                     friendForCameraToTrack = -1;
                     findViewById(R.id.my_location_fab).setSelected(false);
-                    radialMenu.flyBack();
                 }
             }
         });
@@ -348,8 +349,7 @@ public final class MapActivity extends AppCompatActivity implements OnMapReadyCa
                 friendForCameraToTrack = -1;
                 findViewById(R.id.my_location_fab).setSelected(false);
                 infoPanel.hide();
-                radialMenu.setVisible(true);
-                radialMenu.flyBack();
+                timedShareFAB.setVisibility(View.VISIBLE);
                 if (mCurrentCircle != null) {
                     mCurrentCircle.remove();
                     mCurrentCircle = null;
@@ -474,6 +474,40 @@ public final class MapActivity extends AppCompatActivity implements OnMapReadyCa
         }
     }
 
+    private void onFriendSelected(@NonNull FriendRecord fr) {
+        Marker marker = mMarkerTracker.getById(fr.id);
+        if (marker == null) {
+            showInfoPanel(fr, null);
+            return;
+        }
+
+        // Is the info panel already showing for this user? If so, just center the camera and follow
+        if (infoPanel.getFriendId() == fr.id) {
+            friendForCameraToTrack = fr.id;
+            CameraUpdate update = CameraUpdateFactory.newLatLng(marker.getPosition());
+            mGoogMap.animateCamera(update);
+            return;
+        }
+
+        friendForCameraToTrack = fr.id;
+        findViewById(R.id.my_location_fab).setSelected(false);
+        float zoom = Math.max(mGoogMap.getCameraPosition().zoom, Constants.DEFAULT_ZOOM_LEVEL);
+        CameraPosition cp = new CameraPosition.Builder()
+                .target(marker.getPosition())
+                .zoom(zoom)
+                .bearing(0)
+                .tilt(0).build();
+        CameraUpdate cu = CameraUpdateFactory.newCameraPosition(cp);
+        mGoogMap.animateCamera(cu);
+
+        FriendLocation loc = (FriendLocation) marker.getTag();
+        if (loc == null) {
+            throw new RuntimeException("Marker location should never be null. Should contain the friend's location");
+        }
+        showInfoPanel(fr, loc);
+        showFriendErrorCircle(loc);
+    }
+
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         if (requestCode != REQUEST_LOCATION_PERMISSION) {
@@ -517,7 +551,7 @@ public final class MapActivity extends AppCompatActivity implements OnMapReadyCa
 
     @UiThread
     private void showInfoPanel(@NonNull FriendRecord friend, @Nullable FriendLocation loc) {
-        radialMenu.setVisible(false);
+        timedShareFAB.setVisibility(View.INVISIBLE);
         infoPanel.show(friend, loc);
 
         // if the location data for the friend is really old, request a refresh
@@ -526,12 +560,6 @@ public final class MapActivity extends AppCompatActivity implements OnMapReadyCa
                 infoPanelListener.onInfoPanelLocationRequested(friend);
             }
         }
-    }
-
-    public void onStartLimitedShareAction(View v) {
-        radialMenu.flyBack();
-        Intent i = LimitedShareService.newIntent(this, LimitedShareService.ACTION_START);
-        ContextCompat.startForegroundService(this, i);
     }
 
     @UiThread
@@ -552,8 +580,6 @@ public final class MapActivity extends AppCompatActivity implements OnMapReadyCa
 
     @UiThread
     public void showAddFriendDialog(View v) {
-        radialMenu.flyBack();
-
         AddFriendDialog fragment = AddFriendDialog.newInstance();
         getSupportFragmentManager()
                 .beginTransaction()
@@ -609,7 +635,6 @@ public final class MapActivity extends AppCompatActivity implements OnMapReadyCa
     @UiThread
     public void onShowSettings(View v) {
         startActivityForResult(SettingsActivity.newIntent(this), SettingsActivity.REQUEST_EXIT);
-        radialMenu.flyBack();
     }
 
     @WorkerThread
@@ -787,7 +812,6 @@ public final class MapActivity extends AppCompatActivity implements OnMapReadyCa
             if (username == null) {
                 return;
             }
-            avatarsAdapter.onAvatarUpdated(username);
             App.runInBackground(new WorkerRunnable() {
                 @Override
                 public void run() {
@@ -837,7 +861,6 @@ public final class MapActivity extends AppCompatActivity implements OnMapReadyCa
     @Override
     public void onFriendRemoved(long friendId) {
         removeFriendFromMap(friendId);
-        avatarsAdapter.removeFriend(friendId);
         // if the info panel is showing their info, hide it
         if (infoPanel.isHidden()) {
             return;
@@ -846,7 +869,7 @@ public final class MapActivity extends AppCompatActivity implements OnMapReadyCa
         if (friend != null && friend.id == friendId) {
             infoPanel.hide();
             friendForCameraToTrack = -1;
-            radialMenu.setVisible(true);
+            timedShareFAB.setVisibility(View.VISIBLE);
         }
     }
 
@@ -867,7 +890,6 @@ public final class MapActivity extends AppCompatActivity implements OnMapReadyCa
             L.i("onLocationSharingGranted: friend found. will watch");
             oscarSocket.watch(friend.receivingBoxId);
         }
-        avatarsAdapter.addFriend(friend);
 
         // If the friend is currently visible on the info panel, update the panel
         App.runOnUiThread(new UiRunnable() {
@@ -906,9 +928,6 @@ public final class MapActivity extends AppCompatActivity implements OnMapReadyCa
             L.w("MapActivity.onStartedSharingWithUser couldn't obtain a FriendRecord");
             return;
         }
-        // We need to make sure the friend is in the avatar adapter
-        // The adapter handles the case if the friend is already in there.
-        avatarsAdapter.addFriend(friend);
 
         // update the FriendRecord in the info panel, if necessary
         App.runOnUiThread(new UiRunnable() {
@@ -930,8 +949,6 @@ public final class MapActivity extends AppCompatActivity implements OnMapReadyCa
             L.w("MapActivity.onStoppedSharingWithUser couldn't obtain a FriendRecord");
             return;
         }
-        // Update the FriendRecord in our avatar list
-        avatarsAdapter.addFriend(friend);
 
         // update the FriendRecord in the info panel, if necessary
         App.runOnUiThread(new UiRunnable() {
@@ -1124,47 +1141,6 @@ public final class MapActivity extends AppCompatActivity implements OnMapReadyCa
     };
     //endregion
 
-    //region AvatarsAdapter.Listener
-
-    private final AvatarsAdapter.Listener avatarsSelectionListener = new AvatarsAdapter.Listener() {
-        @Override
-        public void onAvatarSelected(FriendRecord fr) {
-            Marker marker = mMarkerTracker.getById(fr.id);
-            if (marker == null) {
-                showInfoPanel(fr, null);
-                return;
-            }
-
-            // Is the info panel already showing for this user? If so, just center the camera and follow
-            if (infoPanel.getFriendId() == fr.id) {
-                friendForCameraToTrack = fr.id;
-                CameraUpdate update = CameraUpdateFactory.newLatLng(marker.getPosition());
-                mGoogMap.animateCamera(update);
-                return;
-            }
-
-            friendForCameraToTrack = fr.id;
-            findViewById(R.id.my_location_fab).setSelected(false);
-            float zoom = Math.max(mGoogMap.getCameraPosition().zoom, Constants.DEFAULT_ZOOM_LEVEL);
-            CameraPosition cp = new CameraPosition.Builder()
-                    .target(marker.getPosition())
-                    .zoom(zoom)
-                    .bearing(0)
-                    .tilt(0).build();
-            CameraUpdate cu = CameraUpdateFactory.newCameraPosition(cp);
-            mGoogMap.animateCamera(cu);
-
-            FriendLocation loc = (FriendLocation) marker.getTag();
-            if (loc == null) {
-                throw new RuntimeException("Marker location should never be null. Should contain the friend's location");
-            }
-            showInfoPanel(fr, loc);
-            showFriendErrorCircle(loc);
-        }
-    };
-
-    //endregion
-
     //region GoogleMap.OnMarkerClickListener
 
     private final GoogleMap.OnMarkerClickListener markerClickListener = new GoogleMap.OnMarkerClickListener() {
@@ -1173,8 +1149,7 @@ public final class MapActivity extends AppCompatActivity implements OnMapReadyCa
         public boolean onMarkerClick(@NonNull final Marker marker) {
             if (marker.equals(mMeMarker)) {
                 infoPanel.hide();
-                radialMenu.setVisible(true);
-                radialMenu.flyBack();
+                timedShareFAB.setVisibility(View.VISIBLE);
                 return true;
             }
 
@@ -1182,8 +1157,7 @@ public final class MapActivity extends AppCompatActivity implements OnMapReadyCa
             if (loc == null) {
                 // should never happen
                 infoPanel.hide();
-                radialMenu.setVisible(true);
-                radialMenu.flyBack();
+                timedShareFAB.setVisibility(View.VISIBLE);
                 return true;
             }
             L.i("onMarkerClick found friend " + loc.friendId);
