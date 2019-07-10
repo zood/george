@@ -111,6 +111,7 @@ public final class MapActivity extends AppCompatActivity implements OnMapReadyCa
     private InfoPanel infoPanel;
     private LocationPermissionNotifier locationPermissionNotifier;
     private ClientNotConnectedNotifier notConnectedNotifier;
+    private MainViewModel mainViewModel;
 
     public static Intent newIntent(Context ctx) {
         return new Intent(ctx, MapActivity.class);
@@ -118,6 +119,11 @@ public final class MapActivity extends AppCompatActivity implements OnMapReadyCa
 
     @Override
     public void onBackPressed() {
+        if (mainViewModel.getTimedShareSheetDismissable()) {
+            mainViewModel.onCloseTimedSheetAction();
+            return;
+        }
+
         super.onBackPressed();
     }
 
@@ -143,7 +149,7 @@ public final class MapActivity extends AppCompatActivity implements OnMapReadyCa
         mMapView.onCreate(savedInstanceState);
         mMapView.getMapAsync(this);
 
-        MainViewModel mainViewModel = ViewModelProviders.of(this).get(MainViewModel.class);
+        mainViewModel = ViewModelProviders.of(this).get(MainViewModel.class);
         mainViewModel.getSelectedFriend().observe(this, this::onFriendSelected);
         mainViewModel.getOnAddFriendClicked().observe(this, new Observer<Event<Boolean>>() {
             @Override

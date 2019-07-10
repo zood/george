@@ -17,6 +17,7 @@ public class MainViewModel extends ViewModel implements TimedShareService.Listen
 
     private Timer countdownTimer;
     private MutableLiveData<Event<Boolean>> liveOnAddFriendClicked = new MutableLiveData<>();
+    private MutableLiveData<Event<Boolean>> liveOnCloseTimedSheet = new MutableLiveData<>();
     private MutableLiveData<Event<Boolean>> liveOnTimedShareClicked = new MutableLiveData<>();
     private MutableLiveData<FriendRecord> liveSelectedFriend = new MutableLiveData<>();
     private MutableLiveData<Boolean> liveTimedShareIsRunning;
@@ -25,14 +26,21 @@ public class MainViewModel extends ViewModel implements TimedShareService.Listen
     private long shareStartTime;
     private long shareDuration;
     private TimedShareListener timedShareListener;
+    private boolean timedShareSheetDismissable;
 
     private long calculateTimedShareRemaining(long now) {
         long hasBeen = now - shareStartTime;
         return shareDuration - hasBeen;
     }
 
+    @UiThread
     public LiveData<Event<Boolean>> getOnAddFriendClicked() {
         return liveOnAddFriendClicked;
+    }
+
+    @UiThread
+    public LiveData<Event<Boolean>> getOnCloseTimedSheet() {
+        return liveOnCloseTimedSheet;
     }
 
     @UiThread
@@ -56,6 +64,11 @@ public class MainViewModel extends ViewModel implements TimedShareService.Listen
         }
 
         return liveTimedShareIsRunning;
+    }
+
+    @UiThread
+    public boolean getTimedShareSheetDismissable() {
+        return timedShareSheetDismissable;
     }
 
     @UiThread
@@ -128,8 +141,18 @@ public class MainViewModel extends ViewModel implements TimedShareService.Listen
     }
 
     @UiThread
+    public void onCloseTimedSheetAction() {
+        liveOnCloseTimedSheet.setValue(new Event<>(true));
+    }
+
+    @UiThread
     public void selectFriend(@Nullable FriendRecord friend) {
         liveSelectedFriend.setValue(friend);
+    }
+
+    @UiThread
+    public void setTimedShareSheetDismissable(boolean dismissable) {
+        this.timedShareSheetDismissable = dismissable;
     }
 
     @UiThread

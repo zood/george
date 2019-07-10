@@ -25,22 +25,16 @@ import androidx.core.content.ContextCompat;
 import androidx.core.view.GestureDetectorCompat;
 import androidx.databinding.DataBindingUtil;
 import androidx.fragment.app.Fragment;
+import androidx.lifecycle.Observer;
 import androidx.lifecycle.ViewModelProviders;
 
 import io.pijun.george.service.TimedShareService;
 import xyz.zood.george.databinding.FragmentTimedShareBinding;
 import xyz.zood.george.time.HoursMinutesSeconds;
+import xyz.zood.george.viewmodels.Event;
 import xyz.zood.george.viewmodels.MainViewModel;
 
 public class TimedShareFragment extends Fragment {
-
-//    private enum State {
-//        Collapsed,
-//        Dragging,
-//        Expanded,
-//        Hidden,
-//        Settling
-//    }
 
     private enum Position {
         Hidden,
@@ -81,6 +75,12 @@ public class TimedShareFragment extends Fragment {
             onTimedShareFabClicked();
         });
         viewModel.getTimedShareTimeRemaining().observe(this, this::setTimeRemaining);
+        viewModel.getOnCloseTimedSheet().observe(this, new Observer<Event<Boolean>>() {
+            @Override
+            public void onChanged(Event<Boolean> booleanEvent) {
+                close();
+            }
+        });
         peekHeight = -getResources().getDimensionPixelSize(R.dimen.sixtyFour);
     }
 
@@ -242,12 +242,15 @@ public class TimedShareFragment extends Fragment {
         switch (position) {
             case Expanded:
                 totalOffset = -binding.sheet.getHeight();
+                viewModel.setTimedShareSheetDismissable(true);
                 break;
             case Hidden:
                 totalOffset = 0;
+                viewModel.setTimedShareSheetDismissable(false);
                 break;
             case Peeking:
                 totalOffset = -getResources().getDimensionPixelSize(R.dimen.sixtyFour);
+                viewModel.setTimedShareSheetDismissable(false);
                 break;
         }
 
@@ -295,6 +298,7 @@ public class TimedShareFragment extends Fragment {
 
         if (this.isRunning) {
             binding.mapTexture.setImageResource(R.drawable.ic_timed_share_map_texture_on);
+            setPosition(Position.Peeking);
         } else {
             binding.mapTexture.setImageResource(R.drawable.ic_timed_share_map_texture_off);
             setPosition(Position.Hidden);
@@ -419,6 +423,7 @@ public class TimedShareFragment extends Fragment {
             float transY = Math.max(totalOffset, -binding.sheet.getHeight());
             updateBannerViews(transY, false);
             binding.sheet.setTranslationY(transY);
+            viewModel.setTimedShareSheetDismissable(false);
 
             return true;
         }
