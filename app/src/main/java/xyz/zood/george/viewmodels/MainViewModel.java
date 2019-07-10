@@ -16,6 +16,7 @@ import io.pijun.george.service.TimedShareService;
 public class MainViewModel extends ViewModel implements TimedShareService.Listener {
 
     private Timer countdownTimer;
+    private MutableLiveData<Event<Boolean>> liveOnAddFriendClicked = new MutableLiveData<>();
     private MutableLiveData<Event<Boolean>> liveOnTimedShareClicked = new MutableLiveData<>();
     private MutableLiveData<FriendRecord> liveSelectedFriend = new MutableLiveData<>();
     private MutableLiveData<Boolean> liveTimedShareIsRunning;
@@ -28,6 +29,10 @@ public class MainViewModel extends ViewModel implements TimedShareService.Listen
     private long calculateTimedShareRemaining(long now) {
         long hasBeen = now - shareStartTime;
         return shareDuration - hasBeen;
+    }
+
+    public LiveData<Event<Boolean>> getOnAddFriendClicked() {
+        return liveOnAddFriendClicked;
     }
 
     @UiThread
@@ -98,6 +103,11 @@ public class MainViewModel extends ViewModel implements TimedShareService.Listen
         if (svc != null) {
             liveTimedShareUrl.postValue(svc.getUrl());
         }
+    }
+
+    @UiThread
+    public void notifyAddFriendClicked() {
+        liveOnAddFriendClicked.setValue(new Event<>(true));
     }
 
     @UiThread

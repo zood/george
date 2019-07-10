@@ -25,6 +25,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 import androidx.databinding.DataBindingUtil;
+import androidx.lifecycle.Observer;
 import androidx.lifecycle.ViewModelProviders;
 
 import com.google.android.gms.common.api.ApiException;
@@ -83,6 +84,7 @@ import xyz.zood.george.databinding.ActivityMapBinding;
 import xyz.zood.george.notifier.BackgroundDataRestrictionNotifier;
 import xyz.zood.george.notifier.ClientNotConnectedNotifier;
 import xyz.zood.george.notifier.LocationPermissionNotifier;
+import xyz.zood.george.viewmodels.Event;
 import xyz.zood.george.viewmodels.MainViewModel;
 import xyz.zood.george.widget.InfoPanel;
 import xyz.zood.george.widget.ZoodDialog;
@@ -115,6 +117,11 @@ public final class MapActivity extends AppCompatActivity implements OnMapReadyCa
     }
 
     @Override
+    public void onBackPressed() {
+        super.onBackPressed();
+    }
+
+    @Override
     @UiThread
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -138,6 +145,15 @@ public final class MapActivity extends AppCompatActivity implements OnMapReadyCa
 
         MainViewModel mainViewModel = ViewModelProviders.of(this).get(MainViewModel.class);
         mainViewModel.getSelectedFriend().observe(this, this::onFriendSelected);
+        mainViewModel.getOnAddFriendClicked().observe(this, new Observer<Event<Boolean>>() {
+            @Override
+            public void onChanged(Event<Boolean> evt) {
+                Boolean clicked = evt.getEventIfNotHandled();
+                if (clicked != null) {
+                    showAddFriendDialog();
+                }
+            }
+        });
 
         binding.myLocationFab.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -579,7 +595,7 @@ public final class MapActivity extends AppCompatActivity implements OnMapReadyCa
     }
 
     @UiThread
-    public void showAddFriendDialog(View v) {
+    private void showAddFriendDialog() {
         AddFriendDialog fragment = AddFriendDialog.newInstance();
         getSupportFragmentManager()
                 .beginTransaction()

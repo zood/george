@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:background="?android:attr/selectableItemBackground"
+    android:layout_width="52dp"
+    android:layout_height="64dp">
+    <ImageView
+        android:id="@+id/image"
+        android:contentDescription="@string/add_friend"
+        android:background="@android:color/white"
+        android:src="@drawable/ic_sharp_person_add_24dp"
+        android:tint="@color/zood_blue"
+        android:layout_gravity="center"
+        android:scaleType="center"
+        android:elevation="6dp"
+        android:layout_width="40dp"
+        android:layout_height="40dp" />
+</FrameLayout>

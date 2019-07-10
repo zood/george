@@ -15,7 +15,6 @@ import androidx.recyclerview.widget.RecyclerView;
 import java.util.ArrayList;
 
 import io.pijun.george.App;
-import io.pijun.george.FriendsBarAdapter;
 import io.pijun.george.WorkerRunnable;
 import io.pijun.george.database.DB;
 import io.pijun.george.database.FriendRecord;
@@ -65,7 +64,12 @@ public class FriendBarFragment extends Fragment implements FriendsBarAdapter.Lis
     //region FriendsBarAdapter.Listener
 
     @Override
-    public void onFriendSelected(FriendRecord friend) {
+    public void onAddFriendAction() {
+        mainViewModel.notifyAddFriendClicked();
+    }
+
+    @Override
+    public void onFriendSelected(@NonNull FriendRecord friend) {
         mainViewModel.selectFriend(friend);
     }
 
