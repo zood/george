@@ -4,7 +4,7 @@
     <androidx.constraintlayout.widget.ConstraintLayout
         android:background="@android:color/white"
         tools:theme="@style/AppTheme"
-        android:elevation="4dp"
+        android:elevation="10dp"
         android:id="@+id/sheet"
         android:layout_width="match_parent"
         android:layout_height="wrap_content">

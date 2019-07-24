@@ -23,6 +23,8 @@
     <dimen name="radial_expanded">100dp</dimen>
     <dimen name="dialog_width">280dp</dimen>
 
+    <dimen name="timed_share_sheet_peek_height">64dp</dimen>
+
     <dimen name="dialog_message_text">15sp</dimen>
     <dimen name="dialog_title_text">19sp</dimen>
 </resources>

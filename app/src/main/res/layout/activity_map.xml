@@ -213,7 +213,8 @@
             android:layout_margin="16dp"
             android:src="@drawable/ic_settings"
             android:backgroundTint="@color/fab_background"
-            android:tint="@color/black_60"
+            app:tint="@color/black_60"
+            app:rippleColor="@color/zood_blue"
             android:transformPivotX="0px"
             app:borderWidth="0dp"
             android:elevation="4dp"
@@ -228,7 +229,8 @@
             android:layout_margin="16dp"
             android:backgroundTint="@color/fab_background"
             android:src="@drawable/ic_my_location_black_24dp"
-            android:tint="@color/my_location_fab_tint"
+            app:tint="@color/my_location_fab_tint"
+            app:rippleColor="@color/zood_blue"
             android:transformPivotX="0px"
             app:borderWidth="0dp"
             app:elevation="4dp"
@@ -239,9 +241,10 @@
 
         <com.google.android.material.floatingactionbutton.FloatingActionButton
             android:id="@+id/timed_share_fab"
-            android:src="@drawable/ic_sharp_timer_24dp"
-
-            android:backgroundTint="@color/fab_background"
+            android:src="@drawable/ic_pin"
+            android:backgroundTint="@color/timed_share_fab_background"
+            app:tint="@color/timed_share_fab_tint"
+            app:rippleColor="@color/zood_blue"
             app:fabSize="normal"
             app:elevation="4dp"
             app:layout_constraintEnd_toEndOf="parent"

@@ -119,7 +119,7 @@ public final class MapActivity extends AppCompatActivity implements OnMapReadyCa
 
     @Override
     public void onBackPressed() {
-        if (mainViewModel.getTimedShareSheetDismissable()) {
+        if (mainViewModel.isTimedShareSheetDismissable()) {
             mainViewModel.onCloseTimedSheetAction();
             return;
         }
@@ -150,7 +150,13 @@ public final class MapActivity extends AppCompatActivity implements OnMapReadyCa
         mMapView.getMapAsync(this);
 
         mainViewModel = ViewModelProviders.of(this).get(MainViewModel.class);
-        mainViewModel.getSelectedFriend().observe(this, this::onFriendSelected);
+        mainViewModel.getSelectedFriend().observe(this, new Observer<FriendRecord>() {
+            @Override
+            public void onChanged(FriendRecord friend) {
+                mainViewModel.onCloseTimedSheetAction();
+                onFriendSelected(friend);
+            }
+        });
         mainViewModel.getOnAddFriendClicked().observe(this, new Observer<Event<Boolean>>() {
             @Override
             public void onChanged(Event<Boolean> evt) {
@@ -158,6 +164,21 @@ public final class MapActivity extends AppCompatActivity implements OnMapReadyCa
                 if (clicked != null) {
                     showAddFriendDialog();
                 }
+            }
+        });
+        mainViewModel.getTimedShareIsRunning().observe(this, new Observer<Boolean>() {
+            @Override
+            public void onChanged(Boolean isRunning) {
+                float transY;
+                if (isRunning == null || !isRunning) {
+                    transY = 0;
+                    binding.timedShareFab.setSelected(false);
+                } else {
+                    transY = -getResources().getDimension(R.dimen.timed_share_sheet_peek_height);
+                    binding.timedShareFab.setSelected(true);
+                }
+                binding.timedShareFab.animate().translationY(transY);
+                binding.infoPanel.animate().translationY(transY);
             }
         });
 

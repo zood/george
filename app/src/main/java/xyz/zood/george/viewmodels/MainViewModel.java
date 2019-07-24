@@ -26,7 +26,7 @@ public class MainViewModel extends ViewModel implements TimedShareService.Listen
     private long shareStartTime;
     private long shareDuration;
     private TimedShareListener timedShareListener;
-    private boolean timedShareSheetDismissable;
+    private boolean isTimedShareSheetDismissable;
 
     private long calculateTimedShareRemaining(long now) {
         long hasBeen = now - shareStartTime;
@@ -64,11 +64,6 @@ public class MainViewModel extends ViewModel implements TimedShareService.Listen
         }
 
         return liveTimedShareIsRunning;
-    }
-
-    @UiThread
-    public boolean getTimedShareSheetDismissable() {
-        return timedShareSheetDismissable;
     }
 
     @UiThread
@@ -119,6 +114,11 @@ public class MainViewModel extends ViewModel implements TimedShareService.Listen
     }
 
     @UiThread
+    public boolean isTimedShareSheetDismissable() {
+        return isTimedShareSheetDismissable;
+    }
+
+    @UiThread
     public void notifyAddFriendClicked() {
         liveOnAddFriendClicked.setValue(new Event<>(true));
     }
@@ -152,7 +152,7 @@ public class MainViewModel extends ViewModel implements TimedShareService.Listen
 
     @UiThread
     public void setTimedShareSheetDismissable(boolean dismissable) {
-        this.timedShareSheetDismissable = dismissable;
+        this.isTimedShareSheetDismissable = dismissable;
     }
 
     @UiThread

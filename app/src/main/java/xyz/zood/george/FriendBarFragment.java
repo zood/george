@@ -45,7 +45,7 @@ public class FriendBarFragment extends Fragment implements FriendsBarAdapter.Lis
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
-        RecyclerView list = (RecyclerView) inflater.inflate(R.layout.fragment_friend_bar, container, false);
+        RecyclerView list = (RecyclerView) inflater.inflate(R.layout.fragment_friends_bar, container, false);
         LinearLayoutManager llm = new LinearLayoutManager(inflater.getContext(), LinearLayoutManager.HORIZONTAL, false);
         list.setLayoutManager(llm);
         list.setAdapter(adapter);
