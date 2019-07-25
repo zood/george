@@ -73,20 +73,6 @@ public class WelcomeActivity extends AppCompatActivity implements WelcomeViewHol
     }
 
     @Override
-    protected void onStart() {
-        super.onStart();
-
-        viewHolder.setCloudMovementEnabled(true);
-    }
-
-    @Override
-    protected void onStop() {
-        super.onStop();
-
-        viewHolder.setCloudMovementEnabled(false);
-    }
-
-    @Override
     public void onBackPressed() {
         WelcomeViewHolder.State state = viewHolder.getState();
         if (state == WelcomeViewHolder.State.Registration || state == WelcomeViewHolder.State.Login) {
@@ -418,13 +404,13 @@ public class WelcomeActivity extends AppCompatActivity implements WelcomeViewHol
         boolean foundError = false;
 
         final Editable usernameText = binding.siUsername.getText();
-        if (TextUtils.isEmpty(usernameText)) {
+        if (usernameText == null || TextUtils.isEmpty(usernameText)) {
             binding.siUsernameContainer.setError(getString(R.string.username_please_msg));
             foundError = true;
         }
 
         final Editable passwordText = binding.siPassword.getText();
-        if(TextUtils.isEmpty(passwordText)) {
+        if(passwordText == null || TextUtils.isEmpty(passwordText)) {
             binding.siPasswordContainer.setError(getString(R.string.password_missing_msg));
             foundError = true;
         }
@@ -432,7 +418,6 @@ public class WelcomeActivity extends AppCompatActivity implements WelcomeViewHol
         if (foundError) {
             return;
         }
-
 
         String username = usernameText.toString();
         String password = passwordText.toString();

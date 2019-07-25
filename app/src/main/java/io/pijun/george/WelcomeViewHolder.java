@@ -1,21 +1,14 @@
 package io.pijun.george;
 
 import android.content.Context;
-import android.content.res.ColorStateList;
-import android.graphics.drawable.Drawable;
 import android.view.View;
 import android.view.ViewTreeObserver;
-import android.view.animation.LinearInterpolator;
 import android.view.inputmethod.EditorInfo;
 import android.view.inputmethod.InputMethodManager;
-import android.widget.ImageView;
 
-import androidx.annotation.DrawableRes;
 import androidx.annotation.NonNull;
 import androidx.annotation.UiThread;
-import androidx.core.content.ContextCompat;
 
-import xyz.zood.george.R;
 import xyz.zood.george.databinding.ActivityWelcomeBinding;
 
 public class WelcomeViewHolder implements ViewTreeObserver.OnGlobalLayoutListener {
@@ -27,11 +20,8 @@ public class WelcomeViewHolder implements ViewTreeObserver.OnGlobalLayoutListene
         Login
     }
 
-    // Default is true, because the clouds should start moving right away
-    private boolean areCloudsMoving = true;
     private final ActivityWelcomeBinding binding;
     private State state = State.Main;
-    private float displayDensity = 0;
     @NonNull private final Listener listener;
 
     WelcomeViewHolder(@NonNull ActivityWelcomeBinding binding, @NonNull Listener listener) {
@@ -42,9 +32,6 @@ public class WelcomeViewHolder implements ViewTreeObserver.OnGlobalLayoutListene
         binding.logo.setVisibility(View.INVISIBLE);
         binding.wordmark.setVisibility(View.INVISIBLE);
         binding.motto.setVisibility(View.INVISIBLE);
-
-        binding.cloud1.setVisibility(View.INVISIBLE);
-        binding.cloud2.setVisibility(View.INVISIBLE);
 
         binding.showRegisterButton.setVisibility(View.INVISIBLE);
         binding.showSignInButton.setVisibility(View.INVISIBLE);
@@ -60,7 +47,6 @@ public class WelcomeViewHolder implements ViewTreeObserver.OnGlobalLayoutListene
 
         binding.root.getViewTreeObserver().addOnGlobalLayoutListener(this);
 
-        applyTextFieldDrawables();
         applyTextFieldActionListeners();
     }
 
@@ -107,14 +93,6 @@ public class WelcomeViewHolder implements ViewTreeObserver.OnGlobalLayoutListene
         });
     }
 
-    private void applyTextFieldDrawables() {
-        binding.regUsername.setCompoundDrawablesRelativeWithIntrinsicBounds(getTintedDrawable(R.drawable.ic_sharp_person_24px), null, null, null);
-        binding.regPassword.setCompoundDrawablesRelativeWithIntrinsicBounds(getTintedDrawable(R.drawable.ic_sharp_lock_24px), null, null, null);
-        binding.regEmail.setCompoundDrawablesRelativeWithIntrinsicBounds(getTintedDrawable(R.drawable.ic_sharp_email_24px), null, null, null);
-        binding.siUsername.setCompoundDrawablesRelativeWithIntrinsicBounds(getTintedDrawable(R.drawable.ic_sharp_person_24px), null, null, null);
-        binding.siPassword.setCompoundDrawablesRelativeWithIntrinsicBounds(getTintedDrawable(R.drawable.ic_sharp_lock_24px), null, null, null);
-    }
-
     void clearFocus() {
         binding.regUsername.clearFocus();
         binding.regPassword.clearFocus();
@@ -133,26 +111,12 @@ public class WelcomeViewHolder implements ViewTreeObserver.OnGlobalLayoutListene
         return state;
     }
 
-    @NonNull
-    private Drawable getTintedDrawable(@DrawableRes int drawable) {
-        Context ctx = binding.getRoot().getContext();
-        Drawable d = ctx.getDrawable(drawable);
-        if (d == null) {
-            throw new IllegalArgumentException("must use a drawable");
-        }
-        d = d.mutate();
-        ColorStateList csl = ContextCompat.getColorStateList(ctx, R.color.welcome_edittext_drawabletint);
-        d.setTintList(csl);
-        return d;
-    }
-
     //region OnGlobalLayoutListener to listen for the initial layout
 
     @Override
     public void onGlobalLayout() {
         // we don't want any further layout events
         binding.root.getViewTreeObserver().removeOnGlobalLayoutListener(this);
-        displayDensity = binding.root.getResources().getDisplayMetrics().density;
         binding.logo.setPivotX(binding.logo.getMeasuredWidth()/2.0f);
         binding.logo.setPivotY(binding.logo.getMeasuredHeight());
         binding.wordmark.setPivotX(binding.wordmark.getMeasuredWidth()/2.0f);
@@ -168,29 +132,10 @@ public class WelcomeViewHolder implements ViewTreeObserver.OnGlobalLayoutListene
     //region state transition methods
 
     private void finishTransitionToMain() {
-        // move the clouds to their animation start position
-        binding.cloud1.setTranslationY(binding.root.getHeight());
-        binding.cloud2.setTranslationY(binding.root.getHeight());
-        binding.cloud1.setVisibility(View.VISIBLE);
-        binding.cloud2.setVisibility(View.VISIBLE);
-
         // start animating the branding items
         binding.logo.animate().setStartDelay(500).setDuration(1000).translationY(0);
         binding.wordmark.animate().setStartDelay(500).setDuration(1000).translationY(0);
         binding.motto.animate().setStartDelay(500).setDuration(1000).translationY(0);
-
-        // start animating the clouds into view
-        binding.cloud1.animate().setStartDelay(500).setDuration(1000).translationY(0);
-        binding.cloud2.animate().setStartDelay(500).setDuration(1000).translationY(0);
-
-        // start moving the clouds horizontally halfway into their appearance animation
-        App.runOnUiThread(new UiRunnable() {
-            @Override
-            public void run() {
-                scheduleCloudMovement(binding.cloud1, 56);
-                scheduleCloudMovement(binding.cloud2, 40);
-            }
-        }, 1000);
 
         // now let's set up the 'show' buttons
         binding.showRegisterButton.setTranslationY(binding.root.getHeight());
@@ -355,52 +300,6 @@ public class WelcomeViewHolder implements ViewTreeObserver.OnGlobalLayoutListene
         binding.regPasswordContainer.animate().setStartDelay(200).setDuration(500).translationX(0);
         binding.regEmailContainer.animate().setStartDelay(300).setDuration(500).translationX(0);
         binding.registerButton.animate().setStartDelay(400).setDuration(500).translationX(0);
-    }
-
-    //endregion
-
-    //region cloud movement
-
-    private void scheduleCloudMovement(@NonNull final ImageView cloud, final int speed) {
-        if (!areCloudsMoving) {
-            return;
-        }
-        int width = binding.root.getWidth();
-        if (cloud.getX() >= width) {
-            cloud.setTranslationX(-cloud.getRight());
-        }
-        float xBy = width - cloud.getX();
-        // speed is in DIPs per second, so let's convert it to pixels/s
-        int speedPx = (int) (speed * displayDensity + 0.5f);
-        cloud.animate().
-                translationXBy(xBy).
-                setDuration((long)xBy * 1000 / speedPx).
-                setInterpolator(new LinearInterpolator()).
-                withEndAction(new Runnable() {
-                    @Override
-                    public void run() {
-                        scheduleCloudMovement(cloud, speed);
-                    }
-                }).start();
-    }
-
-    void setCloudMovementEnabled(boolean enabled) {
-        if (areCloudsMoving == enabled) {
-            return;
-        }
-
-        areCloudsMoving = enabled;
-        if (areCloudsMoving) {
-            if (binding.cloud1 != null) {
-                scheduleCloudMovement(binding.cloud1, 56);
-            }
-            if (binding.cloud2 != null) {
-                scheduleCloudMovement(binding.cloud2, 40);
-            }
-        } else {
-            binding.cloud1.animate().cancel();
-            binding.cloud2.animate().cancel();
-        }
     }
 
     //endregion
