@@ -100,7 +100,7 @@
     <string name="the_privacy_company">The privacy company</string>
     <string name="not_sharing_with_you">Not sharing with you</string>
     <string name="refresh">Refresh</string>
-    <string name="number_percent_msg">%d%%</string>
+    <string name="battery_percent_msg">%d%%</string>
     <string name="waiting_for_location_ellipsis">Waiting for location…</string>
     <string name="remove_friend_interrogative">Remove friend?</string>
     <string name="remove">Remove</string>
@@ -160,4 +160,6 @@
     <string name="welcome_to_zood_location">Welcome to Zood Location</string>
     <string name="sign_in_or_register_a_new_account_to_get_started">Sign in or register a new account to get started.</string>
     <string name="sign_in_welcome_back_msg">Welcome back! We missed you.</string>
+    <string name="info_panel_last_update_msg">\u00A0\u00A0•\u00A0\u00A0%s</string>
+    <string name="wait_duration_msg">Wait %d min</string>
 </resources>

@@ -62,6 +62,7 @@ public class InfoPanel {
     @NonNull private final Button refreshButton;
     @NonNull private final ProgressBar refreshProgressBar;
     @NonNull private final SwitchCompat shareSwitch;
+    @NonNull private final TextView shareSwitchLabel;
     @NonNull private final TextView updateTime;
     @NonNull private final TextView username;
 
@@ -136,6 +137,11 @@ public class InfoPanel {
             throw new IllegalArgumentException("'share_switch' SwitchCompat is missing");
         }
 
+        shareSwitchLabel = root.findViewById(R.id.share_switch_label);
+        if (shareSwitchLabel == null) {
+            throw new IllegalArgumentException("'share_switch_label is missing");
+        }
+
         updateTime = root.findViewById(R.id.update_time);
         if (updateTime == null) {
             throw new IllegalArgumentException("'updateTime' is missing");
@@ -144,6 +150,28 @@ public class InfoPanel {
         username = root.findViewById(R.id.username);
         if (username == null) {
             throw new IllegalArgumentException("'username' TextView is missing");
+        }
+    }
+
+    @UiThread
+    private void calculateAndUpdateRefreshButton(long currTime) {
+        // if it's been less than 3 minutes since the last update, disable the refresh button
+        refreshButton.setVisibility(View.VISIBLE);
+        if ((currTime - currLoc.time) < 3 * DateUtils.MINUTE_IN_MILLIS) {
+            refreshButton.setEnabled(false);
+            long secondsSince = (currTime - currLoc.time) / 1000;
+            int minutes;
+            if (secondsSince <= 60) {
+                minutes = 3;
+            } else if (secondsSince <= 120) {
+                minutes = 2;
+            } else {
+                minutes = 1;
+            }
+            refreshButton.setText(activity.getString(R.string.wait_duration_msg, minutes));
+        } else {
+            refreshButton.setEnabled(true);
+            refreshButton.setText(R.string.refresh);
         }
     }
 
@@ -159,7 +187,7 @@ public class InfoPanel {
                     DateUtils.MINUTE_IN_MILLIS,
                     DateUtils.FORMAT_ABBREV_RELATIVE);
         }
-        updateTime.setText(relTime);
+        updateTime.setText(activity.getString(R.string.info_panel_last_update_msg, relTime));
         updateTime.setVisibility(View.VISIBLE);
     }
 
@@ -252,10 +280,10 @@ public class InfoPanel {
         shareSwitch.setOnCheckedChangeListener(null);
         if (friend.sendingBoxId != null) {
             shareSwitch.setChecked(true);
-            shareSwitch.setText(R.string.sharing);
+            shareSwitchLabel.setText(R.string.sharing);
         } else {
             shareSwitch.setChecked(false);
-            shareSwitch.setText(R.string.not_sharing);
+            shareSwitchLabel.setText(R.string.not_sharing);
         }
         shareSwitch.setOnCheckedChangeListener(shareCheckedChangeListener);
 
@@ -277,6 +305,7 @@ public class InfoPanel {
         if (loc == null) {
             address.setText(R.string.waiting_for_location_ellipsis);
             refreshButton.setVisibility(View.VISIBLE);
+            refreshButton.setText(R.string.refresh);
             updateTime.setVisibility(View.INVISIBLE);
             bearing.setVisibility(View.GONE);
             motion.setVisibility(View.GONE);
@@ -289,12 +318,7 @@ public class InfoPanel {
         // update time
         long now = System.currentTimeMillis();
         calculateAndSetUpdateTime(now);
-        // if it's been less than 3 minutes since the last update, hide the refresh button
-        if ((now - loc.time) < 3 * DateUtils.MINUTE_IN_MILLIS) {
-            refreshButton.setVisibility(View.INVISIBLE);
-        } else {
-            refreshButton.setVisibility(View.VISIBLE);
-        }
+        calculateAndUpdateRefreshButton(now);
 
         // refresh status
         updateRefreshProgressBarState(loc.friendId);
@@ -334,7 +358,7 @@ public class InfoPanel {
 
         // battery status
         if (loc.batteryLevel != null) {
-            battery.setText(activity.getString(R.string.number_percent_msg, loc.batteryLevel));
+            battery.setText(activity.getString(R.string.battery_percent_msg, loc.batteryLevel));
             @DrawableRes int batteryImg;
             if (loc.batteryCharging != null && loc.batteryCharging) {
                 if (loc.batteryLevel >= 95) {
@@ -495,12 +519,7 @@ public class InfoPanel {
             // update the relative time, and refresh button
             long now = System.currentTimeMillis();
             calculateAndSetUpdateTime(now);
-            // if it's been less than 3 minutes since the last update, hide the refresh button
-            if ((now - currLoc.time) < 3 * DateUtils.MINUTE_IN_MILLIS) {
-                refreshButton.setVisibility(View.INVISIBLE);
-            } else {
-                refreshButton.setVisibility(View.VISIBLE);
-            }
+            calculateAndUpdateRefreshButton(now);
 
             App.runOnUiThread(this, REFRESH_INTERVAL);
         }

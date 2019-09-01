@@ -75,10 +75,9 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="16dp"
-                android:layout_marginTop="16dp"
-                android:fontFamily="@font/poppins_bold"
-                android:textColor="@color/zood_navy"
-                android:textSize="18sp"
+                android:layout_marginTop="24dp"
+                android:textColor="@color/black"
+                style="@style/Zood.Headline6"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toTopOf="parent"
                 tools:text="arash" />
@@ -90,7 +89,7 @@
                 android:layout_marginStart="8dp"
                 android:layout_marginTop="2dp"
                 android:contentDescription="@null"
-                android:tint="@color/zood_navy"
+                android:tint="@color/black_40"
                 app:layout_constraintStart_toEndOf="@id/username"
                 app:layout_constraintTop_toTopOf="@id/username"
                 tools:src="@drawable/ic_sharp_walk_20dp" />
@@ -103,7 +102,7 @@
                 android:layout_marginTop="2dp"
                 android:contentDescription="@null"
                 android:src="@drawable/ic_sharp_navigation_20dp"
-                android:tint="@color/zood_navy"
+                android:tint="@color/black_40"
                 app:layout_constraintDimensionRatio="1:1"
                 app:layout_constraintStart_toEndOf="@id/motion"
                 app:layout_constraintTop_toTopOf="@id/username" />
@@ -116,36 +115,38 @@
                 android:layout_marginStart="8dp"
                 android:layout_marginTop="2dp"
                 android:src="@drawable/ic_sharp_battery_50_20dp"
-                android:tint="@color/zood_navy"
+                android:tint="@color/zood_green"
                 app:layout_constraintDimensionRatio="1:1"
                 app:layout_constraintStart_toEndOf="@id/bearing"
-                app:layout_constraintTop_toTopOf="@id/username" />
+                app:layout_constraintBottom_toBottomOf="@id/username" />
 
             <TextView
                 android:id="@+id/battery"
+                android:gravity="center_vertical"
+                android:fontFamily="sans-serif"
+                android:textColor="@color/black_40"
+                android:textSize="12sp"
+                android:textStyle="normal"
+                android:lineSpacingExtra="6sp"
+                tools:text="50%"
                 android:layout_width="wrap_content"
                 android:layout_height="0dp"
                 android:layout_marginStart="8dp"
-                android:fontFamily="@font/poppins_bold"
-                android:gravity="center_vertical"
-                android:textColor="@color/zood_navy"
-                android:textSize="12sp"
                 app:layout_constraintBaseline_toBaselineOf="@id/username"
-                app:layout_constraintStart_toEndOf="@id/battery_icon"
-                tools:drawableTint="@color/zood_grey"
-                tools:text="50%" />
+                app:layout_constraintStart_toEndOf="@id/battery_icon" />
 
             <ImageButton
                 android:id="@+id/info_overflow"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_margin="6dp"
+                android:layout_marginEnd="16dp"
+                android:layout_marginTop="16dp"
                 android:background="?attr/selectableItemBackground"
                 android:contentDescription="@null"
                 android:padding="8dp"
                 android:paddingBottom="6dp"
                 android:src="@drawable/ic_sharp_more_vert_24dp"
-                android:tint="@color/zood_navy"
+                android:tint="@color/black_60"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintTop_toTopOf="parent" />
 
@@ -155,9 +156,8 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="4dp"
                 android:layout_marginEnd="16dp"
-                android:fontFamily="@font/poppins_light"
-                android:textColor="@color/zood_grey"
-                android:textSize="12sp"
+                android:textColor="@color/black_60"
+                style="@style/Zood.Caption"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="@id/username"
                 app:layout_constraintTop_toBottomOf="@id/username"
@@ -165,39 +165,47 @@
 
             <TextView
                 android:id="@+id/update_time"
+                android:gravity="center_vertical"
+                android:fontFamily="sans-serif"
+                android:textColor="@color/black_40"
+                android:textSize="12sp"
+                android:textStyle="normal"
+                android:lineSpacingExtra="6sp"
                 android:layout_width="wrap_content"
                 android:layout_height="0dp"
                 android:layout_marginTop="4dp"
-                android:fontFamily="@font/poppins_light"
-                android:gravity="center_vertical"
-                android:textColor="@color/zood_grey"
-                android:textSize="12sp"
-                app:layout_constraintStart_toStartOf="@id/address"
-                app:layout_constraintTop_toBottomOf="@id/address"
-                tools:text="25 min. ago" />
+                app:layout_constraintStart_toEndOf="@id/battery"
+                app:layout_constraintBaseline_toBaselineOf="@id/username"
+                tools:text="  •  25 min. ago" />
 
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/refresh_button"
-                style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                style="@style/Widget.MaterialComponents.Button"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="0dp"
+                android:layout_marginTop="16dp"
                 android:text="@string/refresh"
-                android:fontFamily="@font/poppins_bold"
                 android:enabled="true"
                 android:visibility="invisible"
+                tools:visibility="visible"
+                app:icon="@drawable/ic_refresh_24dp"
                 app:layout_constraintStart_toStartOf="@id/username"
-                app:layout_constraintTop_toBottomOf="@id/update_time" />
+                app:layout_constraintTop_toBottomOf="@id/address" />
 
+            <TextView
+                android:id="@+id/share_switch_label"
+                android:text="@string/sharing"
+                style="@style/Zood.Body2"
+                app:layout_constraintEnd_toStartOf="@id/share_switch"
+                app:layout_constraintBaseline_toBaselineOf="@id/share_switch"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content" />
             <androidx.appcompat.widget.SwitchCompat
                 android:id="@+id/share_switch"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginEnd="16dp"
                 android:checked="true"
-                android:fontFamily="@font/poppins_light"
-                android:text="@string/sharing"
-                android:textSize="12sp"
                 app:layout_constraintBaseline_toBaselineOf="@id/refresh_button"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:switchPadding="8dp"
