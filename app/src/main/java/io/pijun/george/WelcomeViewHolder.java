@@ -28,23 +28,6 @@ public class WelcomeViewHolder implements ViewTreeObserver.OnGlobalLayoutListene
         this.binding = binding;
         this.listener = listener;
 
-        // hide everything until we're notified that the initial layout has been completed
-        binding.logo.setVisibility(View.INVISIBLE);
-        binding.wordmark.setVisibility(View.INVISIBLE);
-        binding.motto.setVisibility(View.INVISIBLE);
-
-        binding.showRegisterButton.setVisibility(View.INVISIBLE);
-        binding.showSignInButton.setVisibility(View.INVISIBLE);
-
-        binding.siUsernameContainer.setVisibility(View.INVISIBLE);
-        binding.siPasswordContainer.setVisibility(View.INVISIBLE);
-        binding.signInButton.setVisibility(View.INVISIBLE);
-
-        binding.regUsernameContainer.setVisibility(View.INVISIBLE);
-        binding.regPasswordContainer.setVisibility(View.INVISIBLE);
-        binding.regEmailContainer.setVisibility(View.INVISIBLE);
-        binding.registerButton.setVisibility(View.INVISIBLE);
-
         binding.root.getViewTreeObserver().addOnGlobalLayoutListener(this);
 
         applyTextFieldActionListeners();
@@ -117,12 +100,6 @@ public class WelcomeViewHolder implements ViewTreeObserver.OnGlobalLayoutListene
     public void onGlobalLayout() {
         // we don't want any further layout events
         binding.root.getViewTreeObserver().removeOnGlobalLayoutListener(this);
-        binding.logo.setPivotX(binding.logo.getMeasuredWidth()/2.0f);
-        binding.logo.setPivotY(binding.logo.getMeasuredHeight());
-        binding.wordmark.setPivotX(binding.wordmark.getMeasuredWidth()/2.0f);
-        binding.wordmark.setPivotY(binding.wordmark.getMeasuredHeight());
-        binding.motto.setPivotX(binding.motto.getMeasuredWidth()/2.0f);
-        binding.motto.setPivotY(binding.motto.getMeasuredHeight());
 
         transitionToMainFromLaunch();
     }
@@ -131,47 +108,52 @@ public class WelcomeViewHolder implements ViewTreeObserver.OnGlobalLayoutListene
 
     //region state transition methods
 
-    private void finishTransitionToMain() {
-        // start animating the branding items
-        binding.logo.animate().setStartDelay(500).setDuration(1000).translationY(0);
-        binding.wordmark.animate().setStartDelay(500).setDuration(1000).translationY(0);
-        binding.motto.animate().setStartDelay(500).setDuration(1000).translationY(0);
+    private void hideMain(long dur) {
+        // move the 'main' stuff out first
+        binding.welcomeLabel.animate().setStartDelay(0).setDuration(dur).translationX(-binding.welcomeLabel.getRight());
+        binding.mainInstructions.animate().setStartDelay(0).setDuration(dur).translationX(-binding.mainInstructions.getRight());
+        binding.showRegisterButton.animate().setStartDelay(0).setDuration(dur).translationX(-binding.showRegisterButton.getRight());
+        binding.showSignInButton.animate().setStartDelay(0).setDuration(dur).translationX(-binding.showSignInButton.getRight());
 
-        // now let's set up the 'show' buttons
-        binding.showRegisterButton.setTranslationY(binding.root.getHeight());
-        binding.showSignInButton.setTranslationY(binding.root.getHeight());
-        binding.showRegisterButton.setVisibility(View.VISIBLE);
-        binding.showSignInButton.setVisibility(View.VISIBLE);
-        binding.showRegisterButton.animate().setStartDelay(500).setDuration(1000).translationY(0);
-        binding.showSignInButton.animate().setStartDelay(600).setDuration(1000).translationY(0);
+        // also move the wordmark and 'developed by' items
+        binding.developedByZood.animate().setStartDelay(0).setDuration(dur).translationY(1000);
+        binding.wordmark.animate().setStartDelay(0).setDuration(dur).translationY(1000);
     }
 
     void transitionToLogin() {
         if (state != State.Main) {
             return;
         }
-
         state = State.Login;
+        long dur = 500;
 
         // calculate the offset for the start position of the login fields and button
         int xOffset = binding.root.getWidth() - binding.siUsernameContainer.getLeft();
         // move them to that start position
+        binding.siTitle.setTranslationX(xOffset);
+        binding.siSubtitle.setTranslationX(xOffset);
         binding.siUsernameContainer.setTranslationX(xOffset);
         binding.siPasswordContainer.setTranslationX(xOffset);
         binding.signInButton.setTranslationX(binding.root.getWidth() - binding.signInButton.getLeft());
         // update their visibility
+        binding.siTitle.setVisibility(View.VISIBLE);
+        binding.siSubtitle.setVisibility(View.VISIBLE);
         binding.siUsernameContainer.setVisibility(View.VISIBLE);
         binding.siPasswordContainer.setVisibility(View.VISIBLE);
         binding.signInButton.setVisibility(View.VISIBLE);
 
-        // move the 'show' buttons and globe first
-        binding.showRegisterButton.animate().setStartDelay(0).setDuration(500).translationX(-binding.showRegisterButton.getRight());
-        binding.showSignInButton.animate().setStartDelay(100).setDuration(500).translationX(-binding.showSignInButton.getRight());
+        hideMain(dur);
+
+        // move the logo to match the placeholder logo's position
+        int logoOffset = binding.siLogoPlaceholder.getTop() - binding.logo.getTop();
+        binding.logo.animate().setStartDelay(0).setDuration(dur).translationY(logoOffset);
 
         // bring in the login fields
-        binding.siUsernameContainer.animate().setStartDelay(100).setDuration(500).translationX(0);
-        binding.siPasswordContainer.animate().setStartDelay(200).setDuration(500).translationX(0);
-        binding.signInButton.animate().setStartDelay(300).setStartDelay(500).translationX(0);
+        binding.siTitle.animate().setStartDelay(100).setDuration(dur).translationX(0);
+        binding.siSubtitle.animate().setStartDelay(200).setDuration(dur).translationX(0);
+        binding.siUsernameContainer.animate().setStartDelay(300).setDuration(dur).translationX(0);
+        binding.siPasswordContainer.animate().setStartDelay(400).setDuration(dur).translationX(0);
+        binding.signInButton.animate().setStartDelay(500).setStartDelay(dur).translationX(0);
     }
 
     void transitionToMain() {
@@ -192,28 +174,33 @@ public class WelcomeViewHolder implements ViewTreeObserver.OnGlobalLayoutListene
     }
 
     private void transitionToMainFromLaunch() {
-        // figure out how tall the logo and wordmark are, so we can place them at the center of the screen
-        // NOTE: We're purposely not including the height of the motto in this calculation
-        int contentHeight = binding.wordmark.getBottom() - binding.logo.getTop();
+        L.i("main from launch");
+        long dur = 500;
+        long delay = 0;
 
-        // figure out the offset we'll need from their default position
-        int startY = (binding.root.getHeight() - contentHeight)/2;
-        int offsetY = startY - binding.logo.getTop();
-
-        binding.logo.setTranslationY(offsetY);
         binding.logo.setAlpha(0f);
-        binding.wordmark.setTranslationY(offsetY);
+        binding.welcomeLabel.setAlpha(0f);
+        binding.mainInstructions.setAlpha(0f);
         binding.wordmark.setAlpha(0f);
-        binding.motto.setTranslationY(offsetY);
-        binding.motto.setAlpha(0f);
+        binding.developedByZood.setAlpha(0f);
+        binding.showRegisterButton.setAlpha(0f);
+        binding.showSignInButton.setAlpha(0f);
 
         binding.logo.setVisibility(View.VISIBLE);
+        binding.welcomeLabel.setVisibility(View.VISIBLE);
+        binding.mainInstructions.setVisibility(View.VISIBLE);
+        binding.showRegisterButton.setVisibility(View.VISIBLE);
+        binding.showSignInButton.setVisibility(View.VISIBLE);
         binding.wordmark.setVisibility(View.VISIBLE);
-        binding.motto.setVisibility(View.VISIBLE);
+        binding.developedByZood.setVisibility(View.VISIBLE);
 
-        binding.logo.animate().setStartDelay(200).setDuration(350).alpha(1);
-        binding.wordmark.animate().setStartDelay(200).setDuration(350).alpha(1);
-        binding.motto.animate().setStartDelay(1500).setDuration(350).alpha(1).withEndAction(this::finishTransitionToMain);
+        binding.logo.animate().alpha(1).setDuration(dur).setStartDelay(delay);
+        binding.welcomeLabel.animate().alpha(1).setDuration(dur).setStartDelay(delay);
+        binding.mainInstructions.animate().alpha(1).setDuration(dur).setStartDelay(delay);
+        binding.wordmark.animate().alpha(1).setDuration(dur).setStartDelay(delay);
+        binding.developedByZood.animate().alpha(1).setDuration(dur).setStartDelay(delay);
+        binding.showRegisterButton.animate().alpha(1).setDuration(dur).setStartDelay(delay);
+        binding.showSignInButton.animate().alpha(1).setDuration(dur).setStartDelay(delay);
     }
 
     private void transitionToMainFromLogin() {
@@ -222,17 +209,30 @@ public class WelcomeViewHolder implements ViewTreeObserver.OnGlobalLayoutListene
         }
         state = State.Main;
 
-        // figure out the login fields
+        long dur = 500;
+
+        // figure out the offset for login views
         int xOffset = binding.root.getWidth() - binding.siUsernameContainer.getLeft();
 
-        // take out the login fields
-        binding.signInButton.animate().setStartDelay(0).setDuration(500).translationX(binding.root.getWidth() - binding.signInButton.getLeft());
-        binding.siPasswordContainer.animate().setStartDelay(100).setDuration(500).translationX(xOffset);
-        binding.siUsernameContainer.animate().setStartDelay(200).setDuration(500).translationX(xOffset);
+        // take out the login views
+        binding.signInButton.animate().setStartDelay(0).setDuration(dur).translationX(binding.root.getWidth() - binding.signInButton.getLeft());
+        binding.siPasswordContainer.animate().setStartDelay(100).setDuration(dur).translationX(xOffset);
+        binding.siUsernameContainer.animate().setStartDelay(200).setDuration(dur).translationX(xOffset);
+        binding.siSubtitle.animate().setStartDelay(300).setDuration(dur).translationX(xOffset);
+        binding.siTitle.animate().setStartDelay(400).setDuration(dur).translationX(xOffset);
 
-        // bring back the 'show' buttons and globe
-        binding.showRegisterButton.animate().setStartDelay(200).setDuration(500).translationX(0);
-        binding.showSignInButton.animate().setStartDelay(300).setDuration(500).translationX(0).withEndAction(new UiRunnable() {
+        // bring the logo down
+        binding.logo.animate().setStartDelay(500).setDuration(dur).translationY(0);
+
+        // bring back the main views
+        binding.wordmark.animate().setStartDelay(500).setDuration(dur).translationY(0);
+        binding.developedByZood.animate().setStartDelay(500).setDuration(dur).translationY(0);
+
+        binding.welcomeLabel.animate().setStartDelay(500).setDuration(dur).translationX(0);
+        binding.mainInstructions.animate().setStartDelay(500).setDuration(dur).translationX(0);
+        // the buttons should start coming in at the same time
+        binding.showRegisterButton.animate().setStartDelay(500).setDuration(dur).translationX(0);
+        binding.showSignInButton.animate().setStartDelay(500).setDuration(dur).translationX(0).withEndAction(new UiRunnable() {
             @Override
             public void run() {
                 binding.siUsername.setText(null);
@@ -250,18 +250,31 @@ public class WelcomeViewHolder implements ViewTreeObserver.OnGlobalLayoutListene
 
         state = State.Main;
 
-        // figure out the offset for the registration fields
+        long dur = 350;
+
+        // figure out the offset for the registration fields exit
         int xOffset = binding.root.getWidth() - binding.regUsernameContainer.getLeft();
 
-        // take out the registration fields
-        binding.registerButton.animate().setStartDelay(0).setDuration(500).translationX(binding.root.getWidth() - binding.registerButton.getLeft());
-        binding.regEmailContainer.animate().setStartDelay(100).setDuration(500).translationX(xOffset);
-        binding.regPasswordContainer.animate().setStartDelay(200).setDuration(500).translationX(xOffset);
-        binding.regUsernameContainer.animate().setStartDelay(300).setDuration(500).translationX(xOffset);
+        // take out the registration views
+        binding.registerButton.animate().setStartDelay(0).setDuration(dur).translationX(binding.root.getWidth() - binding.registerButton.getLeft());
+        binding.regEmailContainer.animate().setStartDelay(100).setDuration(dur).translationX(xOffset);
+        binding.regPasswordContainer.animate().setStartDelay(200).setDuration(dur).translationX(xOffset);
+        binding.regUsernameContainer.animate().setStartDelay(300).setDuration(dur).translationX(xOffset);
+        binding.registerSubtitle.animate().setStartDelay(400).setDuration(dur).translationX(xOffset);
+        binding.registerTitle.animate().setStartDelay(500).setDuration(dur).translationX(xOffset);
 
-        // animate the 'show' buttons and globe back
-        binding.showRegisterButton.animate().setStartDelay(300).setDuration(500).translationX(0);
-        binding.showSignInButton.animate().setStartDelay(400).setDuration(500).translationX(0).withEndAction(new UiRunnable() {
+        // bring the logo down
+        binding.logo.animate().setStartDelay(500).setDuration(dur).translationY(0);
+
+        // bring back the main views
+        binding.wordmark.animate().setStartDelay(500).setDuration(dur).translationY(0);
+        binding.developedByZood.animate().setStartDelay(500).setDuration(dur).translationY(0);
+
+        binding.welcomeLabel.animate().setStartDelay(500).setDuration(dur).translationX(0);
+        binding.mainInstructions.animate().setStartDelay(500).setDuration(dur).translationX(0);
+        // the buttons should start coming in at the same time
+        binding.showRegisterButton.animate().setStartDelay(500).setDuration(dur).translationX(0);
+        binding.showSignInButton.animate().setStartDelay(500).setDuration(dur).translationX(0).withEndAction(new UiRunnable() {
             @Override
             public void run() {
                 binding.regUsername.setText(null);
@@ -278,28 +291,39 @@ public class WelcomeViewHolder implements ViewTreeObserver.OnGlobalLayoutListene
 
         state = State.Registration;
 
+        long dur = 500;
+
         // set up the start position of the registration fields and button
         int xOffset = binding.root.getWidth() - binding.regUsernameContainer.getLeft();
         // We start them from just right of the screen
+        binding.registerTitle.setTranslationX(xOffset);
+        binding.registerSubtitle.setTranslationX(xOffset);
         binding.regUsernameContainer.setTranslationX(xOffset);
         binding.regPasswordContainer.setTranslationX(xOffset);
         binding.regEmailContainer.setTranslationX(xOffset);
         binding.registerButton.setTranslationX(binding.root.getWidth() - binding.registerButton.getLeft());
         // update their visibility
+        binding.registerTitle.setVisibility(View.VISIBLE);
+        binding.registerSubtitle.setVisibility(View.VISIBLE);
         binding.regUsernameContainer.setVisibility(View.VISIBLE);
         binding.regPasswordContainer.setVisibility(View.VISIBLE);
         binding.regEmailContainer.setVisibility(View.VISIBLE);
         binding.registerButton.setVisibility(View.VISIBLE);
 
-        // move the 'show' buttons and the globe first
-        binding.showRegisterButton.animate().setStartDelay(0).setDuration(500).translationX(-binding.showRegisterButton.getRight());
-        binding.showSignInButton.animate().setStartDelay(100).setDuration(500).translationX(-binding.showSignInButton.getRight());
+        // move the 'main' stuff out first
+        hideMain(dur);
+
+        // shift the logo up, by matching it's position with that of the placeholder
+        int logoOffset = binding.registerLogoPlaceholder.getTop() - binding.logo.getTop();
+        binding.logo.animate().setStartDelay(0).setDuration(dur).translationY(logoOffset);
 
         // bring in the registration fields
-        binding.regUsernameContainer.animate().setStartDelay(100).setDuration(500).translationX(0);
-        binding.regPasswordContainer.animate().setStartDelay(200).setDuration(500).translationX(0);
-        binding.regEmailContainer.animate().setStartDelay(300).setDuration(500).translationX(0);
-        binding.registerButton.animate().setStartDelay(400).setDuration(500).translationX(0);
+        binding.registerTitle.animate().setStartDelay(0).setDuration(dur).translationX(0);
+        binding.registerSubtitle.animate().setStartDelay(100).setDuration(dur).translationX(0);
+        binding.regUsernameContainer.animate().setStartDelay(200).setDuration(dur).translationX(0);
+        binding.regPasswordContainer.animate().setStartDelay(300).setDuration(dur).translationX(0);
+        binding.regEmailContainer.animate().setStartDelay(400).setDuration(dur).translationX(0);
+        binding.registerButton.animate().setStartDelay(500).setDuration(dur).translationX(0);
     }
 
     //endregion

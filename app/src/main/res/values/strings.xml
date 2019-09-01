@@ -155,4 +155,9 @@
     <string name="less_than_1_minute_msg"><![CDATA[<1m]]></string>
     <string name="seconds_abbreviated_msg">%ds</string>
     <string name="send_to">Send to</string>
+    <string name="register_subtitle_msg">Your account information is encrypted on your phone and backed up to our servers. Your information won\'t (and can\'t) be sold to anybody.</string>
+    <string name="built_with_heartemoji_in_thousand_oaks">Built with ❤️ in Thousand Oaks</string>
+    <string name="welcome_to_zood_location">Welcome to Zood Location</string>
+    <string name="sign_in_or_register_a_new_account_to_get_started">Sign in or register a new account to get started.</string>
+    <string name="sign_in_welcome_back_msg">Welcome back! We missed you.</string>
 </resources>
