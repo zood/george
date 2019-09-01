@@ -112,6 +112,7 @@ public final class MapActivity extends AppCompatActivity implements OnMapReadyCa
     private LocationPermissionNotifier locationPermissionNotifier;
     private ClientNotConnectedNotifier notConnectedNotifier;
     private MainViewModel mainViewModel;
+    private boolean isFlyingCameraToMyLocation = false;
 
     public static Intent newIntent(Context ctx) {
         return new Intent(ctx, MapActivity.class);
@@ -350,13 +351,25 @@ public final class MapActivity extends AppCompatActivity implements OnMapReadyCa
             return;
         }
         float zoom = Math.max(mGoogMap.getCameraPosition().zoom, Constants.DEFAULT_ZOOM_LEVEL);
+
         CameraPosition cp = new CameraPosition.Builder()
                 .zoom(zoom)
                 .target(mMeMarker.getPosition())
                 .bearing(0)
                 .tilt(0).build();
         CameraUpdate cu = CameraUpdateFactory.newCameraPosition(cp);
-        mGoogMap.animateCamera(cu);
+        isFlyingCameraToMyLocation = true;
+        mGoogMap.animateCamera(cu, new GoogleMap.CancelableCallback() {
+            @Override
+            public void onFinish() {
+                isFlyingCameraToMyLocation = false;
+            }
+
+            @Override
+            public void onCancel() {
+                isFlyingCameraToMyLocation = false;
+            }
+        });
     }
 
     @Override
@@ -833,7 +846,7 @@ public final class MapActivity extends AppCompatActivity implements OnMapReadyCa
             }
 
             if (friendForCameraToTrack == 0) {
-                if (mGoogMap != null) {
+                if (mGoogMap != null && !isFlyingCameraToMyLocation) {
                     CameraUpdate update = CameraUpdateFactory.newLatLng(new LatLng(location.getLatitude(), location.getLongitude()));
                     mGoogMap.animateCamera(update);
                 }
