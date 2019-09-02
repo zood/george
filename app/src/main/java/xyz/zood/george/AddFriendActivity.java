@@ -303,6 +303,13 @@ public class AddFriendActivity extends AppCompatActivity {
         finish();
     }
 
+    public void onInviteAction(View v) {
+        Intent i = new Intent(Intent.ACTION_SEND);
+        i.putExtra(Intent.EXTRA_TEXT, getString(R.string.invite_friend_msg));
+        i.setType("text/plain");
+        startActivity(Intent.createChooser(i, getString(R.string.send_to)));
+    }
+
     private class UsernameWatcher implements TextWatcher {
 
         final TextInputLayout layout;

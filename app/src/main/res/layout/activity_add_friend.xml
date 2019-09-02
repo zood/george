@@ -118,6 +118,7 @@
         android:id="@+id/invite_friend"
         style="@style/Widget.MaterialComponents.Button.TextButton"
         android:text="@string/invite_a_friend"
+        android:onClick="onInviteAction"
         android:layout_marginBottom="16dp"
         android:layout_marginTop="16dp"
         app:layout_constraintBottom_toBottomOf="parent"
