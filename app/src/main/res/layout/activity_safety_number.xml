@@ -19,8 +19,7 @@
         <TextView
             android:id="@+id/instructions"
             tools:text="@string/safety_number_instructions_msg"
-            android:fontFamily="@font/poppins_regular"
-            android:textSize="16sp"
+            style="@style/Zood.Body1"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintTop_toTopOf="parent"
