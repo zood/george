@@ -162,4 +162,7 @@
     <string name="sign_in_welcome_back_msg">Welcome back! We missed you.</string>
     <string name="info_panel_last_update_msg">\u00A0\u00A0•\u00A0\u00A0%s</string>
     <string name="wait_duration_msg">Wait %d min</string>
+    <string name="share_your_location_with_a_new_friend">Share your location with a new friend</string>
+    <string name="invite_a_friend">Invite a friend</string>
+    <string name="error">Error</string>
 </resources>

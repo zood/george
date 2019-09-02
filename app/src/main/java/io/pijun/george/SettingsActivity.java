@@ -14,8 +14,6 @@ import xyz.zood.george.R;
 
 public class SettingsActivity extends AppCompatActivity {
 
-    public static final int REQUEST_EXIT = 22;
-
     public static Intent newIntent(@NonNull Context ctx) {
         return new Intent(ctx, SettingsActivity.class);
     }

@@ -76,7 +76,7 @@ import io.pijun.george.service.BackupDatabaseJob;
 import io.pijun.george.view.AvatarRenderer;
 import io.pijun.george.view.MyLocationView;
 import retrofit2.Response;
-import xyz.zood.george.AddFriendDialog;
+import xyz.zood.george.AddFriendActivity;
 import xyz.zood.george.AvatarManager;
 import xyz.zood.george.R;
 import xyz.zood.george.SafetyNumberActivity;
@@ -636,12 +636,15 @@ public final class MapActivity extends AppCompatActivity implements OnMapReadyCa
 
     @UiThread
     private void showAddFriendDialog() {
-        AddFriendDialog fragment = AddFriendDialog.newInstance();
-        getSupportFragmentManager()
-                .beginTransaction()
-                .add(fragment, null)
-                .addToBackStack(null)
-                .commit();
+//        AddFriendDialog fragment = AddFriendDialog.newInstance();
+//        AddFriendFragment fragment = AddFriendFragment.newInstance();
+//        getSupportFragmentManager()
+//                .beginTransaction()
+//                .add(R.id.root, fragment, "add_friend")
+//                .addToBackStack(null)
+//                .commit();
+
+        startActivity(AddFriendActivity.newIntent(this));
     }
 
     @UiThread
@@ -690,7 +693,7 @@ public final class MapActivity extends AppCompatActivity implements OnMapReadyCa
 
     @UiThread
     public void onShowSettings(View v) {
-        startActivityForResult(SettingsActivity.newIntent(this), SettingsActivity.REQUEST_EXIT);
+        startActivity(SettingsActivity.newIntent(this));
     }
 
     @WorkerThread

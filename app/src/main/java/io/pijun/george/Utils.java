@@ -14,6 +14,7 @@ import androidx.annotation.IntRange;
 import androidx.annotation.Nullable;
 import androidx.annotation.StringRes;
 import androidx.annotation.UiThread;
+import androidx.appcompat.app.AlertDialog;
 import androidx.fragment.app.FragmentManager;
 
 import xyz.zood.george.R;
@@ -48,10 +49,15 @@ public final class Utils {
 
     @UiThread
     private static void _showAlert(Context ctx, @StringRes int titleId, @StringRes @IntRange(from=1) int msgId, FragmentManager fm) {
+//        AlertDialog.Builder bldr = new AlertDialog.Builder(ctx);
         ZoodDialog dialog = ZoodDialog.newInstance(ctx.getString(msgId));
         if (titleId != 0) {
+//            bldr.setTitle(titleId)
             dialog.setTitle(ctx.getString(titleId));
         }
+//        bldr.setPositiveButton(R.string.ok, null);
+//        bldr.setCancelable(true);
+//        bldr.show();
         dialog.setButton1(ctx.getString(R.string.ok), null);
         dialog.show(fm, null);
     }
