@@ -42,13 +42,13 @@ import io.pijun.george.Constants;
 import io.pijun.george.Hex;
 import io.pijun.george.L;
 import io.pijun.george.LocationUtils;
-import io.pijun.george.MapActivity;
 import io.pijun.george.Prefs;
 import io.pijun.george.Sodium;
 import io.pijun.george.UiRunnable;
 import io.pijun.george.WorkerRunnable;
 import io.pijun.george.crypto.KeyPair;
 import io.pijun.george.database.DB;
+import xyz.zood.george.MainActivity;
 import xyz.zood.george.R;
 
 public class TimedShareService extends Service {
@@ -249,7 +249,7 @@ public class TimedShareService extends Service {
         int reqCode = (int) (System.currentTimeMillis() % 10000);
         PendingIntent openIntent = PendingIntent.getActivity(this,
                 reqCode,
-                MapActivity.newIntent(this),
+                MainActivity.newIntent(this),
                 PendingIntent.FLAG_UPDATE_CURRENT);
         bldr.setContentIntent(openIntent);
 

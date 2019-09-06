@@ -338,7 +338,7 @@ public class AuthenticationManager {
     }
 
     //region Listener management
-    void addListener(@NonNull Listener listener) {
+    public void addListener(@NonNull Listener listener) {
         WeakReference<Listener> ref = new WeakReference<>(listener);
         listeners.add(ref);
     }
@@ -362,7 +362,7 @@ public class AuthenticationManager {
         });
     }
 
-    void removeListener(@NonNull Listener listener) {
+    public void removeListener(@NonNull Listener listener) {
         int i=0;
         while (i<listeners.size()) {
             WeakReference<Listener> ref = listeners.get(i);
@@ -375,7 +375,7 @@ public class AuthenticationManager {
         }
     }
 
-    interface Listener extends LoginWatcher, LogoutWatcher {
+    public interface Listener extends LoginWatcher, LogoutWatcher {
         @UiThread default void onUserLoggedIn(@NonNull Error err, @Nullable String detail) {}
         @UiThread default void onUserLoggedOut() {}
     }

@@ -1,5 +1,8 @@
 package io.pijun.george.crypto;
 
+import android.os.Parcel;
+import android.os.Parcelable;
+
 import androidx.annotation.NonNull;
 
 import java.util.Arrays;
@@ -7,7 +10,7 @@ import java.util.Objects;
 
 import io.pijun.george.Hex;
 
-public class KeyPair {
+public class KeyPair implements Parcelable {
 
     public byte[] publicKey;
     public byte[] secretKey;
@@ -29,13 +32,40 @@ public class KeyPair {
     @NonNull
     @Override
     public String toString() {
-        StringBuilder sb = new StringBuilder();
-        sb.append("PubKey: ");
-        sb.append(Hex.toHexString(publicKey));
-        sb.append('\n');
-        sb.append("SecKey: ");
-        sb.append(Hex.toHexString(secretKey));
-
-        return sb.toString();
+        return "PubKey: " +
+                Hex.toHexString(publicKey) +
+                '\n' +
+                "SecKey: " +
+                Hex.toHexString(secretKey);
     }
+
+    //region Parcelable
+
+    @Override
+    public int describeContents() {
+        return 0;
+    }
+
+    @Override
+    public void writeToParcel(Parcel out, int flags) {
+        out.writeByteArray(publicKey);
+        out.writeByteArray(secretKey);
+    }
+
+    public static final Parcelable.Creator<KeyPair> CREATOR = new Parcelable.Creator<KeyPair>() {
+        @Override
+        public KeyPair createFromParcel(Parcel in) {
+            KeyPair kp = new KeyPair();
+            in.readByteArray(kp.publicKey);
+            in.readByteArray(kp.secretKey);
+            return kp;
+        }
+
+        @Override
+        public KeyPair[] newArray(int size) {
+            return new KeyPair[size];
+        }
+    };
+
+    //endregion
 }

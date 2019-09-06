@@ -8,10 +8,11 @@ import android.view.View;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.RequiresApi;
-import androidx.appcompat.app.AppCompatActivity;
+import androidx.fragment.app.FragmentActivity;
 import androidx.lifecycle.Lifecycle;
 import androidx.lifecycle.LifecycleObserver;
 import androidx.lifecycle.OnLifecycleEvent;
+
 import io.pijun.george.network.Network;
 import xyz.zood.george.R;
 import xyz.zood.george.widget.BannerView;
@@ -20,10 +21,10 @@ import xyz.zood.george.widget.ZoodDialog;
 public class BackgroundDataRestrictionNotifier implements LifecycleObserver {
 
     @NonNull private final BannerView banner;
-    @NonNull private final AppCompatActivity activity;
+    @NonNull private final FragmentActivity activity;
     private static final int bannerItemId = 2134;
 
-    public BackgroundDataRestrictionNotifier(@NonNull AppCompatActivity activity, @NonNull BannerView banner) {
+    public BackgroundDataRestrictionNotifier(@NonNull FragmentActivity activity, @NonNull BannerView banner) {
         this.banner = banner;
         this.activity = activity;
     }

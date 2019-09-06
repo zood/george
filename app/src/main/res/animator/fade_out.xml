@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<set
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:ordering="sequentially">
+    <objectAnimator
+        android:valueFrom="1"
+        android:valueTo="0"
+        android:propertyName="alpha"
+        android:duration="@integer/fragment_transition" />
+</set>

@@ -22,7 +22,7 @@
         android:extractNativeLibs="false"
         tools:ignore="GoogleAppIndexingWarning">
         <activity
-            android:name="io.pijun.george.MapActivity"
+            android:name="xyz.zood.george.MainActivity"
             android:screenOrientation="portrait"
             android:launchMode="singleInstance"
             android:theme="@style/AppTheme">
@@ -39,12 +39,6 @@
         <activity
             android:name="io.pijun.george.LogActivity"
             android:windowSoftInputMode="adjustResize"
-            android:theme="@style/AppTheme" />
-        <activity android:name="io.pijun.george.SettingsActivity"
-            android:screenOrientation="portrait"
-            android:theme="@style/AppTheme" />
-        <activity android:name="com.theartofdev.edmodo.cropper.CropImageActivity"
-            android:screenOrientation="portrait"
             android:theme="@style/AppTheme" />
         <activity android:name="xyz.zood.george.AvatarCropperActivity"
             android:screenOrientation="portrait"

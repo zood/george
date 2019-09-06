@@ -37,7 +37,7 @@ public class UpdateStatusTracker {
     private static final LongSparseArray<Long> requestTimes = new LongSparseArray<>();
     private static final LongSparseArray<Response> responses = new LongSparseArray<>();
 
-    static void addListener(@NonNull Listener l) {
+    public static void addListener(@NonNull Listener l) {
         synchronized (UpdateStatusTracker.class) {
             listeners.add(l);
         }
@@ -104,13 +104,13 @@ public class UpdateStatusTracker {
     }
 
     @AnyThread
-    static void removeListener(@NonNull Listener l) {
+    public static void removeListener(@NonNull Listener l) {
         synchronized (UpdateStatusTracker.class) {
             listeners.remove(l);
         }
     }
 
-    static void setLastRequestTime(long friendId, long reqTime) {
+    public static void setLastRequestTime(long friendId, long reqTime) {
         synchronized (UpdateStatusTracker.class) {
             requestTimes.put(friendId, reqTime);
             notifyListeners(friendId);

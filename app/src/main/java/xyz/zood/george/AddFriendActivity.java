@@ -8,7 +8,6 @@ import android.text.Editable;
 import android.text.TextWatcher;
 import android.view.View;
 
-import androidx.annotation.AnyThread;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.UiThread;
@@ -21,13 +20,9 @@ import com.google.android.material.textfield.TextInputEditText;
 import com.google.android.material.textfield.TextInputLayout;
 
 import java.io.IOException;
-import java.security.SecureRandom;
-import java.util.Collections;
 import java.util.Locale;
 
 import io.pijun.george.App;
-import io.pijun.george.CloudLogger;
-import io.pijun.george.Constants;
 import io.pijun.george.L;
 import io.pijun.george.Prefs;
 import io.pijun.george.UiRunnable;
@@ -35,12 +30,9 @@ import io.pijun.george.Utils;
 import io.pijun.george.WorkerRunnable;
 import io.pijun.george.api.OscarClient;
 import io.pijun.george.api.SearchUserResult;
-import io.pijun.george.api.UserComm;
 import io.pijun.george.crypto.KeyPair;
 import io.pijun.george.database.DB;
-import io.pijun.george.database.FriendRecord;
 import io.pijun.george.database.UserRecord;
-import io.pijun.george.service.BackupDatabaseJob;
 import retrofit2.Response;
 import xyz.zood.george.databinding.ActivityAddFriendBinding;
 
@@ -49,6 +41,7 @@ public class AddFriendActivity extends AppCompatActivity {
     private ActivityAddFriendBinding binding;
     private Drawable invalidUserIcon;
     private Drawable validUserIcon;
+    private FriendshipManager friendshipManager;
 
     public static Intent newIntent(@NonNull Context ctx) {
         return new Intent(ctx, AddFriendActivity.class);
@@ -57,6 +50,17 @@ public class AddFriendActivity extends AppCompatActivity {
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        Prefs prefs = Prefs.get(this);
+        String accessToken = prefs.getAccessToken();
+        if (accessToken == null) {
+            throw new RuntimeException("access token is missing");
+        }
+        KeyPair keyPair = prefs.getKeyPair();
+        if (keyPair == null) {
+            throw new RuntimeException("key pair is missing");
+        }
+        friendshipManager = new FriendshipManager(this, DB.get(), accessToken, keyPair);
 
         binding = DataBindingUtil.setContentView(this, R.layout.activity_add_friend);
 
@@ -83,76 +87,6 @@ public class AddFriendActivity extends AppCompatActivity {
         validUserIcon = null;
 
         super.onDestroy();
-    }
-
-    @WorkerThread
-    private void addFriend(@NonNull String username) {
-        Prefs prefs = Prefs.get(this);
-        String accessToken = prefs.getAccessToken();
-        if (accessToken == null || accessToken.equals("")) {
-            addFriendFinished(getString(R.string.not_logged_in_access_token_msg));
-            return;
-        }
-        KeyPair keyPair = prefs.getKeyPair();
-        if (keyPair == null) {
-            addFriendFinished(getString(R.string.not_logged_in_key_pair_msg));
-            return;
-        }
-
-        DB db = DB.get();
-        UserRecord user = db.getUser(username);
-        if (user == null) {
-            // the user should already have been added by the 'search as you type' feature
-            App.runOnUiThread(new UiRunnable() {
-                @Override
-                public void run() {
-                    addFriendFinished(getString(R.string.unknown_error_getting_user_info));
-                }
-            });
-            return;
-        }
-
-        // check if we already have this user as a friend, and if we're already sharing with them
-        final FriendRecord friend = db.getFriendByUserId(user.id);
-        if (friend != null) {
-            if (friend.sendingBoxId != null) {
-                // send the sending box id to this person one more time, just in case
-                UserComm comm = UserComm.newLocationSharingGrant(friend.sendingBoxId);
-                String errMsg = OscarClient.queueSendMessage(this, user, keyPair, accessToken, comm.toJSON(), false, false);
-                if (errMsg != null) {
-                    CloudLogger.log(errMsg);
-                }
-                addFriendFinished(null);
-                return;
-            }
-        }
-
-        byte[] sendingBoxId = new byte[Constants.DROP_BOX_ID_LENGTH];
-        new SecureRandom().nextBytes(sendingBoxId);
-        UserComm comm = UserComm.newLocationSharingGrant(sendingBoxId);
-        String errMsg = OscarClient.queueSendMessage(this, user, keyPair, accessToken, comm.toJSON(), false, false);
-        if (errMsg != null) {
-            addFriendFinished(getString(R.string.sharing_grant_failed_msg, errMsg));
-            return;
-        }
-
-        try {
-            db.startSharingWith(user, sendingBoxId);
-        } catch (DB.DBException dbe) {
-            addFriendFinished(getString(R.string.database_error_msg, dbe.getLocalizedMessage()));
-            CloudLogger.log(dbe);
-            return;
-        }
-
-        try {
-            AvatarManager.sendAvatarToUsers(this, Collections.singletonList(user), keyPair, accessToken);
-        } catch (IOException ex) {
-            CloudLogger.log(ex);
-            // We're purposely not returning early here. This isn't a critical error.
-        }
-
-        addFriendFinished(null);
-        BackupDatabaseJob.scheduleBackup(this);
     }
 
     @WorkerThread
@@ -260,28 +194,6 @@ public class AddFriendActivity extends AppCompatActivity {
         }
     }
 
-    @AnyThread
-    private void addFriendFinished(@Nullable String msg) {
-        App.runOnUiThread(new UiRunnable() {
-            @Override
-            public void run() {
-                // If no error, finish the activity
-                if (msg == null) {
-                    finish();
-                    return;
-                }
-
-                // Show the error?
-                AlertDialog.Builder bldr = new AlertDialog.Builder(AddFriendActivity.this);
-                bldr.setTitle(R.string.error);
-                bldr.setMessage(msg);
-                bldr.setPositiveButton(R.string.ok, null);
-                bldr.setCancelable(true);
-                bldr.show();
-            }
-        });
-    }
-
     @UiThread
     public void onAddFriendAction(View v) {
         Editable text = binding.username.getText();
@@ -293,7 +205,40 @@ public class AddFriendActivity extends AppCompatActivity {
         App.runInBackground(new WorkerRunnable() {
             @Override
             public void run() {
-                addFriend(username);
+                friendshipManager.addFriend(username, AddFriendActivity.this::onAddFriendFinished);
+            }
+        });
+    }
+
+    @WorkerThread
+    private void onAddFriendFinished(@NonNull FriendshipManager.AddFriendResult result, @Nullable String extraInfo) {
+        App.runOnUiThread(new UiRunnable() {
+            @Override
+            public void run() {
+                String errMsg;
+                switch (result) {
+                    case Success:
+                        finish();
+                        return;
+                    case UserNotFound:
+                        errMsg = getString(R.string.unknown_error_getting_user_info);
+                        break;
+                    case DatabaseError:
+                        errMsg = getString(R.string.database_error_msg, extraInfo);
+                        break;
+                    case SharingGrantFailed:
+                        errMsg = getString(R.string.sharing_grant_failed_msg, extraInfo);
+                        break;
+                    default:
+                        throw new RuntimeException("unaccounted for result");
+                }
+
+                AlertDialog.Builder bldr = new AlertDialog.Builder(AddFriendActivity.this);
+                bldr.setTitle(R.string.error);
+                bldr.setMessage(errMsg);
+                bldr.setPositiveButton(R.string.ok, null);
+                bldr.setCancelable(true);
+                bldr.show();
             }
         });
     }

@@ -2,7 +2,7 @@
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     xmlns:app="http://schemas.android.com/apk/res-auto">
-    <androidx.constraintlayout.widget.ConstraintLayout
+    <xyz.zood.george.widget.SlidableCL
         android:id="@+id/settings_view"
         android:focusable="true"
         android:focusableInTouchMode="true"
@@ -29,5 +29,5 @@
             app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
             android:layout_width="match_parent"
             android:layout_height="0dp" />
-    </androidx.constraintlayout.widget.ConstraintLayout>
+    </xyz.zood.george.widget.SlidableCL>
 </layout>

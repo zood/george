@@ -2,7 +2,7 @@ package xyz.zood.george.notifier;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.UiThread;
-import androidx.appcompat.app.AppCompatActivity;
+import androidx.fragment.app.FragmentActivity;
 
 import io.pijun.george.Utils;
 import xyz.zood.george.R;
@@ -12,10 +12,10 @@ public class ClientNotConnectedNotifier implements BannerView.ItemClickListener 
 
     @NonNull
     private final BannerView banner;
-    @NonNull private final AppCompatActivity activity;
+    @NonNull private final FragmentActivity activity;
     private static final int bannerItemId = 110348;
 
-    public ClientNotConnectedNotifier(@NonNull AppCompatActivity activity, @NonNull BannerView banner) {
+    public ClientNotConnectedNotifier(@NonNull FragmentActivity activity, @NonNull BannerView banner) {
         this.banner = banner;
         this.activity = activity;
     }

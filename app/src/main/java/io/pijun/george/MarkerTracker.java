@@ -2,14 +2,13 @@ package io.pijun.george;
 
 import android.util.LongSparseArray;
 
+import androidx.annotation.Nullable;
+import androidx.annotation.UiThread;
+
 import com.google.android.gms.maps.model.Marker;
 
 import java.util.HashMap;
-import java.util.Set;
 
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
-import androidx.annotation.UiThread;
 import io.pijun.george.database.FriendLocation;
 
 public class MarkerTracker {
@@ -26,7 +25,7 @@ public class MarkerTracker {
     }
 
     @UiThread
-    void clear() {
+    public void clear() {
         mIdToMarker.clear();
         mIdToLocation.clear();
         mMarkerToId.clear();
@@ -34,25 +33,23 @@ public class MarkerTracker {
 
     @Nullable
     @UiThread
-    Marker getById(long friendId) {
+    public Marker getById(long friendId) {
         return mIdToMarker.get(friendId);
-    }
-
-    @UiThread
-    FriendLocation getLocation(Marker marker) {
-        long id = mMarkerToId.get(marker);
-        return mIdToLocation.get(id);
-    }
-
-    @NonNull
-    @UiThread
-    Set<Marker> getMarkers() {
-        return mMarkerToId.keySet();
     }
 
     @Nullable
     @UiThread
-    Marker removeMarker(long friendId) {
+    public FriendLocation getLocation(Marker marker) {
+        Long id = mMarkerToId.get(marker);
+        if (id == null) {
+            return null;
+        }
+        return mIdToLocation.get(id);
+    }
+
+    @Nullable
+    @UiThread
+    public Marker removeMarker(long friendId) {
         Marker marker = mIdToMarker.get(friendId);
         if (marker == null) {
             return null;
@@ -64,7 +61,7 @@ public class MarkerTracker {
     }
 
     @UiThread
-    void updateLocation(long friendId, FriendLocation loc) {
+    public void updateLocation(long friendId, FriendLocation loc) {
         mIdToLocation.put(friendId, loc);
     }
 }

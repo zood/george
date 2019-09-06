@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<set
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:ordering="together">
+    <objectAnimator
+        android:valueFrom="-1"
+        android:valueTo="0"
+        android:propertyName="xFraction"
+        android:duration="@integer/fragment_transition" />
+    <!-- scaling -->
+    <set android:ordering="together">
+        <!-- scale X -->
+        <set android:ordering="sequentially">
+            <objectAnimator
+                android:valueFrom="1"
+                android:valueTo="@dimen/fragment_transition_scale_min"
+                android:propertyName="scaleX"
+                android:duration="@integer/half_fragment_transition" />
+            <objectAnimator
+                android:valueFrom="@dimen/fragment_transition_scale_min"
+                android:valueTo="1"
+                android:propertyName="scaleX"
+                android:duration="@integer/half_fragment_transition" />
+        </set>
+        <!-- scale Y -->
+        <set android:ordering="sequentially">
+            <objectAnimator
+                android:valueFrom="1"
+                android:valueTo="@dimen/fragment_transition_scale_min"
+                android:propertyName="scaleY"
+                android:duration="@integer/half_fragment_transition" />
+            <objectAnimator
+                android:valueFrom="@dimen/fragment_transition_scale_min"
+                android:valueTo="1"
+                android:propertyName="scaleY"
+                android:duration="@integer/half_fragment_transition" />
+        </set>
+    </set>
+</set>

@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <integer name="fragment_transition">400</integer>
+    <integer name="half_fragment_transition">200</integer>
+
+    <item name="fragment_transition_scale_min" type="dimen" format="float">0.95</item>
+</resources>

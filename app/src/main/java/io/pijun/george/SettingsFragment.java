@@ -11,6 +11,7 @@ import android.os.Bundle;
 import android.os.Environment;
 import android.provider.MediaStore;
 import android.view.LayoutInflater;
+import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
@@ -71,7 +72,7 @@ public class SettingsFragment extends Fragment implements SettingsAdapter.Listen
         binding.toolbar.setNavigationOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                requireActivity().finish();
+                requireFragmentManager().popBackStack();
             }
         });
 
@@ -105,11 +106,10 @@ public class SettingsFragment extends Fragment implements SettingsAdapter.Listen
             if (Build.VERSION.SDK_INT >= 28) {
                 versionCode = pi.getLongVersionCode();
             } else {
-                //noinspection deprecation
                 versionCode = pi.versionCode;
             }
             String msg = getString(R.string.app_version_msg, pi.versionName, versionCode);
-            Utils.showStringAlert(requireContext(), getString(R.string.app_name), msg, getFragmentManager());
+            Utils.showStringAlert(requireContext(), getString(R.string.app_name), msg, requireFragmentManager());
         } catch (PackageManager.NameNotFoundException ignore) {
             throw new RuntimeException("You need to specify the correct package name");
         }
@@ -128,7 +128,8 @@ public class SettingsFragment extends Fragment implements SettingsAdapter.Listen
 
         // Show a popup menu to let the user pick
         PopupMenu menu = new PopupMenu(requireContext(), anchor);
-        requireActivity().getMenuInflater().inflate(R.menu.profile_photo, menu.getMenu());
+        MenuInflater menuInflater = new MenuInflater(requireContext());
+        menuInflater.inflate(R.menu.profile_photo, menu.getMenu());
         menu.setOnMenuItemClickListener(new PopupMenu.OnMenuItemClickListener() {
             @Override
             public boolean onMenuItemClick(MenuItem item) {

@@ -1,9 +1,10 @@
 package xyz.zood.george.widget;
 
-import android.app.Activity;
+import android.content.Context;
 import android.graphics.Outline;
 import android.graphics.drawable.Drawable;
 import android.text.format.DateUtils;
+import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewOutlineProvider;
@@ -42,7 +43,7 @@ public class InfoPanel {
 
     private static final long REFRESH_INTERVAL = 15 * DateUtils.SECOND_IN_MILLIS;
 
-    private final Activity activity;
+    private final Context context;
     private final Listener listener;
 
     private FriendRecord currFriend;
@@ -67,10 +68,10 @@ public class InfoPanel {
     @NonNull private final TextView username;
 
     @UiThread
-    public InfoPanel(@NonNull ConstraintLayout root, @NonNull Activity activity, @NonNull Listener listener) {
+    public InfoPanel(@NonNull ConstraintLayout root, @NonNull Context ctx, @NonNull Listener listener) {
         this.panel = root;
         this.listener = listener;
-        this.activity = activity;
+        this.context = ctx;
         panel.setClipToOutline(true);
         panel.setOutlineProvider(new ViewOutlineProvider() {
             @Override
@@ -88,7 +89,7 @@ public class InfoPanel {
         if (battery == null) {
             throw new IllegalArgumentException("'battery' TextView is missing");
         }
-        battery.setCompoundDrawablePadding((int) activity.getResources().getDimension(R.dimen.four));
+        battery.setCompoundDrawablePadding((int) ctx.getResources().getDimension(R.dimen.four));
 
         batteryIcon = root.findViewById(R.id.battery_icon);
         if (batteryIcon == null) {
@@ -168,7 +169,7 @@ public class InfoPanel {
             } else {
                 minutes = 1;
             }
-            refreshButton.setText(activity.getString(R.string.wait_duration_msg, minutes));
+            refreshButton.setText(context.getString(R.string.wait_duration_msg, minutes));
         } else {
             refreshButton.setEnabled(true);
             refreshButton.setText(R.string.refresh);
@@ -179,7 +180,7 @@ public class InfoPanel {
     private void calculateAndSetUpdateTime(long currTime) {
         final CharSequence relTime;
         if (currLoc.time >= currTime-60* DateUtils.SECOND_IN_MILLIS) {
-            relTime = activity.getString(R.string.now);
+            relTime = context.getString(R.string.now);
         } else {
             relTime = DateUtils.getRelativeTimeSpanString(
                     currLoc.time,
@@ -187,7 +188,7 @@ public class InfoPanel {
                     DateUtils.MINUTE_IN_MILLIS,
                     DateUtils.FORMAT_ABBREV_RELATIVE);
         }
-        updateTime.setText(activity.getString(R.string.info_panel_last_update_msg, relTime));
+        updateTime.setText(context.getString(R.string.info_panel_last_update_msg, relTime));
         updateTime.setVisibility(View.VISIBLE);
     }
 
@@ -233,8 +234,9 @@ public class InfoPanel {
         if (friend == null) {
             return;
         }
-        PopupMenu menu = new PopupMenu(activity, overflowButton);
-        activity.getMenuInflater().inflate(R.menu.info_panel_overflow, menu.getMenu());
+        PopupMenu menu = new PopupMenu(context, overflowButton);
+        MenuInflater inflater = new MenuInflater(context);
+        inflater.inflate(R.menu.info_panel_overflow, menu.getMenu());
         menu.setOnMenuItemClickListener(new PopupMenu.OnMenuItemClickListener() {
             @Override
             public boolean onMenuItemClick(MenuItem item) {
@@ -358,7 +360,7 @@ public class InfoPanel {
 
         // battery status
         if (loc.batteryLevel != null) {
-            battery.setText(activity.getString(R.string.battery_percent_msg, loc.batteryLevel));
+            battery.setText(context.getString(R.string.battery_percent_msg, loc.batteryLevel));
             @DrawableRes int batteryImg;
             if (loc.batteryCharging != null && loc.batteryCharging) {
                 if (loc.batteryLevel >= 95) {
@@ -393,7 +395,7 @@ public class InfoPanel {
                     batteryImg = R.drawable.ic_sharp_battery_20_20dp;
                 }
             }
-            Drawable drawable = activity.getDrawable(batteryImg);
+            Drawable drawable = context.getDrawable(batteryImg);
             batteryIcon.setImageDrawable(drawable);
             battery.setVisibility(View.VISIBLE);
             batteryIcon.setVisibility(View.VISIBLE);
@@ -410,7 +412,7 @@ public class InfoPanel {
             address.setText(rg.getAddress());
         } else {
             address.setText(R.string.loading_ellipsis);
-            ReverseGeocodingCache.fetch(activity, loc.latitude, loc.longitude, new ReverseGeocodingCache.OnCachedListener() {
+            ReverseGeocodingCache.fetch(context, loc.latitude, loc.longitude, new ReverseGeocodingCache.OnCachedListener() {
                 @Override
                 public void onReverseGeocodingCached(@Nullable RevGeocoding rg) {
                     if (rg == null) {
@@ -475,7 +477,7 @@ public class InfoPanel {
         }
         if (colorId != 0) {
             DrawableCompat.setTint(refreshProgressBar.getIndeterminateDrawable(),
-                    ContextCompat.getColor(activity, colorId));
+                    ContextCompat.getColor(context, colorId));
         }
         refreshProgressBar.setVisibility(vis);
     }

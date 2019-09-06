@@ -166,7 +166,7 @@ public class Prefs {
     }
 
     @Nullable
-    CameraPosition getCameraPosition() {
+    public CameraPosition getCameraPosition() {
         if (!mPrefs.getBoolean(KEY_CAMERA_POSITION_SAVED, false)) {
             return null;
         }
@@ -190,7 +190,7 @@ public class Prefs {
         return new CameraPosition.Builder().bearing(bearing).target(ll).tilt(tilt).zoom(zoom).build();
     }
 
-    void setCameraPosition(@Nullable CameraPosition pos) {
+    public void setCameraPosition(@Nullable CameraPosition pos) {
         if (pos == null) {
             mPrefs.edit().putBoolean(KEY_CAMERA_POSITION_SAVED, false).apply();
             return;

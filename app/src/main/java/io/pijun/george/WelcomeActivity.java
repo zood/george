@@ -34,6 +34,7 @@ import io.pijun.george.crypto.EncryptedData;
 import io.pijun.george.crypto.KeyPair;
 import io.pijun.george.sodium.HashConfig;
 import retrofit2.Response;
+import xyz.zood.george.MainActivity;
 import xyz.zood.george.R;
 import xyz.zood.george.databinding.ActivityWelcomeBinding;
 import xyz.zood.george.widget.AuthenticationProgressDialog;
@@ -293,7 +294,7 @@ public class WelcomeActivity extends AppCompatActivity implements WelcomeViewHol
 
     @UiThread
     private void showMapActivity() {
-        Intent i = MapActivity.newIntent(this);
+        Intent i = MainActivity.newIntent(this);
         startActivity(i);
         finish();
     }

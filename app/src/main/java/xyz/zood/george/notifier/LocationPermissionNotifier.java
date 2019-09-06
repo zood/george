@@ -8,8 +8,8 @@ import android.provider.Settings;
 import android.view.View;
 
 import androidx.annotation.NonNull;
-import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.content.ContextCompat;
+import androidx.fragment.app.FragmentActivity;
 import androidx.lifecycle.Lifecycle;
 import androidx.lifecycle.LifecycleObserver;
 import androidx.lifecycle.OnLifecycleEvent;
@@ -21,10 +21,10 @@ import xyz.zood.george.widget.ZoodDialog;
 public class LocationPermissionNotifier implements LifecycleObserver {
 
     @NonNull private final BannerView banner;
-    @NonNull private final AppCompatActivity activity;
+    @NonNull private final FragmentActivity activity;
     private static final int bannerItemId = 871;
 
-    public LocationPermissionNotifier(@NonNull AppCompatActivity activity, @NonNull BannerView banner) {
+    public LocationPermissionNotifier(@NonNull FragmentActivity activity, @NonNull BannerView banner) {
         this.banner = banner;
         this.activity = activity;
     }

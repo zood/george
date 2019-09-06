@@ -3,17 +3,17 @@ package io.pijun.george;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Build;
-import android.text.TextUtils;
 import android.text.format.DateUtils;
-
-import java.io.IOException;
-import java.util.Arrays;
 
 import androidx.annotation.AnyThread;
 import androidx.annotation.NonNull;
 import androidx.annotation.Size;
 import androidx.annotation.WorkerThread;
 import androidx.core.content.ContextCompat;
+
+import java.io.IOException;
+import java.util.Arrays;
+
 import io.pijun.george.api.DeviceInfo;
 import io.pijun.george.api.LimitedUserInfo;
 import io.pijun.george.api.Message;
@@ -99,7 +99,7 @@ public class MessageProcessor {
         if (!AuthenticationManager.isLoggedIn(context)) {
             return Result.ErrorNotLoggedIn;
         }
-        if (TextUtils.isEmpty(token) || keyPair == null) {
+        if (token == null || keyPair == null) {
             return Result.ErrorNotLoggedIn;
         }
 
@@ -478,7 +478,7 @@ public class MessageProcessor {
                     case Success:
                         queue.poll();
                         // delete the action from the server
-                        if (msg.id != 0 && !TextUtils.isEmpty(token)) {
+                        if (msg.id != 0 && token != null) {
                             OscarClient.queueDeleteMessage(App.getApp(), token, msg.id);
                         }
                         break;
@@ -506,7 +506,7 @@ public class MessageProcessor {
                     default:
                         queue.poll();
                         // delete the action from the server
-                        if (msg.id != 0 && !TextUtils.isEmpty(token)) {
+                        if (msg.id != 0 && token != null) {
                             OscarClient.queueDeleteMessage(App.getApp(), token, msg.id);
                         }
                         L.w("error processing action: " + result);
@@ -533,6 +533,27 @@ public class MessageProcessor {
                 get().queue.offer(msg);
             }
         });
+    }
+
+    public static void retrieveAndProcessNewMessages(@NonNull String accessToken) {
+        OscarAPI api = OscarClient.newInstance(accessToken);
+        try {
+            Response<Message[]> response = api.getMessages().execute();
+            if (!response.isSuccessful()) {
+                OscarError err = OscarError.fromResponse(response);
+                L.w("error checking for messages: " + err);
+                return;
+            }
+            Message[] msgs = response.body();
+            if (msgs == null) {
+                return;
+            }
+            for (Message msg : msgs) {
+                queue(msg);
+            }
+        } catch (IOException ignore) {
+            // meh, we'll try again later
+        }
     }
 
 }

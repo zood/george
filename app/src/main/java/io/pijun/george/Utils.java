@@ -4,18 +4,18 @@ import android.annotation.SuppressLint;
 import android.content.Context;
 import android.os.Looper;
 
+import androidx.annotation.AnyThread;
+import androidx.annotation.IntRange;
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.annotation.StringRes;
+import androidx.annotation.UiThread;
+import androidx.fragment.app.FragmentManager;
+
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
 import java.util.regex.Pattern;
-
-import androidx.annotation.AnyThread;
-import androidx.annotation.IntRange;
-import androidx.annotation.Nullable;
-import androidx.annotation.StringRes;
-import androidx.annotation.UiThread;
-import androidx.appcompat.app.AlertDialog;
-import androidx.fragment.app.FragmentManager;
 
 import xyz.zood.george.R;
 import xyz.zood.george.widget.ZoodDialog;
@@ -23,6 +23,7 @@ import xyz.zood.george.widget.ZoodDialog;
 @SuppressWarnings("WeakerAccess")
 public final class Utils {
 
+    @SuppressWarnings("unused")
     public static Map<String, Object> map(Object... args) {
         if (args.length % 2 != 0) {
             throw new IllegalArgumentException("You need to provide an even number of arguments. (Keys and values)");
@@ -38,7 +39,7 @@ public final class Utils {
 
     @SuppressLint("WrongThread")
     @AnyThread
-    public static void showAlert(final Context ctx, @StringRes final int titleId, @StringRes final int msgId, FragmentManager fm) {
+    public static void showAlert(@NonNull final Context ctx, @StringRes final int titleId, @StringRes final int msgId, @NonNull FragmentManager fm) {
         if (Looper.myLooper() != Looper.getMainLooper()) {
             App.runOnUiThread(() -> _showAlert(ctx, titleId, msgId, fm));
             return;
@@ -48,23 +49,18 @@ public final class Utils {
     }
 
     @UiThread
-    private static void _showAlert(Context ctx, @StringRes int titleId, @StringRes @IntRange(from=1) int msgId, FragmentManager fm) {
-//        AlertDialog.Builder bldr = new AlertDialog.Builder(ctx);
+    private static void _showAlert(@NonNull Context ctx, @StringRes int titleId, @StringRes @IntRange(from=1) int msgId, @NonNull FragmentManager fm) {
         ZoodDialog dialog = ZoodDialog.newInstance(ctx.getString(msgId));
         if (titleId != 0) {
-//            bldr.setTitle(titleId)
             dialog.setTitle(ctx.getString(titleId));
         }
-//        bldr.setPositiveButton(R.string.ok, null);
-//        bldr.setCancelable(true);
-//        bldr.show();
         dialog.setButton1(ctx.getString(R.string.ok), null);
         dialog.show(fm, null);
     }
 
     @SuppressLint("WrongThread")
     @AnyThread
-    public static void showStringAlert(final Context ctx, final CharSequence title, final CharSequence msg, FragmentManager fm) {
+    public static void showStringAlert(@NonNull final Context ctx, @Nullable final CharSequence title, @NonNull final CharSequence msg, @NonNull FragmentManager fm) {
         if (Looper.myLooper() != Looper.getMainLooper()) {
             App.runOnUiThread(() -> _showStringAlert(ctx, title, msg, fm));
             return;
@@ -74,7 +70,7 @@ public final class Utils {
     }
 
     @UiThread
-    private static void _showStringAlert(final Context ctx, CharSequence title, CharSequence msg, FragmentManager fm) {
+    private static void _showStringAlert(@NonNull final Context ctx, @Nullable CharSequence title, @NonNull CharSequence msg, @NonNull FragmentManager fm) {
         ZoodDialog dialog = ZoodDialog.newInstance(msg.toString());
         if (title != null) {
             dialog.setTitle(title.toString());
@@ -90,7 +86,7 @@ public final class Utils {
 
     private static final Pattern sUsernamePattern = Pattern.compile("^[a-z0-9]{5,}$");
     @AnyThread
-    public static boolean isValidUsername(String username) {
+    public static boolean isValidUsername(@Nullable String username) {
         if (username == null) {
             return false;
         }
