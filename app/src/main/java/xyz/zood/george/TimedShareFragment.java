@@ -52,7 +52,6 @@ public class TimedShareFragment extends Fragment {
     private MainViewModel viewModel;
     private float peekHeight;
 
-
     @UiThread
     private void close() {
         if (isRunning) {
@@ -73,22 +72,6 @@ public class TimedShareFragment extends Fragment {
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        viewModel = ViewModelProviders.of(requireActivity()).get(MainViewModel.class);
-        viewModel.getTimedShareIsRunning().observe(this, this::setTimedShareRunning);
-        viewModel.getOnTimedShareClicked().observe(this, clickEvent -> {
-            Boolean didClick = clickEvent.getEventIfNotHandled();
-            if (didClick == null) {
-                return;
-            }
-            onTimedShareFabClicked();
-        });
-        viewModel.getTimedShareTimeRemaining().observe(this, this::setTimeRemaining);
-        viewModel.getOnCloseTimedSheet().observe(this, new Observer<Event<Boolean>>() {
-            @Override
-            public void onChanged(Event<Boolean> booleanEvent) {
-                close();
-            }
-        });
         peekHeight = -getResources().getDimensionPixelSize(R.dimen.timed_share_sheet_peek_height);
     }
 
@@ -227,6 +210,23 @@ public class TimedShareFragment extends Fragment {
                     newDuration -= DateUtils.MINUTE_IN_MILLIS;
                 }
                 svc.updateDuration(newDuration);
+            }
+        });
+
+        viewModel = ViewModelProviders.of(requireActivity()).get(MainViewModel.class);
+        viewModel.getTimedShareIsRunning().observe(this, this::setTimedShareRunning);
+        viewModel.getOnTimedShareClicked().observe(this, clickEvent -> {
+            Boolean didClick = clickEvent.getEventIfNotHandled();
+            if (didClick == null) {
+                return;
+            }
+            onTimedShareFabClicked();
+        });
+        viewModel.getTimedShareTimeRemaining().observe(this, this::setTimeRemaining);
+        viewModel.getOnCloseTimedSheet().observe(this, new Observer<Event<Boolean>>() {
+            @Override
+            public void onChanged(Event<Boolean> booleanEvent) {
+                close();
             }
         });
 

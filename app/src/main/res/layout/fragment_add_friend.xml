@@ -2,7 +2,7 @@
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools">
-<ScrollView
+<xyz.zood.george.widget.SlidableScrollView
     android:focusable="true"
     android:focusableInTouchMode="true"
     android:fillViewport="true"
@@ -21,7 +21,6 @@
         app:icon="@drawable/ic_chevron_left_24dp"
         app:iconGravity="textStart"
         app:iconTint="@color/black_80"
-        android:onClick="onBackClicked"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
         android:layout_marginStart="24dp"
@@ -94,7 +93,6 @@
         android:id="@+id/add_friend"
         android:text="@string/add_friend"
         android:enabled="false"
-        android:onClick="onAddFriendAction"
         app:layout_constraintTop_toBottomOf="@id/username_container"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
@@ -118,7 +116,6 @@
         android:id="@+id/invite_friend"
         style="@style/Widget.MaterialComponents.Button.TextButton"
         android:text="@string/invite_a_friend"
-        android:onClick="onInviteAction"
         android:layout_marginBottom="16dp"
         android:layout_marginTop="16dp"
         app:layout_constraintBottom_toBottomOf="parent"
@@ -129,5 +126,5 @@
         android:layout_height="wrap_content" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>
-</ScrollView>
+</xyz.zood.george.widget.SlidableScrollView>
 </layout>

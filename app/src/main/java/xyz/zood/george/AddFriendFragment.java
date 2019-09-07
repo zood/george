@@ -6,15 +6,17 @@ import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
+import android.view.LayoutInflater;
 import android.view.View;
+import android.view.ViewGroup;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.UiThread;
 import androidx.annotation.WorkerThread;
 import androidx.appcompat.app.AlertDialog;
-import androidx.appcompat.app.AppCompatActivity;
 import androidx.databinding.DataBindingUtil;
+import androidx.fragment.app.Fragment;
 
 import com.google.android.material.textfield.TextInputEditText;
 import com.google.android.material.textfield.TextInputLayout;
@@ -24,7 +26,6 @@ import java.util.Locale;
 
 import io.pijun.george.App;
 import io.pijun.george.L;
-import io.pijun.george.Prefs;
 import io.pijun.george.UiRunnable;
 import io.pijun.george.Utils;
 import io.pijun.george.WorkerRunnable;
@@ -34,59 +35,96 @@ import io.pijun.george.crypto.KeyPair;
 import io.pijun.george.database.DB;
 import io.pijun.george.database.UserRecord;
 import retrofit2.Response;
-import xyz.zood.george.databinding.ActivityAddFriendBinding;
+import xyz.zood.george.databinding.FragmentAddFriendBinding;
 
-public class AddFriendActivity extends AppCompatActivity {
+public class AddFriendFragment extends Fragment {
 
-    private ActivityAddFriendBinding binding;
+    private static final String ARG_ACCESS_TOKEN = "access_token";
+    private static final String ARG_KEY_PAIR = "key_pair";
+
+    private String accessToken;
+    private FragmentAddFriendBinding binding;
     private Drawable invalidUserIcon;
     private Drawable validUserIcon;
     private FriendshipManager friendshipManager;
 
-    public static Intent newIntent(@NonNull Context ctx) {
-        return new Intent(ctx, AddFriendActivity.class);
+    static AddFriendFragment newInstance(@NonNull String accessToken, @NonNull KeyPair keyPair) {
+        AddFriendFragment fragment = new AddFriendFragment();
+        Bundle args = new Bundle();
+        args.putString(ARG_ACCESS_TOKEN, accessToken);
+        args.putParcelable(ARG_KEY_PAIR, keyPair);
+
+        fragment.setArguments(args);
+
+        return fragment;
     }
 
     @Override
-    protected void onCreate(@Nullable Bundle savedInstanceState) {
+    public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        Prefs prefs = Prefs.get(this);
-        String accessToken = prefs.getAccessToken();
+        Bundle args = getArguments();
+        if (args == null) {
+            throw new RuntimeException("You must create the fragment via newInstance");
+        }
+        accessToken = args.getString(ARG_ACCESS_TOKEN);
         if (accessToken == null) {
-            throw new RuntimeException("access token is missing");
+            throw new RuntimeException("missing access token");
         }
-        KeyPair keyPair = prefs.getKeyPair();
+        KeyPair keyPair = args.getParcelable(ARG_KEY_PAIR);
         if (keyPair == null) {
-            throw new RuntimeException("key pair is missing");
+            throw new RuntimeException("missing key pair");
         }
-        friendshipManager = new FriendshipManager(this, DB.get(), accessToken, keyPair);
 
-        binding = DataBindingUtil.setContentView(this, R.layout.activity_add_friend);
+        Context ctx = requireContext();
+        friendshipManager = new FriendshipManager(ctx, DB.get(), accessToken, keyPair);
+    }
 
+    @Nullable
+    @Override
+    public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
+        binding = DataBindingUtil.inflate(inflater, R.layout.fragment_add_friend, container, false);
         binding.username.addTextChangedListener(
                 new UsernameWatcher(
                         binding.usernameContainer, binding.username));
         binding.usernameContainer.setEndIconVisible(true);
+        binding.back.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                requireFragmentManager().popBackStack();
+            }
+        });
+        binding.inviteFriend.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                onInviteAction();
+            }
+        });
+        binding.addFriend.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                onAddFriendAction();
+            }
+        });
 
         int lightRed = getResources().getColor(R.color.zood_red_light);
-        //noinspection ConstantConditions
-        invalidUserIcon = getDrawable(R.drawable.ic_close_black_24dp).mutate();
+        invalidUserIcon = getResources().getDrawable(R.drawable.ic_close_black_24dp).mutate();
         invalidUserIcon.setTint(lightRed);
 
         int green = getResources().getColor(R.color.zood_green);
-        //noinspection ConstantConditions
-        validUserIcon = getDrawable(R.drawable.ic_check_black_24dp).mutate();
+        validUserIcon = getResources().getDrawable(R.drawable.ic_check_black_24dp).mutate();
         validUserIcon.setTint(green);
+
+        return binding.getRoot();
     }
 
     @Override
-    protected void onDestroy() {
+    public void onDestroyView() {
         binding = null;
         invalidUserIcon = null;
         validUserIcon = null;
 
-        super.onDestroy();
+        super.onDestroyView();
     }
 
     @WorkerThread
@@ -104,21 +142,6 @@ public class AddFriendActivity extends AppCompatActivity {
         }
 
         // we have to check with the server
-        Prefs prefs = Prefs.get(this);
-        String accessToken = prefs.getAccessToken();
-        if (accessToken == null || accessToken.equals("")) {
-            App.runOnUiThread(new UiRunnable() {
-                @Override
-                public void run() {
-                    Utils.showAlert(AddFriendActivity.this,
-                            R.string.error,
-                            R.string.not_logged_in_access_token_msg,
-                            getSupportFragmentManager());
-                }
-            });
-            return;
-        }
-
         Response<SearchUserResult> response;
         try {
             response = OscarClient.newInstance(accessToken).searchForUser(username).execute();
@@ -195,7 +218,7 @@ public class AddFriendActivity extends AppCompatActivity {
     }
 
     @UiThread
-    public void onAddFriendAction(View v) {
+    private void onAddFriendAction() {
         Editable text = binding.username.getText();
         if (text == null) {
             throw new NullPointerException("How did we get into this state?");
@@ -205,7 +228,7 @@ public class AddFriendActivity extends AppCompatActivity {
         App.runInBackground(new WorkerRunnable() {
             @Override
             public void run() {
-                friendshipManager.addFriend(username, AddFriendActivity.this::onAddFriendFinished);
+                friendshipManager.addFriend(username, AddFriendFragment.this::onAddFriendFinished);
             }
         });
     }
@@ -218,7 +241,7 @@ public class AddFriendActivity extends AppCompatActivity {
                 String errMsg;
                 switch (result) {
                     case Success:
-                        finish();
+                        requireFragmentManager().popBackStack();
                         return;
                     case UserNotFound:
                         errMsg = getString(R.string.unknown_error_getting_user_info);
@@ -233,7 +256,7 @@ public class AddFriendActivity extends AppCompatActivity {
                         throw new RuntimeException("unaccounted for result");
                 }
 
-                AlertDialog.Builder bldr = new AlertDialog.Builder(AddFriendActivity.this);
+                AlertDialog.Builder bldr = new AlertDialog.Builder(requireContext());
                 bldr.setTitle(R.string.error);
                 bldr.setMessage(errMsg);
                 bldr.setPositiveButton(R.string.ok, null);
@@ -243,12 +266,7 @@ public class AddFriendActivity extends AppCompatActivity {
         });
     }
 
-    @UiThread
-    public void onBackClicked(View v) {
-        finish();
-    }
-
-    public void onInviteAction(View v) {
+    private void onInviteAction() {
         Intent i = new Intent(Intent.ACTION_SEND);
         i.putExtra(Intent.EXTRA_TEXT, getString(R.string.invite_friend_msg));
         i.setType("text/plain");
@@ -298,5 +316,4 @@ public class AddFriendActivity extends AppCompatActivity {
         public void onTextChanged(CharSequence s, int start, int before, int count) {}
 
     }
-
 }

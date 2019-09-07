@@ -20,7 +20,7 @@
         android:supportsRtl="true"
         android:theme="@style/AppTheme"
         android:extractNativeLibs="false"
-        tools:ignore="GoogleAppIndexingWarning">
+        tools:ignore="GoogleAppIndexingWarning,UnusedAttribute">
         <activity
             android:name="xyz.zood.george.MainActivity"
             android:screenOrientation="portrait"
@@ -45,10 +45,6 @@
             android:theme="@style/AppTheme" />
         <activity android:name="xyz.zood.george.SafetyNumberActivity"
             android:screenOrientation="portrait"
-            android:theme="@style/AppTheme" />
-        <activity android:name=".AddFriendActivity"
-            android:screenOrientation="portrait"
-            android:windowSoftInputMode="stateHidden|adjustResize"
             android:theme="@style/AppTheme" />
 
         <!-- BEGIN SERVICES -->

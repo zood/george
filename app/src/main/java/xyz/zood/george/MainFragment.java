@@ -111,6 +111,7 @@ public class MainFragment extends Fragment implements OnMapReadyCallback, DB.Lis
     private GoogleMap googMap;
     private InfoPanel infoPanel;
     private boolean isFlyingCameraToMyLocation = false;
+    private KeyPair keyPair;
     private LocationPermissionNotifier locationPermissionNotifier;
     private FusedLocationProviderClient locationProviderClient;
     private LocationRequest locationRequest;
@@ -148,7 +149,7 @@ public class MainFragment extends Fragment implements OnMapReadyCallback, DB.Lis
         if (accessToken == null) {
             throw new RuntimeException("missing access token");
         }
-        KeyPair keyPair = args.getParcelable(ARG_KEY_PAIR);
+        keyPair = args.getParcelable(ARG_KEY_PAIR);
         if (keyPair == null) {
             throw new RuntimeException("missing key pair");
         }
@@ -567,7 +568,16 @@ public class MainFragment extends Fragment implements OnMapReadyCallback, DB.Lis
 
     @UiThread
     private void showAddFriendDialog() {
-        startActivity(AddFriendActivity.newIntent(requireContext()));
+        AddFriendFragment fragment = AddFriendFragment.newInstance(accessToken, keyPair);
+        FragmentManager mgr = requireFragmentManager();
+        mgr.beginTransaction()
+                .setCustomAnimations(R.animator.new_enter_from_right,
+                        R.animator.new_exit_to_left,
+                        R.animator.new_enter_from_left,
+                        R.animator.new_exit_to_right)
+                .replace(R.id.fragment_host, fragment)
+                .addToBackStack(null)
+                .commit();
     }
 
     @UiThread
