@@ -31,6 +31,7 @@ import java.util.Locale;
 import io.pijun.george.crypto.KeyPair;
 import xyz.zood.george.AvatarCropperActivity;
 import xyz.zood.george.AvatarManager;
+import xyz.zood.george.FriendshipManager;
 import xyz.zood.george.R;
 import xyz.zood.george.databinding.FragmentSettingsBinding;
 import xyz.zood.george.widget.ZoodDialog;
@@ -69,7 +70,7 @@ public class SettingsFragment extends Fragment implements SettingsAdapter.Listen
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         binding = FragmentSettingsBinding.inflate(inflater, container, false);
         binding.list.setAdapter(adapter);
-        binding.toolbar.setNavigationOnClickListener(new View.OnClickListener() {
+        binding.back.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 requireFragmentManager().popBackStack();
@@ -144,6 +145,10 @@ public class SettingsFragment extends Fragment implements SettingsAdapter.Listen
         menu.show();
     }
 
+    public void onInviteFriendAction() {
+        FriendshipManager.inviteFriend(requireContext());
+    }
+
     @Override
     public void onLogOutAction() {
         ZoodDialog dialog = ZoodDialog.newInstance(getString(R.string.confirm_log_out_msg));
@@ -164,6 +169,10 @@ public class SettingsFragment extends Fragment implements SettingsAdapter.Listen
             throw new RuntimeException("How is the fragment manager null right now?");
         }
         dialog.show(fm, null);
+    }
+
+    public void onNotificationsClicked() {
+
     }
 
     //endregion
@@ -227,13 +236,11 @@ public class SettingsFragment extends Fragment implements SettingsAdapter.Listen
 
     @Override
     public void onAvatarUpdated(@Nullable String username) {
-        L.i("SettingsFragment.onAvatarUpdated: " + username);
         if (username != null) {
             // we're only interested in updates to our personal avatar
             return;
         }
 
-        L.i("notifyDataSetChanged");
         adapter.notifyDataSetChanged();
     }
 

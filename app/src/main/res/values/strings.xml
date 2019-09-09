@@ -166,4 +166,5 @@
     <string name="invite_a_friend">Invite a friend</string>
     <string name="error">Error</string>
     <string name="invite_friend_msg">Install Zood Location so we can securely share our location with each other. https://www.zood.xyz</string>
+    <string name="notifications">Notifications</string>
 </resources>

@@ -1,10 +1,12 @@
 package xyz.zood.george;
 
 import android.content.Context;
+import android.content.Intent;
 
 import androidx.annotation.AnyThread;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.annotation.UiThread;
 import androidx.annotation.WorkerThread;
 
 import java.io.IOException;
@@ -88,6 +90,14 @@ public class FriendshipManager {
 
         listener.onAddFriendFinished(AddFriendResult.Success, null);
         BackupDatabaseJob.scheduleBackup(ctx);
+    }
+
+    @UiThread
+    public static void inviteFriend(@NonNull Context ctx) {
+        Intent i = new Intent(Intent.ACTION_SEND);
+        i.putExtra(Intent.EXTRA_TEXT, ctx.getString(R.string.invite_friend_msg));
+        i.setType("text/plain");
+        ctx.startActivity(Intent.createChooser(i, ctx.getString(R.string.send_to)));
     }
 
     @WorkerThread

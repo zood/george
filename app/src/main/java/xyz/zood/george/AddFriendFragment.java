@@ -1,7 +1,6 @@
 package xyz.zood.george;
 
 import android.content.Context;
-import android.content.Intent;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.text.Editable;
@@ -97,7 +96,7 @@ public class AddFriendFragment extends Fragment {
         binding.inviteFriend.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                onInviteAction();
+                FriendshipManager.inviteFriend(requireContext());
             }
         });
         binding.addFriend.setOnClickListener(new View.OnClickListener() {
@@ -264,13 +263,6 @@ public class AddFriendFragment extends Fragment {
                 bldr.show();
             }
         });
-    }
-
-    private void onInviteAction() {
-        Intent i = new Intent(Intent.ACTION_SEND);
-        i.putExtra(Intent.EXTRA_TEXT, getString(R.string.invite_friend_msg));
-        i.setType("text/plain");
-        startActivity(Intent.createChooser(i, getString(R.string.send_to)));
     }
 
     private class UsernameWatcher implements TextWatcher {
