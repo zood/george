@@ -12,6 +12,7 @@ import android.graphics.Color;
 import android.location.Location;
 import android.os.Bundle;
 import android.os.Looper;
+import android.text.TextUtils;
 import android.text.format.DateUtils;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -146,7 +147,7 @@ public class MainFragment extends Fragment implements OnMapReadyCallback, DB.Lis
             throw new RuntimeException("You must create the fragment via newInstance");
         }
         accessToken = args.getString(ARG_ACCESS_TOKEN);
-        if (accessToken == null) {
+        if (TextUtils.isEmpty(accessToken)) {
             throw new RuntimeException("missing access token");
         }
         keyPair = args.getParcelable(ARG_KEY_PAIR);

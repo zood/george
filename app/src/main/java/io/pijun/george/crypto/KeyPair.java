@@ -56,8 +56,10 @@ public class KeyPair implements Parcelable {
         @Override
         public KeyPair createFromParcel(Parcel in) {
             KeyPair kp = new KeyPair();
-            in.readByteArray(kp.publicKey);
-            in.readByteArray(kp.secretKey);
+            kp.publicKey = in.createByteArray();
+            kp.secretKey = in.createByteArray();
+//            in.readByteArray(kp.publicKey);
+//            in.readByteArray(kp.secretKey);
             return kp;
         }
 
