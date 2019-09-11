@@ -667,6 +667,45 @@ public class MainFragment extends Fragment implements OnMapReadyCallback, DB.Lis
             googMap.moveCamera(CameraUpdateFactory.newCameraPosition(pos));
         }
         googMap.setOnMarkerClickListener(markerClickListener);
+        googMap.getUiSettings().setCompassEnabled(false);
+        googMap.setOnCameraMoveStartedListener(new GoogleMap.OnCameraMoveStartedListener() {
+            @Override
+            public void onCameraMoveStarted(int reason) {
+                if (reason == REASON_GESTURE) {
+                    friendForCameraToTrack = -1;
+                    binding.myLocationFab.setSelected(false);
+                }
+            }
+        });
+        googMap.setOnMapClickListener(new GoogleMap.OnMapClickListener() {
+            @Override
+            public void onMapClick(LatLng latLng) {
+                friendForCameraToTrack = -1;
+                binding.myLocationFab.setSelected(false);
+                infoPanel.hide();
+                binding.timedShareFab.setVisibility(View.VISIBLE);
+                if (currentCircle != null) {
+                    currentCircle.remove();
+                    currentCircle = null;
+                }
+            }
+        });
+
+        // add markers for all friends
+        App.runInBackground(new WorkerRunnable() {
+            @Override
+            public void run() {
+                DB db = DB.get();
+                ArrayList<FriendRecord> friends = db.getFriends();
+                for (final FriendRecord f : friends) {
+                    final FriendLocation location = db.getFriendLocation(f.id);
+                    if (location == null) {
+                        continue;
+                    }
+                    addMapMarker(f, location);
+                }
+            }
+        });
     }
 
     //endregion

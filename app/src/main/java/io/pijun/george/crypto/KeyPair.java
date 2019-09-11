@@ -58,8 +58,6 @@ public class KeyPair implements Parcelable {
             KeyPair kp = new KeyPair();
             kp.publicKey = in.createByteArray();
             kp.secretKey = in.createByteArray();
-//            in.readByteArray(kp.publicKey);
-//            in.readByteArray(kp.secretKey);
             return kp;
         }
 
