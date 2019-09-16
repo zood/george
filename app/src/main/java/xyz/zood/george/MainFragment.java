@@ -98,6 +98,8 @@ import xyz.zood.george.widget.ZoodDialog;
 
 public class MainFragment extends Fragment implements OnMapReadyCallback, DB.Listener, AuthenticationManager.Listener, BackPressInterceptor {
 
+    static final String TAG = "main";
+
     private static final String ARG_ACCESS_TOKEN = "access_token";
     private static final String ARG_KEY_PAIR = "key_pair";
 
@@ -125,6 +127,7 @@ public class MainFragment extends Fragment implements OnMapReadyCallback, DB.Lis
     private SettingsClient settingsClient;
     private MainViewModel viewModel;
 
+    @NonNull
     static MainFragment newInstance(@NonNull String accessToken, @NonNull KeyPair keyPair) {
         MainFragment f = new MainFragment();
         Bundle args = new Bundle();

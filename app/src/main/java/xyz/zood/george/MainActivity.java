@@ -59,11 +59,20 @@ public class MainActivity extends AppCompatActivity implements BackPressNotifier
             if (keyPair == null) {
                 throw new RuntimeException("Key pair should not be null at this point");
             }
-            MainFragment fragment = MainFragment.newInstance(accessToken, keyPair);
-            FragmentManager fm = getSupportFragmentManager();
-            FragmentTransaction ft = fm.beginTransaction();
-            ft.add(R.id.fragment_host, fragment);
-            ft.commit();
+
+            if (prefs.getShownOnboarding()) {
+                MainFragment fragment = MainFragment.newInstance(accessToken, keyPair);
+                FragmentManager fm = getSupportFragmentManager();
+                FragmentTransaction ft = fm.beginTransaction();
+                ft.add(R.id.fragment_host, fragment, MainFragment.TAG);
+                ft.commit();
+            } else {
+                OnboardingFragment fragment = OnboardingFragment.newInstance(accessToken, keyPair);
+                FragmentManager fm = getSupportFragmentManager();
+                FragmentTransaction ft = fm.beginTransaction();
+                ft.add(R.id.fragment_host, fragment, OnboardingFragment.TAG);
+                ft.commit();
+            }
         }
     }
 

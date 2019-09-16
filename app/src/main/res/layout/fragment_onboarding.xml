@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools">
+<androidx.constraintlayout.widget.ConstraintLayout
+    android:background="@android:color/white"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+    <androidx.viewpager2.widget.ViewPager2
+        android:id="@+id/view_pager"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent" />
+    <View
+        android:id="@+id/indicator_1"
+        android:background="@drawable/page_indicator"
+        android:backgroundTint="@color/black_10"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toStartOf="@id/indicator_2"
+        app:layout_constraintTop_toTopOf="@id/button"
+        app:layout_constraintBottom_toBottomOf="@id/button"
+        app:layout_constraintHorizontal_chainStyle="packed"
+        android:layout_margin="8dp"
+        android:layout_width="8dp"
+        android:layout_height="8dp" />
+    <View
+        android:id="@+id/indicator_2"
+        android:background="@drawable/page_indicator"
+        android:backgroundTint="@color/black_10"
+        app:layout_constraintStart_toEndOf="@id/indicator_1"
+        app:layout_constraintEnd_toStartOf="@id/indicator_3"
+        app:layout_constraintTop_toTopOf="@id/button"
+        app:layout_constraintBottom_toBottomOf="@id/button"
+        android:layout_margin="8dp"
+        android:layout_width="8dp"
+        android:layout_height="8dp" />
+    <View
+        android:id="@+id/indicator_3"
+        android:background="@drawable/page_indicator"
+        android:backgroundTint="@color/black_10"
+        app:layout_constraintStart_toEndOf="@id/indicator_2"
+        app:layout_constraintEnd_toStartOf="@id/indicator_4"
+        app:layout_constraintTop_toTopOf="@id/button"
+        app:layout_constraintBottom_toBottomOf="@id/button"
+        android:layout_margin="8dp"
+        android:layout_width="8dp"
+        android:layout_height="8dp" />
+    <View
+        android:id="@+id/indicator_4"
+        android:background="@drawable/page_indicator"
+        android:backgroundTint="@color/black_10"
+        app:layout_constraintStart_toEndOf="@id/indicator_3"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="@id/button"
+        app:layout_constraintBottom_toBottomOf="@id/button"
+        android:layout_margin="8dp"
+        android:layout_width="8dp"
+        android:layout_height="8dp" />
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/button"
+        tools:text="@string/next"
+        style="@style/Widget.MaterialComponents.Button.TextButton"
+        android:layout_marginEnd="24dp"
+        android:layout_marginBottom="24dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content" />
+</androidx.constraintlayout.widget.ConstraintLayout>
+</layout>

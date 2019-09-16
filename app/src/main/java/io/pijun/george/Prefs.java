@@ -42,6 +42,8 @@ public class Prefs {
 
     private final static String KEY_DEVICE_ID = "device_id";
 
+    private final static String KEY_SHOWN_ONBOARDING = "shown_onboarding";
+
     private Prefs(Context context) {
         mPrefs = context.getSharedPreferences("secrets", Context.MODE_PRIVATE);
     }
@@ -235,6 +237,14 @@ public class Prefs {
         }
 
         return deviceId;
+    }
+
+    public boolean getShownOnboarding() {
+        return mPrefs.getBoolean(KEY_SHOWN_ONBOARDING, false);
+    }
+
+    public void setShownOnboarding() {
+        mPrefs.edit().putBoolean(KEY_SHOWN_ONBOARDING, true).apply();
     }
 
 }
