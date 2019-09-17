@@ -27,6 +27,7 @@ public class App extends Application {
     @Override
     public void onCreate() {
         sApp = this;
+        L.resetLog(this);
         L.i("========================");
         L.i("      App.onCreate");
         L.i("========================");

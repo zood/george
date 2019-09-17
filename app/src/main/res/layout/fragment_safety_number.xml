@@ -1,0 +1,71 @@
+<layout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools">
+    <xyz.zood.george.widget.SlidableCL
+        android:background="@android:color/white"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/back"
+            style="@style/Widget.MaterialComponents.Button.TextButton"
+            app:icon="@drawable/ic_chevron_left_24dp"
+            app:iconGravity="textStart"
+            app:iconTint="@color/black_80"
+            app:iconSize="24dp"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            android:layout_marginStart="16dp"
+            android:layout_marginTop="12dp"
+            android:layout_width="40dp"
+            android:layout_height="40dp" />
+        <com.google.android.material.textview.MaterialTextView
+            android:id="@+id/screen_title"
+            android:text="@string/safety_number"
+            style="@style/Zood.Headline6"
+            android:textAllCaps="true"
+            app:layout_constraintStart_toEndOf="@id/back"
+            app:layout_constraintTop_toTopOf="@id/back"
+            app:layout_constraintBottom_toBottomOf="@id/back"
+            android:layout_marginStart="24dp"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content" />
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/share"
+            style="@style/Widget.MaterialComponents.Button.TextButton"
+            app:icon="@drawable/ic_share_24dp"
+            app:iconGravity="start"
+            app:iconTint="@color/black_80"
+            app:iconSize="24dp"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            android:layout_marginEnd="24dp"
+            android:layout_marginTop="12dp"
+            android:layout_width="40dp"
+            android:layout_height="40dp" />
+        <TextView
+            android:id="@+id/instructions"
+            tools:text="@string/safety_number_instructions_msg"
+            style="@style/Zood.Body1"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintBottom_toTopOf="@+id/safety_number"
+            app:layout_constraintVertical_chainStyle="packed"
+            android:layout_margin="32dp"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content" />
+        <TextView
+            android:id="@+id/safety_number"
+            tools:text="32768 32768 32768 32768\n32768 32768 32768 32768\n32768 32768 32768 32768\n32768 32768 32768 32768\n32768 32768 32768 32768\n32768 32768 32768 32768\n32768 32768 32768 32768\n32768 32768 32768 32768"
+            android:fontFamily="monospace"
+            android:textSize="16sp"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/instructions"
+            app:layout_constraintBottom_toBottomOf="parent"
+            android:layout_marginTop="8dp"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content" />
+    </xyz.zood.george.widget.SlidableCL>
+</layout>

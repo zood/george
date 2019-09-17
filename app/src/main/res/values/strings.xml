@@ -177,4 +177,5 @@
     <string name="onboarding_body_3">Using end-to-end encryption your location is always protected.</string>
     <string name="onboarding_body_4">We need you to give the Zood Location app permission to access your location. Only people you choose to share with can see where you are.</string>
     <string name="start">Start</string>
+    <string name="safety_number">Safety number</string>
 </resources>

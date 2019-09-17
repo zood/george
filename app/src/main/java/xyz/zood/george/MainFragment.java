@@ -877,8 +877,21 @@ public class MainFragment extends Fragment implements OnMapReadyCallback, DB.Lis
 
         @Override
         public void onInfoPanelViewSafetyNumber(@NonNull FriendRecord friend) {
-            Intent i = SafetyNumberActivity.newIntent(requireContext(), friend.user);
-            startActivity(i);
+            Prefs prefs = Prefs.get(requireContext());
+            String username = prefs.getUsername();
+            SafetyNumberFragment fragment = SafetyNumberFragment.newInstance(username,
+                    keyPair.publicKey,
+                    friend.user.username,
+                    friend.user.publicKey);
+            FragmentManager mgr = requireFragmentManager();
+            mgr.beginTransaction()
+                    .setCustomAnimations(R.animator.new_enter_from_right,
+                            R.animator.new_exit_to_left,
+                            R.animator.new_enter_from_left,
+                            R.animator.new_exit_to_right)
+                    .replace(R.id.fragment_host, fragment)
+                    .addToBackStack(null)
+                    .commit();
         }
     };
 

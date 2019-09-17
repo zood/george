@@ -43,9 +43,6 @@
         <activity android:name="xyz.zood.george.AvatarCropperActivity"
             android:screenOrientation="portrait"
             android:theme="@style/AppTheme" />
-        <activity android:name="xyz.zood.george.SafetyNumberActivity"
-            android:screenOrientation="portrait"
-            android:theme="@style/AppTheme" />
 
         <!-- BEGIN SERVICES -->
         <service android:name="io.pijun.george.service.FcmMessageReceiver">
