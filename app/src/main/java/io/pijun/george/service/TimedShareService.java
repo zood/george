@@ -243,7 +243,7 @@ public class TimedShareService extends Service {
         }
 
         NotificationCompat.Builder bldr = new NotificationCompat.Builder(this, TIMED_SHARE_CHANNEL_ID);
-        bldr.setSmallIcon(R.drawable.status_icon);
+        bldr.setSmallIcon(R.drawable.ic_timed_share);
         bldr.setContentTitle("Timed share is running");
         bldr.setPriority(NotificationCompat.PRIORITY_MIN);
         int reqCode = (int) (System.currentTimeMillis() % 10000);

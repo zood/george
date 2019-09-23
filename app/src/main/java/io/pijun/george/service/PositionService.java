@@ -197,7 +197,7 @@ public class PositionService extends Service {
         }
 
         NotificationCompat.Builder bldr = new NotificationCompat.Builder(this, FINDING_LOCATION_CHANNEL_ID);
-        bldr.setSmallIcon(R.drawable.status_icon);
+        bldr.setSmallIcon(R.drawable.ic_position_service);
         bldr.setContentTitle(getString(R.string.finding_your_location));
         startForeground(NOTIFICATION_ID, bldr.build());
     }

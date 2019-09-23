@@ -115,6 +115,8 @@ public class OnboardingFragment extends Fragment {
 
     private void onButtonClicked() {
         if (binding.viewPager.getCurrentItem() == getLastSlideIndex()) {
+            // disable the button so the user can't tap it again while the main fragment loads
+            binding.button.setEnabled(false);
             showMain();
         } else {
             binding.viewPager.setCurrentItem(binding.viewPager.getCurrentItem()+1, true);
