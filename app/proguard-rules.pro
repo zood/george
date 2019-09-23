@@ -22,19 +22,12 @@
 -dontwarn retrofit2.Platform$Java8
 
 # Don't minify any zood code
--keep class io.pijun.** {
-    public protected private *;
-}
--keep class xyz.zood.** {
-    public protected private *;
-}
+-keep class io.pijun.** { *; }
+-keep class xyz.zood.** { *; }
+
 # Inner class protection
--keep class io.pijun.*$* {
-    *;
-}
--keep class xyz.zood.*$* {
-    *;
-}
+-keep class io.pijun.*$* { *; }
+-keep class xyz.zood.*$* { *; }
 
 # For Android-Image-Croper library
 -keep class android.support.v7.widget.** { *; }

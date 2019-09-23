@@ -13,6 +13,7 @@ android {
         multiDexEnabled true
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         resConfigs "en"
+        vectorDrawables.useSupportLibrary = true
         externalNativeBuild {
             cmake {
                 cFlags "-Os -fvisibility=hidden"
@@ -76,8 +77,8 @@ dependencies {
         exclude group: 'com.google.firebase', module: 'firebase-core'
     })
 
-    implementation 'com.squareup.retrofit2:retrofit:2.6.0'
-    implementation 'com.squareup.retrofit2:converter-gson:2.6.0'
+    implementation 'com.squareup.retrofit2:retrofit:2.6.1'
+    implementation 'com.squareup.retrofit2:converter-gson:2.6.1'
 
     // explicitly include okhttp in case retrofit's dependency doesn't get updated to the latest
     implementation 'com.squareup.okhttp3:okhttp:3.14.2'

@@ -1175,20 +1175,19 @@ public class MainFragment extends Fragment implements OnMapReadyCallback, DB.Lis
             }
             MessageProcessor.Result result = MessageProcessor.decryptAndProcess(requireContext(), friend.user.userId, data.cipherText, data.nonce);
             if (result != MessageProcessor.Result.Success) {
-                L.i("MA error decrypting+processing dropped package: " + result);
+                L.i("MF error decrypting+processing dropped package: " + result);
             }
         }
 
         @Override
         public void onPushNotificationReceived(@NonNull PushNotification notification) {
-            L.i("MA.onPushNotificationReceived");
+            L.i("MF.onPushNotificationReceived");
             MessageProcessor.Result result = MessageProcessor.decryptAndProcess(requireContext(),
                     notification.senderId,
                     notification.cipherText,
                     notification.nonce);
             if (result != MessageProcessor.Result.Success) {
-                L.i("MA error decrypting+processing push notification: " + result);
-                return;
+                L.i("MF error decrypting+processing push notification: " + result);
             }
 
             // Was this a transient message?
