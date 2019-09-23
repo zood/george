@@ -14,5 +14,6 @@ app/src/main/res/values/secrets.xml
 app/src/debug/res/values/secrets.xml
 .idea/assetWizardSettings.xml
 .idea/render.experimental.xml
+.idea/gradle.xml
 .cxx/
 .stignore
