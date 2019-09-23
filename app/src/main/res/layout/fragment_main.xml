@@ -86,12 +86,12 @@
                 android:id="@+id/motion"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginStart="8dp"
-                android:layout_marginTop="2dp"
+                android:layout_marginStart="4dp"
                 android:contentDescription="@null"
                 android:tint="@color/black_40"
-                app:layout_constraintStart_toEndOf="@id/username"
-                app:layout_constraintTop_toTopOf="@id/username"
+                app:layout_constraintStart_toEndOf="@id/battery"
+                app:layout_constraintTop_toTopOf="@id/battery_icon"
+                app:layout_constraintBottom_toBottomOf="@id/battery_icon"
                 tools:src="@drawable/ic_sharp_walk_20dp" />
 
             <ImageView
@@ -104,35 +104,37 @@
                 android:src="@drawable/ic_sharp_navigation_20dp"
                 android:tint="@color/black_40"
                 app:layout_constraintDimensionRatio="1:1"
-                app:layout_constraintStart_toEndOf="@id/motion"
-                app:layout_constraintTop_toTopOf="@id/username" />
+                app:layout_constraintStart_toEndOf="@id/username"
+                app:layout_constraintTop_toTopOf="@id/username"
+                app:layout_constraintBottom_toBottomOf="@id/username"/>
 
             <ImageView
                 android:id="@+id/battery_icon"
                 android:contentDescription="@null"
                 android:layout_width="wrap_content"
                 android:layout_height="0dp"
-                android:layout_marginStart="8dp"
-                android:layout_marginTop="2dp"
+                android:layout_marginStart="0dp"
+                android:layout_marginTop="8dp"
                 android:src="@drawable/ic_sharp_battery_50_20dp"
                 android:tint="@color/zood_green"
                 app:layout_constraintDimensionRatio="1:1"
-                app:layout_constraintStart_toEndOf="@id/bearing"
-                app:layout_constraintBottom_toBottomOf="@id/username" />
+                app:layout_constraintStart_toStartOf="@id/username"
+                app:layout_constraintTop_toBottomOf="@id/username" />
 
             <TextView
                 android:id="@+id/battery"
                 android:gravity="center_vertical"
                 android:fontFamily="sans-serif"
-                android:textColor="@color/black_40"
+                android:textColor="@color/zood_green"
                 android:textSize="12sp"
                 android:textStyle="normal"
                 android:lineSpacingExtra="6sp"
                 tools:text="50%"
                 android:layout_width="wrap_content"
                 android:layout_height="0dp"
-                android:layout_marginStart="8dp"
-                app:layout_constraintBaseline_toBaselineOf="@id/username"
+                android:layout_marginStart="4dp"
+                app:layout_constraintTop_toTopOf="@id/battery_icon"
+                app:layout_constraintBottom_toBottomOf="@id/battery_icon"
                 app:layout_constraintStart_toEndOf="@id/battery_icon" />
 
             <ImageButton
@@ -160,7 +162,7 @@
                 style="@style/Zood.Caption"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="@id/username"
-                app:layout_constraintTop_toBottomOf="@id/username"
+                app:layout_constraintTop_toBottomOf="@id/battery_icon"
                 tools:text="1212 S. Westlake Blvd, Thousand Oaks" />
 
             <TextView
@@ -174,8 +176,9 @@
                 android:layout_width="wrap_content"
                 android:layout_height="0dp"
                 android:layout_marginTop="4dp"
-                app:layout_constraintStart_toEndOf="@id/battery"
-                app:layout_constraintBaseline_toBaselineOf="@id/username"
+                app:layout_constraintStart_toEndOf="@id/motion"
+                app:layout_constraintTop_toTopOf="@id/battery_icon"
+                app:layout_constraintBottom_toBottomOf="@id/battery_icon"
                 tools:text="  •  25 min. ago" />
 
             <com.google.android.material.button.MaterialButton
