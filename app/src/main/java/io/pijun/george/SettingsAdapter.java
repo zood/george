@@ -4,23 +4,19 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
-import com.squareup.picasso.Picasso;
-
-import java.io.File;
-import java.util.ArrayList;
-
 import androidx.annotation.NonNull;
 import androidx.annotation.UiThread;
 import androidx.recyclerview.widget.RecyclerView;
+
+import java.util.ArrayList;
+
 import io.pijun.george.view.ProfileListItemViewHolder;
 import io.pijun.george.view.RecyclerViewAdapterItem;
-import xyz.zood.george.AvatarManager;
 import xyz.zood.george.R;
 import xyz.zood.george.widget.SettingsListItemViewHolder;
 
 public class SettingsAdapter extends RecyclerView.Adapter {
 
-    private static final int PROFILE_ID = 1;
     private static final int LOG_OUT_ID = 2;
     private static final int BILLING_PLAN_ID = 3;
     private static final int MANAGE_FAMILY_MEMBERS = 4;
@@ -30,8 +26,7 @@ public class SettingsAdapter extends RecyclerView.Adapter {
     private static final int NOTIFICATIONS = 8;
 
     private final ArrayList<RecyclerViewAdapterItem> adapterItems = new ArrayList<>();
-    String username;
-    byte[] publicKey;
+
     @NonNull
     private final SettingsAdapter.Listener listener;
 
@@ -71,21 +66,6 @@ public class SettingsAdapter extends RecyclerView.Adapter {
     public void onBindViewHolder(@NonNull RecyclerView.ViewHolder holder, int position) {
         RecyclerViewAdapterItem item = adapterItems.get(position);
         switch ((int) item.id) {
-            case PROFILE_ID: {
-                ProfileListItemViewHolder h = (ProfileListItemViewHolder) holder;
-                h.avatar.setUsername(username);
-                File myImg = AvatarManager.getMyAvatar(h.avatar.getContext());
-                Picasso.with(h.avatar.getContext()).load(myImg).into(h.avatar);
-
-                h.username.setText(username);
-                h.itemView.setOnClickListener(new View.OnClickListener() {
-                    @Override
-                    public void onClick(View v) {
-                        listener.onChangeProfilePhoto(h.avatar);
-                    }
-                });
-                break;
-            }
             case LOG_OUT_ID: {
                 SettingsListItemViewHolder h = (SettingsListItemViewHolder) holder;
                 h.textView.setText(R.string.log_out);
@@ -159,7 +139,6 @@ public class SettingsAdapter extends RecyclerView.Adapter {
     //endregion
 
     private void rebuildRecycler() {
-        adapterItems.add(new RecyclerViewAdapterItem(R.layout.profile_list_item, PROFILE_ID));
         adapterItems.add(new RecyclerViewAdapterItem(R.layout.settings_list_item, NOTIFICATIONS));
         adapterItems.add(new RecyclerViewAdapterItem(R.layout.settings_list_item, ABOUT_ID));
         adapterItems.add(new RecyclerViewAdapterItem(R.layout.settings_list_item, INVITE_A_FRIEND));
@@ -168,7 +147,6 @@ public class SettingsAdapter extends RecyclerView.Adapter {
 
     interface Listener {
         @UiThread void onAboutAction();
-        @UiThread void onChangeProfilePhoto(View anchor);
         @UiThread void onInviteFriendAction();
         @UiThread void onLogOutAction();
         @UiThread void onNotificationsClicked();

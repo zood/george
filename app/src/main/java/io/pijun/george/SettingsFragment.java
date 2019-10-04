@@ -23,12 +23,13 @@ import androidx.core.content.FileProvider;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 
+import com.squareup.picasso.Picasso;
+
 import java.io.File;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Locale;
 
-import io.pijun.george.crypto.KeyPair;
 import xyz.zood.george.AvatarCropperActivity;
 import xyz.zood.george.AvatarManager;
 import xyz.zood.george.FriendshipManager;
@@ -55,12 +56,6 @@ public class SettingsFragment extends Fragment implements SettingsAdapter.Listen
         super.onCreate(savedInstanceState);
 
         adapter = new SettingsAdapter(this);
-        Prefs prefs = Prefs.get(requireContext());
-        adapter.username = prefs.getUsername();
-        KeyPair kp = prefs.getKeyPair();
-        if (kp != null) {
-            adapter.publicKey = kp.publicKey;
-        }
 
         AvatarManager.addListener(this);
     }
@@ -74,6 +69,20 @@ public class SettingsFragment extends Fragment implements SettingsAdapter.Listen
             @Override
             public void onClick(View v) {
                 requireFragmentManager().popBackStack();
+            }
+        });
+
+        Prefs prefs = Prefs.get(requireContext());
+        String username = prefs.getUsername();
+        binding.avatar.setUsername(username);
+        Context ctx = requireContext();
+        File myImg = AvatarManager.getMyAvatar(ctx);
+        Picasso.with(ctx).load(myImg).into(binding.avatar);
+        binding.username.setText(username);
+        binding.profileItem.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                onChangeProfilePhoto(binding.avatar);
             }
         });
 
@@ -96,28 +105,7 @@ public class SettingsFragment extends Fragment implements SettingsAdapter.Listen
 
     //endregion
 
-    //region SettingsAdapter.Listener methods
-
-    @Override
-    public void onAboutAction() {
-        PackageManager pkgMgr = requireContext().getPackageManager();
-        try {
-            PackageInfo pi = pkgMgr.getPackageInfo("xyz.zood.george", 0);
-            long versionCode;
-            if (Build.VERSION.SDK_INT >= 28) {
-                versionCode = pi.getLongVersionCode();
-            } else {
-                versionCode = pi.versionCode;
-            }
-            String msg = getString(R.string.app_version_msg, pi.versionName, versionCode);
-            Utils.showStringAlert(requireContext(), getString(R.string.app_name), msg, requireFragmentManager());
-        } catch (PackageManager.NameNotFoundException ignore) {
-            throw new RuntimeException("You need to specify the correct package name");
-        }
-    }
-
-    @Override
-    public void onChangeProfilePhoto(View anchor) {
+    private void onChangeProfilePhoto(View anchor) {
         // Check if there is a camera on this device.
         Intent intent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
         Context ctx = requireContext();
@@ -143,6 +131,26 @@ public class SettingsFragment extends Fragment implements SettingsAdapter.Listen
             }
         });
         menu.show();
+    }
+
+    //region SettingsAdapter.Listener methods
+
+    @Override
+    public void onAboutAction() {
+        PackageManager pkgMgr = requireContext().getPackageManager();
+        try {
+            PackageInfo pi = pkgMgr.getPackageInfo("xyz.zood.george", 0);
+            long versionCode;
+            if (Build.VERSION.SDK_INT >= 28) {
+                versionCode = pi.getLongVersionCode();
+            } else {
+                versionCode = pi.versionCode;
+            }
+            String msg = getString(R.string.app_version_msg, pi.versionName, versionCode);
+            Utils.showStringAlert(requireContext(), getString(R.string.app_name), msg, requireFragmentManager());
+        } catch (PackageManager.NameNotFoundException ignore) {
+            throw new RuntimeException("You need to specify the correct package name");
+        }
     }
 
     public void onInviteFriendAction() {
