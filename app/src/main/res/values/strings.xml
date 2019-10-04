@@ -168,13 +168,13 @@
     <string name="invite_friend_msg">Install Zood Location so we can securely share our location with each other. https://www.zood.xyz</string>
     <string name="notifications">Notifications</string>
     <string name="next">Next</string>
-    <string name="onboarding_body_1">Build a list of family and friends that you trust.</string>
     <string name="onboarding_title_1">Add friends</string>
     <string name="onboarding_title_2">Share location</string>
     <string name="onboarding_title_3">Safe and secure</string>
     <string name="onboarding_title_4">One more thing!</string>
-    <string name="onboarding_body_2">Keep track of each other by sharing and requesting location.</string>
-    <string name="onboarding_body_3">Using end-to-end encryption your location is always protected.</string>
+    <string name="onboarding_body_1">Invite your family and friends to Zood, and build a list of the people you trust the most.</string>
+    <string name="onboarding_body_2">Keep track of each other by sharing and requesting location with one another.</string>
+    <string name="onboarding_body_3">Using end-to-end encryption your location is always protected, and we at Zood can\'t even seen where you are.</string>
     <string name="onboarding_body_4">We need you to give the Zood Location app permission to access your location. Only people you choose to share with can see where you are.</string>
     <string name="start">Start</string>
     <string name="safety_number">Safety number</string>
