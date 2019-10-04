@@ -272,8 +272,12 @@ public class MainFragment extends Fragment implements OnMapReadyCallback, DB.Lis
         AuthenticationManager.get().removeListener(this);
         AvatarManager.removeListener(avatarListener);
         markerTracker.clear();
-        binding = null;
+        googMap = null;
+        meMarker = null;
         infoPanel = null;
+        binding = null;
+        currentCircle = null;
+        myCircle = null;
 
         super.onDestroyView();
     }
