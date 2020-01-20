@@ -51,7 +51,7 @@
             app:layout_constraintBottom_toTopOf="@id/friends_bar_fragment"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            tools:visibility="invisible">
+            tools:visibility="visible">
 
             <androidx.constraintlayout.widget.Guideline
                 android:id="@+id/top_guideline"
@@ -252,6 +252,7 @@
             android:id="@+id/timed_share_fab"
             android:src="@drawable/ic_pin"
             android:backgroundTint="@color/timed_share_fab_background"
+            tools:visibility="invisible"
             app:tint="@color/timed_share_fab_tint"
             app:rippleColor="@color/zood_blue"
             app:fabSize="normal"

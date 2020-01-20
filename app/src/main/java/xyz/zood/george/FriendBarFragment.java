@@ -102,16 +102,6 @@ public class FriendBarFragment extends Fragment implements FriendsBarAdapter.Lis
         adapter.addFriend(friend);
     }
 
-    @Override
-    public void onStoppedSharingWithUser(long userId) {
-        FriendRecord friend = DB.get().getFriendByUserId(userId);
-        if (friend == null) {
-            return;
-        }
-        // Update the FriendRecord in our avatar list
-        adapter.addFriend(friend);
-    }
-
     //endregion
 
     //region AvatarManager.Listener
