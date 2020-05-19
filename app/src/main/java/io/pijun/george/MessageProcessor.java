@@ -275,6 +275,9 @@ public class MessageProcessor {
             OscarError err = OscarError.fromResponse(response);
             if (err != null) {
                 L.w(err.toString());
+                if (err.code == OscarError.ERROR_INVALID_ACCESS_TOKEN) {
+                    return Result.ErrorNotLoggedIn;
+                }
             } else {
                 L.w("Unknown server error received while sending device_info");
             }
@@ -447,6 +450,9 @@ public class MessageProcessor {
             OscarError err = OscarError.fromResponse(response);
             if (err != null) {
                 L.w(err.toString());
+                if (err.code == OscarError.ERROR_INVALID_ACCESS_TOKEN) {
+                    return Result.ErrorNotLoggedIn;
+                }
             } else {
                 L.w("Unknown server error received while sending scream_began");
             }

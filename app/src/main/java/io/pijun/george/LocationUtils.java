@@ -121,6 +121,11 @@ public class LocationUtils {
                     } else {
                         OscarError err = OscarError.fromResponse(response);
                         L.w("LUtils.run error dropping packages - " + err);
+                        if (err != null && err.code == OscarError.ERROR_INVALID_ACCESS_TOKEN) {
+                            if (AuthenticationManager.isLoggedIn(ctx)) {
+                                AuthenticationManager.get().logOut(ctx, null);
+                            }
+                        }
                     }
                 } catch (IOException ex) {
                     L.w("LUtils.run - Failed to upload location because " + ex.getLocalizedMessage());

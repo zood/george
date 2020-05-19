@@ -301,7 +301,7 @@ public class AuthenticationManager {
     }
 
     @AnyThread
-    void logOut(@NonNull Context ctx, @Nullable LogoutWatcher completion) {
+    public void logOut(@NonNull Context ctx, @Nullable LogoutWatcher completion) {
         App.runInBackground(new WorkerRunnable() {
             @Override
             public void run() {

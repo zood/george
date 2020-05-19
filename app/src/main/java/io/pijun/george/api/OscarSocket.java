@@ -40,6 +40,10 @@ public class OscarSocket {
     private static final byte SocketMsgPackage = 1;
     private static final byte SocketMsgPushNotification = 2;
 
+    public static final int CLOSE_CODE_NETWORK_FAILURE = 4000;
+    public static final int CLOSE_CODE_INVALID_TOKEN = 4001;
+    public static final int CLOSE_CODE_UNKNOWN_ERROR = 4002;
+
     @NonNull final private Listener listener;
     private static final Handler handler;
     private WebSocket socket;
@@ -94,7 +98,7 @@ public class OscarSocket {
                     App.runInBackground(new WorkerRunnable() {
                         @Override
                         public void run() {
-                            listener.onDisconnect(4000, "No network available");
+                            listener.onDisconnect(CLOSE_CODE_NETWORK_FAILURE, "No network available");
                         }
                     });
                 }
@@ -202,6 +206,7 @@ public class OscarSocket {
         @WorkerThread
         public void onFailure(WebSocket webSocket, Throwable t, Response response) {
             L.w("ISL.onFailure");
+            OscarError err = OscarError.fromResponseBody(response.body());
             handler.post(new WorkerRunnable() {
                 @Override
                 public void run() {
@@ -211,7 +216,11 @@ public class OscarSocket {
             App.runInBackground(new WorkerRunnable() {
                 @Override
                 public void run() {
-                    listener.onDisconnect(4001, t.getLocalizedMessage());
+                    if (err != null && err.code == OscarError.ERROR_INVALID_ACCESS_TOKEN) {
+                        listener.onDisconnect(CLOSE_CODE_INVALID_TOKEN, "Invalid access token");
+                    } else {
+                        listener.onDisconnect(CLOSE_CODE_UNKNOWN_ERROR, t.getLocalizedMessage());
+                    }
                 }
             });
         }

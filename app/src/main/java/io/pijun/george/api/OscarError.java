@@ -73,4 +73,11 @@ public class OscarError {
         return fromReader(errBody.charStream());
     }
 
+    public static OscarError fromResponseBody(ResponseBody rb) {
+        if (rb == null) {
+            return null;
+        }
+        return fromReader(rb.charStream());
+    }
+
 }

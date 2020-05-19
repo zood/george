@@ -246,7 +246,6 @@ public class MainFragment extends Fragment implements OnMapReadyCallback, DB.Lis
         });
 
         DB.get().addListener(this);
-        AuthenticationManager.get().addListener(this);
         AvatarManager.addListener(avatarListener);
 
         getLifecycle().addObserver(new GoogleMapLifecycleObserver(binding.map));
@@ -262,6 +261,7 @@ public class MainFragment extends Fragment implements OnMapReadyCallback, DB.Lis
     @Override
     public void onDestroy() {
         oscarSocket = null;
+        AuthenticationManager.get().removeListener(this);
 
         super.onDestroy();
     }
@@ -269,7 +269,6 @@ public class MainFragment extends Fragment implements OnMapReadyCallback, DB.Lis
     @Override
     public void onDestroyView() {
         DB.get().removeListener(this);
-        AuthenticationManager.get().removeListener(this);
         AvatarManager.removeListener(avatarListener);
         markerTracker.clear();
         googMap = null;
@@ -1141,6 +1140,13 @@ public class MainFragment extends Fragment implements OnMapReadyCallback, DB.Lis
 
         @Override
         public void onDisconnect(int code, String reason) {
+            if (code == OscarSocket.CLOSE_CODE_INVALID_TOKEN) {
+                Context ctx = getContext();
+                if (ctx != null) {
+                    AuthenticationManager.get().logOut(ctx, null);
+                }
+                return;
+            }
             if (!isVisible()) {
                 return;
             }
@@ -1202,7 +1208,7 @@ public class MainFragment extends Fragment implements OnMapReadyCallback, DB.Lis
             // Wasn't transient, so let's delete it from the server
             long msgId;
             try {
-                msgId = Long.valueOf(notification.id);
+                msgId = Long.parseLong(notification.id);
                 if (msgId == 0) { // technically, a redundant check
                     return;
                 }

@@ -3,13 +3,14 @@ package io.pijun.george.service;
 import android.text.TextUtils;
 import android.util.Base64;
 
+import androidx.annotation.WorkerThread;
+
 import com.google.firebase.messaging.FirebaseMessagingService;
 import com.google.firebase.messaging.RemoteMessage;
 
 import java.io.IOException;
 import java.util.Map;
 
-import androidx.annotation.WorkerThread;
 import io.pijun.george.AuthenticationManager;
 import io.pijun.george.L;
 import io.pijun.george.MessageProcessor;
@@ -41,6 +42,8 @@ public class FcmMessageReceiver extends FirebaseMessagingService {
             return;
         }
         try {
+            // null check happens above in TextUtils.isEmpty()
+            //noinspection ConstantConditions
             switch (type) {
                 case TYPE_MESSAGE_RECEIVED:
                     handleMessageReceived(data);
