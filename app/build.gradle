@@ -74,8 +74,10 @@ dependencies {
     // used for Google maps view
     implementation 'com.google.android.gms:play-services-maps:17.0.0'
     // cloud messaging
-    implementation ('com.google.firebase:firebase-messaging:17.3.3', {
+    implementation ('com.google.firebase:firebase-messaging:20.2.1', {
         exclude group: 'com.google.firebase', module: 'firebase-core'
+        exclude group: 'com.google.firebase', module: 'firebase-analytics'
+        exclude group: 'com.google.firebase', module: 'firebase-measurement-connector'
     })
 
     implementation 'com.squareup.retrofit2:retrofit:2.8.2'
