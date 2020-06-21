@@ -10,6 +10,7 @@ import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.location.Location;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Looper;
 import android.text.TextUtils;
@@ -440,11 +441,12 @@ public class MainFragment extends Fragment implements OnMapReadyCallback, DB.Lis
 
     @AnyThread
     private void beginLocationUpdates() {
+        L.i("MainFragment.beginLocationUpdates");
         Context ctx = getContext();
         if (ctx == null) {
             return;
         }
-        if (ContextCompat.checkSelfPermission(ctx, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+        if (!Permissions.checkGrantedForegroundLocationPermission(ctx)) {
             // This should never happen. Nobody should be calling this method before permission has been obtained.
             L.w("MapActivity.beginLocationUpdates was called before obtaining location permission");
             CloudLogger.log("Location updates requested before acquiring permission");
@@ -455,30 +457,36 @@ public class MainFragment extends Fragment implements OnMapReadyCallback, DB.Lis
     }
 
     @UiThread
+    private void checkForActivityRecognitionPermission() {
+
+    }
+
+    @UiThread
     private void checkForLocationPermission() {
-        if (ContextCompat.checkSelfPermission(requireContext(), Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
+        if (Permissions.checkGrantedBackgroundLocationPermission(requireContext())) {
             locationPermissionVerified();
             return;
         }
 
-
-        if (shouldShowRequestPermissionRationale(Manifest.permission.ACCESS_FINE_LOCATION)) {
+        boolean showRationale;
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            showRationale = shouldShowRequestPermissionRationale(Manifest.permission.ACCESS_BACKGROUND_LOCATION);
+        } else {
+            showRationale = shouldShowRequestPermissionRationale(Manifest.permission.ACCESS_FINE_LOCATION);
+        }
+        if (showRationale) {
             // show the reasoning
             ZoodDialog dialog = ZoodDialog.newInstance(getString(R.string.location_permission_reason_msg));
             dialog.setTitle(getString(R.string.permission_request));
             dialog.setButton1(getString(R.string.ok), new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    requestPermissions(
-                            new String[]{Manifest.permission.ACCESS_FINE_LOCATION},
-                            REQUEST_LOCATION_PERMISSION);
+                    requestPermissions(Permissions.getLocationPermissions(), REQUEST_LOCATION_PERMISSION);
                 }
             });
             dialog.show(requireFragmentManager(), null);
         } else {
-            requestPermissions(
-                    new String[]{Manifest.permission.ACCESS_FINE_LOCATION},
-                    REQUEST_LOCATION_PERMISSION);
+            requestPermissions(Permissions.getLocationPermissions(), REQUEST_LOCATION_PERMISSION);
         }
     }
 

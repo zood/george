@@ -4,21 +4,21 @@ import android.app.PendingIntent;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
-import android.content.pm.PackageManager;
 import android.location.Location;
 import android.text.format.DateUtils;
+
+import androidx.annotation.AnyThread;
+import androidx.annotation.NonNull;
+import androidx.annotation.UiThread;
 
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationResult;
 import com.google.android.gms.location.LocationServices;
 
-import androidx.annotation.AnyThread;
-import androidx.annotation.NonNull;
-import androidx.annotation.UiThread;
-import androidx.core.content.ContextCompat;
 import io.pijun.george.App;
 import io.pijun.george.LocationUtils;
+import xyz.zood.george.Permissions;
 
 public class PassiveLocationReceiver extends BroadcastReceiver {
 
@@ -62,7 +62,7 @@ public class PassiveLocationReceiver extends BroadcastReceiver {
 
     @AnyThread
     public static void register(@NonNull Context context) {
-        if (ContextCompat.checkSelfPermission(context, android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+        if (!Permissions.checkGrantedBackgroundLocationPermission(context)) {
             return;
         }
 

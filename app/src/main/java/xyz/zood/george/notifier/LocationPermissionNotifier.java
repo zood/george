@@ -1,19 +1,17 @@
 package xyz.zood.george.notifier;
 
-import android.Manifest;
 import android.content.Intent;
-import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.provider.Settings;
 import android.view.View;
 
 import androidx.annotation.NonNull;
-import androidx.core.content.ContextCompat;
 import androidx.fragment.app.FragmentActivity;
 import androidx.lifecycle.Lifecycle;
 import androidx.lifecycle.LifecycleObserver;
 import androidx.lifecycle.OnLifecycleEvent;
 
+import xyz.zood.george.Permissions;
 import xyz.zood.george.R;
 import xyz.zood.george.widget.BannerView;
 import xyz.zood.george.widget.ZoodDialog;
@@ -27,11 +25,11 @@ public class LocationPermissionNotifier implements LifecycleObserver {
     public LocationPermissionNotifier(@NonNull FragmentActivity activity, @NonNull BannerView banner) {
         this.banner = banner;
         this.activity = activity;
-    }
+}
 
     @OnLifecycleEvent(Lifecycle.Event.ON_START)
     public void onStart() {
-        if (ContextCompat.checkSelfPermission(activity, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
+        if (Permissions.checkGrantedBackgroundLocationPermission(activity)) {
             hide();
         }
         // not having the permission doesn't definitively mean we need to show the banner item.
@@ -65,7 +63,7 @@ public class LocationPermissionNotifier implements LifecycleObserver {
     }
 
     public void show() {
-        banner.addItem(activity.getString(R.string.location_permission_needed), activity.getString(R.string.fix), bannerItemId, new BannerView.ItemClickListener() {
+        banner.addItem(activity.getString(R.string.background_location_permission_needed), activity.getString(R.string.fix), bannerItemId, new BannerView.ItemClickListener() {
             @Override
             public void onBannerItemClick(int id) {
                 onBannerItemClicked();

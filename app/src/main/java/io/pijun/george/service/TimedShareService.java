@@ -1,13 +1,11 @@
 package io.pijun.george.service;
 
-import android.Manifest;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
-import android.content.pm.PackageManager;
 import android.location.Location;
 import android.os.Build;
 import android.os.Handler;
@@ -23,7 +21,6 @@ import androidx.annotation.Nullable;
 import androidx.annotation.UiThread;
 import androidx.annotation.WorkerThread;
 import androidx.core.app.NotificationCompat;
-import androidx.core.content.ContextCompat;
 
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationCallback;
@@ -49,6 +46,7 @@ import io.pijun.george.WorkerRunnable;
 import io.pijun.george.crypto.KeyPair;
 import io.pijun.george.database.DB;
 import xyz.zood.george.MainActivity;
+import xyz.zood.george.Permissions;
 import xyz.zood.george.R;
 
 public class TimedShareService extends Service {
@@ -258,8 +256,8 @@ public class TimedShareService extends Service {
 
     @WorkerThread
     private void startLimitedShare() {
-        if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-            Toast.makeText(this, "Need location permission", Toast.LENGTH_SHORT).show();
+        if (!Permissions.checkGrantedBackgroundLocationPermission(this)) {
+            Toast.makeText(this, R.string.need_background_location_permission, Toast.LENGTH_SHORT).show();
             stopSelf();
             return;
         }

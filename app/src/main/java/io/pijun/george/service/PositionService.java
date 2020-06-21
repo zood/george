@@ -1,12 +1,10 @@
 package io.pijun.george.service;
 
-import android.Manifest;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
-import android.content.pm.PackageManager;
 import android.location.Location;
 import android.os.Build;
 import android.os.Handler;
@@ -14,6 +12,11 @@ import android.os.HandlerThread;
 import android.os.IBinder;
 import android.os.PowerManager;
 import android.text.format.DateUtils;
+
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.annotation.WorkerThread;
+import androidx.core.app.NotificationCompat;
 
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationCallback;
@@ -26,11 +29,6 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
-import androidx.annotation.WorkerThread;
-import androidx.core.app.NotificationCompat;
-import androidx.core.content.ContextCompat;
 import io.pijun.george.App;
 import io.pijun.george.CloudLogger;
 import io.pijun.george.L;
@@ -42,6 +40,7 @@ import io.pijun.george.api.UserComm;
 import io.pijun.george.crypto.KeyPair;
 import io.pijun.george.database.DB;
 import io.pijun.george.database.UserRecord;
+import xyz.zood.george.Permissions;
 import xyz.zood.george.R;
 
 public class PositionService extends Service {
@@ -223,7 +222,7 @@ public class PositionService extends Service {
 
     @WorkerThread
     private void start() {
-        if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+        if (!Permissions.checkGrantedBackgroundLocationPermission(this)) {
             // should never happen
             stopSelf();
             notifyWaiters();
