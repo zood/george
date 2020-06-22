@@ -127,7 +127,7 @@ public class OnboardingFragment extends Fragment {
         Prefs.get(requireContext()).setShownOnboarding();
 
         MainFragment fragment = MainFragment.newInstance(accessToken, keyPair);
-        FragmentManager mgr = requireFragmentManager();
+        FragmentManager mgr = getParentFragmentManager();
         mgr.beginTransaction()
                 .setCustomAnimations(R.animator.new_enter_from_right,
                         R.animator.new_exit_to_left,

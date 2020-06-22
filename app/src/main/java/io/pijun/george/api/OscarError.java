@@ -65,7 +65,7 @@ public class OscarError {
     }
 
     @Nullable
-    public static OscarError fromResponse(Response r) {
+    public static OscarError fromResponse(@NonNull Response<?> r) {
         ResponseBody errBody = r.errorBody();
         if (errBody == null) {
             return null;

@@ -15,7 +15,7 @@ import io.pijun.george.view.RecyclerViewAdapterItem;
 import xyz.zood.george.R;
 import xyz.zood.george.widget.SettingsListItemViewHolder;
 
-public class SettingsAdapter extends RecyclerView.Adapter {
+public class SettingsAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
 
     private static final int LOG_OUT_ID = 2;
     private static final int BILLING_PLAN_ID = 3;
@@ -99,8 +99,6 @@ public class SettingsAdapter extends RecyclerView.Adapter {
                 break;
             }
             case BILLING_PLAN_ID: {
-                SettingsListItemViewHolder h = (SettingsListItemViewHolder) holder;
-                h.textView.setText("Individual plan");
                 break;
             }
             case INVITE_A_FRIEND: {

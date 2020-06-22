@@ -90,7 +90,7 @@ public class AddFriendFragment extends Fragment {
         binding.back.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                requireFragmentManager().popBackStack();
+                getParentFragmentManager().popBackStack();
             }
         });
         binding.inviteFriend.setOnClickListener(new View.OnClickListener() {
@@ -240,7 +240,7 @@ public class AddFriendFragment extends Fragment {
                 String errMsg;
                 switch (result) {
                     case Success:
-                        requireFragmentManager().popBackStack();
+                        getParentFragmentManager().popBackStack();
                         return;
                     case UserNotFound:
                         errMsg = getString(R.string.unknown_error_getting_user_info);

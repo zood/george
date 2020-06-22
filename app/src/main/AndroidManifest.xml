@@ -48,7 +48,8 @@
             android:theme="@style/AppTheme" />
 
         <!-- BEGIN SERVICES -->
-        <service android:name="io.pijun.george.service.FcmMessageReceiver">
+        <service android:name="io.pijun.george.service.FcmMessageReceiver"
+            tools:ignore="ExportedService">
             <intent-filter>
                 <action android:name="com.google.firebase.MESSAGING_EVENT" />
             </intent-filter>

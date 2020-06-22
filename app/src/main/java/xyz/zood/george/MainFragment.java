@@ -31,7 +31,7 @@ import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentActivity;
 import androidx.fragment.app.FragmentManager;
 import androidx.lifecycle.Observer;
-import androidx.lifecycle.ViewModelProviders;
+import androidx.lifecycle.ViewModelProvider;
 
 import com.google.android.gms.common.api.ApiException;
 import com.google.android.gms.common.api.ResolvableApiException;
@@ -86,13 +86,13 @@ import io.pijun.george.database.DB;
 import io.pijun.george.database.FriendLocation;
 import io.pijun.george.database.FriendRecord;
 import io.pijun.george.database.UserRecord;
-import xyz.zood.george.receiver.UserActivityReceiver;
 import io.pijun.george.view.AvatarRenderer;
 import io.pijun.george.view.MyLocationView;
 import xyz.zood.george.databinding.FragmentMainBinding;
 import xyz.zood.george.notifier.BackgroundDataRestrictionNotifier;
 import xyz.zood.george.notifier.ClientNotConnectedNotifier;
 import xyz.zood.george.notifier.LocationPermissionNotifier;
+import xyz.zood.george.receiver.UserActivityReceiver;
 import xyz.zood.george.viewmodels.Event;
 import xyz.zood.george.viewmodels.MainViewModel;
 import xyz.zood.george.widget.InfoPanel;
@@ -164,39 +164,7 @@ public class MainFragment extends Fragment implements OnMapReadyCallback, DB.Lis
         Context ctx = requireContext();
         friendshipManager = new FriendshipManager(ctx, DB.get(), accessToken, keyPair);
 
-        viewModel = ViewModelProviders.of(requireActivity()).get(MainViewModel.class);
-        viewModel.getSelectedFriend().observe(this, new Observer<FriendRecord>() {
-            @Override
-            public void onChanged(FriendRecord friend) {
-                viewModel.onCloseTimedSheetAction();
-                onFriendSelected(friend);
-            }
-        });
-        viewModel.getOnAddFriendClicked().observe(this, new Observer<Event<Boolean>>() {
-            @Override
-            public void onChanged(Event<Boolean> evt) {
-                Boolean clicked = evt.getEventIfNotHandled();
-                if (clicked != null) {
-                    showAddFriendDialog();
-                }
-            }
-        });
-        viewModel.getTimedShareIsRunning().observe(this, new Observer<Boolean>() {
-            @Override
-            public void onChanged(Boolean isRunning) {
-                float transY;
-                if (isRunning == null || !isRunning) {
-                    transY = 0;
-                    binding.timedShareFab.setSelected(false);
-                } else {
-                    transY = -getResources().getDimension(R.dimen.timed_share_sheet_peek_height);
-                    binding.timedShareFab.setSelected(true);
-                }
-                binding.timedShareFab.animate().translationY(transY);
-                binding.infoPanel.animate().translationY(transY);
-            }
-        });
-
+        viewModel = new ViewModelProvider(requireActivity()).get(MainViewModel.class);
         locationProviderClient = LocationServices.getFusedLocationProviderClient(requireContext());
         settingsClient = LocationServices.getSettingsClient(ctx);
         locationRequest = LocationRequest.create();
@@ -222,6 +190,38 @@ public class MainFragment extends Fragment implements OnMapReadyCallback, DB.Lis
         infoPanel = new InfoPanel(binding.infoPanel, requireContext(), infoPanelListener);
         binding.map.onCreate(savedInstanceState);
         binding.map.getMapAsync(this);
+
+        viewModel.getSelectedFriend().observe(getViewLifecycleOwner(), new Observer<FriendRecord>() {
+            @Override
+            public void onChanged(FriendRecord friend) {
+                viewModel.onCloseTimedSheetAction();
+                onFriendSelected(friend);
+            }
+        });
+        viewModel.getOnAddFriendClicked().observe(getViewLifecycleOwner(), new Observer<Event<Boolean>>() {
+            @Override
+            public void onChanged(Event<Boolean> evt) {
+                Boolean clicked = evt.getEventIfNotHandled();
+                if (clicked != null) {
+                    showAddFriendDialog();
+                }
+            }
+        });
+        viewModel.getTimedShareIsRunning().observe(getViewLifecycleOwner(), new Observer<Boolean>() {
+            @Override
+            public void onChanged(Boolean isRunning) {
+                float transY;
+                if (isRunning == null || !isRunning) {
+                    transY = 0;
+                    binding.timedShareFab.setSelected(false);
+                } else {
+                    transY = -getResources().getDimension(R.dimen.timed_share_sheet_peek_height);
+                    binding.timedShareFab.setSelected(true);
+                }
+                binding.timedShareFab.animate().translationY(transY);
+                binding.infoPanel.animate().translationY(transY);
+            }
+        });
 
         binding.myLocationFab.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -535,7 +535,7 @@ public class MainFragment extends Fragment implements OnMapReadyCallback, DB.Lis
                     requestPermissions(Permissions.getLocationPermissions(), REQUEST_LOCATION_PERMISSION);
                 }
             });
-            dialog.show(requireFragmentManager(), null);
+            dialog.show(getParentFragmentManager(), null);
         } else {
             requestPermissions(Permissions.getLocationPermissions(), REQUEST_LOCATION_PERMISSION);
         }
@@ -636,7 +636,7 @@ public class MainFragment extends Fragment implements OnMapReadyCallback, DB.Lis
     @UiThread
     private void showAddFriendDialog() {
         AddFriendFragment fragment = AddFriendFragment.newInstance(accessToken, keyPair);
-        FragmentManager mgr = requireFragmentManager();
+        FragmentManager mgr = getParentFragmentManager();
         mgr.beginTransaction()
                 .setCustomAnimations(R.animator.new_enter_from_right,
                         R.animator.new_exit_to_left,
@@ -706,7 +706,7 @@ public class MainFragment extends Fragment implements OnMapReadyCallback, DB.Lis
 
     private void showSettings() {
         SettingsFragment fragment = SettingsFragment.newInstance();
-        FragmentManager mgr = requireFragmentManager();
+        FragmentManager mgr = getParentFragmentManager();
         mgr.beginTransaction()
                 .setCustomAnimations(R.animator.new_enter_from_right,
                         R.animator.new_exit_to_left,
@@ -816,7 +816,7 @@ public class MainFragment extends Fragment implements OnMapReadyCallback, DB.Lis
             @Override
             public void run() {
                 if (binding != null) {
-                    Utils.showAlert(requireContext(), R.string.unexpected_error, R.string.remove_friend_error_msg, requireFragmentManager());
+                    Utils.showAlert(requireContext(), R.string.unexpected_error, R.string.remove_friend_error_msg, getParentFragmentManager());
                 }
             }
         });
@@ -921,7 +921,7 @@ public class MainFragment extends Fragment implements OnMapReadyCallback, DB.Lis
                 }
             });
             dialog.setButton2(getString(R.string.cancel), null);
-            dialog.show(requireFragmentManager(), null);
+            dialog.show(getParentFragmentManager(), null);
         }
 
         @Override
@@ -946,7 +946,7 @@ public class MainFragment extends Fragment implements OnMapReadyCallback, DB.Lis
                     keyPair.publicKey,
                     friend.user.username,
                     friend.user.publicKey);
-            FragmentManager mgr = requireFragmentManager();
+            FragmentManager mgr = getParentFragmentManager();
             mgr.beginTransaction()
                     .setCustomAnimations(R.animator.new_enter_from_right,
                             R.animator.new_exit_to_left,

@@ -26,7 +26,7 @@ import androidx.core.view.GestureDetectorCompat;
 import androidx.databinding.DataBindingUtil;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.Observer;
-import androidx.lifecycle.ViewModelProviders;
+import androidx.lifecycle.ViewModelProvider;
 
 import io.pijun.george.L;
 import io.pijun.george.service.TimedShareService;
@@ -213,17 +213,17 @@ public class TimedShareFragment extends Fragment {
             }
         });
 
-        viewModel = ViewModelProviders.of(requireActivity()).get(MainViewModel.class);
-        viewModel.getTimedShareIsRunning().observe(this, this::setTimedShareRunning);
-        viewModel.getOnTimedShareClicked().observe(this, clickEvent -> {
+        viewModel = new ViewModelProvider(requireActivity()).get(MainViewModel.class);
+        viewModel.getTimedShareIsRunning().observe(getViewLifecycleOwner(), this::setTimedShareRunning);
+        viewModel.getOnTimedShareClicked().observe(getViewLifecycleOwner(), clickEvent -> {
             Boolean didClick = clickEvent.getEventIfNotHandled();
             if (didClick == null) {
                 return;
             }
             onTimedShareFabClicked();
         });
-        viewModel.getTimedShareTimeRemaining().observe(this, this::setTimeRemaining);
-        viewModel.getOnCloseTimedSheet().observe(this, new Observer<Event<Boolean>>() {
+        viewModel.getTimedShareTimeRemaining().observe(getViewLifecycleOwner(), this::setTimeRemaining);
+        viewModel.getOnCloseTimedSheet().observe(getViewLifecycleOwner(), new Observer<Event<Boolean>>() {
             @Override
             public void onChanged(Event<Boolean> booleanEvent) {
                 close();

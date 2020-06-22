@@ -7,13 +7,12 @@ import android.os.HandlerThread;
 import android.os.PowerManager;
 import android.text.format.DateUtils;
 
-import java.io.IOException;
-
 import androidx.annotation.AnyThread;
 import androidx.annotation.NonNull;
 import androidx.annotation.WorkerThread;
 
-import io.pijun.george.AuthenticationManager;
+import java.io.IOException;
+
 import io.pijun.george.CloudLogger;
 import io.pijun.george.L;
 import io.pijun.george.WorkerRunnable;
@@ -67,7 +66,7 @@ public final class TaskSender {
             task = queue.blockingPeek();
 
             OscarAPI api = OscarClient.newInstance(task.accessToken);
-            Call call;
+            Call<?> call;
             switch (task.apiMethod) {
                 case AddFcmTokenTask.NAME:
                     AddFcmTokenTask aftt = (AddFcmTokenTask) task;
@@ -100,7 +99,7 @@ public final class TaskSender {
             PowerManager.WakeLock wakeLock = pwrMgr.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "zoodlocation:tasksenderlock");
             try {
                 wakeLock.acquire(30 * DateUtils.SECOND_IN_MILLIS);
-                Response response = call.execute();
+                Response<?> response = call.execute();
                 if (response.isSuccessful()) {
                     queue.poll();
                 } else {

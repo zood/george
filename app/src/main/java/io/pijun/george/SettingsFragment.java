@@ -68,7 +68,7 @@ public class SettingsFragment extends Fragment implements SettingsAdapter.Listen
         binding.back.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                requireFragmentManager().popBackStack();
+                getParentFragmentManager().popBackStack();
             }
         });
 
@@ -147,7 +147,7 @@ public class SettingsFragment extends Fragment implements SettingsAdapter.Listen
                 versionCode = pi.versionCode;
             }
             String msg = getString(R.string.app_version_msg, pi.versionName, versionCode);
-            Utils.showStringAlert(requireContext(), getString(R.string.app_name), msg, requireFragmentManager());
+            Utils.showStringAlert(requireContext(), getString(R.string.app_name), msg, getParentFragmentManager());
         } catch (PackageManager.NameNotFoundException ignore) {
             throw new RuntimeException("You need to specify the correct package name");
         }
@@ -172,10 +172,7 @@ public class SettingsFragment extends Fragment implements SettingsAdapter.Listen
             }
         });
         dialog.setButton2(getString(R.string.no), null);
-        FragmentManager fm = getFragmentManager();
-        if (fm == null) {
-            throw new RuntimeException("How is the fragment manager null right now?");
-        }
+        FragmentManager fm = getParentFragmentManager();
         dialog.show(fm, null);
     }
 

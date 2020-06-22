@@ -107,7 +107,7 @@ public class SafetyNumberFragment extends Fragment {
         binding.back.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                requireFragmentManager().popBackStack();
+                getParentFragmentManager().popBackStack();
             }
         });
         binding.share.setOnClickListener(new View.OnClickListener() {
