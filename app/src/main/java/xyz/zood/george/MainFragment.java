@@ -86,7 +86,7 @@ import io.pijun.george.database.DB;
 import io.pijun.george.database.FriendLocation;
 import io.pijun.george.database.FriendRecord;
 import io.pijun.george.database.UserRecord;
-import io.pijun.george.receiver.UserActivityReceiver;
+import xyz.zood.george.receiver.UserActivityReceiver;
 import io.pijun.george.view.AvatarRenderer;
 import io.pijun.george.view.MyLocationView;
 import xyz.zood.george.databinding.FragmentMainBinding;
@@ -487,9 +487,7 @@ public class MainFragment extends Fragment implements OnMapReadyCallback, DB.Lis
 
     @UiThread
     private void checkForActivityRecognitionPermission() {
-        L.i("checkForActivityRecognitionPermission");
         if (Permissions.checkGrantedActivityRecognitionPermission(requireContext())) {
-            L.i("activity recognition permission already granted");
             activityRecognitionPermissionGranted();
             return;
         }

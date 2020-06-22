@@ -66,8 +66,8 @@
                 <action android:name="android.intent.action.BOOT_COMPLETED" />
             </intent-filter>
         </receiver>
-        <receiver android:name="io.pijun.george.receiver.PassiveLocationReceiver" />
-        <receiver android:name="io.pijun.george.receiver.UserActivityReceiver" />
+        <receiver android:name=".receiver.PassiveLocationReceiver" />
+        <receiver android:name=".receiver.UserActivityReceiver" />
         <!-- END RECEIVERS -->
 
         <!-- BEGIN PROVIDERS -->

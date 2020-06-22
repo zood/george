@@ -32,8 +32,8 @@ import io.pijun.george.crypto.KeyPair;
 import io.pijun.george.database.DB;
 import io.pijun.george.database.FriendRecord;
 import io.pijun.george.database.Snapshot;
-import io.pijun.george.receiver.PassiveLocationReceiver;
-import io.pijun.george.receiver.UserActivityReceiver;
+import xyz.zood.george.receiver.PassiveLocationReceiver;
+import xyz.zood.george.receiver.UserActivityReceiver;
 import io.pijun.george.service.LocationJobService;
 import io.pijun.george.sodium.HashConfig;
 import retrofit2.Response;
@@ -296,7 +296,7 @@ public class AuthenticationManager {
 
         // schedule periodic location updates
         LocationJobService.scheduleLocationJobService(ctx);
-        PassiveLocationReceiver.register(ctx);
+        PassiveLocationReceiver.requestUpdates(ctx);
         UserActivityReceiver.requestUpdates(ctx);
     }
 
@@ -314,7 +314,7 @@ public class AuthenticationManager {
                 prefs.clearAll();
                 DB.get().deleteAllData();
                 LocationJobService.cancelLocationJobService(ctx);
-                PassiveLocationReceiver.unregister(ctx);
+                PassiveLocationReceiver.stopUpdates(ctx);
                 UserActivityReceiver.stopUpdates(ctx);
                 AvatarManager.deleteAll(ctx);
 
