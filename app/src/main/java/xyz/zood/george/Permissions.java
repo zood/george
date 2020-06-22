@@ -13,8 +13,11 @@ public class Permissions {
 
     // Ugly method name is because https://stackoverflow.com/a/36193309/211180
     @AnyThread
-    public static boolean checkGrantedForegroundLocationPermission(@NonNull Context ctx) {
-        return ContextCompat.checkSelfPermission(ctx, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED;
+    public static boolean checkGrantedActivityRecognitionPermission(@NonNull Context ctx) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            return ContextCompat.checkSelfPermission(ctx, Manifest.permission.ACTIVITY_RECOGNITION) == PackageManager.PERMISSION_GRANTED;
+        }
+        return true;
     }
 
     // Ugly method name is because https://stackoverflow.com/a/36193309/211180
@@ -24,6 +27,20 @@ public class Permissions {
             return ContextCompat.checkSelfPermission(ctx, Manifest.permission.ACCESS_BACKGROUND_LOCATION) == PackageManager.PERMISSION_GRANTED;
         } else {
             return ContextCompat.checkSelfPermission(ctx, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED;
+        }
+    }
+
+    // Ugly method name is because https://stackoverflow.com/a/36193309/211180
+    @AnyThread
+    public static boolean checkGrantedForegroundLocationPermission(@NonNull Context ctx) {
+        return ContextCompat.checkSelfPermission(ctx, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED;
+    }
+
+    public static String[] getActivityRecognitionPermissions() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            return new String[]{Manifest.permission.ACTIVITY_RECOGNITION};
+        } else {
+            return new String[]{};
         }
     }
 

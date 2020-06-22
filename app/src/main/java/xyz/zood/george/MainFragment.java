@@ -86,6 +86,7 @@ import io.pijun.george.database.DB;
 import io.pijun.george.database.FriendLocation;
 import io.pijun.george.database.FriendRecord;
 import io.pijun.george.database.UserRecord;
+import io.pijun.george.receiver.UserActivityReceiver;
 import io.pijun.george.view.AvatarRenderer;
 import io.pijun.george.view.MyLocationView;
 import xyz.zood.george.databinding.FragmentMainBinding;
@@ -104,6 +105,7 @@ public class MainFragment extends Fragment implements OnMapReadyCallback, DB.Lis
     private static final String ARG_ACCESS_TOKEN = "access_token";
     private static final String ARG_KEY_PAIR = "key_pair";
 
+    private static final int REQUEST_ACTIVITY_RECOGNITION_PERMISSION = 16;
     private static final int REQUEST_LOCATION_PERMISSION = 18;
     private static final int REQUEST_LOCATION_SETTINGS = 20;
 
@@ -293,17 +295,36 @@ public class MainFragment extends Fragment implements OnMapReadyCallback, DB.Lis
 
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
-        if (requestCode != REQUEST_LOCATION_PERMISSION) {
-            L.w("onRequestPermissionsResult called with unknown request code: " + requestCode);
-            return;
-        }
-
-        if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-            L.i("permission granted");
-            locationPermissionVerified();
-        } else {
-            L.i("permission denied");
-            locationPermissionNotifier.show();
+        Context ctx = requireContext();
+        switch (requestCode) {
+            case REQUEST_ACTIVITY_RECOGNITION_PERMISSION:
+                L.i("Permissions for activity recognition result: " + Permissions.checkGrantedActivityRecognitionPermission(requireContext()));
+                if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                    L.i("activity recognition permission granted");
+                    activityRecognitionPermissionGranted();
+                } else {
+                    L.i("activity recognition permission denied");
+                }
+                break;
+            case REQUEST_LOCATION_PERMISSION:
+                boolean fgloc = Permissions.checkGrantedForegroundLocationPermission(ctx);
+                boolean bgLoc = Permissions.checkGrantedBackgroundLocationPermission(ctx);
+                if (fgloc) {
+                    // If at least foreground location permission was granted, we can display the
+                    // user's current position on the map.
+                    locationPermissionVerified();
+                }
+                if (bgLoc) {
+                    // If background permission was also granted, it's now worth asking for
+                    // activity recognition permission so that info can be included in
+                    // friend updates.
+                    checkForActivityRecognitionPermission();
+                } else {
+                    // Even if we have foreground permission, we should show the banner if we
+                    // don't have background permission.
+                    locationPermissionNotifier.show();
+                }
+                break;
         }
     }
 
@@ -368,6 +389,14 @@ public class MainFragment extends Fragment implements OnMapReadyCallback, DB.Lis
     }
 
     //endregion
+
+    @UiThread
+    private void activityRecognitionPermissionGranted() {
+        Context ctx = getContext();
+        if (ctx != null) {
+            UserActivityReceiver.requestUpdates(requireContext());
+        }
+    }
 
     @WorkerThread
     private void addMapMarker(@NonNull FriendRecord friend, @NonNull FriendLocation loc) {
@@ -458,13 +487,37 @@ public class MainFragment extends Fragment implements OnMapReadyCallback, DB.Lis
 
     @UiThread
     private void checkForActivityRecognitionPermission() {
+        L.i("checkForActivityRecognitionPermission");
+        if (Permissions.checkGrantedActivityRecognitionPermission(requireContext())) {
+            L.i("activity recognition permission already granted");
+            activityRecognitionPermissionGranted();
+            return;
+        }
 
+        boolean showRationale = false;
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            showRationale = shouldShowRequestPermissionRationale(Manifest.permission.ACTIVITY_RECOGNITION);
+        }
+        if (showRationale) {
+            // show the reasoning
+            ZoodDialog dialog = ZoodDialog.newInstance(getString(R.string.activity_recognition_permission_reason_msg));
+            dialog.setTitle(getString(R.string.permission_request));
+            dialog.setButton1(getString(R.string.ok), new View.OnClickListener() {
+                @Override
+                public void onClick(View view) {
+                    requestPermissions(Permissions.getActivityRecognitionPermissions(), REQUEST_ACTIVITY_RECOGNITION_PERMISSION);
+                }
+            });
+        } else {
+            requestPermissions(Permissions.getActivityRecognitionPermissions(), REQUEST_ACTIVITY_RECOGNITION_PERMISSION);
+        }
     }
 
     @UiThread
     private void checkForLocationPermission() {
         if (Permissions.checkGrantedBackgroundLocationPermission(requireContext())) {
             locationPermissionVerified();
+            checkForActivityRecognitionPermission();
             return;
         }
 
@@ -545,6 +598,7 @@ public class MainFragment extends Fragment implements OnMapReadyCallback, DB.Lis
                 });
 
         beginLocationUpdates();
+        checkForActivityRecognitionPermission();
     }
 
     private void onFriendSelected(@NonNull FriendRecord fr) {

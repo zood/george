@@ -24,6 +24,7 @@ import androidx.annotation.UiThread;
 import io.pijun.george.L;
 import io.pijun.george.Prefs;
 import io.pijun.george.database.MovementType;
+import xyz.zood.george.Permissions;
 
 public class UserActivityReceiver extends BroadcastReceiver {
 
@@ -92,6 +93,10 @@ public class UserActivityReceiver extends BroadcastReceiver {
 
     @AnyThread
     public static void requestUpdates(@NonNull Context context) {
+        if (!Permissions.checkGrantedActivityRecognitionPermission(context)) {
+            return;
+        }
+
         ActivityTransitionRequest req = new ActivityTransitionRequest(getHandledTransitions());
         Task<Void> task = ActivityRecognition.getClient(context).requestActivityTransitionUpdates(req, getPendingIntent(context));
         task.addOnSuccessListener(new OnSuccessListener<Void>() {
