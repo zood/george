@@ -17,10 +17,12 @@ import io.pijun.george.CloudLogger;
 import io.pijun.george.Constants;
 import io.pijun.george.api.OscarClient;
 import io.pijun.george.api.UserComm;
+import io.pijun.george.api.task.OscarTask;
 import io.pijun.george.crypto.KeyPair;
 import io.pijun.george.database.DB;
 import io.pijun.george.database.FriendRecord;
 import io.pijun.george.database.UserRecord;
+import io.pijun.george.queue.PersistentQueue;
 import io.pijun.george.service.BackupDatabaseJob;
 
 public class FriendshipManager {
@@ -29,13 +31,15 @@ public class FriendshipManager {
     @NonNull private final Context ctx;
     @NonNull private final DB db;
     @NonNull private final KeyPair keyPair;
+    @NonNull private final PersistentQueue<OscarTask> queue;
 
     @AnyThread
-    FriendshipManager(@NonNull Context ctx, @NonNull DB db, @NonNull String accessToken, @NonNull KeyPair keyPair) {
+    FriendshipManager(@NonNull Context ctx, @NonNull DB db, @NonNull PersistentQueue<OscarTask> queue, @NonNull String accessToken, @NonNull KeyPair keyPair) {
         this.ctx = ctx;
         this.db = db;
         this.accessToken = accessToken;
         this.keyPair = keyPair;
+        this.queue = queue;
     }
 
     @WorkerThread
@@ -53,7 +57,7 @@ public class FriendshipManager {
             if (friend.sendingBoxId != null) {
                 // send the sending box id to this person one more time, just in case
                 UserComm comm = UserComm.newLocationSharingGrant(friend.sendingBoxId);
-                String errMsg = OscarClient.queueSendMessage(ctx, user, keyPair, accessToken, comm.toJSON(), false, false);
+                String errMsg = OscarClient.queueSendMessage(queue, user, keyPair, accessToken, comm.toJSON(), false, false);
                 if (errMsg != null) {
                     CloudLogger.log(errMsg);
                     listener.onAddFriendFinished(AddFriendResult.SharingGrantFailed, errMsg);
@@ -67,7 +71,7 @@ public class FriendshipManager {
         byte[] sendingBoxId = new byte[Constants.DROP_BOX_ID_LENGTH];
         new SecureRandom().nextBytes(sendingBoxId);
         UserComm comm = UserComm.newLocationSharingGrant(sendingBoxId);
-        String errMsg = OscarClient.queueSendMessage(ctx, user, keyPair, accessToken, comm.toJSON(), false, false);
+        String errMsg = OscarClient.queueSendMessage(queue, user, keyPair, accessToken, comm.toJSON(), false, false);
         if (errMsg != null) {
             listener.onAddFriendFinished(AddFriendResult.SharingGrantFailed, errMsg);
             return;
@@ -125,7 +129,7 @@ public class FriendshipManager {
         new SecureRandom().nextBytes(sendingBoxId);
         // send the sending box id to the friend
         UserComm comm = UserComm.newLocationSharingGrant(sendingBoxId);
-        String errMsg = OscarClient.queueSendMessage(ctx, friend.user, comm, false, false);
+        String errMsg = OscarClient.queueSendMessage(queue, friend.user, keyPair, accessToken, comm.toJSON(), false, false);
         if (errMsg != null) {
             CloudLogger.log(new RuntimeException(errMsg));
             listener.onShareOpFinished(false);
@@ -139,6 +143,9 @@ public class FriendshipManager {
             CloudLogger.log(ex);
             listener.onShareOpFinished(false);
         }
+
+        // notify the listener before doing any low priority work
+        listener.onShareOpFinished(true);
 
         // send the friend our avatar
         try {
@@ -162,11 +169,12 @@ public class FriendshipManager {
         BackupDatabaseJob.scheduleBackup(ctx);
 
         UserComm comm = UserComm.newLocationSharingRevocation();
-        String errMsg = OscarClient.queueSendMessage(ctx, friend.user, comm, false, false);
+        String errMsg = OscarClient.queueSendMessage(queue, friend.user, keyPair, accessToken, comm.toJSON(), false, false);
         if (errMsg != null) {
             CloudLogger.log(new RuntimeException(errMsg));
             listener.onShareOpFinished(false);
         }
+        listener.onShareOpFinished(true);
     }
 
     enum AddFriendResult {

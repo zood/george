@@ -162,7 +162,7 @@ public class MainFragment extends Fragment implements OnMapReadyCallback, DB.Lis
         }
 
         Context ctx = requireContext();
-        friendshipManager = new FriendshipManager(ctx, DB.get(), accessToken, keyPair);
+        friendshipManager = new FriendshipManager(ctx, DB.get(), OscarClient.getQueue(ctx), accessToken, keyPair);
 
         viewModel = new ViewModelProvider(requireActivity()).get(MainViewModel.class);
         locationProviderClient = LocationServices.getFusedLocationProviderClient(requireContext());
@@ -897,7 +897,7 @@ public class MainFragment extends Fragment implements OnMapReadyCallback, DB.Lis
                     L.i("requesting location from " + friend.user.username);
                     UserComm comm = UserComm.newLocationUpdateRequest();
                     UpdateStatusTracker.setLastRequestTime(friend.id, System.currentTimeMillis());
-                    String errMsg = OscarClient.queueSendMessage(requireContext(), friend.user, comm, true, true);
+                    String errMsg = OscarClient.queueSendMessage(OscarClient.getQueue(requireContext()), friend.user, keyPair, accessToken, comm.toJSON(), true, true);
                     if (errMsg != null) {
                         L.w("manual location request failed: " + errMsg);
                     }

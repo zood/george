@@ -1,7 +1,11 @@
 package io.pijun.george.api;
 
 import android.content.Context;
-import android.text.TextUtils;
+
+import androidx.annotation.CheckResult;
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.annotation.WorkerThread;
 
 import com.google.gson.FieldNamingPolicy;
 import com.google.gson.Gson;
@@ -12,14 +16,9 @@ import java.lang.ref.WeakReference;
 import java.util.Collections;
 import java.util.concurrent.ConcurrentHashMap;
 
-import androidx.annotation.CheckResult;
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
-import androidx.annotation.WorkerThread;
 import io.pijun.george.Config;
 import io.pijun.george.Hex;
 import io.pijun.george.L;
-import io.pijun.george.Prefs;
 import io.pijun.george.Sodium;
 import io.pijun.george.api.adapter.BytesToBase64Adapter;
 import io.pijun.george.api.adapter.CommTypeAdapter;
@@ -178,44 +177,20 @@ public class OscarClient {
         getQueue(context).offer(dmt);
     }
 
-    @WorkerThread @CheckResult
-    public static String queueSendMessage(@NonNull Context context, @NonNull UserRecord user, @NonNull UserComm comm, boolean urgent, boolean isTransient) {
-        return queueSendMessage(context, user, comm.toJSON(), urgent, isTransient);
-    }
-
-    @WorkerThread @CheckResult
-    public static String queueSendMessage(@NonNull Context context, @NonNull UserRecord user,
-                                        @NonNull byte[] msgBytes, boolean urgent, boolean isTransient) {
-        Prefs prefs = Prefs.get(context);
-        KeyPair keyPair = prefs.getKeyPair();
-        if (keyPair == null) {
-            String msg = "Oops! Tried sending a message while the keypair was null";
-            L.w(msg);
-            return msg;
-        }
-        String token = prefs.getAccessToken();
-        if (TextUtils.isEmpty(token)) {
-            String msg = "Somebody is trying to send a message when we have no access token";
-            L.w(msg);
-            return msg;
-        }
-
-        return queueSendMessage(context, user, keyPair, token, msgBytes, urgent, isTransient);
-    }
-
-    public static String queueSendMessage(@NonNull Context ctx, @NonNull UserRecord user, @NonNull KeyPair keyPair, @NonNull String accessToken, @NonNull byte[] msgBytes, boolean urgent, boolean isTransient) {
-        EncryptedData encMsg = Sodium.publicKeyEncrypt(msgBytes, user.publicKey, keyPair.secretKey);
+    @WorkerThread @CheckResult @Nullable
+    public static String queueSendMessage(@NonNull PersistentQueue<OscarTask> queue, @NonNull UserRecord toUser, @NonNull KeyPair keyPair, @NonNull String accessToken, @NonNull byte[] msgBytes, boolean urgent, boolean isTransient) {
+        EncryptedData encMsg = Sodium.publicKeyEncrypt(msgBytes, toUser.publicKey, keyPair.secretKey);
         if (encMsg == null) {
-            String msg = "Encrypting msg to " + user.username + " failed.";
+            String msg = "Encrypting msg to " + toUser.username + " failed.";
             L.w(msg);
             return msg;
         }
         SendMessageTask smt = new SendMessageTask(accessToken);
-        smt.hexUserId = Hex.toHexString(user.userId);
+        smt.hexUserId = Hex.toHexString(toUser.userId);
         smt.message = encMsg;
         smt.urgent = urgent;
         smt.isTransient = isTransient;
-        getQueue(ctx).offer(smt);
+        queue.offer(smt);
 
         return null;
     }

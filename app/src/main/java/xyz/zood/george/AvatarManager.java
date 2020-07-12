@@ -244,7 +244,7 @@ public class AvatarManager {
         }
         UserComm comm = UserComm.newAvatarUpdate(buffer);
         for (UserRecord u : users) {
-            String errMsg = OscarClient.queueSendMessage(ctx, u, keyPair, accessToken, comm.toJSON(), false, false);
+            String errMsg = OscarClient.queueSendMessage(OscarClient.getQueue(ctx), u, keyPair, accessToken, comm.toJSON(), false, false);
             if (errMsg != null) {
                 L.w(errMsg);
             }

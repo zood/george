@@ -288,7 +288,7 @@ public class AuthenticationManager {
         byte[] reqJson = avatarReq.toJSON();
         ArrayList<FriendRecord> friends = DB.get().getFriends();
         for (FriendRecord f : friends) {
-            String err = OscarClient.queueSendMessage(ctx, f.user, reqJson, false, false);
+            String err = OscarClient.queueSendMessage(OscarClient.getQueue(ctx), f.user, kp, loginResponse.accessToken, reqJson, false, false);
             if (err != null) {
                 L.w("Error queue avatar request to friend " + f.user.username + ": " + err);
             }

@@ -76,7 +76,7 @@ public class AddFriendFragment extends Fragment {
         }
 
         Context ctx = requireContext();
-        friendshipManager = new FriendshipManager(ctx, DB.get(), accessToken, keyPair);
+        friendshipManager = new FriendshipManager(ctx, DB.get(), OscarClient.getQueue(ctx), accessToken, keyPair);
     }
 
     @Nullable
