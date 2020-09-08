@@ -33,6 +33,7 @@ import java.util.Locale;
 import xyz.zood.george.AvatarCropperActivity;
 import xyz.zood.george.AvatarManager;
 import xyz.zood.george.FriendshipManager;
+import xyz.zood.george.LicensesFragment;
 import xyz.zood.george.R;
 import xyz.zood.george.databinding.FragmentSettingsBinding;
 import xyz.zood.george.widget.ZoodDialog;
@@ -137,7 +138,8 @@ public class SettingsFragment extends Fragment implements SettingsAdapter.Listen
 
     @Override
     public void onAboutAction() {
-        PackageManager pkgMgr = requireContext().getPackageManager();
+        Context ctx = requireContext();
+        PackageManager pkgMgr = ctx.getPackageManager();
         try {
             PackageInfo pi = pkgMgr.getPackageInfo("xyz.zood.george", 0);
             long versionCode;
@@ -147,7 +149,11 @@ public class SettingsFragment extends Fragment implements SettingsAdapter.Listen
                 versionCode = pi.versionCode;
             }
             String msg = getString(R.string.app_version_msg, pi.versionName, versionCode);
-            Utils.showStringAlert(requireContext(), getString(R.string.app_name), msg, getParentFragmentManager());
+            ZoodDialog dialog = ZoodDialog.newInstance(msg);
+            dialog.setTitle(ctx.getString(R.string.app_name));
+            dialog.setButton1(ctx.getString(R.string.ok), null);
+            dialog.setButton2(ctx.getString(R.string.licenses), v -> onShowLicensesClicked());
+            dialog.show(getParentFragmentManager(), null);
         } catch (PackageManager.NameNotFoundException ignore) {
             throw new RuntimeException("You need to specify the correct package name");
         }
@@ -178,6 +184,19 @@ public class SettingsFragment extends Fragment implements SettingsAdapter.Listen
 
     public void onNotificationsClicked() {
 
+    }
+
+    private void onShowLicensesClicked() {
+        LicensesFragment fragment = LicensesFragment.newInstance();
+        FragmentManager mgr = getParentFragmentManager();
+        mgr.beginTransaction()
+                .setCustomAnimations(R.animator.new_enter_from_right,
+                        R.animator.new_exit_to_left,
+                        R.animator.new_enter_from_left,
+                        R.animator.new_exit_to_right)
+                .replace(R.id.fragment_host, fragment)
+                .addToBackStack(null)
+                .commit();
     }
 
     //endregion

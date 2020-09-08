@@ -20,10 +20,8 @@ import java.util.regex.Pattern;
 import xyz.zood.george.R;
 import xyz.zood.george.widget.ZoodDialog;
 
-@SuppressWarnings("WeakerAccess")
 public final class Utils {
 
-    @SuppressWarnings("unused")
     public static Map<String, Object> map(Object... args) {
         if (args.length % 2 != 0) {
             throw new IllegalArgumentException("You need to provide an even number of arguments. (Keys and values)");

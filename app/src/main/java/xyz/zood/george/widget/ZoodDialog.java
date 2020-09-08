@@ -58,7 +58,7 @@ public class ZoodDialog extends DialogFragment {
                 @Override
                 public void onClick(View v) {
                     dismiss();
-                    getDialog().dismiss();
+                    requireDialog().dismiss();
                     if (button1Listener != null) {
                         button1Listener.onClick(v);
                     }
@@ -71,7 +71,7 @@ public class ZoodDialog extends DialogFragment {
             button2.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    getDialog().dismiss();
+                    requireDialog().dismiss();
                     if (button2Listener != null) {
                         button2Listener.onClick(v);
                     }
@@ -80,7 +80,7 @@ public class ZoodDialog extends DialogFragment {
         }
 
         // give the window rounded corners
-        Window win = getDialog().getWindow();
+        Window win = requireDialog().getWindow();
         if (win != null) {
             win.setBackgroundDrawableResource(R.drawable.rounded_background);
         }
@@ -94,7 +94,7 @@ public class ZoodDialog extends DialogFragment {
 
         // Because we used a custom background on onCreateView, we need to re-apply the layout size
         // This doesn't work if we do it in onCreateView
-        Window win = getDialog().getWindow();
+        Window win = requireDialog().getWindow();
         if (win != null) {
             win.setLayout((int)getResources().getDimension(R.dimen.dialog_width), ViewGroup.LayoutParams.WRAP_CONTENT);
         }

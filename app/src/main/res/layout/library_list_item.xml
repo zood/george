@@ -1,0 +1,28 @@
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical">
+    <com.google.android.material.textview.MaterialTextView
+        tools:text="Retrofit"
+        android:id="@+id/name"
+        android:background="?attr/selectableItemBackground"
+        android:drawablePadding="24dp"
+        android:textSize="14sp"
+        android:textColor="@color/black_80"
+        android:fontFamily="@font/montserrat_extra_bold"
+        android:gravity="center_vertical"
+        android:minHeight="56dp"
+        android:paddingStart="24dp"
+        android:paddingEnd="24dp"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content" />
+    <View
+        android:id="@+id/divider"
+        android:background="@color/black_60"
+        android:layout_marginStart="24dp"
+        android:layout_marginEnd="24dp"
+        android:layout_width="match_parent"
+        android:layout_height="1px" />
+</LinearLayout>
