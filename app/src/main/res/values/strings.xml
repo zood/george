@@ -181,5 +181,5 @@
     <string name="need_background_location_permission">Need background location permission</string>
     <string name="activity_recognition_permission_reason_msg">Zood includes your current activity (whether you\'re walking, biking, or driving) along with your location to your friends. It\'s never used for any other purpose.</string>
     <string name="licenses">Licenses</string>
-    <string name="zood_license"><![CDATA[Zood Location is distributed under the terms of the GNU Affero General Public License version 3, or (at your option) any later version. <https://www.gnu.org/licenses/agpl-3.0.txt>\n\nZood wouldn\'t be possible without other open source libraries. Click any of the libraries below to view their license.]]></string>
+    <string name="zood_license"><![CDATA[Zood wouldn\'t be possible without open source libraries. Click any of the libraries below to view their license.]]></string>
 </resources>
