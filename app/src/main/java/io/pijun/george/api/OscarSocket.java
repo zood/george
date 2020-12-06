@@ -187,7 +187,7 @@ public class OscarSocket {
 
         @Override
         @WorkerThread
-        public void onClosed(WebSocket webSocket, int code, String reason) {
+        public void onClosed(@NonNull WebSocket webSocket, int code, @NonNull String reason) {
             handler.post(new WorkerRunnable() {
                 @Override
                 public void run() {
@@ -204,7 +204,7 @@ public class OscarSocket {
 
         @Override
         @WorkerThread
-        public void onFailure(WebSocket webSocket, Throwable t, Response response) {
+        public void onFailure(@NonNull WebSocket webSocket, @NonNull Throwable t, Response response) {
             L.w("ISL.onFailure");
             OscarError err = OscarError.fromResponseBody(response.body());
             handler.post(new WorkerRunnable() {
@@ -227,9 +227,9 @@ public class OscarSocket {
 
         @Override
         @WorkerThread
-        public void onMessage(WebSocket webSocket, ByteString byteString) {
+        public void onMessage(@NonNull WebSocket webSocket, @NonNull ByteString byteString) {
 //            L.i("ISL.onMessage");
-            if (byteString == null || byteString.size() < 3) {
+            if (byteString.size() < 3) {
                 L.i("ISL received a null (or trivially small) message");
                 return;
             }
@@ -248,7 +248,7 @@ public class OscarSocket {
         }
 
         @Override
-        public void onOpen(WebSocket webSocket, Response response) {
+        public void onOpen(@NonNull WebSocket webSocket, @NonNull Response response) {
             App.runInBackground(new WorkerRunnable() {
                 @Override
                 public void run() {

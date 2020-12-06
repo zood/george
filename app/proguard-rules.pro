@@ -26,8 +26,8 @@
 -keep class xyz.zood.george.** { *; }
 
 # Inner class protection
--keep class io.pijun.*$* { *; }
--keep class xyz.zood.*$* { *; }
+-keep class io.pijun.george.*$* { *; }
+-keep class xyz.zood.george.*$* { *; }
 
 # For Android-Image-Croper library
 -keep class androidx.appcompat.widget.** { *; }
