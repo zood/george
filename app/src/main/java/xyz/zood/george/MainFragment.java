@@ -1224,7 +1224,7 @@ public class MainFragment extends Fragment implements OnMapReadyCallback, DB.Lis
             if (!isVisible()) {
                 return;
             }
-            String token = Prefs.get(requireContext()).getAccessToken();
+            String token = Prefs.get(App.getApp().getApplicationContext()).getAccessToken();
             if (token == null) {
                 return;
             }
@@ -1243,7 +1243,7 @@ public class MainFragment extends Fragment implements OnMapReadyCallback, DB.Lis
             if (friend == null) {
                 return;
             }
-            MessageProcessor.Result result = MessageProcessor.decryptAndProcess(requireContext(), friend.user.userId, data.cipherText, data.nonce);
+            MessageProcessor.Result result = MessageProcessor.decryptAndProcess(App.getApp().getApplicationContext(), friend.user.userId, data.cipherText, data.nonce);
             if (result != MessageProcessor.Result.Success) {
                 L.i("MF error decrypting+processing dropped package: " + result);
             }
@@ -1252,7 +1252,8 @@ public class MainFragment extends Fragment implements OnMapReadyCallback, DB.Lis
         @Override
         public void onPushNotificationReceived(@NonNull PushNotification notification) {
             L.i("MF.onPushNotificationReceived");
-            MessageProcessor.Result result = MessageProcessor.decryptAndProcess(requireContext(),
+            Context ctx = App.getApp().getApplicationContext();
+            MessageProcessor.Result result = MessageProcessor.decryptAndProcess(ctx,
                     notification.senderId,
                     notification.cipherText,
                     notification.nonce);
@@ -1278,11 +1279,11 @@ public class MainFragment extends Fragment implements OnMapReadyCallback, DB.Lis
                 return;
             }
 
-            String token = Prefs.get(requireContext()).getAccessToken();
+            String token = Prefs.get(ctx).getAccessToken();
             if (token == null) {
                 return;
             }
-            OscarClient.queueDeleteMessage(requireContext(), token, msgId);
+            OscarClient.queueDeleteMessage(ctx, token, msgId);
         }
     };
 
