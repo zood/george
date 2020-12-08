@@ -18,5 +18,5 @@ Copyright 2020 Arash Payan
 
 Licensed under the AGPLv3: https://www.gnu.org/licenses/agpl-3.0.en.html
 
-Zood is a trademark of Tangled Wires, LLC
-Google Play and the Google Play logo are trademarks fo Google Inc.
+Zood is a trademark of Tangled Wires, LLC<br>
+Google Play and the Google Play logo are trademarks of Google Inc.
