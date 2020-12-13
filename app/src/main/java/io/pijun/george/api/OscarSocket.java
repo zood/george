@@ -206,7 +206,11 @@ public class OscarSocket {
         @WorkerThread
         public void onFailure(@NonNull WebSocket webSocket, @NonNull Throwable t, Response response) {
             L.w("ISL.onFailure");
-            OscarError err = OscarError.fromResponseBody(response.body());
+            OscarError tmpErr = null;
+            if (response != null) {
+                tmpErr = OscarError.fromResponseBody(response.body());
+            }
+            final OscarError err = tmpErr;
             handler.post(new WorkerRunnable() {
                 @Override
                 public void run() {

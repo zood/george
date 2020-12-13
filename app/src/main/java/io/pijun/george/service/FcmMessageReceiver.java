@@ -3,6 +3,7 @@ package io.pijun.george.service;
 import android.text.TextUtils;
 import android.util.Base64;
 
+import androidx.annotation.NonNull;
 import androidx.annotation.WorkerThread;
 
 import com.google.firebase.messaging.FirebaseMessagingService;
@@ -26,24 +27,18 @@ public class FcmMessageReceiver extends FirebaseMessagingService {
     private static final String TYPE_MESSAGE_SYNC_NEEDED = "message_sync_needed";
 
     @Override
-    public void onMessageReceived(RemoteMessage remoteMessage) {
+    public void onMessageReceived(@NonNull RemoteMessage remoteMessage) {
         L.i("FcmMessageReceiver.onMessageReceived");
         if (!AuthenticationManager.isLoggedIn(this)) {
             L.i("\tnot logged in. returning early.");
             return;
         }
         Map<String, String> data = remoteMessage.getData();
-        if (data == null) {
-            return;
-        }
-
         String type = data.get("type");
         if (TextUtils.isEmpty(type)) {
             return;
         }
         try {
-            // null check happens above in TextUtils.isEmpty()
-            //noinspection ConstantConditions
             switch (type) {
                 case TYPE_MESSAGE_RECEIVED:
                     handleMessageReceived(data);
@@ -58,7 +53,7 @@ public class FcmMessageReceiver extends FirebaseMessagingService {
     }
 
     @Override
-    public void onNewToken(String fcmToken) {
+    public void onNewToken(@NonNull String fcmToken) {
         L.i("FcmMessageReceiver.onNewToken");
 
         Prefs prefs = Prefs.get(this);
@@ -71,12 +66,6 @@ public class FcmMessageReceiver extends FirebaseMessagingService {
         String oldToken = Prefs.get(this).getFcmToken();
         if (oldToken != null) {
             OscarClient.queueDeleteFcmToken(this, accessToken, oldToken);
-        }
-
-        // Is there an actual token? If not, just wipe what we have and return
-        if (fcmToken == null) {
-            prefs.setFcmToken(null);
-            return;
         }
 
         OscarClient.queueAddFcmToken(this, accessToken, fcmToken);

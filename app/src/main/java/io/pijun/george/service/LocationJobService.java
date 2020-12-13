@@ -68,7 +68,6 @@ public class LocationJobService extends JobService {
             return false;
         }
         // if we already uploaded our location within the last 3 minutes - get out of here
-        long now = System.currentTimeMillis();
         long timeSince = Prefs.get(this).getLastLocationUpdateTime();
         if (timeSince < 3 * DateUtils.MINUTE_IN_MILLIS) {
             return false;
