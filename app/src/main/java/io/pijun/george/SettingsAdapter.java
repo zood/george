@@ -24,6 +24,7 @@ public class SettingsAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
     private static final int HELP_AND_FEEDBACK_ID = 6;
     private static final int INVITE_A_FRIEND = 7;
     private static final int NOTIFICATIONS = 8;
+    private static final int PRIVACY_POLICY = 9;
 
     private final ArrayList<RecyclerViewAdapterItem> adapterItems = new ArrayList<>();
 
@@ -132,12 +133,27 @@ public class SettingsAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
                         0,
                         0);
             }
+            case PRIVACY_POLICY: {
+                SettingsListItemViewHolder h = (SettingsListItemViewHolder) holder;
+                h.textView.setText(R.string.privacy_policy);
+                h.textView.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        listener.onPrivacyPolicyClicked();
+                    }
+                });
+                h.textView.setCompoundDrawablesRelativeWithIntrinsicBounds(
+                        R.drawable.ic_outlined_privacy_tip_24dp,
+                        0,
+                        0,
+                        0);
+            }
         }
     }
     //endregion
 
     private void rebuildRecycler() {
-        adapterItems.add(new RecyclerViewAdapterItem(R.layout.settings_list_item, NOTIFICATIONS));
+        adapterItems.add(new RecyclerViewAdapterItem(R.layout.settings_list_item, PRIVACY_POLICY));
         adapterItems.add(new RecyclerViewAdapterItem(R.layout.settings_list_item, ABOUT_ID));
         adapterItems.add(new RecyclerViewAdapterItem(R.layout.settings_list_item, INVITE_A_FRIEND));
         adapterItems.add(new RecyclerViewAdapterItem(R.layout.settings_list_item, LOG_OUT_ID));
@@ -148,6 +164,7 @@ public class SettingsAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
         @UiThread void onInviteFriendAction();
         @UiThread void onLogOutAction();
         @UiThread void onNotificationsClicked();
+        @UiThread void onPrivacyPolicyClicked();
     }
 
 }

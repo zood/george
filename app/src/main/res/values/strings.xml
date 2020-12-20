@@ -175,11 +175,12 @@
     <string name="onboarding_body_1">Invite your family and friends to Zood, and build a list of the people you trust the most.</string>
     <string name="onboarding_body_2">Keep track of each other by sharing and requesting location with one another.</string>
     <string name="onboarding_body_3">Using end-to-end encryption your location is always protected, and we at Zood can\'t even seen where you are.</string>
-    <string name="onboarding_body_4">We need you to give the Zood Location app permission to access your location. Only people you choose to share with can see where you are.</string>
+    <string name="onboarding_body_4">We need you to give Zood Location permission to access your location in the background. Only people you choose to share with can see where you are.</string>
     <string name="start">Start</string>
     <string name="safety_number">Safety number</string>
     <string name="need_background_location_permission">Need background location permission</string>
     <string name="activity_recognition_permission_reason_msg">Zood includes your current activity (whether you\'re walking, biking, or driving) along with your location to your friends. It\'s never used for any other purpose.</string>
     <string name="licenses">Licenses</string>
     <string name="zood_license"><![CDATA[Zood wouldn\'t be possible without open source libraries. Click any of the libraries below to view their license.]]></string>
+    <string name="privacy_policy">Privacy policy</string>
 </resources>
