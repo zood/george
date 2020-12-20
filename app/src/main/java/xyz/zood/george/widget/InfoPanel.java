@@ -219,7 +219,7 @@ public class InfoPanel {
                 .setStiffness(SpringForce.STIFFNESS_MEDIUM);
         new SpringAnimation(panel, DynamicAnimation.TRANSLATION_X)
                 .setSpring(xSpring)
-                .setStartVelocity(1000)
+                .setStartVelocity(-1000)
                 .start();
     }
 
