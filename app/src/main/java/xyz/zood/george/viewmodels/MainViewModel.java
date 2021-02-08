@@ -16,17 +16,21 @@ import io.pijun.george.service.TimedShareService;
 public class MainViewModel extends ViewModel implements TimedShareService.Listener {
 
     private Timer countdownTimer;
-    private MutableLiveData<Event<Boolean>> liveOnAddFriendClicked = new MutableLiveData<>();
-    private MutableLiveData<Event<Boolean>> liveOnCloseTimedSheet = new MutableLiveData<>();
-    private MutableLiveData<Event<Boolean>> liveOnTimedShareClicked = new MutableLiveData<>();
-    private MutableLiveData<FriendRecord> liveSelectedFriend = new MutableLiveData<>();
+    private final MutableLiveData<Event<Boolean>> liveOnAddFriendClicked = new MutableLiveData<>();
+    private final MutableLiveData<Event<Boolean>> liveOnCloseTimedSheet = new MutableLiveData<>();
+    private final MutableLiveData<Event<Boolean>> liveOnTimedShareClicked = new MutableLiveData<>();
+    private final MutableLiveData<FriendRecord> liveSelectedFriend = new MutableLiveData<>();
     private MutableLiveData<Boolean> liveTimedShareIsRunning;
     private MutableLiveData<Long> liveTimedShareTimeRemaining;
     private MutableLiveData<String> liveTimedShareUrl;
     private long shareStartTime;
     private long shareDuration;
     private TimedShareListener timedShareListener;
+    private boolean isBackgroundLocationRationaleVisible;
+    private boolean isForegroundLocationRationaleVisible;
+    private boolean isPreQLocationRationaleVisible;
     private boolean isTimedShareSheetDismissable;
+    private boolean isActivityRecognitionRationaleVisible;
 
     private long calculateTimedShareRemaining(long now) {
         long hasBeen = now - shareStartTime;
@@ -114,6 +118,26 @@ public class MainViewModel extends ViewModel implements TimedShareService.Listen
     }
 
     @UiThread
+    public boolean isActivityRecognitionRationaleVisible() {
+        return isActivityRecognitionRationaleVisible;
+    }
+
+    @UiThread
+    public boolean isBackgroundLocationRationaleVisible() {
+        return isBackgroundLocationRationaleVisible;
+    }
+
+    @UiThread
+    public boolean isForegroundLocationRationaleVisible() {
+        return isForegroundLocationRationaleVisible;
+    }
+
+    @UiThread
+    public boolean isPreQLocationRationaleVisible() {
+        return isPreQLocationRationaleVisible;
+    }
+
+    @UiThread
     public boolean isTimedShareSheetDismissable() {
         return isTimedShareSheetDismissable;
     }
@@ -148,6 +172,26 @@ public class MainViewModel extends ViewModel implements TimedShareService.Listen
     @UiThread
     public void selectFriend(@Nullable FriendRecord friend) {
         liveSelectedFriend.setValue(friend);
+    }
+
+    @UiThread
+    public void setActivityRecognitionRationaleVisible(boolean visible) {
+        this.isActivityRecognitionRationaleVisible = visible;
+    }
+
+    @UiThread
+    public void setBackgroundLocationRationaleVisible(boolean visible) {
+        this.isBackgroundLocationRationaleVisible = visible;
+    }
+
+    @UiThread
+    public void setForegroundLocationRationaleVisible(boolean visible) {
+        this.isForegroundLocationRationaleVisible = visible;
+    }
+
+    @UiThread
+    public void setPreQLocationRationaleVisible(boolean visible) {
+        this.isPreQLocationRationaleVisible = visible;
     }
 
     @UiThread

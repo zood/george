@@ -16,6 +16,7 @@ import io.pijun.george.AuthenticationManager;
 import io.pijun.george.L;
 import io.pijun.george.Prefs;
 import io.pijun.george.WorkerRunnable;
+import xyz.zood.george.Permissions;
 
 public class LocationJobService extends JobService {
 
@@ -65,11 +66,17 @@ public class LocationJobService extends JobService {
         // only launch the service if the app isn't already in the foreground
         if (App.isInForeground || App.isLimitedShareRunning) {
             L.i("  skipping PositionService start, because App.isInForeground || App.isLimitedShareRunning");
+            jobFinished(mParams, false);
             return false;
         }
         // if we already uploaded our location within the last 3 minutes - get out of here
         long timeSince = Prefs.get(this).getLastLocationUpdateTime();
         if (timeSince < 3 * DateUtils.MINUTE_IN_MILLIS) {
+            jobFinished(mParams, false);
+            return false;
+        }
+
+        if (!Permissions.checkBackgroundLocationPermission(this)) {
             return false;
         }
 

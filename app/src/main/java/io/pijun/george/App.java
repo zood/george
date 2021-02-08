@@ -2,6 +2,7 @@ package io.pijun.george;
 
 import android.app.Application;
 import android.os.Handler;
+import android.os.Looper;
 
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -38,7 +39,7 @@ public class App extends Application {
             throw new RuntimeException("sodium_init failed. Unsafe to proceed in this state.");
         }
 
-        mUiThreadHandler = new Handler();
+        mUiThreadHandler = new Handler(Looper.myLooper());
         mExecutor = Executors.newCachedThreadPool();
 
         DB.init(this, false);
@@ -57,6 +58,7 @@ public class App extends Application {
         });
     }
 
+    @NonNull @AnyThread
     public static App getApp() {
         return sApp;
     }

@@ -88,7 +88,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginStart="4dp"
                 android:contentDescription="@null"
-                android:tint="@color/black_40"
+                app:tint="@color/black_40"
                 app:layout_constraintStart_toEndOf="@id/battery"
                 app:layout_constraintTop_toTopOf="@id/battery_icon"
                 app:layout_constraintBottom_toBottomOf="@id/battery_icon"
@@ -102,7 +102,7 @@
                 android:layout_marginTop="2dp"
                 android:contentDescription="@null"
                 android:src="@drawable/ic_sharp_navigation_20dp"
-                android:tint="@color/black_40"
+                app:tint="@color/black_40"
                 app:layout_constraintDimensionRatio="1:1"
                 app:layout_constraintStart_toEndOf="@id/username"
                 app:layout_constraintTop_toTopOf="@id/username"
@@ -116,7 +116,7 @@
                 android:layout_marginStart="0dp"
                 android:layout_marginTop="6dp"
                 android:src="@drawable/ic_sharp_battery_50_20dp"
-                android:tint="@color/zood_green"
+                app:tint="@color/zood_green"
                 app:layout_constraintDimensionRatio="1:1"
                 app:layout_constraintStart_toStartOf="@id/username"
                 app:layout_constraintTop_toBottomOf="@id/username" />
@@ -217,6 +217,7 @@
 
         <com.google.android.material.floatingactionbutton.FloatingActionButton
             android:id="@+id/settings"
+            android:contentDescription="@string/settings"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_margin="16dp"
@@ -233,6 +234,7 @@
 
         <com.google.android.material.floatingactionbutton.FloatingActionButton
             android:id="@+id/my_location_fab"
+            android:contentDescription="@string/my_location"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_margin="16dp"
@@ -250,6 +252,7 @@
 
         <com.google.android.material.floatingactionbutton.FloatingActionButton
             android:id="@+id/timed_share_fab"
+            android:contentDescription="@string/timed_share"
             android:src="@drawable/ic_pin"
             android:backgroundTint="@color/timed_share_fab_background"
             tools:visibility="invisible"

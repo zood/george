@@ -116,6 +116,7 @@
     <string name="unknown_error_getting_user_info">Unknown error getting user info</string>
     <string name="permission_request">Permission request</string>
     <string name="location_permission_reason_msg">Zood uses your location to show your position on the map, and to securely share it with friends that you\'ve authorized. It\'s never used for any other purpose.</string>
+    <string name="foreground_location_permission_reason_msg">Zood uses your location while it\'s running to display your position on the map.</string>
     <string name="background_data_is_restricted">Background data is restricted</string>
     <string name="fix">Fix</string>
     <string name="background_data_restricted_msg">Background data for Zood\u00A0Location was disabled, so it can\'t share your location while in the background. To fix this, go to \'Data usage\' then enable \'Background data\' in the app\'s settings.</string>
@@ -132,7 +133,7 @@
     <string name="unknown_avatar_save_error_msg">There was a problem saving your profile avatar. Try again, and if the problem persists, contact support.</string>
     <string name="avatar_save_io_error_msg">Unable to save your profile avatar. Make sure you have enough free space on your device, then try again.</string>
     <string name="background_location_permission_needed">Background location permission needed</string>
-    <string name="grant_location_permission_msg">Zood needs permission to access your location while in the background in order to share it with your friends (only). Go to Permissions in the app settings screen to grant it.</string>
+    <string name="grant_background_location_permission_via_settings_msg">Zood needs permission to access your location while in the background in order to share it with your friends (only). Go to Permissions in the app settings screen to grant it.</string>
     <string name="grant_location_permission">Grant location permission</string>
     <string name="reticulating_primes_ellipsis">Reticulating primes…</string>
     <string name="view_safety_number">View safety number</string>
@@ -179,8 +180,20 @@
     <string name="start">Start</string>
     <string name="safety_number">Safety number</string>
     <string name="need_background_location_permission">Need background location permission</string>
-    <string name="activity_recognition_permission_reason_msg">Zood includes your current activity (whether you\'re walking, biking, or driving) along with your location to your friends. It\'s never used for any other purpose.</string>
+    <string name="activity_recognition_permission_reason_msg">Zood includes your current activity (whether you\'re walking, biking, or driving) when sharing your location with your friends. It\'s never used for any other purpose.</string>
     <string name="licenses">Licenses</string>
     <string name="zood_license"><![CDATA[Zood wouldn\'t be possible without open source libraries. Click any of the libraries below to view their license.]]></string>
     <string name="privacy_policy">Privacy policy</string>
+    <string name="grant_pre_q_location_permission_via_settings_msg">Zood Location needs permission to access your location in order to display your position on the map and share it with your friends (only). Go to Permissions in the app settings screen to grant it.</string>
+    <string name="background_location_permission_reason_msg">In order to periodically share your location with your friends (only), Zood needs permission to access your location while in the background.</string>
+    <string name="location_permission_needed">Location permission needed</string>
+    <string name="background_permission">Background permission</string>
+    <string name="grant_background_location_permission_msg">Zood needs permission to access your location while in the background in order to share it with your friends (only).</string>
+    <string name="location_permission">Location permission</string>
+    <string name="grant_foreground_location_permission_msg">Zood needs permission to access your location while you\'re using the app to show your current location on the map.</string>
+    <string name="grant_foreground_location_permission_via_settings_msg">Zood needs permission to access your location while you\'re using the app to show your current location on the map. Go to Permissions in the app settings screen to grant it.</string>
+    <string name="grant_pre_q_location_permission_msg">Zood Location needs permission to access your location in order to display your position on the map and share it with your friends (only).</string>
+    <string name="no_thanks">No, thanks</string>
+    <string name="activity_recognition_permission_needed">Activity recognition permission needed</string>
+    <string name="my_location">My location</string>
 </resources>

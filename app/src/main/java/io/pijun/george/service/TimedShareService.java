@@ -256,7 +256,7 @@ public class TimedShareService extends Service {
 
     @WorkerThread
     private void startLimitedShare() {
-        if (!Permissions.checkGrantedBackgroundLocationPermission(this)) {
+        if (!Permissions.checkForegroundLocationPermission(this)) {
             Toast.makeText(this, R.string.need_background_location_permission, Toast.LENGTH_SHORT).show();
             stopSelf();
             return;

@@ -339,6 +339,11 @@ public class TimedShareFragment extends Fragment {
     @UiThread
     private void startTimedShare() {
         Context ctx = requireContext();
+        if (!Permissions.checkForegroundLocationPermission(ctx)) {
+            Toast.makeText(ctx, R.string.location_permission_needed, Toast.LENGTH_LONG).show();
+            binding.toggle.setChecked(false);
+            return;
+        }
         Intent i = TimedShareService.newIntent(ctx, TimedShareService.ACTION_START);
         ContextCompat.startForegroundService(ctx, i);
     }
@@ -386,7 +391,7 @@ public class TimedShareFragment extends Fragment {
         }
     }
 
-    private GestureDetector.SimpleOnGestureListener gestureListener = new GestureDetector.SimpleOnGestureListener() {
+    private final GestureDetector.SimpleOnGestureListener gestureListener = new GestureDetector.SimpleOnGestureListener() {
 
         /*
         The accumulator exists because when we move the sheet, future events from the gesture

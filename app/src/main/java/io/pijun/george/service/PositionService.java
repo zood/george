@@ -222,8 +222,7 @@ public class PositionService extends Service {
 
     @WorkerThread
     private void start() {
-        if (!Permissions.checkGrantedBackgroundLocationPermission(this)) {
-            // should never happen
+        if (!Permissions.checkBackgroundLocationPermission(this)) {
             stopSelf();
             notifyWaiters();
             return;
