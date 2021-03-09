@@ -132,7 +132,6 @@
     <string name="unknown_avatar_save_error_msg">Возникла проблема с сохранением аватарки вашего профиля. Попробуйте еще раз и если проблема не исчезнет, обратитесь в службу поддержки.</string>
     <string name="avatar_save_io_error_msg">Не удалось сохранить аватар вашего профиля. Убедитесь, что на вашем устройстве достаточно свободного места, а затем повторите попытку.</string>
     <string name="background_location_permission_needed">Требуется разрешение на доступ к вашему местоположению в фоновом режиме</string>
-    <string name="grant_location_permission_msg">Zood требуется разрешение на доступ к вашему местоположению в фоновом режиме, чтобы поделиться им со своими друзьями (только). Перейдите в раздел Разрешения в настройках приложения, чтобы предоставить его.</string>
     <string name="grant_location_permission">Предоставить разрешение местоположения</string>
     <string name="reticulating_primes_ellipsis">Reticulating primes…</string>
     <string name="view_safety_number">Посмотреть ключ безопасности</string>
