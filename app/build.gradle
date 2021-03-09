@@ -8,8 +8,8 @@ android {
         applicationId "xyz.zood.george"
         minSdkVersion 21
         targetSdkVersion 30
-        versionCode 37
-        versionName "0.37"
+        versionCode 38
+        versionName "0.38"
         multiDexEnabled true
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         resConfigs "en"
