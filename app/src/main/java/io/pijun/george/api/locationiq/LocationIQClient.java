@@ -23,7 +23,7 @@ public class LocationIQClient {
     @NonNull
     @AnyThread
     private static LocationIQAPI newInstance(@NonNull final String apiKey) {
-        String url = "https://locationiq.org/v1/";
+        String url = "https://us1.locationiq.com/v1/";
 
         OkHttpClient.Builder httpBuilder = new OkHttpClient.Builder();
 

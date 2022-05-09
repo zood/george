@@ -12,7 +12,7 @@ android {
         versionName "0.38"
         multiDexEnabled true
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
-        resConfigs "en"
+        resConfigs 'en'
         vectorDrawables.useSupportLibrary = true
         externalNativeBuild {
             cmake {
@@ -20,8 +20,8 @@ android {
             }
         }
         ndk {
-//            abiFilters 'x86', 'x86_64', 'armeabi-v7a', 'arm64-v8a'
-            abiFilters 'armeabi-v7a', 'arm64-v8a'
+            abiFilters 'x86', 'x86_64', 'armeabi-v7a', 'arm64-v8a'
+//            abiFilters 'armeabi-v7a', 'arm64-v8a'
         }
     }
     buildTypes {
