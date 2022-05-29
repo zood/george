@@ -2,9 +2,9 @@ package io.pijun.george;
 
 import android.content.Context;
 
-import com.google.android.gms.tasks.OnSuccessListener;
-import com.google.firebase.iid.FirebaseInstanceId;
-import com.google.firebase.iid.InstanceIdResult;
+import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.Task;
+import com.google.firebase.messaging.FirebaseMessaging;
 import com.squareup.picasso.Picasso;
 import com.squareup.picasso.PicassoTools;
 
@@ -276,10 +276,15 @@ public class AuthenticationManager {
         notifyLoginWatchers(Error.None, null, watcher);
 
         // If the device has an FCM token, upload it
-        FirebaseInstanceId.getInstance().getInstanceId().addOnSuccessListener(new OnSuccessListener<InstanceIdResult>() {
+        FirebaseMessaging.getInstance().getToken().addOnCompleteListener(new OnCompleteListener<String>() {
             @Override
-            public void onSuccess(InstanceIdResult result) {
-                OscarClient.queueAddFcmToken(ctx, loginResponse.accessToken, result.getToken());
+            public void onComplete(@NonNull Task<String> task) {
+                if (!task.isSuccessful() && task.getException() != null) {
+                    L.w("AuthenticationManager._login failed to obtain FCM registration token", task.getException());
+                    return;
+                }
+
+                OscarClient.queueAddFcmToken(ctx, loginResponse.accessToken, task.getResult());
             }
         });
 
