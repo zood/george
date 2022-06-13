@@ -8,9 +8,10 @@ Features
 * Username based accounts
 * Convenient 'timed shares' for temporarily sharing your location with someone that is not a friend via a link.
 
-Currently available on the Play Store.
+Currently available on the Play Store, and F-Droid via the [IzzyOnDroid repo](https://apt.izzysoft.de/fdroid/).
 
 <a href="https://play.google.com/store/apps/details?id=xyz.zood.george"><img alt="Get it on Google Play" src="https://play.google.com/intl/en_us/badges/images/generic/en_badge_web_generic.png" height="80px" /></a>
+<a href="https://apt.izzysoft.de/fdroid/index/apk/xyz.zood.george"><img alt="Get it on IzzyOnDroid" src="https://gitlab.com/IzzyOnDroid/repo/-/raw/master/assets/IzzyOnDroid.png" height="80px" /></a>
 
 ## License
 
