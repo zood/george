@@ -77,7 +77,7 @@ public class UserActivityReceiver extends BroadcastReceiver {
         return PendingIntent.getBroadcast(context,
                 TRANSITION_REQUEST_CODE,
                 new Intent(context, UserActivityReceiver.class),
-                PendingIntent.FLAG_UPDATE_CURRENT);
+                PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
     }
 
     @Override

@@ -19,6 +19,9 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Toast;
 
+import androidx.activity.result.ActivityResultCallback;
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.RequiresApi;
@@ -58,6 +61,7 @@ import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 
 import java.util.ArrayList;
+import java.util.Map;
 
 import io.pijun.george.App;
 import io.pijun.george.AuthenticationManager;
@@ -126,6 +130,7 @@ public class MainFragment extends Fragment implements OnMapReadyCallback, DB.Lis
     private ActivityRecognitionPermissionNotifier userActivityPermissionNotifier;
     private BackgroundLocationPermissionNotifier bgLocationPermissionNotifier;
     private ForegroundLocationPermissionNotifier fgLocationPermissionNotifier;
+    private ActivityResultLauncher<String[]> fgLocationPermLauncher;
     private PreQLocationPermissionNotifier preQLocPermNotifier;
     private FusedLocationProviderClient locationProviderClient;
     private LocationRequest locationRequest;
@@ -171,6 +176,22 @@ public class MainFragment extends Fragment implements OnMapReadyCallback, DB.Lis
 
         Context ctx = requireContext();
         friendshipManager = new FriendshipManager(ctx, DB.get(), OscarClient.getQueue(ctx), accessToken, keyPair);
+
+//        fgLocationPermLauncher = registerForActivityResult(new ActivityResultContracts.RequestMultiplePermissions(), new ActivityResultCallback<Map<String, Boolean>>() {
+//            @Override
+//            public void onActivityResult(Map<String, Boolean> grants) {
+//
+//            }
+//        });
+        fgLocationPermLauncher = registerForActivityResult(new ActivityResultContracts.RequestMultiplePermissions(), new ActivityResultCallback<Map<String, Boolean>>() {
+            @Override
+            public void onActivityResult(Map<String, Boolean> grants) {
+                L.i("grant map is non-null? " + (grants != null));
+                for (Map.Entry<String, Boolean> entry : grants.entrySet()) {
+                    L.i("== GRANT MAP str: " + entry.getKey() + " , bool: " + entry.getValue());
+                }
+            }
+        });
 
         viewModel = new ViewModelProvider(requireActivity()).get(MainViewModel.class);
         locationProviderClient = LocationServices.getFusedLocationProviderClient(requireContext());
@@ -760,6 +781,7 @@ public class MainFragment extends Fragment implements OnMapReadyCallback, DB.Lis
             return;
         }
         // Do we need to show the rationale for foreground location?
+        String[] perms = new String[]{Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.POST_NOTIFICATIONS};
         if (ActivityCompat.shouldShowRequestPermissionRationale(activity, Manifest.permission.ACCESS_FINE_LOCATION)) {
             ZoodDialog dialog = ZoodDialog.newInstance(getString(R.string.foreground_location_permission_reason_msg));
             dialog.setTitle(getString(R.string.permission_request));
@@ -767,7 +789,8 @@ public class MainFragment extends Fragment implements OnMapReadyCallback, DB.Lis
                 @Override
                 public void onClick(View view) {
                     viewModel.setForegroundLocationRationaleVisible(false);
-                    requestPermissions(Permissions.getForegroundLocationPermissions(), REQUEST_FOREGROUND_LOCATION_PERMISSION);
+                    fgLocationPermLauncher.launch(perms);
+//                    requestPermissions(Permissions.getForegroundLocationPermissions(), REQUEST_FOREGROUND_LOCATION_PERMISSION);
                 }
             });
             // In order to track when the dialog is dismissed, don't allow cancelling
@@ -775,7 +798,8 @@ public class MainFragment extends Fragment implements OnMapReadyCallback, DB.Lis
             dialog.show(getParentFragmentManager(), null);
             viewModel.setForegroundLocationRationaleVisible(true);
         } else {
-            requestPermissions(Permissions.getForegroundLocationPermissions(), REQUEST_FOREGROUND_LOCATION_PERMISSION);
+            fgLocationPermLauncher.launch(perms);
+//            requestPermissions(Permissions.getForegroundLocationPermissions(), REQUEST_FOREGROUND_LOCATION_PERMISSION);
         }
     }
 

@@ -76,6 +76,12 @@ public class Permissions {
         return new String[]{Manifest.permission.ACCESS_FINE_LOCATION};
     }
 
+    @RequiresApi(api = Build.VERSION_CODES.TIRAMISU)
+    @NonNull @AnyThread @CheckResult
+    public static String[] getPostNotificationPermissions() {
+        return new String[]{Manifest.permission.POST_NOTIFICATIONS};
+    }
+
     @NonNull @AnyThread @CheckResult
     public static String[] getPreQLocationPermissions() {
         return new String[]{Manifest.permission.ACCESS_FINE_LOCATION};

@@ -51,7 +51,7 @@ public class PassiveLocationReceiver extends BroadcastReceiver {
         return PendingIntent.getBroadcast(context,
                 LOCATION_REQUEST_CODE,
                 newIntent(context),
-                PendingIntent.FLAG_UPDATE_CURRENT);
+                PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_MUTABLE);
     }
 
     @Override

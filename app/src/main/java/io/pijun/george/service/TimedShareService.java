@@ -248,7 +248,7 @@ public class TimedShareService extends Service {
         PendingIntent openIntent = PendingIntent.getActivity(this,
                 reqCode,
                 MainActivity.newIntent(this),
-                PendingIntent.FLAG_UPDATE_CURRENT);
+                PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
         bldr.setContentIntent(openIntent);
 
         startForeground(NOTIFICATION_ID, bldr.build());

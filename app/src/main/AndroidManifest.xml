@@ -13,6 +13,8 @@
     <!--required for Android Q-->
     <uses-permission android:name="android.permission.ACCESS_BACKGROUND_LOCATION" />
     <uses-permission android:name="android.permission.ACTIVITY_RECOGNITION" />
+    <!--required for Android 12 (API 31)-->
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
 
     <application
         android:name="io.pijun.george.App"
@@ -56,10 +58,10 @@
             </intent-filter>
         </service>
         <service android:name="io.pijun.george.service.TimedShareService" />
-        <service android:name="io.pijun.george.service.LocationJobService" android:permission="android.permission.BIND_JOB_SERVICE" />
+        <service android:name="io.pijun.george.service.LocationJobService" android:foregroundServiceType="location" android:permission="android.permission.BIND_JOB_SERVICE" />
         <service android:name="io.pijun.george.service.BackupDatabaseJob" android:permission="android.permission.BIND_JOB_SERVICE" />
-        <service android:name="io.pijun.george.service.PositionService" />
-        <service android:name="xyz.zood.george.service.ScreamerService" />
+        <service android:name="io.pijun.george.service.PositionService" android:foregroundServiceType="location" />
+        <service android:name="xyz.zood.george.service.ScreamerService" android:foregroundServiceType="location" />
         <!-- END SERVICES -->
 
         <!-- BEGIN RECEIVERS -->
@@ -94,6 +96,8 @@
 
         <!--disable FCM analytics-->
         <meta-data android:name="firebase_analytics_collection_deactivated" android:value="true" />
+        <meta-data android:name="firebase_analytics_collection_enabled" android:value="false" />
+        <meta-data android:name="firebase_messaging_auto_init_enabled" android:value="false" />
         <!--disable google advertising id usage in the app-->
         <meta-data android:name="google_analytics_adid_collection_enabled" android:value="false" />
     </application>
