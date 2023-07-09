@@ -23,7 +23,7 @@ import io.pijun.george.database.DB;
 import io.pijun.george.database.FriendRecord;
 import io.pijun.george.database.UserRecord;
 import io.pijun.george.queue.PersistentQueue;
-import io.pijun.george.service.BackupDatabaseJob;
+import xyz.zood.george.worker.BackupDatabaseWorker;
 
 public class FriendshipManager {
 
@@ -93,7 +93,7 @@ public class FriendshipManager {
         }
 
         listener.onAddFriendFinished(AddFriendResult.Success, null);
-        BackupDatabaseJob.scheduleBackup(ctx);
+        BackupDatabaseWorker.scheduleBackup(ctx);
     }
 
     @UiThread
@@ -154,7 +154,7 @@ public class FriendshipManager {
             CloudLogger.log(ex);
             listener.onShareOpFinished(false);
         }
-        BackupDatabaseJob.scheduleBackup(ctx);
+        BackupDatabaseWorker.scheduleBackup(ctx);
     }
 
     @WorkerThread
@@ -166,7 +166,7 @@ public class FriendshipManager {
             CloudLogger.log(ex);
             listener.onShareOpFinished(false);
         }
-        BackupDatabaseJob.scheduleBackup(ctx);
+        BackupDatabaseWorker.scheduleBackup(ctx);
 
         UserComm comm = UserComm.newLocationSharingRevocation();
         String errMsg = OscarClient.queueSendMessage(queue, friend.user, keyPair, accessToken, comm.toJSON(), false, false);

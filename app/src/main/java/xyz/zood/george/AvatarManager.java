@@ -38,7 +38,7 @@ import io.pijun.george.crypto.KeyPair;
 import io.pijun.george.database.DB;
 import io.pijun.george.database.FriendRecord;
 import io.pijun.george.database.UserRecord;
-import io.pijun.george.service.BackupDatabaseJob;
+import xyz.zood.george.worker.BackupDatabaseWorker;
 
 public class AvatarManager {
 
@@ -194,7 +194,7 @@ public class AvatarManager {
                         users.add(f.user);
                     }
                     sendAvatarToUsers(ctx, users);
-                    BackupDatabaseJob.scheduleBackup(ctx);
+                    BackupDatabaseWorker.scheduleBackup(ctx);
                 } catch (IOException ex) {
                     CloudLogger.log(ex);
                 }

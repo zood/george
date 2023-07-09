@@ -58,8 +58,6 @@
             </intent-filter>
         </service>
         <service android:name="io.pijun.george.service.TimedShareService" />
-        <service android:name="io.pijun.george.service.LocationJobService" android:foregroundServiceType="location" android:permission="android.permission.BIND_JOB_SERVICE" />
-        <service android:name="io.pijun.george.service.BackupDatabaseJob" android:permission="android.permission.BIND_JOB_SERVICE" />
         <service android:name="io.pijun.george.service.PositionService" android:foregroundServiceType="location" />
         <service android:name="xyz.zood.george.service.ScreamerService" android:foregroundServiceType="location" />
         <!-- END SERVICES -->

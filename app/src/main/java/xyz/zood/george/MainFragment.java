@@ -177,12 +177,6 @@ public class MainFragment extends Fragment implements OnMapReadyCallback, DB.Lis
         Context ctx = requireContext();
         friendshipManager = new FriendshipManager(ctx, DB.get(), OscarClient.getQueue(ctx), accessToken, keyPair);
 
-//        fgLocationPermLauncher = registerForActivityResult(new ActivityResultContracts.RequestMultiplePermissions(), new ActivityResultCallback<Map<String, Boolean>>() {
-//            @Override
-//            public void onActivityResult(Map<String, Boolean> grants) {
-//
-//            }
-//        });
         fgLocationPermLauncher = registerForActivityResult(new ActivityResultContracts.RequestMultiplePermissions(), new ActivityResultCallback<Map<String, Boolean>>() {
             @Override
             public void onActivityResult(Map<String, Boolean> grants) {

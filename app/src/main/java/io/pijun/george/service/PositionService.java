@@ -6,7 +6,6 @@ import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
 import android.location.Location;
-import android.os.Build;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.IBinder;
@@ -23,6 +22,7 @@ import com.google.android.gms.location.LocationCallback;
 import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationResult;
 import com.google.android.gms.location.LocationServices;
+import com.google.android.gms.location.Priority;
 
 import java.util.LinkedList;
 import java.util.concurrent.CountDownLatch;
@@ -80,6 +80,7 @@ public class PositionService extends Service {
             return;
         }
         try {
+            //noinspection ResultOfMethodCallIgnored
             localRef.await(MAX_WAIT_SECONDS, TimeUnit.SECONDS);
         } catch (InterruptedException ie) {
             L.w("PS.await interrupted", ie);
@@ -182,17 +183,15 @@ public class PositionService extends Service {
 
     @WorkerThread
     private void showNotification() {
-        if (Build.VERSION.SDK_INT >= 26) {
-            NotificationManager mgr = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
-            if (mgr != null) {
-                String name = getString(R.string.finding_location);
-                NotificationChannel channel = new NotificationChannel(
-                        FINDING_LOCATION_CHANNEL_ID,
-                        name,
-                        NotificationManager.IMPORTANCE_MIN);
-                channel.setDescription("Used when trying to find your location.");
-                mgr.createNotificationChannel(channel);
-            }
+        NotificationManager mgr = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+        if (mgr != null) {
+            String name = getString(R.string.finding_location);
+            NotificationChannel channel = new NotificationChannel(
+                    FINDING_LOCATION_CHANNEL_ID,
+                    name,
+                    NotificationManager.IMPORTANCE_MIN);
+            channel.setDescription("Used when trying to find your location.");
+            mgr.createNotificationChannel(channel);
         }
 
         NotificationCompat.Builder bldr = new NotificationCompat.Builder(this, FINDING_LOCATION_CHANNEL_ID);
@@ -231,9 +230,9 @@ public class PositionService extends Service {
         showNotification();
 
         FusedLocationProviderClient client = LocationServices.getFusedLocationProviderClient(this);
-        LocationRequest request = LocationRequest.create();
-        request.setInterval(DateUtils.SECOND_IN_MILLIS);
-        request.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
+        LocationRequest request = new LocationRequest.Builder(DateUtils.SECOND_IN_MILLIS).
+                setPriority(Priority.PRIORITY_HIGH_ACCURACY).
+                build();
         thread = new HandlerThread("PositionService_" + HANDLER_COUNT++);
         thread.start();
         client.requestLocationUpdates(request, callback, thread.getLooper());

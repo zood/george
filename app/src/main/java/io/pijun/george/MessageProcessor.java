@@ -30,11 +30,11 @@ import io.pijun.george.database.DB;
 import io.pijun.george.database.FriendRecord;
 import io.pijun.george.database.UserRecord;
 import io.pijun.george.queue.PersistentQueue;
-import io.pijun.george.service.BackupDatabaseJob;
 import io.pijun.george.service.PositionService;
 import retrofit2.Response;
 import xyz.zood.george.AvatarManager;
 import xyz.zood.george.service.ScreamerService;
+import xyz.zood.george.worker.BackupDatabaseWorker;
 
 public class MessageProcessor {
 
@@ -133,7 +133,7 @@ public class MessageProcessor {
                 // now that we've encountered a new user, add them to the database (because of TOFU)
                 user = db.addUser(senderId, lui.username, lui.publicKey);
                 L.i("  added user: " + user);
-                BackupDatabaseJob.scheduleBackup(context);
+                BackupDatabaseWorker.scheduleBackup(context);
             } catch (IOException ioe) {
                 return Result.ErrorNoNetwork;
             } catch (DB.DBException dbe) {
@@ -319,7 +319,7 @@ public class MessageProcessor {
         DB db = DB.get();
         try {
             db.sharingGrantedBy(user, comm.dropBox);
-            BackupDatabaseJob.scheduleBackup(context);
+            BackupDatabaseWorker.scheduleBackup(context);
         } catch (DB.DBException ex) {
             L.w("error recording location grant", ex);
             CloudLogger.log(ex);
@@ -333,7 +333,7 @@ public class MessageProcessor {
         L.i("LocationSharingRevocation");
         DB db = DB.get();
         db.sharingRevokedBy(user);
-        BackupDatabaseJob.scheduleBackup(context);
+        BackupDatabaseWorker.scheduleBackup(context);
         return Result.Success;
     }
 
@@ -492,6 +492,7 @@ public class MessageProcessor {
                     case ErrorRemoteInternal:
                         L.w("reschedulable action processing error");
                         // sleep for 60 seconds, then try again
+                        //noinspection BusyWait
                         Thread.sleep(60 * DateUtils.SECOND_IN_MILLIS);
                         break;
                     case ErrorDecryptionFailed:

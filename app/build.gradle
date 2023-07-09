@@ -9,7 +9,7 @@ android {
 
     defaultConfig {
         applicationId "xyz.zood.george"
-        minSdkVersion 26
+        minSdkVersion 29
         targetSdkVersion 33
         versionCode 39
         versionName "0.39"
@@ -97,6 +97,7 @@ dependencies {
     // jetpack libs
     implementation "androidx.lifecycle:lifecycle-extensions:2.2.0"
     implementation "androidx.activity:activity:1.7.2"
+    implementation "androidx.work:work-runtime:2.8.1"
 
     testImplementation 'junit:junit:4.13.2'
     androidTestImplementation 'androidx.test.ext:junit:1.1.5'
