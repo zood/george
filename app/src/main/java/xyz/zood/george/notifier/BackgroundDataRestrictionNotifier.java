@@ -2,23 +2,20 @@ package xyz.zood.george.notifier;
 
 import android.content.Intent;
 import android.net.Uri;
-import android.os.Build;
 import android.provider.Settings;
 import android.view.View;
 
 import androidx.annotation.NonNull;
-import androidx.annotation.RequiresApi;
 import androidx.fragment.app.FragmentActivity;
-import androidx.lifecycle.Lifecycle;
-import androidx.lifecycle.LifecycleObserver;
-import androidx.lifecycle.OnLifecycleEvent;
+import androidx.lifecycle.DefaultLifecycleObserver;
+import androidx.lifecycle.LifecycleOwner;
 
 import io.pijun.george.network.Network;
 import xyz.zood.george.R;
 import xyz.zood.george.widget.BannerView;
 import xyz.zood.george.widget.ZoodDialog;
 
-public class BackgroundDataRestrictionNotifier implements LifecycleObserver {
+public class BackgroundDataRestrictionNotifier implements DefaultLifecycleObserver {
 
     @NonNull private final BannerView banner;
     @NonNull private final FragmentActivity activity;
@@ -29,8 +26,8 @@ public class BackgroundDataRestrictionNotifier implements LifecycleObserver {
         this.activity = activity;
     }
 
-    @OnLifecycleEvent(Lifecycle.Event.ON_START)
-    public void onStart() {
+    @Override
+    public void onStart(@NonNull LifecycleOwner owner) {
         if (Network.isBackgroundDataRestricted(activity)) {
             banner.addItem(activity.getString(R.string.background_data_is_restricted), activity.getString(R.string.fix), bannerItemId, new BannerView.ItemClickListener() {
                 @Override
@@ -47,7 +44,6 @@ public class BackgroundDataRestrictionNotifier implements LifecycleObserver {
         ZoodDialog dialog = ZoodDialog.newInstance(activity.getString(R.string.background_data_restricted_msg));
         dialog.setTitle(activity.getString(R.string.data_restricted));
         dialog.setButton1(activity.getString(R.string.system_settings), new View.OnClickListener() {
-            @RequiresApi(api = Build.VERSION_CODES.N)
             @Override
             public void onClick(View v) {
                 Intent i = new Intent();

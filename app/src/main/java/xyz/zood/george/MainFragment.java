@@ -9,7 +9,6 @@ import android.content.IntentSender;
 import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.location.Location;
-import android.os.Build;
 import android.os.Bundle;
 import android.os.Looper;
 import android.text.TextUtils;
@@ -24,7 +23,6 @@ import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.annotation.RequiresApi;
 import androidx.annotation.UiThread;
 import androidx.annotation.WorkerThread;
 import androidx.core.app.ActivityCompat;
@@ -45,6 +43,7 @@ import com.google.android.gms.location.LocationResult;
 import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.location.LocationSettingsRequest;
 import com.google.android.gms.location.LocationSettingsStatusCodes;
+import com.google.android.gms.location.Priority;
 import com.google.android.gms.location.SettingsClient;
 import com.google.android.gms.maps.CameraUpdate;
 import com.google.android.gms.maps.CameraUpdateFactory;
@@ -97,7 +96,6 @@ import xyz.zood.george.notifier.BackgroundDataRestrictionNotifier;
 import xyz.zood.george.notifier.BackgroundLocationPermissionNotifier;
 import xyz.zood.george.notifier.ClientNotConnectedNotifier;
 import xyz.zood.george.notifier.ForegroundLocationPermissionNotifier;
-import xyz.zood.george.notifier.PreQLocationPermissionNotifier;
 import xyz.zood.george.receiver.UserActivityReceiver;
 import xyz.zood.george.viewmodels.Event;
 import xyz.zood.george.viewmodels.MainViewModel;
@@ -111,13 +109,6 @@ public class MainFragment extends Fragment implements OnMapReadyCallback, DB.Lis
     private static final String ARG_ACCESS_TOKEN = "access_token";
     private static final String ARG_KEY_PAIR = "key_pair";
 
-    private static final int REQUEST_ACTIVITY_RECOGNITION_PERMISSION = 16;
-    private static final int REQUEST_BACKGROUND_LOCATION_PERMISSION = 18;
-    private static final int REQUEST_BACKGROUND_LOCATION_PERMISSION_THEN_ADD_FRIEND = 26;
-    private static final int REQUEST_FOREGROUND_LOCATION_PERMISSION = 22;
-    private static final int REQUEST_PRE_Q_LOCATION_PERMISSION = 24;
-    private static final int REQUEST_LOCATION_SETTINGS = 20;
-
     private String accessToken;
     private FragmentMainBinding binding;
     private Circle currentCircle;
@@ -130,8 +121,10 @@ public class MainFragment extends Fragment implements OnMapReadyCallback, DB.Lis
     private ActivityRecognitionPermissionNotifier userActivityPermissionNotifier;
     private BackgroundLocationPermissionNotifier bgLocationPermissionNotifier;
     private ForegroundLocationPermissionNotifier fgLocationPermissionNotifier;
-    private ActivityResultLauncher<String[]> fgLocationPermLauncher;
-    private PreQLocationPermissionNotifier preQLocPermNotifier;
+    public ActivityResultLauncher<String[]> fgLocationPermLauncher;
+    public ActivityResultLauncher<String[]> bgLocationPermLauncher;
+    public ActivityResultLauncher<String[]> bgLocationPermToAddFriendLauncher;
+    public ActivityResultLauncher<String[]> activityRecognitionPermLauncher;
     private FusedLocationProviderClient locationProviderClient;
     private LocationRequest locationRequest;
     private LocationSettingsRequest locationSettingsRequest;
@@ -177,12 +170,43 @@ public class MainFragment extends Fragment implements OnMapReadyCallback, DB.Lis
         Context ctx = requireContext();
         friendshipManager = new FriendshipManager(ctx, DB.get(), OscarClient.getQueue(ctx), accessToken, keyPair);
 
-        fgLocationPermLauncher = registerForActivityResult(new ActivityResultContracts.RequestMultiplePermissions(), new ActivityResultCallback<Map<String, Boolean>>() {
+        fgLocationPermLauncher = registerForActivityResult(new ActivityResultContracts.RequestMultiplePermissions(), new ActivityResultCallback<>() {
             @Override
             public void onActivityResult(Map<String, Boolean> grants) {
-                L.i("grant map is non-null? " + (grants != null));
-                for (Map.Entry<String, Boolean> entry : grants.entrySet()) {
-                    L.i("== GRANT MAP str: " + entry.getKey() + " , bool: " + entry.getValue());
+                if (Permissions.checkGrantedForegroundLocationPermission(ctx)) {
+                    foregroundLocationPermissionGranted();
+                } else {
+                    fgLocationPermissionNotifier.show();
+                }
+            }
+        });
+        bgLocationPermLauncher = registerForActivityResult(new ActivityResultContracts.RequestMultiplePermissions(), new ActivityResultCallback<>() {
+            @Override
+            public void onActivityResult(Map<String, Boolean> o) {
+                if (Permissions.checkGrantedBackgroundLocationPermission(ctx)) {
+                    backgroundLocationPermissionGranted();
+                } else {
+                    bgLocationPermissionNotifier.show();
+                }
+            }
+        });
+        bgLocationPermToAddFriendLauncher = registerForActivityResult(new ActivityResultContracts.RequestMultiplePermissions(), new ActivityResultCallback<>() {
+            @Override
+            public void onActivityResult(Map<String, Boolean> o) {
+                if (Permissions.checkGrantedBackgroundLocationPermission(ctx)) {
+                    // Just show the add friend dialog - the other permission requests can
+                    // happen when they come back to the screen, after they have added their friend
+                    onAddFriendClicked();
+                }
+            }
+        });
+        activityRecognitionPermLauncher = registerForActivityResult(new ActivityResultContracts.RequestMultiplePermissions(), new ActivityResultCallback<>() {
+            @Override
+            public void onActivityResult(Map<String, Boolean> o) {
+                if (Permissions.checkGrantedActivityRecognitionPermission(ctx)) {
+                    activityRecognitionPermissionGranted();
+                } else {
+                    userActivityPermissionNotifier.show();
                 }
             }
         });
@@ -190,9 +214,7 @@ public class MainFragment extends Fragment implements OnMapReadyCallback, DB.Lis
         viewModel = new ViewModelProvider(requireActivity()).get(MainViewModel.class);
         locationProviderClient = LocationServices.getFusedLocationProviderClient(requireContext());
         settingsClient = LocationServices.getSettingsClient(ctx);
-        locationRequest = LocationRequest.create();
-        locationRequest.setInterval(3 * DateUtils.SECOND_IN_MILLIS);
-        locationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
+        locationRequest = new LocationRequest.Builder(3*DateUtils.SECOND_IN_MILLIS).setPriority(Priority.PRIORITY_HIGH_ACCURACY).build();
         LocationSettingsRequest.Builder builder = new LocationSettingsRequest.Builder();
         builder.addLocationRequest(locationRequest);
         locationSettingsRequest = builder.build();
@@ -214,14 +236,14 @@ public class MainFragment extends Fragment implements OnMapReadyCallback, DB.Lis
         binding.map.onCreate(savedInstanceState);
         binding.map.getMapAsync(this);
 
-        viewModel.getSelectedFriend().observe(getViewLifecycleOwner(), new Observer<FriendRecord>() {
+        viewModel.getSelectedFriend().observe(getViewLifecycleOwner(), new Observer<>() {
             @Override
             public void onChanged(FriendRecord friend) {
                 viewModel.onCloseTimedSheetAction();
                 onFriendSelected(friend);
             }
         });
-        viewModel.getOnAddFriendClicked().observe(getViewLifecycleOwner(), new Observer<Event<Boolean>>() {
+        viewModel.getOnAddFriendClicked().observe(getViewLifecycleOwner(), new Observer<>() {
             @Override
             public void onChanged(Event<Boolean> evt) {
                 Boolean clicked = evt.getEventIfNotHandled();
@@ -230,7 +252,7 @@ public class MainFragment extends Fragment implements OnMapReadyCallback, DB.Lis
                 }
             }
         });
-        viewModel.getTimedShareIsRunning().observe(getViewLifecycleOwner(), new Observer<Boolean>() {
+        viewModel.getTimedShareIsRunning().observe(getViewLifecycleOwner(), new Observer<>() {
             @Override
             public void onChanged(Boolean isRunning) {
                 float transY;
@@ -276,17 +298,12 @@ public class MainFragment extends Fragment implements OnMapReadyCallback, DB.Lis
 
         getLifecycle().addObserver(new GoogleMapLifecycleObserver(binding.map));
         getLifecycle().addObserver(new BackgroundDataRestrictionNotifier(requireActivity(), binding.banners));
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-            bgLocationPermissionNotifier = new BackgroundLocationPermissionNotifier(requireActivity(), this, binding.banners, REQUEST_BACKGROUND_LOCATION_PERMISSION);
-            getLifecycle().addObserver(bgLocationPermissionNotifier);
-            fgLocationPermissionNotifier = new ForegroundLocationPermissionNotifier(requireActivity(), this, binding.banners, REQUEST_FOREGROUND_LOCATION_PERMISSION);
-            getLifecycle().addObserver(fgLocationPermissionNotifier);
-            userActivityPermissionNotifier = new ActivityRecognitionPermissionNotifier(requireActivity(), this, binding.banners, REQUEST_ACTIVITY_RECOGNITION_PERMISSION);
-            getLifecycle().addObserver(userActivityPermissionNotifier);
-        } else {
-            preQLocPermNotifier = new PreQLocationPermissionNotifier(requireActivity(), this, binding.banners, REQUEST_PRE_Q_LOCATION_PERMISSION);
-            getLifecycle().addObserver(preQLocPermNotifier);
-        }
+        bgLocationPermissionNotifier = new BackgroundLocationPermissionNotifier(requireActivity(), this, binding.banners);
+        getLifecycle().addObserver(bgLocationPermissionNotifier);
+        fgLocationPermissionNotifier = new ForegroundLocationPermissionNotifier(requireActivity(), this, binding.banners);
+        getLifecycle().addObserver(fgLocationPermissionNotifier);
+        userActivityPermissionNotifier = new ActivityRecognitionPermissionNotifier(requireActivity(), this, binding.banners);
+        getLifecycle().addObserver(userActivityPermissionNotifier);
         notConnectedNotifier = new ClientNotConnectedNotifier(requireActivity(), binding.banners);
 
         return binding.getRoot();
@@ -342,11 +359,7 @@ public class MainFragment extends Fragment implements OnMapReadyCallback, DB.Lis
             ((BackPressNotifier) ctx).setBackPressInterceptor(this);
         }
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-            checkPermissions();
-        } else {
-            checkPreQPermissions();
-        }
+        checkPermissions();
 
         UpdateStatusTracker.addListener(updateStatusTrackerListener);
         App.runInBackground(new WorkerRunnable() {
@@ -419,6 +432,10 @@ public class MainFragment extends Fragment implements OnMapReadyCallback, DB.Lis
                         .anchor(0.5f, 0.5f)
                         .title(friend.user.username);
                 Marker marker = googMap.addMarker(opts);
+                if (marker == null) {
+                    L.w("Adding a map marker for a friend failed");
+                    return;
+                }
                 marker.setTag(loc);
                 markerTracker.add(marker, friend.id, loc);
             }
@@ -535,11 +552,7 @@ public class MainFragment extends Fragment implements OnMapReadyCallback, DB.Lis
 
         // If the user hasn't granted background location permission, we need
         if (!Permissions.checkBackgroundLocationPermission(ctx)) {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                checkBackgroundLocationPermission(true);
-            } else {
-                checkPreQPermissions();
-            }
+            checkBackgroundLocationPermission(true);
             return;
         }
 
@@ -636,7 +649,6 @@ public class MainFragment extends Fragment implements OnMapReadyCallback, DB.Lis
         UserActivityReceiver.requestUpdates(ctx);
     }
 
-    @RequiresApi(api = Build.VERSION_CODES.Q)
     @UiThread
     private void backgroundLocationPermissionGranted() {
         verifyLocationSettingsResolution();
@@ -657,10 +669,8 @@ public class MainFragment extends Fragment implements OnMapReadyCallback, DB.Lis
                 });
             }
         });
-
     }
 
-    @RequiresApi(api = Build.VERSION_CODES.Q)
     @UiThread
     private void checkActivityRecognitionPermission() {
         Context ctx = getContext();
@@ -689,18 +699,17 @@ public class MainFragment extends Fragment implements OnMapReadyCallback, DB.Lis
                 @Override
                 public void onClick(View view) {
                     viewModel.setActivityRecognitionRationaleVisible(false);
-                    requestPermissions(Permissions.getActivityRecognitionPermissions(), REQUEST_ACTIVITY_RECOGNITION_PERMISSION);
+                    activityRecognitionPermLauncher.launch(Permissions.getActivityRecognitionPermissions());
                 }
             });
             dialog.setCancelable(false);
             dialog.show(getParentFragmentManager(), null);
             viewModel.setActivityRecognitionRationaleVisible(true);
         } else {
-            requestPermissions(Permissions.getActivityRecognitionPermissions(), REQUEST_ACTIVITY_RECOGNITION_PERMISSION);
+            activityRecognitionPermLauncher.launch(Permissions.getActivityRecognitionPermissions());
         }
     }
 
-    @RequiresApi(api = Build.VERSION_CODES.Q)
     @UiThread
     private void checkBackgroundLocationPermission(boolean fromAddFriendClick) {
         Context ctx = getContext();
@@ -729,13 +738,11 @@ public class MainFragment extends Fragment implements OnMapReadyCallback, DB.Lis
                 @Override
                 public void onClick(View view) {
                     viewModel.setBackgroundLocationRationaleVisible(false);
-                    int code;
                     if (fromAddFriendClick) {
-                        code = REQUEST_BACKGROUND_LOCATION_PERMISSION_THEN_ADD_FRIEND;
+                        bgLocationPermToAddFriendLauncher.launch(Permissions.getBackgroundLocationPermissions());
                     } else {
-                        code = REQUEST_BACKGROUND_LOCATION_PERMISSION;
+                        bgLocationPermLauncher.launch(Permissions.getBackgroundLocationPermissions());
                     }
-                    requestPermissions(Permissions.getBackgroundLocationPermissions(), code);
                 }
             });
             if (fromAddFriendClick) {
@@ -751,11 +758,10 @@ public class MainFragment extends Fragment implements OnMapReadyCallback, DB.Lis
             dialog.show(getParentFragmentManager(), null);
             viewModel.setBackgroundLocationRationaleVisible(true);
         } else {
-            requestPermissions(Permissions.getBackgroundLocationPermissions(), REQUEST_BACKGROUND_LOCATION_PERMISSION);
+            bgLocationPermLauncher.launch(Permissions.getBackgroundLocationPermissions());
         }
     }
 
-    @RequiresApi(api = Build.VERSION_CODES.Q)
     private void checkPermissions() {
         Context ctx = getContext();
         if (ctx == null) {
@@ -775,7 +781,7 @@ public class MainFragment extends Fragment implements OnMapReadyCallback, DB.Lis
             return;
         }
         // Do we need to show the rationale for foreground location?
-        String[] perms = new String[]{Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.POST_NOTIFICATIONS};
+        String[] perms = new String[]{Manifest.permission.ACCESS_FINE_LOCATION};
         if (ActivityCompat.shouldShowRequestPermissionRationale(activity, Manifest.permission.ACCESS_FINE_LOCATION)) {
             ZoodDialog dialog = ZoodDialog.newInstance(getString(R.string.foreground_location_permission_reason_msg));
             dialog.setTitle(getString(R.string.permission_request));
@@ -784,7 +790,6 @@ public class MainFragment extends Fragment implements OnMapReadyCallback, DB.Lis
                 public void onClick(View view) {
                     viewModel.setForegroundLocationRationaleVisible(false);
                     fgLocationPermLauncher.launch(perms);
-//                    requestPermissions(Permissions.getForegroundLocationPermissions(), REQUEST_FOREGROUND_LOCATION_PERMISSION);
                 }
             });
             // In order to track when the dialog is dismissed, don't allow cancelling
@@ -793,51 +798,9 @@ public class MainFragment extends Fragment implements OnMapReadyCallback, DB.Lis
             viewModel.setForegroundLocationRationaleVisible(true);
         } else {
             fgLocationPermLauncher.launch(perms);
-//            requestPermissions(Permissions.getForegroundLocationPermissions(), REQUEST_FOREGROUND_LOCATION_PERMISSION);
         }
     }
 
-    private void checkPreQPermissions() {
-        Context ctx = getContext();
-        if (ctx == null) {
-            return;
-        }
-
-        if (Permissions.checkGrantedPreQLocationPermission(ctx)) {
-            preQLocationPermissionGranted();
-            return;
-        }
-
-        if (viewModel.isPreQLocationRationaleVisible()) {
-            return;
-        }
-
-        FragmentActivity activity = getActivity();
-        if (activity == null) {
-            return;
-        }
-
-        // Do we need to show the rationale?
-        if (ActivityCompat.shouldShowRequestPermissionRationale(activity, Manifest.permission.ACCESS_FINE_LOCATION)) {
-            ZoodDialog dialog = ZoodDialog.newInstance(getString(R.string.location_permission_reason_msg));
-            dialog.setTitle(getString(R.string.permission_request));
-            dialog.setButton1(getString(R.string.ok), new View.OnClickListener(){
-                @Override
-                public void onClick(View view) {
-                    viewModel.setPreQLocationRationaleVisible(false);
-                    requestPermissions(Permissions.getPreQLocationPermissions(), REQUEST_PRE_Q_LOCATION_PERMISSION);
-                }
-            });
-            // In order to track when the dialog is dismissed, don't allow cancelling
-            dialog.setCancelable(false);
-            dialog.show(getParentFragmentManager(), null);
-            viewModel.setForegroundLocationRationaleVisible(true);
-        } else {
-            requestPermissions(Permissions.getPreQLocationPermissions(), REQUEST_PRE_Q_LOCATION_PERMISSION);
-        }
-    }
-
-    @RequiresApi(api = Build.VERSION_CODES.Q)
     @UiThread
     private void foregroundLocationPermissionGranted() {
         Context ctx = getContext();
@@ -868,19 +831,6 @@ public class MainFragment extends Fragment implements OnMapReadyCallback, DB.Lis
         });
     }
 
-    @UiThread
-    private void preQLocationPermissionGranted() {
-        UserActivityReceiver.requestUpdates(App.getApp().getApplicationContext());
-        Context ctx = getContext();
-        if (ctx == null) {
-            return;
-        }
-        if (Permissions.checkGrantedPreQLocationPermission(ctx)) {
-            locationProviderClient.requestLocationUpdates(locationRequest, mLocationCallbackHelper, Looper.getMainLooper());
-        }
-        verifyLocationSettingsResolution();
-    }
-
     private void verifyLocationSettingsResolution() {
         settingsClient.checkLocationSettings(locationSettingsRequest)
                 .addOnFailureListener(e -> {
@@ -893,7 +843,7 @@ public class MainFragment extends Fragment implements OnMapReadyCallback, DB.Lis
                         case LocationSettingsStatusCodes.RESOLUTION_REQUIRED:
                             try {
                                 ResolvableApiException rae = (ResolvableApiException) e;
-                                rae.startResolutionForResult(activity, REQUEST_LOCATION_SETTINGS);
+                                rae.startResolutionForResult(activity, 20); // we don't care about the request code
                             } catch (IntentSender.SendIntentException sie) {
                                 L.w("Unable to start settings resolution", sie);
                             }
@@ -906,61 +856,13 @@ public class MainFragment extends Fragment implements OnMapReadyCallback, DB.Lis
                 });
     }
 
-    @Override
-    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
-        Context ctx = getContext();
-        if (ctx == null) {
-            return;
-        }
-
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-            switch (requestCode) {
-                case REQUEST_ACTIVITY_RECOGNITION_PERMISSION:
-                    if (Permissions.checkGrantedActivityRecognitionPermission(ctx)) {
-                        activityRecognitionPermissionGranted();
-                    } else {
-                        userActivityPermissionNotifier.show();
-                    }
-                    break;
-                case REQUEST_BACKGROUND_LOCATION_PERMISSION_THEN_ADD_FRIEND:
-                    if (Permissions.checkGrantedBackgroundLocationPermission(ctx)) {
-                        // Just show the add friend dialog - the other permission requests can
-                        // happen when they come back to the screen, after they have added their friend
-                        onAddFriendClicked();
-                    }
-                case REQUEST_BACKGROUND_LOCATION_PERMISSION:
-                    if (Permissions.checkGrantedBackgroundLocationPermission(ctx)) {
-                        backgroundLocationPermissionGranted();
-                    } else {
-                        bgLocationPermissionNotifier.show();
-                    }
-                    break;
-                case REQUEST_FOREGROUND_LOCATION_PERMISSION:
-                    if (Permissions.checkGrantedForegroundLocationPermission(ctx)) {
-                        foregroundLocationPermissionGranted();
-                    } else {
-                        fgLocationPermissionNotifier.show();
-                    }
-                    break;
-            }
-        } else {
-            if (requestCode == REQUEST_PRE_Q_LOCATION_PERMISSION) {
-                if (Permissions.checkGrantedPreQLocationPermission(ctx)) {
-                        preQLocationPermissionGranted();
-                    } else {
-                        preQLocPermNotifier.show();
-                    }
-            }
-        }
-    }
-
     //endregion
 
     //region OnMapReadyCallback
 
     @Override
     @UiThread
-    public void onMapReady(GoogleMap googleMap) {
+    public void onMapReady(@NonNull GoogleMap googleMap) {
         this.googMap = googleMap;
         Context ctx = requireContext();
         boolean success = googMap.setMapStyle(MapStyleOptions.loadRawResourceStyle(ctx, R.raw.map_style));
@@ -984,7 +886,7 @@ public class MainFragment extends Fragment implements OnMapReadyCallback, DB.Lis
         });
         googMap.setOnMapClickListener(new GoogleMap.OnMapClickListener() {
             @Override
-            public void onMapClick(LatLng latLng) {
+            public void onMapClick(@NonNull LatLng latLng) {
                 friendForCameraToTrack = -1;
                 binding.myLocationFab.setSelected(false);
                 infoPanel.hide();
@@ -1531,8 +1433,11 @@ public class MainFragment extends Fragment implements OnMapReadyCallback, DB.Lis
     private final LocationCallback mLocationCallbackHelper = new LocationCallback() {
         @Override
         @UiThread
-        public void onLocationResult(LocationResult result) {
+        public void onLocationResult(@NonNull LocationResult result) {
             Location location = result.getLastLocation();
+            if (location == null) {
+                return;
+            }
             if (meMarker == null) {
                 addMyLocation(location);
             } else {
