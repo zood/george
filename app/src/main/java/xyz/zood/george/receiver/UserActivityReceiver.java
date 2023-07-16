@@ -109,7 +109,7 @@ public class UserActivityReceiver extends BroadcastReceiver {
         if (isRunning) {
             return;
         }
-        if (!Permissions.checkGrantedActivityRecognitionPermission(context)) {
+        if (!Permissions.checkActivityRecognitionPermission(context)) {
             L.i("UserActivityReceiver.requestUpdates is bailing");
             return;
         }

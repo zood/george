@@ -34,7 +34,7 @@ public class ForegroundLocationPermissionNotifier implements DefaultLifecycleObs
 
     @Override
     public void onStart(@NonNull LifecycleOwner owner) {
-        if (Permissions.checkGrantedForegroundLocationPermission(activity)) {
+        if (Permissions.checkForegroundLocationPermission(activity)) {
             hide();
         }
         // not having the permission doesn't definitively mean we need to show the banner item.

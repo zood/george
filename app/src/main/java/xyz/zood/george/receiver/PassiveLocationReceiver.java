@@ -86,7 +86,7 @@ public class PassiveLocationReceiver extends BroadcastReceiver {
         if (isRunning) {
             return;
         }
-        if (!Permissions.checkGrantedBackgroundLocationPermission(context)) {
+        if (!Permissions.checkBackgroundLocationPermission(context)) {
             return;
         }
 

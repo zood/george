@@ -173,7 +173,7 @@ public class MainFragment extends Fragment implements OnMapReadyCallback, DB.Lis
         fgLocationPermLauncher = registerForActivityResult(new ActivityResultContracts.RequestMultiplePermissions(), new ActivityResultCallback<>() {
             @Override
             public void onActivityResult(Map<String, Boolean> grants) {
-                if (Permissions.checkGrantedForegroundLocationPermission(ctx)) {
+                if (Permissions.checkForegroundLocationPermission(ctx)) {
                     foregroundLocationPermissionGranted();
                 } else {
                     fgLocationPermissionNotifier.show();
@@ -183,7 +183,7 @@ public class MainFragment extends Fragment implements OnMapReadyCallback, DB.Lis
         bgLocationPermLauncher = registerForActivityResult(new ActivityResultContracts.RequestMultiplePermissions(), new ActivityResultCallback<>() {
             @Override
             public void onActivityResult(Map<String, Boolean> o) {
-                if (Permissions.checkGrantedBackgroundLocationPermission(ctx)) {
+                if (Permissions.checkBackgroundLocationPermission(ctx)) {
                     backgroundLocationPermissionGranted();
                 } else {
                     bgLocationPermissionNotifier.show();
@@ -193,7 +193,7 @@ public class MainFragment extends Fragment implements OnMapReadyCallback, DB.Lis
         bgLocationPermToAddFriendLauncher = registerForActivityResult(new ActivityResultContracts.RequestMultiplePermissions(), new ActivityResultCallback<>() {
             @Override
             public void onActivityResult(Map<String, Boolean> o) {
-                if (Permissions.checkGrantedBackgroundLocationPermission(ctx)) {
+                if (Permissions.checkBackgroundLocationPermission(ctx)) {
                     // Just show the add friend dialog - the other permission requests can
                     // happen when they come back to the screen, after they have added their friend
                     onAddFriendClicked();
@@ -203,7 +203,7 @@ public class MainFragment extends Fragment implements OnMapReadyCallback, DB.Lis
         activityRecognitionPermLauncher = registerForActivityResult(new ActivityResultContracts.RequestMultiplePermissions(), new ActivityResultCallback<>() {
             @Override
             public void onActivityResult(Map<String, Boolean> o) {
-                if (Permissions.checkGrantedActivityRecognitionPermission(ctx)) {
+                if (Permissions.checkActivityRecognitionPermission(ctx)) {
                     activityRecognitionPermissionGranted();
                 } else {
                     userActivityPermissionNotifier.show();
@@ -677,7 +677,7 @@ public class MainFragment extends Fragment implements OnMapReadyCallback, DB.Lis
         if (ctx == null) {
             return;
         }
-        if (Permissions.checkGrantedActivityRecognitionPermission(ctx)) {
+        if (Permissions.checkActivityRecognitionPermission(ctx)) {
             activityRecognitionPermissionGranted();
             return;
         }
@@ -717,7 +717,7 @@ public class MainFragment extends Fragment implements OnMapReadyCallback, DB.Lis
             return;
         }
 
-        if (Permissions.checkGrantedBackgroundLocationPermission(ctx)) {
+        if (Permissions.checkBackgroundLocationPermission(ctx)) {
             backgroundLocationPermissionGranted();
             return;
         }
@@ -767,7 +767,7 @@ public class MainFragment extends Fragment implements OnMapReadyCallback, DB.Lis
         if (ctx == null) {
             return;
         }
-        if (Permissions.checkGrantedForegroundLocationPermission(ctx)) {
+        if (Permissions.checkForegroundLocationPermission(ctx)) {
             foregroundLocationPermissionGranted();
             return;
         }
@@ -808,7 +808,7 @@ public class MainFragment extends Fragment implements OnMapReadyCallback, DB.Lis
             return;
         }
         // Start requesting location updates. The permission check is redundant, but we do it quiet the linter
-        if (Permissions.checkGrantedForegroundLocationPermission(ctx)) {
+        if (Permissions.checkForegroundLocationPermission(ctx)) {
             locationProviderClient.requestLocationUpdates(locationRequest, mLocationCallbackHelper, Looper.getMainLooper());
         }
 

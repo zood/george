@@ -33,14 +33,14 @@ public class ActivityRecognitionPermissionNotifier implements DefaultLifecycleOb
 
     @Override
     public void onStart(@NonNull LifecycleOwner owner) {
-        if (Permissions.checkGrantedActivityRecognitionPermission(activity)) {
+        if (Permissions.checkActivityRecognitionPermission(activity)) {
             hide();
         }
     }
 
     @Override
     public void onResume(@NonNull LifecycleOwner owner) {
-        if (Permissions.checkGrantedActivityRecognitionPermission(activity)) {
+        if (Permissions.checkActivityRecognitionPermission(activity)) {
             hide();
         }
     }
