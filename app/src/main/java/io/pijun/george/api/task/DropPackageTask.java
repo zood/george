@@ -5,7 +5,7 @@ import androidx.annotation.NonNull;
 import io.pijun.george.crypto.EncryptedData;
 
 public class DropPackageTask extends OscarTask {
-    public static final transient String NAME = "drop_package";
+    public static final String NAME = "drop_package";
     public String hexBoxId;
     public EncryptedData pkg;
 

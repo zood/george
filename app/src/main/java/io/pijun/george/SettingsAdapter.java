@@ -53,14 +53,13 @@ public class SettingsAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
     public RecyclerView.ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
         LayoutInflater inflater = LayoutInflater.from(parent.getContext());
         View v = inflater.inflate(viewType, parent, false);
-        switch (viewType) {
-            case R.layout.settings_list_item:
-                return new SettingsListItemViewHolder(v);
-            case R.layout.profile_list_item:
-                return new ProfileListItemViewHolder(v);
-            default:
-                throw new RuntimeException("Unknown view type");
+        if (viewType == R.layout.settings_list_item) {
+            return new SettingsListItemViewHolder(v);
+        } else if (viewType == R.layout.profile_list_item) {
+            return new ProfileListItemViewHolder(v);
         }
+
+        throw new RuntimeException("Unknown view type");
     }
 
     @Override @UiThread

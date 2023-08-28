@@ -81,7 +81,10 @@ public class LocationWorker extends Worker {
                 FusedLocationProviderClient client = LocationServices.getFusedLocationProviderClient(ctx);
                 Task<Location> task = client.getCurrentLocation(Priority.PRIORITY_HIGH_ACCURACY, cancelSrc.getToken());
                 task.addOnSuccessListener(location -> {
-                    L.i("LW.doWork received location " + location.toString());
+                    if (location == null) {
+                        return;
+                    }
+                    L.i("LW.doWork received location " + location);
                     LocationUtils.upload(location); // asynchronous
                     // give the LocationUtils some time to actually perform the upload
                     try {

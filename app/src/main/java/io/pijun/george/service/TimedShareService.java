@@ -7,7 +7,6 @@ import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
 import android.location.Location;
-import android.os.Build;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.IBinder;
@@ -27,6 +26,7 @@ import com.google.android.gms.location.LocationCallback;
 import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationResult;
 import com.google.android.gms.location.LocationServices;
+import com.google.android.gms.location.Priority;
 
 import java.lang.ref.WeakReference;
 import java.security.SecureRandom;
@@ -227,17 +227,15 @@ public class TimedShareService extends Service {
 
     @AnyThread
     private void showNotification() {
-        // if we're on Android O, we need to create the notification channel
-        if (Build.VERSION.SDK_INT >= 26) {
-            NotificationManager mgr = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
-            if (mgr != null) {
-                String name = getString(R.string.timed_share);
-                NotificationChannel channel = new NotificationChannel(TIMED_SHARE_CHANNEL_ID,
-                        name,
-                        NotificationManager.IMPORTANCE_LOW);
-                channel.setDescription("Used only for the location broadcast notification.");
-                mgr.createNotificationChannel(channel);
-            }
+        // since Android O, we need to create the notification channel
+        NotificationManager mgr = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+        if (mgr != null) {
+            String name = getString(R.string.timed_share);
+            NotificationChannel channel = new NotificationChannel(TIMED_SHARE_CHANNEL_ID,
+                    name,
+                    NotificationManager.IMPORTANCE_LOW);
+            channel.setDescription("Used only for the location broadcast notification.");
+            mgr.createNotificationChannel(channel);
         }
 
         NotificationCompat.Builder bldr = new NotificationCompat.Builder(this, TIMED_SHARE_CHANNEL_ID);
@@ -294,9 +292,9 @@ public class TimedShareService extends Service {
         notifyShareStarted(startTime, shareDuration);
 
         mLocationProviderClient = LocationServices.getFusedLocationProviderClient(this);
-        LocationRequest request = LocationRequest.create();
-        request.setInterval(5 * DateUtils.SECOND_IN_MILLIS);
-        request.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
+        LocationRequest request = new LocationRequest.Builder(5*DateUtils.SECOND_IN_MILLIS).
+                setPriority(Priority.PRIORITY_HIGH_ACCURACY).
+                build();
         mLocationProviderClient.requestLocationUpdates(request, mLocationCallbackHelper, sServiceLooper);
 
         // schedule a runnable to shut us down

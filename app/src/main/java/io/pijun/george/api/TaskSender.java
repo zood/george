@@ -136,7 +136,6 @@ public final class TaskSender {
     /**
      * A wrapped up version of Thread.sleep() that converts the InterruptedException into a RuntimeException
      * so we don't have try-catches littering our code everytime we want to sleep.
-     *
      * Also, we never interrupt threads in Zood, so the RuntimeException should never really occur.
      * @param millis Duration to sleep in milliseconds
      */

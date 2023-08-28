@@ -156,14 +156,10 @@ public class AvatarRenderer {
             String txt = username.charAt(0) + "";
             txt = txt.toUpperCase(Locale.US);
             textWidth = (int)textPaint.measureText(txt);
-            if (Build.VERSION.SDK_INT >= 23) {
-                layout = StaticLayout.Builder.obtain(txt, 0, 1, textPaint, textWidth)
-                        .setAlignment(Layout.Alignment.ALIGN_CENTER)
-                        .setIncludePad(true)
-                        .build();
-            } else {
-                layout = new StaticLayout(txt, textPaint, textWidth, Layout.Alignment.ALIGN_CENTER, 0, 0, true);
-            }
+            layout = StaticLayout.Builder.obtain(txt, 0, 1, textPaint, textWidth)
+                    .setAlignment(Layout.Alignment.ALIGN_CENTER)
+                    .setIncludePad(true)
+                    .build();
         } else {
             layout = null;
         }
