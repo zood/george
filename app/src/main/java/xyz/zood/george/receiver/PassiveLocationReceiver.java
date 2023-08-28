@@ -18,6 +18,7 @@ import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationResult;
 import com.google.android.gms.location.LocationServices;
+import com.google.android.gms.location.Priority;
 import com.google.android.gms.tasks.Task;
 import com.google.android.gms.tasks.Tasks;
 
@@ -51,19 +52,22 @@ public class PassiveLocationReceiver extends BroadcastReceiver {
         return PendingIntent.getBroadcast(context,
                 LOCATION_REQUEST_CODE,
                 newIntent(context),
-                PendingIntent.FLAG_UPDATE_CURRENT);
+                PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_MUTABLE);
     }
 
     @Override
     @UiThread
     public void onReceive(Context context, Intent intent) {
-//        L.i("PLR onReceive");
+        L.i("PLR onReceive");
         if (!LocationResult.hasResult(intent)) {
 //            L.i("PLR intent had no location");
             return;
         }
 
         LocationResult locRes = LocationResult.extractResult(intent);
+        if (locRes == null) {
+            return;
+        }
         Location loc = locRes.getLastLocation();
         if (loc == null) {
             return;
@@ -82,14 +86,14 @@ public class PassiveLocationReceiver extends BroadcastReceiver {
         if (isRunning) {
             return;
         }
-        if (!Permissions.checkGrantedBackgroundLocationPermission(context)) {
+        if (!Permissions.checkBackgroundLocationPermission(context)) {
             return;
         }
 
         FusedLocationProviderClient client = LocationServices.getFusedLocationProviderClient(context);
-        LocationRequest request = LocationRequest.create();
-        request.setInterval(30 * DateUtils.SECOND_IN_MILLIS);
-        request.setPriority(LocationRequest.PRIORITY_NO_POWER);
+        LocationRequest request = new LocationRequest.Builder(30 * DateUtils.SECOND_IN_MILLIS).
+                setPriority(Priority.PRIORITY_PASSIVE).
+                build();
         Task<Void> task = client.requestLocationUpdates(request, newPendingIntent(context));
         try {
             Tasks.await(task);

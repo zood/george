@@ -3,43 +3,44 @@ package xyz.zood.george.notifier;
 import android.Manifest;
 import android.content.Intent;
 import android.net.Uri;
-import android.os.Build;
 import android.provider.Settings;
 import android.view.View;
 
 import androidx.annotation.NonNull;
-import androidx.annotation.RequiresApi;
 import androidx.core.app.ActivityCompat;
-import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentActivity;
-import androidx.lifecycle.Lifecycle;
-import androidx.lifecycle.LifecycleObserver;
-import androidx.lifecycle.OnLifecycleEvent;
+import androidx.lifecycle.DefaultLifecycleObserver;
+import androidx.lifecycle.LifecycleOwner;
 
+import xyz.zood.george.MainFragment;
 import xyz.zood.george.Permissions;
 import xyz.zood.george.R;
 import xyz.zood.george.widget.BannerView;
 import xyz.zood.george.widget.ZoodDialog;
 
-@RequiresApi(api = Build.VERSION_CODES.Q)
-public class ActivityRecognitionPermissionNotifier implements LifecycleObserver {
+public class ActivityRecognitionPermissionNotifier implements DefaultLifecycleObserver {
 
     @NonNull private final BannerView banner;
     @NonNull private final FragmentActivity activity;
-    @NonNull private final Fragment fragment;
+    @NonNull private final MainFragment fragment;
     private static final int bannerItemId = 11174;
-    private final int activityRecognitionResultCode;
 
-    public ActivityRecognitionPermissionNotifier(@NonNull FragmentActivity activity, @NonNull Fragment fragment, @NonNull BannerView banner, int resultCode) {
+    public ActivityRecognitionPermissionNotifier(@NonNull FragmentActivity activity, @NonNull MainFragment fragment, @NonNull BannerView banner) {
         this.banner = banner;
         this.activity = activity;
         this.fragment = fragment;
-        this.activityRecognitionResultCode = resultCode;
     }
 
-    @OnLifecycleEvent(Lifecycle.Event.ON_START)
-    public void onStart() {
-        if (Permissions.checkGrantedActivityRecognitionPermission(activity)) {
+    @Override
+    public void onStart(@NonNull LifecycleOwner owner) {
+        if (Permissions.checkActivityRecognitionPermission(activity)) {
+            hide();
+        }
+    }
+
+    @Override
+    public void onResume(@NonNull LifecycleOwner owner) {
+        if (Permissions.checkActivityRecognitionPermission(activity)) {
             hide();
         }
     }
@@ -76,7 +77,7 @@ public class ActivityRecognitionPermissionNotifier implements LifecycleObserver 
         // If Android says we should show a rationale, that means we can still bring up the
         // normal request dialog. Otherwise, we have to redirect the user to settings.
         if (ActivityCompat.shouldShowRequestPermissionRationale(activity, Manifest.permission.ACTIVITY_RECOGNITION)) {
-            fragment.requestPermissions(Permissions.getBackgroundLocationPermissions(), activityRecognitionResultCode);
+            fragment.activityRecognitionPermLauncher.launch(Permissions.getActivityRecognitionPermissions());
         } else {
             Intent i = new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS);
             Uri uri = Uri.fromParts("package", activity.getPackageName(), null);

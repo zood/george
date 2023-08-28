@@ -15,9 +15,6 @@ public class Sodium {
 
     public native static int init();
 
-//    @CheckResult
-//    public native static int getPasswordHashSaltLength();
-
     @CheckResult
     public native static int generateKeyPair(KeyPair kp);
 

@@ -2,24 +2,12 @@ package io.pijun.george.network;
 
 import android.content.Context;
 import android.net.ConnectivityManager;
-import android.net.NetworkInfo;
-import android.os.Build;
 
 import androidx.annotation.NonNull;
+
 import io.pijun.george.L;
 
 public class Network {
-
-    public static boolean isConnected(@NonNull Context context) {
-        ConnectivityManager cm = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
-        if (cm == null) {
-            // Should never happen
-            L.w("isConnected - ConnectivityManager was null");
-            return false;
-        }
-        NetworkInfo net = cm.getActiveNetworkInfo();
-        return (net != null && net.isConnectedOrConnecting());
-    }
 
     /**
      * Determine whether background data usage is restricted for this app.
@@ -27,10 +15,6 @@ public class Network {
      * @return true if background data is restricted. false, otherwise.
      */
     public static boolean isBackgroundDataRestricted(@NonNull Context context) {
-        if (Build.VERSION.SDK_INT < 24) {
-            return false;
-        }
-
         ConnectivityManager connMgr = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
         if (connMgr == null) {
             L.w("ConnectivityManager was null!");

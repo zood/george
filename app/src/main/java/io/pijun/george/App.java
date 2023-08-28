@@ -1,6 +1,8 @@
 package io.pijun.george;
 
 import android.app.Application;
+import android.app.job.JobScheduler;
+import android.content.Context;
 import android.os.Handler;
 import android.os.Looper;
 
@@ -11,11 +13,12 @@ import java.util.concurrent.Future;
 import androidx.annotation.AnyThread;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatDelegate;
+
 import io.pijun.george.api.TaskSender;
 import io.pijun.george.database.DB;
+import xyz.zood.george.worker.LocationWorker;
 import xyz.zood.george.receiver.PassiveLocationReceiver;
 import xyz.zood.george.receiver.UserActivityReceiver;
-import io.pijun.george.service.LocationJobService;
 
 public class App extends Application {
 
@@ -49,8 +52,13 @@ public class App extends Application {
         runInBackground(new WorkerRunnable() {
             @Override
             public void run() {
+                // Now that we're using WorkManager we need to cancel all JobScheduler jobs
+                JobScheduler scheduler = (JobScheduler) App.this.getSystemService(Context.JOB_SCHEDULER_SERVICE);
+                scheduler.cancel(4319); // LocationJobService
+                scheduler.cancel(2194); // BackupDatabaseJob
+
                 if (AuthenticationManager.isLoggedIn(App.this)) {
-                    LocationJobService.scheduleLocationJobService(App.this);
+                    LocationWorker.scheduleLocationWorker(App.this);
                     PassiveLocationReceiver.requestUpdates(App.this);
                     UserActivityReceiver.requestUpdates(App.this);
                 }

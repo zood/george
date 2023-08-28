@@ -142,12 +142,7 @@ public class SettingsFragment extends Fragment implements SettingsAdapter.Listen
         PackageManager pkgMgr = ctx.getPackageManager();
         try {
             PackageInfo pi = pkgMgr.getPackageInfo("xyz.zood.george", 0);
-            long versionCode;
-            if (Build.VERSION.SDK_INT >= 28) {
-                versionCode = pi.getLongVersionCode();
-            } else {
-                versionCode = pi.versionCode;
-            }
+            long versionCode = pi.getLongVersionCode();
             String msg = getString(R.string.app_version_msg, pi.versionName, versionCode);
             ZoodDialog dialog = ZoodDialog.newInstance(msg);
             dialog.setTitle(ctx.getString(R.string.app_name));
@@ -272,7 +267,13 @@ public class SettingsFragment extends Fragment implements SettingsAdapter.Listen
             return;
         }
 
-        adapter.notifyDataSetChanged();
+        Context ctx = getContext();
+        if (ctx == null || binding == null) {
+            return;
+        }
+
+        File myImg = AvatarManager.getMyAvatar(ctx);
+        Picasso.with(ctx).load(myImg).into(binding.avatar);
     }
 
     //endregion

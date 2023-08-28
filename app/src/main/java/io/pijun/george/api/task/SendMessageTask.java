@@ -4,7 +4,7 @@ import androidx.annotation.NonNull;
 import io.pijun.george.crypto.EncryptedData;
 
 public class SendMessageTask extends OscarTask {
-    public static final transient String NAME = "send_message";
+    public static final String NAME = "send_message";
     public String hexUserId;
     public EncryptedData message;
     public boolean urgent;

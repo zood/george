@@ -1,13 +1,12 @@
 package xyz.zood.george;
 
 import androidx.annotation.NonNull;
-import androidx.lifecycle.Lifecycle;
-import androidx.lifecycle.LifecycleObserver;
-import androidx.lifecycle.OnLifecycleEvent;
+import androidx.lifecycle.DefaultLifecycleObserver;
+import androidx.lifecycle.LifecycleOwner;
 
 import com.google.android.gms.maps.MapView;
 
-public class GoogleMapLifecycleObserver implements LifecycleObserver {
+public class GoogleMapLifecycleObserver implements DefaultLifecycleObserver {
 
     @NonNull private final MapView map;
 
@@ -15,28 +14,28 @@ public class GoogleMapLifecycleObserver implements LifecycleObserver {
         this.map = map;
     }
 
-    @OnLifecycleEvent(Lifecycle.Event.ON_START)
-    public void onStart() {
+    @Override
+    public void onStart(@NonNull LifecycleOwner owner) {
         map.onStart();
     }
 
-    @OnLifecycleEvent(Lifecycle.Event.ON_RESUME)
-    public void onResume() {
+    @Override
+    public void onResume(@NonNull LifecycleOwner owner) {
         map.onResume();
     }
 
-    @OnLifecycleEvent(Lifecycle.Event.ON_PAUSE)
-    public void onPause() {
+    @Override
+    public void onPause(@NonNull LifecycleOwner owner) {
         map.onPause();
     }
 
-    @OnLifecycleEvent(Lifecycle.Event.ON_STOP)
-    public void onStop() {
+    @Override
+    public void onStop(@NonNull LifecycleOwner owner) {
         map.onStop();
     }
 
-    @OnLifecycleEvent(Lifecycle.Event.ON_DESTROY)
-    public void onDestroy() {
+    @Override
+    public void onDestroy(@NonNull LifecycleOwner owner) {
         map.onDestroy();
     }
 }

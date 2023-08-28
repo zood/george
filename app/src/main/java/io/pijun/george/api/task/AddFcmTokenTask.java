@@ -5,7 +5,7 @@ import androidx.annotation.NonNull;
 import java.util.Map;
 
 public class AddFcmTokenTask extends OscarTask {
-    public static final transient String NAME = "add_fcm_token";
+    public static final String NAME = "add_fcm_token";
     public Map<String, String> body;
 
     public AddFcmTokenTask(String accessToken) {
