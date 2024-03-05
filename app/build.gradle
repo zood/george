@@ -54,6 +54,11 @@ android {
     }
     ndkVersion '20.0.5594570'
     namespace 'xyz.zood.george'
+    packagingOptions {
+        jniLibs {
+            useLegacyPackaging false
+        }
+    }
 }
 
 repositories {
