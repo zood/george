@@ -1,15 +1,12 @@
 package io.pijun.george;
 
-import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.net.Uri;
-import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
-import android.provider.MediaStore;
 import android.view.LayoutInflater;
 import android.view.MenuInflater;
 import android.view.MenuItem;
@@ -17,6 +14,9 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.PopupMenu;
 
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.PickVisualMediaRequest;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.core.content.FileProvider;
@@ -29,6 +29,7 @@ import java.io.File;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Locale;
+import java.util.UUID;
 
 import xyz.zood.george.AvatarCropperActivity;
 import xyz.zood.george.AvatarManager;
@@ -40,12 +41,11 @@ import xyz.zood.george.widget.ZoodDialog;
 
 public class SettingsFragment extends Fragment implements SettingsAdapter.Listener, AvatarManager.Listener {
 
-    private static final int REQUEST_IMAGE_CAPTURE = 1;
-    private static final int REQUEST_IMAGE_FILE = 2;
-
     private FragmentSettingsBinding binding;
     private SettingsAdapter adapter;
     private String imgCapturePath;
+    private ActivityResultLauncher<PickVisualMediaRequest> pickMedia;
+    private ActivityResultLauncher<Uri> takePicture;
 
     public static SettingsFragment newInstance() {
         return new SettingsFragment();
@@ -57,6 +57,23 @@ public class SettingsFragment extends Fragment implements SettingsAdapter.Listen
         super.onCreate(savedInstanceState);
 
         adapter = new SettingsAdapter(this);
+        pickMedia = registerForActivityResult(new ActivityResultContracts.PickVisualMedia(), uri -> {
+            if (uri == null) {
+                return;
+            }
+
+            Intent i = AvatarCropperActivity.newIntent(requireContext(), uri);
+            startActivity(i);
+        });
+        takePicture = registerForActivityResult(new ActivityResultContracts.TakePicture(), success -> {
+            if (!success) {
+                return;
+            }
+
+            Uri uri = Uri.fromFile(new File(imgCapturePath));
+            Intent i = AvatarCropperActivity.newIntent(requireContext(), uri);
+            startActivity(i);
+        });
 
         AvatarManager.addListener(this);
     }
@@ -108,10 +125,11 @@ public class SettingsFragment extends Fragment implements SettingsAdapter.Listen
 
     private void onChangeProfilePhoto(View anchor) {
         // Check if there is a camera on this device.
-        Intent intent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
         Context ctx = requireContext();
-        if (intent.resolveActivity(ctx.getPackageManager()) == null) {
-            // no camera, so just show the avatar picke
+        PackageManager pm = ctx.getPackageManager();
+        boolean hasCamera = pm.hasSystemFeature(PackageManager.FEATURE_CAMERA_ANY);
+        if (!hasCamera) {
+            // no camera, so just show the avatar picker
             startImagePicker();
             return;
         }
@@ -205,43 +223,15 @@ public class SettingsFragment extends Fragment implements SettingsAdapter.Listen
 
     //region Profile photo taking/selection
 
-    @Override
-    public void onActivityResult(int requestCode, int resultCode, Intent data) {
-        L.i("onActivityResult: " + resultCode);
-        if (resultCode != Activity.RESULT_OK) {
-            return;
-        }
-
-        Context ctx = requireContext();
-        if (requestCode == REQUEST_IMAGE_CAPTURE) {
-            Uri uri = Uri.fromFile(new File(imgCapturePath));
-
-            Intent i = AvatarCropperActivity.newIntent(ctx, uri);
-            startActivity(i);
-        } else if (requestCode == REQUEST_IMAGE_FILE) {
-            Uri uri = data.getData();
-            if (uri == null) {
-                L.i("avatar file data is null");
-                return;
-            }
-            L.i("img uri: " + uri.toString());
-
-            Intent i = AvatarCropperActivity.newIntent(ctx, uri);
-            startActivity(i);
-        }
-    }
-
     private void startCamera() {
         try {
-            Intent intent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
             Context ctx = requireContext();
             String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss", Locale.US).format(new Date());
             File storageDir = ctx.getExternalFilesDir(Environment.DIRECTORY_PICTURES);
             File imgFile = File.createTempFile(timeStamp, ".jpg", storageDir);
             imgCapturePath = imgFile.getAbsolutePath();
             Uri photoUri  = FileProvider.getUriForFile(ctx, "xyz.zood.george.fileprovider", imgFile);
-            intent.putExtra(MediaStore.EXTRA_OUTPUT, photoUri);
-            startActivityForResult(intent, REQUEST_IMAGE_CAPTURE);
+            takePicture.launch(photoUri);
         } catch (Throwable t) {
             L.w("unable to start camera", t);
             CloudLogger.log(t);
@@ -249,11 +239,9 @@ public class SettingsFragment extends Fragment implements SettingsAdapter.Listen
     }
 
     private void startImagePicker() {
-        Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
-        intent.putExtra(Intent.EXTRA_LOCAL_ONLY, true);
-        intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
-        intent.setType("image/*");
-        startActivityForResult(intent, REQUEST_IMAGE_FILE);
+        pickMedia.launch(new PickVisualMediaRequest.Builder()
+                .setMediaType(ActivityResultContracts.PickVisualMedia.ImageOnly.INSTANCE)
+                .build());
     }
 
     //endregion

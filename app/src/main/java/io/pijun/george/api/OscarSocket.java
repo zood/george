@@ -66,7 +66,7 @@ public class OscarSocket {
                 try {
                     OkHttpClient.Builder clientBuilder = new OkHttpClient.Builder();
                     ConnectionSpec connSpec = new ConnectionSpec.Builder(ConnectionSpec.MODERN_TLS)
-                            .tlsVersions(TlsVersion.TLS_1_2)
+                            .tlsVersions(TlsVersion.TLS_1_2, TlsVersion.TLS_1_3)
                             .cipherSuites(
                                     CipherSuite.TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,
                                     CipherSuite.TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256)
@@ -108,14 +108,7 @@ public class OscarSocket {
 
     @AnyThread
     public void disconnect() {
-        handler.post(new WorkerRunnable() {
-            @Override
-            public void run() {
-                if (socket != null) {
-                    socket.close(1001, "Finished listening");
-                }
-            }
-        });
+        socket.cancel();
     }
 
     @AnyThread
@@ -232,7 +225,6 @@ public class OscarSocket {
         @Override
         @WorkerThread
         public void onMessage(@NonNull WebSocket webSocket, @NonNull ByteString byteString) {
-//            L.i("ISL.onMessage");
             if (byteString.size() < 3) {
                 L.i("ISL received a null (or trivially small) message");
                 return;

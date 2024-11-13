@@ -67,7 +67,7 @@ public class AuthenticationManager {
     }
 
     private final CopyOnWriteArrayList<WeakReference<Listener>> listeners = new CopyOnWriteArrayList<>();
-    private static AuthenticationManager singleton;
+    private static volatile AuthenticationManager singleton;
 
     public static AuthenticationManager get() {
         if (singleton == null) {

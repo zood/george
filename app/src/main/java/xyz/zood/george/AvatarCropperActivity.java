@@ -13,7 +13,7 @@ import androidx.annotation.UiThread;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.databinding.DataBindingUtil;
 
-import com.theartofdev.edmodo.cropper.CropImageView;
+import com.canhub.cropper.CropImageView;
 
 import java.io.IOException;
 
@@ -65,16 +65,21 @@ public class AvatarCropperActivity extends AppCompatActivity implements CropImag
         binding.cropImageView.setEnabled(false);
 
         binding.cropImageView.setOnCropImageCompleteListener(this);
-        binding.cropImageView.getCroppedImageAsync();
+        binding.cropImageView.croppedImageAsync(Bitmap.CompressFormat.JPEG, 80, 0, 0, CropImageView.RequestSizeOptions.RESIZE_INSIDE, null);
     }
 
     //region OnCropImageCompleteListener
 
     @Override
     @UiThread
-    public void onCropImageComplete(CropImageView view, CropImageView.CropResult result) {
+    public void onCropImageComplete(@NonNull CropImageView view, CropImageView.CropResult result) {
         L.i("onCropImageComplete");
         Bitmap bmp = result.getBitmap();
+        if (bmp == null) {
+            finish();
+            return;
+        }
+
         App.runInBackground(new WorkerRunnable() {
             @Override
             public void run() {

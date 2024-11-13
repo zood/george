@@ -32,9 +32,9 @@ public class FriendsBarAdapter extends RecyclerView.Adapter<RecyclerView.ViewHol
     private static final int DIVIDER_ID = -3;
     private static final int MARGIN_ID = -2;
 
-    private ArrayList<RecyclerViewAdapterItem> items = new ArrayList<>();
+    private final ArrayList<RecyclerViewAdapterItem> items = new ArrayList<>();
     private ArrayList<FriendRecord> friends = new ArrayList<>();
-    private SparseArray<FriendRecord> friendPositions = new SparseArray<>();
+    private final SparseArray<FriendRecord> friendPositions = new SparseArray<>();
     @NonNull
     private final Listener listener;
 

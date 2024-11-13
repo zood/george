@@ -8,7 +8,7 @@
         tools:context="xyz.zood.george.AvatarCropperActivity"
         android:layout_width="match_parent"
         android:layout_height="match_parent">
-        <com.theartofdev.edmodo.cropper.CropImageView
+        <com.canhub.cropper.CropImageView
             android:id="@+id/crop_image_view"
             app:cropAspectRatioX="1"
             app:cropAspectRatioY="1"

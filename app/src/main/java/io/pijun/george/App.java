@@ -1,8 +1,6 @@
 package io.pijun.george;
 
 import android.app.Application;
-import android.app.job.JobScheduler;
-import android.content.Context;
 import android.os.Handler;
 import android.os.Looper;
 
@@ -52,11 +50,6 @@ public class App extends Application {
         runInBackground(new WorkerRunnable() {
             @Override
             public void run() {
-                // Now that we're using WorkManager we need to cancel all JobScheduler jobs
-                JobScheduler scheduler = (JobScheduler) App.this.getSystemService(Context.JOB_SCHEDULER_SERVICE);
-                scheduler.cancel(4319); // LocationJobService
-                scheduler.cancel(2194); // BackupDatabaseJob
-
                 if (AuthenticationManager.isLoggedIn(App.this)) {
                     LocationWorker.scheduleLocationWorker(App.this);
                     PassiveLocationReceiver.requestUpdates(App.this);

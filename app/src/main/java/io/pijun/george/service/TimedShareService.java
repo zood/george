@@ -6,6 +6,7 @@ import android.app.PendingIntent;
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.ServiceInfo;
 import android.location.Location;
 import android.os.Handler;
 import android.os.HandlerThread;
@@ -20,6 +21,7 @@ import androidx.annotation.Nullable;
 import androidx.annotation.UiThread;
 import androidx.annotation.WorkerThread;
 import androidx.core.app.NotificationCompat;
+import androidx.core.app.ServiceCompat;
 
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationCallback;
@@ -249,7 +251,7 @@ public class TimedShareService extends Service {
                 PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
         bldr.setContentIntent(openIntent);
 
-        startForeground(NOTIFICATION_ID, bldr.build());
+        ServiceCompat.startForeground(this, NOTIFICATION_ID, bldr.build(), ServiceInfo.FOREGROUND_SERVICE_TYPE_LOCATION);
     }
 
     @WorkerThread

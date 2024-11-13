@@ -31,3 +31,4 @@
 
 # For Android-Image-Croper library
 -keep class androidx.appcompat.widget.** { *; }
+-keep class com.google.firebase.messaging.FirebaseMessagingService { *; }

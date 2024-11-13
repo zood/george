@@ -6,7 +6,7 @@ import androidx.annotation.Nullable;
 public class Event<T> {
 
     private boolean handled;
-    private T value;
+    private final T value;
 
     public Event(@NonNull T value) {
         this.value = value;
@@ -19,11 +19,6 @@ public class Event<T> {
         }
 
         handled = true;
-        return value;
-    }
-
-    @NonNull
-    public T peekValue() {
         return value;
     }
 

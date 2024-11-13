@@ -58,6 +58,9 @@ import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MapStyleOptions;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
+import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.Task;
+import com.google.firebase.messaging.FirebaseMessaging;
 
 import java.util.ArrayList;
 import java.util.Map;
@@ -361,6 +364,19 @@ public class MainFragment extends Fragment implements OnMapReadyCallback, DB.Lis
 
         checkPermissions();
 
+        // If the device has an FCM token, upload it
+        FirebaseMessaging.getInstance().getToken().addOnCompleteListener(new OnCompleteListener<String>() {
+            @Override
+            public void onComplete(@NonNull Task<String> task) {
+                if (!task.isSuccessful() && task.getException() != null) {
+                    L.w("MainFragment.start failed to obtain FCM registration token", task.getException());
+                    return;
+                }
+
+                OscarClient.queueAddFcmToken(ctx, accessToken, task.getResult());
+            }
+        });
+
         UpdateStatusTracker.addListener(updateStatusTrackerListener);
         App.runInBackground(new WorkerRunnable() {
             @Override
@@ -657,7 +673,7 @@ public class MainFragment extends Fragment implements OnMapReadyCallback, DB.Lis
             @Override
             public void run() {
                 ArrayList<FriendRecord> friends = DB.get().getFriends();
-                if (friends.size() == 0) {
+                if (friends.isEmpty()) {
                     return;
                 }
 
@@ -817,7 +833,7 @@ public class MainFragment extends Fragment implements OnMapReadyCallback, DB.Lis
             @Override
             public void run() {
                 ArrayList<FriendRecord> friends = DB.get().getFriends();
-                if (friends.size() == 0) {
+                if (friends.isEmpty()) {
                     return;
                 }
 

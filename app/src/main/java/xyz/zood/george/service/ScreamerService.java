@@ -7,13 +7,13 @@ import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.pm.ServiceInfo;
 import android.media.AudioAttributes;
 import android.media.AudioFocusRequest;
 import android.media.AudioManager;
 import android.media.MediaPlayer;
 import android.media.RingtoneManager;
 import android.net.Uri;
-import android.os.Build;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.text.TextUtils;
@@ -26,6 +26,8 @@ import androidx.annotation.Nullable;
 import androidx.annotation.UiThread;
 import androidx.annotation.WorkerThread;
 import androidx.core.app.NotificationCompat;
+import androidx.core.app.ServiceCompat;
+
 import io.pijun.george.App;
 import io.pijun.george.L;
 import io.pijun.george.WorkerRunnable;
@@ -117,20 +119,14 @@ public class ScreamerService extends Service implements AudioManager.OnAudioFocu
         }
 
         AudioAttributes audioAttr = getAudioAttributes();
-        int reqResult;
-        if (Build.VERSION.SDK_INT >= 26) {
-            mgr.setStreamVolume(audioAttr.getVolumeControlStream(), 100, 0);
-            AudioFocusRequest req = new AudioFocusRequest.Builder(AudioManager.AUDIOFOCUS_GAIN)
-                    .setAudioAttributes(audioAttr)
-                    .setAcceptsDelayedFocusGain(false)
-                    .setWillPauseWhenDucked(false)
-                    .setOnAudioFocusChangeListener(this)
-                    .build();
-            reqResult = mgr.requestAudioFocus(req);
-        } else {
-            mgr.setStreamVolume(AudioManager.STREAM_MUSIC, 100, 0);
-            reqResult = mgr.requestAudioFocus(this, AudioManager.STREAM_MUSIC, AudioManager.AUDIOFOCUS_GAIN);
-        }
+        mgr.setStreamVolume(audioAttr.getVolumeControlStream(), 100, 0);
+        AudioFocusRequest req = new AudioFocusRequest.Builder(AudioManager.AUDIOFOCUS_GAIN)
+                .setAudioAttributes(audioAttr)
+                .setAcceptsDelayedFocusGain(false)
+                .setWillPauseWhenDucked(false)
+                .setOnAudioFocusChangeListener(this)
+                .build();
+        int reqResult = mgr.requestAudioFocus(req);
         switch (reqResult) {
             case AudioManager.AUDIOFOCUS_REQUEST_FAILED:
                 L.w("Audio focus request failed");
@@ -158,7 +154,12 @@ public class ScreamerService extends Service implements AudioManager.OnAudioFocu
             player.setLooping(true);
             player.prepare();
         } catch (IOException ex) {
-            L.w(ex.getLocalizedMessage(), ex);
+            String msg = ex.getLocalizedMessage();
+            if (msg != null) {
+                L.w(msg, ex);
+            } else {
+                L.w("exception without message", ex);
+            }
             return;
         }
 
@@ -184,18 +185,16 @@ public class ScreamerService extends Service implements AudioManager.OnAudioFocu
     }
 
     private void showNotification() {
-        // if we're on Android O, we need to create the notification channel
-        if (Build.VERSION.SDK_INT >= 26) {
-            NotificationManager mgr = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
-            if (mgr != null) {
-                String name = getString(R.string.find_my_phone);
-                NotificationChannel channel = new NotificationChannel(
-                        SCREAMER_CHANNEL_ID,
-                        name,
-                        NotificationManager.IMPORTANCE_HIGH);
-                channel.setDescription(getString(R.string.screamer_channel_description_msg));
-                mgr.createNotificationChannel(channel);
-            }
+        // we need to create the notification channel
+        NotificationManager mgr = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+        if (mgr != null) {
+            String name = getString(R.string.find_my_phone);
+            NotificationChannel channel = new NotificationChannel(
+                    SCREAMER_CHANNEL_ID,
+                    name,
+                    NotificationManager.IMPORTANCE_HIGH);
+            channel.setDescription(getString(R.string.screamer_channel_description_msg));
+            mgr.createNotificationChannel(channel);
         }
 
         NotificationCompat.Builder bldr = new NotificationCompat.Builder(this, SCREAMER_CHANNEL_ID);
@@ -208,7 +207,8 @@ public class ScreamerService extends Service implements AudioManager.OnAudioFocu
                 ScreamerService.newStopIntent(this, true),
                 PendingIntent.FLAG_UPDATE_CURRENT);
         bldr.addAction(R.drawable.ic_clear_black_24px, getString(R.string.dismiss), stopIntent);
-        startForeground(NOTIFICATION_ID, bldr.build());
+
+        ServiceCompat.startForeground(this, NOTIFICATION_ID, bldr.build(), ServiceInfo.FOREGROUND_SERVICE_TYPE_LOCATION);
     }
 
     private void stopScreaming(boolean removeNotification) {
@@ -229,17 +229,13 @@ public class ScreamerService extends Service implements AudioManager.OnAudioFocu
             return;
         }
 
-        if (Build.VERSION.SDK_INT >= 26) {
-            AudioFocusRequest req = new AudioFocusRequest.Builder(AudioManager.AUDIOFOCUS_GAIN)
-                    .setAudioAttributes(getAudioAttributes())
-                    .setAcceptsDelayedFocusGain(false)
-                    .setWillPauseWhenDucked(false)
-                    .setOnAudioFocusChangeListener(this)
-                    .build();
-            mgr.abandonAudioFocusRequest(req);
-        } else {
-            mgr.abandonAudioFocus(this);
-        }
+        AudioFocusRequest req = new AudioFocusRequest.Builder(AudioManager.AUDIOFOCUS_GAIN)
+                .setAudioAttributes(getAudioAttributes())
+                .setAcceptsDelayedFocusGain(false)
+                .setWillPauseWhenDucked(false)
+                .setOnAudioFocusChangeListener(this)
+                .build();
+        mgr.abandonAudioFocusRequest(req);
 
         stopForeground(removeNotification);
     }

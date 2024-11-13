@@ -30,9 +30,9 @@ import io.pijun.george.database.DB;
 import io.pijun.george.database.FriendRecord;
 import io.pijun.george.database.UserRecord;
 import io.pijun.george.queue.PersistentQueue;
-import io.pijun.george.service.PositionService;
 import retrofit2.Response;
 import xyz.zood.george.AvatarManager;
+import xyz.zood.george.service.LocationService;
 import xyz.zood.george.service.ScreamerService;
 import xyz.zood.george.worker.BackupDatabaseWorker;
 
@@ -361,8 +361,9 @@ public class MessageProcessor {
             return Result.Success;
         }
 
-        L.i("MU attempting to start the position service");
-        ContextCompat.startForegroundService(context, PositionService.newIntent(context, userRecord.id));
+        L.i("MP attempting to start LocationService");
+        Intent serviceIntent = new Intent(context, LocationService.class);
+        context.startForegroundService(serviceIntent);
 
         // let them know we've started
         L.i("queueing update starting");

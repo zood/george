@@ -16,6 +16,10 @@ import androidx.annotation.AnyThread;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.WorkerThread;
+import androidx.work.ListenableWorker;
+
+import com.google.common.util.concurrent.SettableFuture;
+
 import io.pijun.george.api.OscarAPI;
 import io.pijun.george.api.OscarClient;
 import io.pijun.george.api.OscarError;
@@ -53,6 +57,8 @@ public class LocationUtils {
             return (int) (o2.getTime() - o1.getTime());
         }
     });
+    private static volatile SettableFuture<ListenableWorker.Result> future;
+    private static volatile long futureTime;
 
     private LocationUtils() {}
 
@@ -112,12 +118,21 @@ public class LocationUtils {
                 }
             }
             lastLocationMessage = locMsg;   // doesn't matter if we succeed or not
-            if (pkgs.size() > 0) {
+            if (!pkgs.isEmpty()) {
                 OscarAPI api = OscarClient.newInstance(token);
                 try {
                     Response<Void> response = api.dropMultiplePackages(pkgs).execute();
                     if (response.isSuccessful()) {
                         prefs.setLastLocationUpdateTime(loc.getTime());
+
+                        // check if there is a future to set
+                        SettableFuture<ListenableWorker.Result> f = LocationUtils.future;
+                        // If there is a future and it's time is less than the time of the message
+                        // we just sent, report success.
+                        if (f != null && loc.getTime() >= futureTime) {
+                            f.set(ListenableWorker.Result.success());
+                            LocationUtils.future = null;
+                        }
                     } else {
                         OscarError err = OscarError.fromResponse(response);
                         L.w("LUtils.run error dropping packages - " + err);
@@ -145,6 +160,13 @@ public class LocationUtils {
 
     @AnyThread
     public static void upload(@NonNull Location location) {
+        locationsQueue.add(location);
+    }
+
+    @AnyThread
+    public static void uploadFuture(@NonNull Location location, @NonNull SettableFuture<ListenableWorker.Result> future) {
+        LocationUtils.future = future;
+        LocationUtils.futureTime = location.getTime();
         locationsQueue.add(location);
     }
 }

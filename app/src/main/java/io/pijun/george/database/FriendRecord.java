@@ -19,9 +19,7 @@ public class FriendRecord {
 
         FriendRecord that = (FriendRecord) o;
 
-        if (id != that.id) return false;
-
-        return true;
+        return id == that.id;
     }
 
     @Override

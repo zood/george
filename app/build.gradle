@@ -1,7 +1,6 @@
 apply plugin: 'com.android.application'
 
 android {
-    compileSdkVersion 33
     buildFeatures {
         dataBinding = true
         buildConfig = true
@@ -9,10 +8,11 @@ android {
 
     defaultConfig {
         applicationId "xyz.zood.george"
+        compileSdk 34
         minSdkVersion 29
-        targetSdkVersion 33
-        versionCode 40
-        versionName "0.40"
+        targetSdkVersion 34
+        versionCode 41
+        versionName "0.41"
         multiDexEnabled true
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         resourceConfigurations += ['en']
@@ -23,8 +23,8 @@ android {
             }
         }
         ndk {
-            abiFilters 'x86', 'x86_64', 'armeabi-v7a', 'arm64-v8a'
-//            abiFilters 'armeabi-v7a', 'arm64-v8a'
+//            abiFilters 'x86', 'x86_64', 'armeabi-v7a', 'arm64-v8a'
+            abiFilters 'armeabi-v7a', 'arm64-v8a'
         }
     }
     buildTypes {
@@ -68,26 +68,28 @@ repositories {
 dependencies {
     implementation fileTree(dir: 'libs', include: ['*.jar'])
 
-    implementation 'androidx.appcompat:appcompat:1.6.1'
-    implementation 'com.google.android.material:material:1.9.0'
-    implementation 'androidx.constraintlayout:constraintlayout:2.1.4'
+    implementation 'androidx.appcompat:appcompat:1.7.0'
+    implementation 'com.google.android.material:material:1.12.0'
+    implementation 'androidx.constraintlayout:constraintlayout:2.2.0'
 
     // dynamic animation
     implementation 'androidx.dynamicanimation:dynamicanimation:1.0.0'
 
     // ViewPager2
-    implementation "androidx.viewpager2:viewpager2:1.1.0-beta02"
+    implementation "androidx.viewpager2:viewpager2:1.1.0"
 
     // used for fusion location
-    implementation 'com.google.android.gms:play-services-location:21.0.1'
+    implementation 'com.google.android.gms:play-services-location:21.3.0'
     // used for Google maps view
-    implementation 'com.google.android.gms:play-services-maps:18.1.0'
+    implementation 'com.google.android.gms:play-services-maps:19.0.0'
     // cloud messaging
     implementation ('com.google.firebase:firebase-messaging:23.1.2', {
         exclude group: 'com.google.firebase', module: 'firebase-core'
         exclude group: 'com.google.firebase', module: 'firebase-analytics'
         exclude group: 'com.google.firebase', module: 'firebase-measurement-connector'
     })
+
+    implementation 'com.google.guava:guava:31.1-android'
 
     implementation 'com.squareup.retrofit2:retrofit:2.9.0'
     implementation 'com.squareup.retrofit2:converter-gson:2.9.0'
@@ -97,16 +99,16 @@ dependencies {
 
     implementation 'com.squareup.picasso:picasso:2.5.2'
 
-    implementation 'com.theartofdev.edmodo:android-image-cropper:2.8.0'
+    implementation 'com.vanniktech:android-image-cropper:4.6.0'
 
     // jetpack libs
     implementation "androidx.lifecycle:lifecycle-extensions:2.2.0"
-    implementation "androidx.activity:activity:1.7.2"
-    implementation "androidx.work:work-runtime:2.8.1"
+    implementation "androidx.activity:activity:1.9.3"
+    implementation "androidx.work:work-runtime:2.10.0"
 
     testImplementation 'junit:junit:4.13.2'
-    androidTestImplementation 'androidx.test.ext:junit:1.1.5'
-    androidTestImplementation 'androidx.test:rules:1.5.0'
+    androidTestImplementation 'androidx.test.ext:junit:1.2.1'
+    androidTestImplementation 'androidx.test:rules:1.6.1'
 }
 
 apply plugin: 'com.google.gms.google-services'

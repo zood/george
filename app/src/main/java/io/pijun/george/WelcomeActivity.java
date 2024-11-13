@@ -16,6 +16,7 @@ import com.google.android.material.textfield.TextInputLayout;
 import java.io.IOException;
 import java.security.SecureRandom;
 
+import androidx.activity.OnBackPressedCallback;
 import androidx.annotation.AnyThread;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -71,17 +72,18 @@ public class WelcomeActivity extends AppCompatActivity implements WelcomeViewHol
         binding.siUsername.addTextChangedListener(new ErrorDisabler(binding.siUsernameContainer));
 
         binding.siPassword.addTextChangedListener(new ErrorDisabler(binding.siPasswordContainer));
-    }
 
-    @Override
-    public void onBackPressed() {
-        WelcomeViewHolder.State state = viewHolder.getState();
-        if (state == WelcomeViewHolder.State.Registration || state == WelcomeViewHolder.State.Login) {
-            viewHolder.transitionToMain();
-            return;
-        }
-
-        super.onBackPressed();
+        getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
+            @Override
+            public void handleOnBackPressed() {
+                WelcomeViewHolder.State state = viewHolder.getState();
+                if (state == WelcomeViewHolder.State.Registration || state == WelcomeViewHolder.State.Login) {
+                    viewHolder.transitionToMain();
+                } else {
+                    finish();
+                }
+            }
+        });
     }
 
     public void onShowRegistration(View v) {
@@ -436,7 +438,7 @@ public class WelcomeActivity extends AppCompatActivity implements WelcomeViewHol
 
     //region TextWatchers
 
-    private abstract class StandardWatcher implements TextWatcher {
+    private abstract static class StandardWatcher implements TextWatcher {
 
         final TextInputLayout mLayout;
         final TextInputEditText mEditText;
@@ -453,7 +455,7 @@ public class WelcomeActivity extends AppCompatActivity implements WelcomeViewHol
         public void onTextChanged(CharSequence s, int start, int before, int count) {}
     }
 
-    private class UsernameWatcher extends StandardWatcher {
+    private static class UsernameWatcher extends StandardWatcher {
         UsernameWatcher(@NonNull TextInputLayout layout, @NonNull TextInputEditText editText) {
             super(layout, editText);
         }
@@ -471,7 +473,7 @@ public class WelcomeActivity extends AppCompatActivity implements WelcomeViewHol
         }
     }
 
-    private class PasswordWatcher extends StandardWatcher {
+    private static class PasswordWatcher extends StandardWatcher {
         PasswordWatcher(@NonNull TextInputLayout layout, @NonNull TextInputEditText editText) {
             super(layout, editText);
         }
@@ -489,7 +491,7 @@ public class WelcomeActivity extends AppCompatActivity implements WelcomeViewHol
         }
     }
 
-    private class EmailWatcher extends StandardWatcher {
+    private static class EmailWatcher extends StandardWatcher {
         EmailWatcher(@NonNull TextInputLayout layout, @NonNull TextInputEditText editText) {
             super(layout, editText);
         }
@@ -507,7 +509,7 @@ public class WelcomeActivity extends AppCompatActivity implements WelcomeViewHol
         }
     }
 
-    private class ErrorDisabler implements TextWatcher {
+    private static class ErrorDisabler implements TextWatcher {
         private final TextInputLayout mLayout;
         ErrorDisabler(@NonNull TextInputLayout layout) {
             mLayout = layout;

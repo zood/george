@@ -28,7 +28,6 @@ public class FcmMessageReceiver extends FirebaseMessagingService {
 
     @Override
     public void onMessageReceived(@NonNull RemoteMessage remoteMessage) {
-        L.i("FcmMessageReceiver.onMessageReceived");
         if (!AuthenticationManager.isLoggedIn(this)) {
             L.i("\tnot logged in. returning early.");
             return;

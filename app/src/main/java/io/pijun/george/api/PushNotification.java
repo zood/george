@@ -20,10 +20,6 @@ public class PushNotification {
         if (senderId == null || senderId.length != Constants.USER_ID_LENGTH) {
             return false;
         }
-        if (sentDate == null) {
-            return false;
-        }
-
-        return true;
+        return sentDate != null;
     }
 }

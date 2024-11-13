@@ -1,6 +1,7 @@
 package xyz.zood.george;
 
 import android.content.Context;
+import android.content.res.Resources;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.text.Editable;
@@ -14,6 +15,8 @@ import androidx.annotation.Nullable;
 import androidx.annotation.UiThread;
 import androidx.annotation.WorkerThread;
 import androidx.appcompat.app.AlertDialog;
+import androidx.core.content.ContextCompat;
+import androidx.core.content.res.ResourcesCompat;
 import androidx.databinding.DataBindingUtil;
 import androidx.fragment.app.Fragment;
 
@@ -106,13 +109,20 @@ public class AddFriendFragment extends Fragment {
             }
         });
 
-        int lightRed = getResources().getColor(R.color.zood_red_light);
-        invalidUserIcon = getResources().getDrawable(R.drawable.ic_close_black_24dp).mutate();
-        invalidUserIcon.setTint(lightRed);
+        Resources rsrcs = getResources();
+        int lightRed = rsrcs.getColor(R.color.zood_red_light, null);
+        invalidUserIcon = ResourcesCompat.getDrawable(rsrcs, R.drawable.ic_close_black_24dp, null);
+        if (invalidUserIcon != null) {
+            invalidUserIcon.mutate();
+            invalidUserIcon.setTint(lightRed);
+        }
 
-        int green = getResources().getColor(R.color.zood_green);
-        validUserIcon = getResources().getDrawable(R.drawable.ic_check_black_24dp).mutate();
-        validUserIcon.setTint(green);
+        int green = rsrcs.getColor(R.color.zood_green, null);
+        validUserIcon = ResourcesCompat.getDrawable(rsrcs, R.drawable.ic_check_black_24dp, null);
+        if (validUserIcon != null) {
+            validUserIcon.mutate();
+            validUserIcon.setTint(green);
+        }
 
         return binding.getRoot();
     }
@@ -279,7 +289,7 @@ public class AddFriendFragment extends Fragment {
         public void afterTextChanged(Editable s) {
             if (s != null) {
                 String username = s.toString().trim().toLowerCase(Locale.US);
-                if (username.equals("")) {
+                if (username.isEmpty()) {
                     binding.addFriend.setEnabled(false);
                     layout.setEndIconDrawable(null);
                     return;
