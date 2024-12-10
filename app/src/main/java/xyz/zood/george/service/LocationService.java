@@ -4,6 +4,7 @@ import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.Service;
+import android.content.Context;
 import android.content.Intent;
 import android.content.pm.ServiceInfo;
 import android.location.Location;
@@ -26,7 +27,13 @@ import java.util.concurrent.Future;
 import io.pijun.george.App;
 import io.pijun.george.L;
 import io.pijun.george.LocationUtils;
+import io.pijun.george.Prefs;
 import io.pijun.george.UiRunnable;
+import io.pijun.george.api.OscarClient;
+import io.pijun.george.api.UserComm;
+import io.pijun.george.crypto.KeyPair;
+import io.pijun.george.database.DB;
+import io.pijun.george.database.UserRecord;
 import xyz.zood.george.Permissions;
 import xyz.zood.george.R;
 
@@ -34,9 +41,11 @@ public class LocationService extends Service {
 
     private static final String FINDING_LOCATION_CHANNEL_ID = "finding_location_01";
     private static final int NOTIFICATION_ID = 44;  // arbitrary number
+    private static final String REQUESTING_USER_ID = "requesting_user_id";
 
     private FusedLocationProviderClient fusedLocationClient;
     private Future<?> timeout;
+    private long requestingUserId = -1;
 
     @Override
     public void onCreate() {
@@ -55,6 +64,7 @@ public class LocationService extends Service {
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         L.i("LocationService.onStartCommand");
+        requestingUserId = intent.getLongExtra(REQUESTING_USER_ID, -1);
         startForegroundService();
         startLocationUpdates();
         return START_NOT_STICKY;
@@ -75,6 +85,25 @@ public class LocationService extends Service {
             t.cancel(false);
             timeout = null;
         }
+        if (requestingUserId != -1) {
+            Prefs prefs = Prefs.get(this);
+            String token = prefs.getAccessToken();
+            KeyPair kp = prefs.getKeyPair();
+            UserRecord user = DB.get().getUser(requestingUserId);
+            if (token != null && kp != null && user != null) {
+                UserComm finished = UserComm.newLocationUpdateRequestReceived(UserComm.LOCATION_UPDATE_REQUEST_ACTION_FINISHED);
+                String errMsg = OscarClient.queueSendMessage(OscarClient.getQueue(getApplicationContext()), user, kp, token, finished.toJSON(), true, true);
+                if (errMsg != null) {
+                    L.w("LocationService errorNotifyingRequestingUser: " + errMsg);
+                }
+            }
+        }
+    }
+
+    public static Intent newIntent(Context context, long userId) {
+        Intent intent = new Intent(context, LocationService.class);
+        intent.putExtra(REQUESTING_USER_ID, userId);
+        return intent;
     }
 
     private void startForegroundService() {

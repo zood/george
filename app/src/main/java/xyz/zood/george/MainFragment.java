@@ -225,8 +225,6 @@ public class MainFragment extends Fragment implements OnMapReadyCallback, DB.Lis
         DB.get().addListener(this);
         AuthenticationManager.get().addListener(this);
 
-        oscarSocket = new OscarSocket(oscarSocketListener);
-
         getLifecycle().addObserver(new AppInForegroundObserver());
     }
 
@@ -301,7 +299,7 @@ public class MainFragment extends Fragment implements OnMapReadyCallback, DB.Lis
 
         getLifecycle().addObserver(new GoogleMapLifecycleObserver(binding.map));
         getLifecycle().addObserver(new BackgroundDataRestrictionNotifier(requireActivity(), binding.banners));
-        bgLocationPermissionNotifier = new BackgroundLocationPermissionNotifier(requireActivity(), this, binding.banners);
+        bgLocationPermissionNotifier = new BackgroundLocationPermissionNotifier(requireActivity(), binding.banners);
         getLifecycle().addObserver(bgLocationPermissionNotifier);
         fgLocationPermissionNotifier = new ForegroundLocationPermissionNotifier(requireActivity(), this, binding.banners);
         getLifecycle().addObserver(fgLocationPermissionNotifier);
@@ -314,7 +312,6 @@ public class MainFragment extends Fragment implements OnMapReadyCallback, DB.Lis
 
     @Override
     public void onDestroy() {
-        oscarSocket = null;
         AuthenticationManager.get().removeListener(this);
 
         super.onDestroy();
@@ -365,7 +362,7 @@ public class MainFragment extends Fragment implements OnMapReadyCallback, DB.Lis
         checkPermissions();
 
         // If the device has an FCM token, upload it
-        FirebaseMessaging.getInstance().getToken().addOnCompleteListener(new OnCompleteListener<String>() {
+        FirebaseMessaging.getInstance().getToken().addOnCompleteListener(new OnCompleteListener<>() {
             @Override
             public void onComplete(@NonNull Task<String> task) {
                 if (!task.isSuccessful() && task.getException() != null) {
@@ -381,6 +378,7 @@ public class MainFragment extends Fragment implements OnMapReadyCallback, DB.Lis
         App.runInBackground(new WorkerRunnable() {
             @Override
             public void run() {
+                oscarSocket = new OscarSocket(oscarSocketListener);
                 oscarSocket.connect(accessToken);
 
                 ArrayList<FriendRecord> friends = DB.get().getFriends();
@@ -1378,13 +1376,14 @@ public class MainFragment extends Fragment implements OnMapReadyCallback, DB.Lis
                 Thread.sleep(5000);
             } catch (InterruptedException ignore) {}
             // are we still running after our siesta?
-            if (!isVisible()) {
+            if (!App.isInForeground) {
                 return;
             }
             String token = Prefs.get(App.getApp().getApplicationContext()).getAccessToken();
             if (token == null) {
                 return;
             }
+            oscarSocket = new OscarSocket(oscarSocketListener);
             oscarSocket.connect(token);
             ArrayList<FriendRecord> friends = DB.get().getFriends();
             for (FriendRecord f : friends) {

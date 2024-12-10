@@ -60,6 +60,7 @@ public class OscarSocket {
 
     @AnyThread
     public void connect(@NonNull final String accessToken) {
+        L.i("socket.connect");
         handler.post(new WorkerRunnable() {
             @Override
             public void run() {
@@ -108,6 +109,7 @@ public class OscarSocket {
 
     @AnyThread
     public void disconnect() {
+        L.i("socket.cancel");
         socket.cancel();
     }
 

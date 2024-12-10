@@ -1,6 +1,5 @@
 package xyz.zood.george.notifier;
 
-import android.Manifest;
 import android.content.Intent;
 import android.net.Uri;
 import android.provider.Settings;
@@ -8,12 +7,10 @@ import android.view.View;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.StringRes;
-import androidx.core.app.ActivityCompat;
 import androidx.fragment.app.FragmentActivity;
 import androidx.lifecycle.DefaultLifecycleObserver;
 import androidx.lifecycle.LifecycleOwner;
 
-import xyz.zood.george.MainFragment;
 import xyz.zood.george.Permissions;
 import xyz.zood.george.R;
 import xyz.zood.george.widget.BannerView;
@@ -23,13 +20,11 @@ public class BackgroundLocationPermissionNotifier implements DefaultLifecycleObs
 
     @NonNull private final BannerView banner;
     @NonNull private final FragmentActivity activity;
-    @NonNull private final MainFragment fragment;
     private static final int bannerItemId = 871;
 
-    public BackgroundLocationPermissionNotifier(@NonNull FragmentActivity activity, @NonNull MainFragment fragment, @NonNull BannerView banner) {
+    public BackgroundLocationPermissionNotifier(@NonNull FragmentActivity activity, @NonNull BannerView banner) {
         this.banner = banner;
         this.activity = activity;
-        this.fragment = fragment;
     }
 
     @Override
@@ -47,36 +42,24 @@ public class BackgroundLocationPermissionNotifier implements DefaultLifecycleObs
     }
 
     private void onBannerItemClicked() {
-        // Select the message based on the screen to which we'll be sending the user
-        @StringRes int msgId;
-        if (ActivityCompat.shouldShowRequestPermissionRationale(activity, Manifest.permission.ACCESS_BACKGROUND_LOCATION)) {
-            msgId = R.string.grant_background_location_permission_msg;
-        } else {
-            msgId = R.string.grant_background_location_permission_via_settings_msg;
-        }
+        @StringRes int msgId = R.string.grant_background_location_permission_via_settings_msg;
         ZoodDialog dialog = ZoodDialog.newInstance(activity.getString(msgId));
         dialog.setTitle(activity.getString(R.string.background_permission));
         dialog.setButton1(activity.getString(R.string.fix), new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                showPermissionRequest();
+                showAppSystemSettings();
             }
         });
         dialog.setButton2(activity.getString(R.string.ignore), null);
         dialog.show(activity.getSupportFragmentManager(), null);
     }
 
-    private void showPermissionRequest() {
-        // If Android says we should show a rationale, that means we can still bring up the
-        // normal request dialog. Otherwise, we have to redirect the user to settings.
-        if (ActivityCompat.shouldShowRequestPermissionRationale(activity, Manifest.permission.ACCESS_BACKGROUND_LOCATION)) {
-            fragment.bgLocationPermLauncher.launch(Permissions.getBackgroundLocationPermissions());
-        } else {
-            Intent i = new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS);
-            Uri uri = Uri.fromParts("package", activity.getPackageName(), null);
-            i.setData(uri);
-            activity.startActivity(i);
-        }
+    private void showAppSystemSettings() {
+        Intent i = new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS);
+        Uri uri = Uri.fromParts("package", activity.getPackageName(), null);
+        i.setData(uri);
+        activity.startActivity(i);
     }
 
     public void show() {

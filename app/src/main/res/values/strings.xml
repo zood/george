@@ -188,7 +188,6 @@
     <string name="background_location_permission_reason_msg">In order to periodically share your location with your friends (only), Zood needs permission to access your location while in the background.</string>
     <string name="location_permission_needed">Location permission needed</string>
     <string name="background_permission">Background permission</string>
-    <string name="grant_background_location_permission_msg">Zood needs permission to access your location while in the background in order to share it with your friends (only).</string>
     <string name="location_permission">Location permission</string>
     <string name="grant_foreground_location_permission_msg">Zood needs permission to access your location while you\'re using the app to show your current location on the map.</string>
     <string name="grant_foreground_location_permission_via_settings_msg">Zood needs permission to access your location while you\'re using the app to show your current location on the map. Go to Permissions in the app settings screen to grant it.</string>

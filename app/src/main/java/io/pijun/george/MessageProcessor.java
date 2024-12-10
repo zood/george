@@ -362,7 +362,7 @@ public class MessageProcessor {
         }
 
         L.i("MP attempting to start LocationService");
-        Intent serviceIntent = new Intent(context, LocationService.class);
+        Intent serviceIntent = LocationService.newIntent(context, userRecord.id);
         context.startForegroundService(serviceIntent);
 
         // let them know we've started
