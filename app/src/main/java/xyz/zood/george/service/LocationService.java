@@ -148,7 +148,6 @@ public class LocationService extends Service {
     private final LocationCallback callback = new LocationCallback() {
         @Override
         public void onLocationResult(@NonNull LocationResult locationResult) {
-            L.i("LocationService.onLocationResult");
             Location loc = locationResult.getLastLocation();
             if (loc == null) {
                 return;

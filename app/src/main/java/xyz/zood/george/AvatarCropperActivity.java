@@ -73,7 +73,6 @@ public class AvatarCropperActivity extends AppCompatActivity implements CropImag
     @Override
     @UiThread
     public void onCropImageComplete(@NonNull CropImageView view, CropImageView.CropResult result) {
-        L.i("onCropImageComplete");
         Bitmap bmp = result.getBitmap();
         if (bmp == null) {
             finish();
