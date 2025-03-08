@@ -241,7 +241,9 @@ public class InfoPanel {
         menu.setOnMenuItemClickListener(new PopupMenu.OnMenuItemClickListener() {
             @Override
             public boolean onMenuItemClick(MenuItem item) {
-                if (item.getItemId() == R.id.remove_friend) {
+                if (item.getItemId() == R.id.send_location) {
+                    listener.onInfoPanelSendLocation(friend.user.username, currLoc);
+                } else if (item.getItemId() == R.id.remove_friend) {
                     listener.onInfoPanelRemoveFriend(friend);
                 } else if (item.getItemId() == R.id.view_safety_number) {
                     listener.onInfoPanelViewSafetyNumber(friend);
@@ -500,6 +502,8 @@ public class InfoPanel {
         void onInfoPanelLocationRequested(@NonNull FriendRecord friend);
         @UiThread
         void onInfoPanelRemoveFriend(@NonNull FriendRecord friend);
+        @UiThread
+        void onInfoPanelSendLocation(@NonNull String username, @Nullable FriendLocation friend);
         @UiThread
         void onInfoPanelShareToggled(@NonNull FriendRecord friend, boolean shouldShare);
         @UiThread

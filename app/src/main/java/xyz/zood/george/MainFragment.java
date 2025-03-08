@@ -9,6 +9,7 @@ import android.content.IntentSender;
 import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.location.Location;
+import android.net.Uri;
 import android.os.Bundle;
 import android.os.Looper;
 import android.text.TextUtils;
@@ -63,6 +64,7 @@ import com.google.android.gms.tasks.Task;
 import com.google.firebase.messaging.FirebaseMessaging;
 
 import java.util.ArrayList;
+import java.util.Locale;
 import java.util.Map;
 
 import io.pijun.george.App;
@@ -1077,6 +1079,20 @@ public class MainFragment extends Fragment implements OnMapReadyCallback, DB.Lis
             });
             dialog.setButton2(getString(R.string.cancel), null);
             dialog.show(getParentFragmentManager(), null);
+        }
+
+        public void onInfoPanelSendLocation(@NonNull String username, @Nullable FriendLocation location) {
+            if (location == null) {
+                // the friend isn't sharing their location with us
+                return;
+            }
+
+            Intent i = new Intent();
+            i.setAction(Intent.ACTION_VIEW);
+            i.setData(Uri.parse(String.format(Locale.ENGLISH, "geo:0,0?q=%f,%f(%s)", location.latitude, location.longitude, username)));
+            if (i.resolveActivity(requireContext().getPackageManager()) != null) {
+                startActivity(i);
+            }
         }
 
         @Override
