@@ -11,8 +11,8 @@ android {
         compileSdk 34
         minSdkVersion 29
         targetSdkVersion 34
-        versionCode 42
-        versionName "0.42"
+        versionCode 43
+        versionName "0.43"
         multiDexEnabled true
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         resourceConfigurations += ['en']

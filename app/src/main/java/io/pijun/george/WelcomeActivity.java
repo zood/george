@@ -357,7 +357,6 @@ public class WelcomeActivity extends AppCompatActivity implements WelcomeViewHol
 
         final Editable password = binding.regPassword.getText();
         if (password == null || password.length() < Constants.PASSWORD_TEXT_MIN_LENGTH) {
-            L.i("reg password: '" + password + "'");
             binding.regPasswordContainer.setError(getString(R.string.too_short));
             foundError = true;
         }

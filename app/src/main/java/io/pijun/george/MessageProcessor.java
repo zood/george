@@ -32,6 +32,7 @@ import io.pijun.george.database.UserRecord;
 import io.pijun.george.queue.PersistentQueue;
 import retrofit2.Response;
 import xyz.zood.george.AvatarManager;
+import xyz.zood.george.Permissions;
 import xyz.zood.george.service.LocationService;
 import xyz.zood.george.service.ScreamerService;
 import xyz.zood.george.worker.BackupDatabaseWorker;
@@ -345,6 +346,17 @@ public class MessageProcessor {
         // make sure this is actually a friend
         FriendRecord f = DB.get().getFriendByUserId(userRecord.id);
         if (f == null || f.sendingBoxId == null) {
+            return Result.Success;
+        }
+
+        // does the app have background location permission?
+        if (!Permissions.checkBackgroundLocationPermission(context)) {
+            // we don't, so just inform the requester that we're done providing updates
+            UserComm done = UserComm.newLocationUpdateRequestReceived(UserComm.LOCATION_UPDATE_REQUEST_ACTION_FINISHED);
+            String errMsg = OscarClient.immediatelySendMessage(userRecord, accessToken, keyPair, done, true, true);
+            if (errMsg != null) {
+                L.w(errMsg);
+            }
             return Result.Success;
         }
 

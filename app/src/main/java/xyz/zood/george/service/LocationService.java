@@ -112,6 +112,7 @@ public class LocationService extends Service {
         Notification notification = new NotificationCompat.Builder(this, FINDING_LOCATION_CHANNEL_ID)
                 .setContentTitle(getString(R.string.finding_your_location))
                 .setSmallIcon(R.drawable.ic_position_service)
+                .setForegroundServiceBehavior(NotificationCompat.FOREGROUND_SERVICE_IMMEDIATE)
                 .build();
         startForeground(NOTIFICATION_ID, notification, ServiceInfo.FOREGROUND_SERVICE_TYPE_LOCATION);
     }

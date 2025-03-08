@@ -116,13 +116,13 @@ public final class Utils {
         }
 
         String local = parts[0];
-        if (local.length() == 0 || local.length() > 64) {
+        if (local.isEmpty() || local.length() > 64) {
             return false;
         }
 
         // check if we have the format of a domain
         String domain = parts[1];
-        if (domain.length() == 0 || domain.length() > 255) {
+        if (domain.isEmpty() || domain.length() > 255) {
             return false;
         }
         String[] domainParts = domain.split("\\.");

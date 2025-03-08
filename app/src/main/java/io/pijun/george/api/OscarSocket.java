@@ -110,7 +110,9 @@ public class OscarSocket {
     @AnyThread
     public void disconnect() {
         L.i("socket.cancel");
-        socket.cancel();
+        if (socket != null) {
+            socket.cancel();
+        }
     }
 
     @AnyThread
