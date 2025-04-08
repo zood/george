@@ -15,7 +15,7 @@ android {
         versionName "0.43"
         multiDexEnabled true
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
-        resourceConfigurations += ['en']
+        resourceConfigurations += ['en', 'tr']
         vectorDrawables.useSupportLibrary = true
         externalNativeBuild {
             cmake {
