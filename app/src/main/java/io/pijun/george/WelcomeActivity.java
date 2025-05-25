@@ -421,7 +421,7 @@ public class WelcomeActivity extends AppCompatActivity implements WelcomeViewHol
             return;
         }
 
-        String username = usernameText.toString();
+        String username = usernameText.toString().trim();
         String password = passwordText.toString();
 
         showProgressDialog(true);

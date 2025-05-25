@@ -9,7 +9,6 @@ import android.graphics.Matrix;
 import android.graphics.Paint;
 import android.graphics.Shader;
 import android.graphics.Typeface;
-import android.os.Build;
 import android.text.Layout;
 import android.text.StaticLayout;
 import android.text.TextPaint;
@@ -22,8 +21,6 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.core.content.res.ResourcesCompat;
 
-import com.google.android.gms.maps.model.BitmapDescriptor;
-import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.squareup.picasso.Picasso;
 
 import java.io.IOException;
@@ -99,12 +96,14 @@ public class AvatarRenderer {
 
     @AnyThread
     @NonNull
-    public static BitmapDescriptor getBitmapDescriptor(@NonNull Context ctx, @NonNull String username, @DimenRes int sizeRes) {
+    public static Bitmap getBitmap(@NonNull Context ctx, @NonNull String username, @DimenRes int sizeRes) {
         int size = ctx.getResources().getDimensionPixelSize(sizeRes);
         Bitmap img = null;
         try {
             img = Picasso.with(ctx).load(AvatarManager.getAvatar(ctx, username)).resize(size, size).get();
-        } catch (IOException ignore) {}
+        } catch (IOException ignore) {
+            // if the image doesn't exist, the AvatarRenderer will render an icon based on the username
+        }
 
         AvatarRenderer renderer = new AvatarRenderer(ctx, false);
         renderer.setUsername(username);
@@ -117,7 +116,7 @@ public class AvatarRenderer {
         Canvas c = new Canvas(avatar);
         renderer.draw(c);
 
-        return BitmapDescriptorFactory.fromBitmap(avatar);
+        return avatar;
     }
 
     @NonNull

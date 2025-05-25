@@ -54,6 +54,7 @@ public class OscarClient {
                 .setFieldNamingPolicy(FieldNamingPolicy.LOWER_CASE_WITH_UNDERSCORES)
                 .registerTypeAdapter(byte[].class, new BytesToBase64Adapter())
                 .registerTypeAdapter(CommType.class, new CommTypeAdapter())
+                .disableHtmlEscaping()
                 .create();
     }
 

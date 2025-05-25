@@ -109,10 +109,6 @@
     <string name="add_friend_dialog_msg">Введите имя пользователя вашего друга/друзей, чтобы начать делиться с ним/ними своим местоположением. Он/они получат уведомление с просьбой начать делиться с вами.</string>
     <string name="invalid_username">Неверное имя пользователя</string>
     <string name="not_a_user">Не пользователь</string>
-    <string name="database_error_msg" translatable="false">Ошибка базы данных: %s</string>
-    <string name="sharing_grant_failed_msg" translatable="false">Предоставленная попытка поделиться не увенчалась успехом: %s</string>
-    <string name="not_logged_in_access_token_msg" translatable="false">Вы/они не залогинены в системе (доступность токена)</string>
-    <string name="not_logged_in_key_pair_msg" translatable="false">Вы/они не залогинены в системе (пара ключей)</string>
     <string name="unknown_error_getting_user_info">Неизвестная ошибка при получении информации о пользователе</string>
     <string name="permission_request">Запросы разрешения</string>
     <string name="location_permission_reason_msg">Zood использует ваше местоположение, чтобы показать ваше местоположение на карте и безопасно поделиться им с друзьями, которых вы авторизовали. Он никогда не используется ни для каких других целей.</string>

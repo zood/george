@@ -4,9 +4,6 @@ import android.content.Context;
 import android.content.SharedPreferences;
 import android.text.TextUtils;
 
-import com.google.android.gms.maps.model.CameraPosition;
-import com.google.android.gms.maps.model.LatLng;
-
 import java.security.SecureRandom;
 
 import androidx.annotation.AnyThread;
@@ -14,6 +11,10 @@ import androidx.annotation.CheckResult;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.Size;
+
+import org.maplibre.android.camera.CameraPosition;
+import org.maplibre.android.geometry.LatLng;
+
 import io.pijun.george.crypto.KeyPair;
 import io.pijun.george.database.MovementType;
 
@@ -167,43 +168,42 @@ public class Prefs {
         mPrefs.edit().putString(KEY_FCM_TOKEN, token).apply();
     }
 
-    @Nullable
     public CameraPosition getCameraPosition() {
         if (!mPrefs.getBoolean(KEY_CAMERA_POSITION_SAVED, false)) {
             return null;
         }
 
-        float bearing = 0;
+        double bearing = 0;
         try {
             bearing = mPrefs.getFloat(KEY_CAMERA_POSITION_BEARING, 0);
         } catch (Throwable ignore) {}
-        float tilt = 0;
+        double tilt = 0;
         try {
             tilt = mPrefs.getFloat(KEY_CAMERA_POSITION_TILT, 0);
         } catch (Throwable ignore) {}
-        float zoom = 0;
+        double zoom = 0;
         try {
             zoom = mPrefs.getFloat(KEY_CAMERA_POSITION_ZOOM, 0);
         } catch (Throwable ignore) {}
         double lat = Double.longBitsToDouble(mPrefs.getLong(KEY_CAMERA_POSITION_LATITUDE, 0));
         double lng = Double.longBitsToDouble(mPrefs.getLong(KEY_CAMERA_POSITION_LONGITUDE, 0));
 
-        LatLng ll = new LatLng(lat, lng);
+        var ll = new LatLng(lat, lng);
         return new CameraPosition.Builder().bearing(bearing).target(ll).tilt(tilt).zoom(zoom).build();
     }
 
     public void setCameraPosition(@Nullable CameraPosition pos) {
-        if (pos == null) {
+        if (pos == null || pos.target == null) {
             mPrefs.edit().putBoolean(KEY_CAMERA_POSITION_SAVED, false).apply();
             return;
         }
 
         mPrefs.edit()
-                .putFloat(KEY_CAMERA_POSITION_BEARING, pos.bearing)
-                .putFloat(KEY_CAMERA_POSITION_TILT, pos.tilt)
-                .putFloat(KEY_CAMERA_POSITION_ZOOM, pos.zoom)
-                .putLong(KEY_CAMERA_POSITION_LATITUDE, Double.doubleToRawLongBits(pos.target.latitude))
-                .putLong(KEY_CAMERA_POSITION_LONGITUDE, Double.doubleToRawLongBits(pos.target.longitude))
+                .putFloat(KEY_CAMERA_POSITION_BEARING, (float)pos.bearing)
+                .putFloat(KEY_CAMERA_POSITION_TILT, (float)pos.tilt)
+                .putFloat(KEY_CAMERA_POSITION_ZOOM, (float)pos.zoom)
+                .putLong(KEY_CAMERA_POSITION_LATITUDE, Double.doubleToRawLongBits(pos.target.getLatitude()))
+                .putLong(KEY_CAMERA_POSITION_LONGITUDE, Double.doubleToRawLongBits(pos.target.getLongitude()))
                 .putBoolean(KEY_CAMERA_POSITION_SAVED, true)
                 .apply();
     }

@@ -1,13 +1,10 @@
 package xyz.zood.george;
 
 import android.Manifest;
-import android.animation.ObjectAnimator;
-import android.animation.ValueAnimator;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentSender;
 import android.graphics.Bitmap;
-import android.graphics.Color;
 import android.location.Location;
 import android.net.Uri;
 import android.os.Bundle;
@@ -27,7 +24,6 @@ import androidx.annotation.Nullable;
 import androidx.annotation.UiThread;
 import androidx.annotation.WorkerThread;
 import androidx.core.app.ActivityCompat;
-import androidx.core.content.ContextCompat;
 import androidx.databinding.DataBindingUtil;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentActivity;
@@ -46,22 +42,21 @@ import com.google.android.gms.location.LocationSettingsRequest;
 import com.google.android.gms.location.LocationSettingsStatusCodes;
 import com.google.android.gms.location.Priority;
 import com.google.android.gms.location.SettingsClient;
-import com.google.android.gms.maps.CameraUpdate;
-import com.google.android.gms.maps.CameraUpdateFactory;
-import com.google.android.gms.maps.GoogleMap;
-import com.google.android.gms.maps.OnMapReadyCallback;
-import com.google.android.gms.maps.model.BitmapDescriptor;
-import com.google.android.gms.maps.model.BitmapDescriptorFactory;
-import com.google.android.gms.maps.model.CameraPosition;
-import com.google.android.gms.maps.model.Circle;
-import com.google.android.gms.maps.model.CircleOptions;
-import com.google.android.gms.maps.model.LatLng;
-import com.google.android.gms.maps.model.MapStyleOptions;
-import com.google.android.gms.maps.model.Marker;
-import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.messaging.FirebaseMessaging;
+
+import org.maplibre.android.MapLibre;
+import org.maplibre.android.camera.CameraPosition;
+import org.maplibre.android.camera.CameraUpdate;
+import org.maplibre.android.camera.CameraUpdateFactory;
+import org.maplibre.android.geometry.LatLng;
+import org.maplibre.android.maps.MapLibreMap;
+import org.maplibre.android.maps.OnMapReadyCallback;
+import org.maplibre.android.plugins.annotation.OnSymbolClickListener;
+import org.maplibre.android.plugins.annotation.Symbol;
+import org.maplibre.android.plugins.annotation.SymbolManager;
+import org.maplibre.android.style.sources.GeoJsonOptions;
 
 import java.util.ArrayList;
 import java.util.Locale;
@@ -72,7 +67,6 @@ import io.pijun.george.AuthenticationManager;
 import io.pijun.george.Constants;
 import io.pijun.george.L;
 import io.pijun.george.LocationUtils;
-import io.pijun.george.MarkerTracker;
 import io.pijun.george.MessageProcessor;
 import io.pijun.george.Prefs;
 import io.pijun.george.SettingsFragment;
@@ -81,8 +75,6 @@ import io.pijun.george.UpdateStatusTracker;
 import io.pijun.george.Utils;
 import io.pijun.george.WelcomeActivity;
 import io.pijun.george.WorkerRunnable;
-import io.pijun.george.animation.DoubleEvaluator;
-import io.pijun.george.animation.LatLngEvaluator;
 import io.pijun.george.api.OscarClient;
 import io.pijun.george.api.OscarSocket;
 import io.pijun.george.api.PushNotification;
@@ -94,7 +86,6 @@ import io.pijun.george.database.FriendLocation;
 import io.pijun.george.database.FriendRecord;
 import io.pijun.george.database.UserRecord;
 import io.pijun.george.view.AvatarRenderer;
-import io.pijun.george.view.MyLocationView;
 import xyz.zood.george.databinding.FragmentMainBinding;
 import xyz.zood.george.notifier.ActivityRecognitionPermissionNotifier;
 import xyz.zood.george.notifier.BackgroundDataRestrictionNotifier;
@@ -107,7 +98,7 @@ import xyz.zood.george.viewmodels.MainViewModel;
 import xyz.zood.george.widget.InfoPanel;
 import xyz.zood.george.widget.ZoodDialog;
 
-public class MainFragment extends Fragment implements OnMapReadyCallback, DB.Listener, AuthenticationManager.Listener, BackPressInterceptor {
+public class MainFragment extends Fragment implements OnMapReadyCallback, DB.Listener, AuthenticationManager.Listener, BackPressInterceptor, OnSymbolClickListener {
 
     static final String TAG = "main";
 
@@ -116,10 +107,9 @@ public class MainFragment extends Fragment implements OnMapReadyCallback, DB.Lis
 
     private String accessToken;
     private FragmentMainBinding binding;
-    private Circle currentCircle;
     private long friendForCameraToTrack = -1;
     private FriendshipManager friendshipManager;
-    private GoogleMap googMap;
+    private MapLibreMap mlMap;
     private InfoPanel infoPanel;
     private boolean isFlyingCameraToMyLocation = false;
     private KeyPair keyPair;
@@ -133,12 +123,12 @@ public class MainFragment extends Fragment implements OnMapReadyCallback, DB.Lis
     private FusedLocationProviderClient locationProviderClient;
     private LocationRequest locationRequest;
     private LocationSettingsRequest locationSettingsRequest;
-    private final MarkerTracker markerTracker = new MarkerTracker();
-    private Marker meMarker;
-    private Circle myCircle;
+    private FriendSymbolTracker symbolTracker;
+    private MyLocationSymbol myLocationSymbol;
     private ClientNotConnectedNotifier notConnectedNotifier;
     private OscarSocket oscarSocket;
     private SettingsClient settingsClient;
+    private SymbolManager symbolManager;
     private MainViewModel viewModel;
 
     @NonNull
@@ -173,6 +163,7 @@ public class MainFragment extends Fragment implements OnMapReadyCallback, DB.Lis
         }
 
         Context ctx = requireContext();
+        MapLibre.getInstance(ctx);
         friendshipManager = new FriendshipManager(ctx, DB.get(), OscarClient.getQueue(ctx), accessToken, keyPair);
 
         fgLocationPermLauncher = registerForActivityResult(new ActivityResultContracts.RequestMultiplePermissions(), new ActivityResultCallback<>() {
@@ -236,8 +227,8 @@ public class MainFragment extends Fragment implements OnMapReadyCallback, DB.Lis
         binding = DataBindingUtil.inflate(inflater, R.layout.fragment_main, container, false);
 
         infoPanel = new InfoPanel(binding.infoPanel, requireContext(), infoPanelListener);
-        binding.map.onCreate(savedInstanceState);
         binding.map.getMapAsync(this);
+        binding.map.onCreate(savedInstanceState);
 
         viewModel.getSelectedFriend().observe(getViewLifecycleOwner(), new Observer<>() {
             @Override
@@ -299,7 +290,7 @@ public class MainFragment extends Fragment implements OnMapReadyCallback, DB.Lis
         DB.get().addListener(this);
         AvatarManager.addListener(avatarListener);
 
-        getLifecycle().addObserver(new GoogleMapLifecycleObserver(binding.map));
+        getLifecycle().addObserver(new MapLibreMapLifecycleObserver(binding.map));
         getLifecycle().addObserver(new BackgroundDataRestrictionNotifier(requireActivity(), binding.banners));
         bgLocationPermissionNotifier = new BackgroundLocationPermissionNotifier(requireActivity(), binding.banners);
         getLifecycle().addObserver(bgLocationPermissionNotifier);
@@ -323,13 +314,12 @@ public class MainFragment extends Fragment implements OnMapReadyCallback, DB.Lis
     public void onDestroyView() {
         DB.get().removeListener(this);
         AvatarManager.removeListener(avatarListener);
-        markerTracker.clear();
-        googMap = null;
-        meMarker = null;
+        symbolTracker.clear();
+        symbolTracker = null;
+        mlMap = null;
+        myLocationSymbol = null;
         infoPanel = null;
         binding = null;
-        currentCircle = null;
-        myCircle = null;
 
         super.onDestroyView();
     }
@@ -402,9 +392,8 @@ public class MainFragment extends Fragment implements OnMapReadyCallback, DB.Lis
         UpdateStatusTracker.removeListener(updateStatusTrackerListener);
 
         // save the camera position
-        if (googMap != null) {
-            CameraPosition pos = googMap.getCameraPosition();
-            Prefs.get(requireContext()).setCameraPosition(pos);
+        if (mlMap != null) {
+            Prefs.get(requireContext()).setCameraPosition(mlMap.getCameraPosition());
         }
 
         // stop location updates
@@ -420,11 +409,9 @@ public class MainFragment extends Fragment implements OnMapReadyCallback, DB.Lis
 
     //endregion
 
-
-
     @WorkerThread
     private void addMapMarker(@NonNull FriendRecord friend, @NonNull FriendLocation loc) {
-        if (googMap == null) {
+        if (mlMap == null) {
             return;
         }
         Context ctx = getContext();
@@ -432,102 +419,52 @@ public class MainFragment extends Fragment implements OnMapReadyCallback, DB.Lis
             return;
         }
 
-        BitmapDescriptor icon = AvatarRenderer.getBitmapDescriptor(ctx, friend.user.username, R.dimen.thirtySix);
-
+        Bitmap icon = AvatarRenderer.getBitmap(ctx, friend.user.username, R.dimen.thirtySix);
         App.runOnUiThread(new UiRunnable() {
             @Override
             public void run() {
-                // check if it's already there
-                if (markerTracker.getById(friend.id) != null) {
-                    // don't add another one
+                if (symbolTracker == null) {
                     return;
                 }
-                MarkerOptions opts = new MarkerOptions()
-                        .position(new LatLng(loc.latitude, loc.longitude))
-                        .icon(icon)
-                        .anchor(0.5f, 0.5f)
-                        .title(friend.user.username);
-                Marker marker = googMap.addMarker(opts);
-                if (marker == null) {
-                    L.w("Adding a map marker for a friend failed");
-                    return;
-                }
-                marker.setTag(loc);
-                markerTracker.add(marker, friend.id, loc);
+                symbolTracker.put(requireContext(), icon, friend, loc);
             }
         });
     }
 
-    @UiThread
-    private void addMyErrorCircle(Location location) {
-        if (googMap == null) {
-            return;
-        }
-
-        if (!location.hasAccuracy()) {
-            return;
-        }
-
-        CircleOptions opts = new CircleOptions()
-                .center(new LatLng(location.getLatitude(), location.getLongitude()))
-                .radius(location.getAccuracy())
-                .strokeColor(Color.TRANSPARENT)
-                .fillColor(0x8032b6f4);
-        myCircle = googMap.addCircle(opts);
-    }
-
-    @UiThread
-    private void addMyLocation(Location location) {
-        if (googMap == null) {
-            return;
-        }
-        Context ctx = getContext();
-        if (ctx == null) {
-            return;
-        }
-
-        Bitmap bitmap = MyLocationView.getBitmap(ctx);
-        BitmapDescriptor descriptor = BitmapDescriptorFactory.fromBitmap(bitmap);
-        LatLng ll = new LatLng(location.getLatitude(), location.getLongitude());
-        MarkerOptions opts = new MarkerOptions()
-                .position(ll)
-                .anchor(0.5f, 0.5f)
-                .icon(descriptor);
-        meMarker = googMap.addMarker(opts);
-    }
-
     private void flyCameraToMyLocation() {
-        if (googMap == null) {
+        if (mlMap == null || myLocationSymbol == null) {
             return;
         }
-        if (meMarker == null) {
-            return;
-        }
-        float zoom = Math.max(googMap.getCameraPosition().zoom, Constants.DEFAULT_ZOOM_LEVEL);
 
-        CameraPosition cp = new CameraPosition.Builder()
+        LatLng ll = myLocationSymbol.getLatLng();
+        if (ll == null) {
+            return;
+        }
+
+        double zoom = Math.max(mlMap.getCameraPosition().zoom, Constants.DEFAULT_ZOOM_LEVEL);
+        var cp = new CameraPosition.Builder()
                 .zoom(zoom)
-                .target(meMarker.getPosition())
+                .target(ll)
                 .bearing(0)
                 .tilt(0).build();
         CameraUpdate cu = CameraUpdateFactory.newCameraPosition(cp);
         isFlyingCameraToMyLocation = true;
-        googMap.animateCamera(cu, new GoogleMap.CancelableCallback() {
+        mlMap.animateCamera(cu, new MapLibreMap.CancelableCallback() {
             @Override
-            public void onFinish() {
+            public void onCancel() {
                 isFlyingCameraToMyLocation = false;
             }
 
             @Override
-            public void onCancel() {
+            public void onFinish() {
                 isFlyingCameraToMyLocation = false;
             }
         });
     }
 
     private void onFriendSelected(@NonNull FriendRecord fr) {
-        Marker marker = markerTracker.getById(fr.id);
-        if (marker == null) {
+        var fs = symbolTracker.get(fr.id);
+        if (fs == null) {
             showInfoPanel(fr, null);
             return;
         }
@@ -535,28 +472,26 @@ public class MainFragment extends Fragment implements OnMapReadyCallback, DB.Lis
         // Is the info panel already showing for this user? If so, just center the camera and follow
         if (infoPanel.getFriendId() == fr.id) {
             friendForCameraToTrack = fr.id;
-            CameraUpdate update = CameraUpdateFactory.newLatLng(marker.getPosition());
-            googMap.animateCamera(update);
+            var update = CameraUpdateFactory.newLatLng(fs.getLatLng());
+            mlMap.animateCamera(update);
             return;
         }
 
+        // the camera should track this friend
         friendForCameraToTrack = fr.id;
         binding.myLocationFab.setSelected(false);
-        float zoom = Math.max(googMap.getCameraPosition().zoom, Constants.DEFAULT_ZOOM_LEVEL);
+        var zoom = Math.max(mlMap.getCameraPosition().zoom, Constants.DEFAULT_ZOOM_LEVEL);
         CameraPosition cp = new CameraPosition.Builder()
-                .target(marker.getPosition())
+                .target(fs.getLatLng())
                 .zoom(zoom)
                 .bearing(0)
                 .tilt(0).build();
-        CameraUpdate cu = CameraUpdateFactory.newCameraPosition(cp);
-        googMap.animateCamera(cu);
+        var cu = CameraUpdateFactory.newCameraPosition(cp);
+        mlMap.animateCamera(cu);
 
-        FriendLocation loc = (FriendLocation) marker.getTag();
-        if (loc == null) {
-            throw new RuntimeException("Marker location should never be null. Should contain the friend's location");
-        }
+        var loc = fs.getLocation();
         showInfoPanel(fr, loc);
-        showFriendErrorCircle(loc);
+        fs.setErrorCircleVisible(true);
     }
 
     @UiThread
@@ -582,50 +517,6 @@ public class MainFragment extends Fragment implements OnMapReadyCallback, DB.Lis
                 .replace(R.id.fragment_host, fragment)
                 .addToBackStack(null)
                 .commit();
-    }
-
-    @UiThread
-    private void showFriendErrorCircle(@NonNull FriendLocation loc) {
-        if (googMap == null) {
-            return;
-        }
-
-        // check if we even need a circle
-        if (loc.accuracy == null) {
-            // no circle needed
-            // check if there's a circle that we need to remove
-            if (currentCircle != null) {
-                currentCircle.remove();
-                currentCircle = null;
-            }
-            return;
-        }
-        // check if there is already a circle
-        if (currentCircle != null) {
-            // does this circle already belong to this friend?
-            Long friendId = (Long) currentCircle.getTag();
-            if (friendId == null || friendId != loc.friendId) {
-                // nope! Remove it.
-                currentCircle.remove();
-                currentCircle = null;
-            }
-        }
-
-        // If this friend doesn't have a circle, create it
-        if (currentCircle == null) {
-            CircleOptions opts = new CircleOptions()
-                    .center(new LatLng(loc.latitude, loc.longitude))
-                    .radius(loc.accuracy)
-                    .strokeColor(Color.TRANSPARENT)
-                    .fillColor(ContextCompat.getColor(requireContext(), R.color.error_circle_fill));
-            currentCircle = googMap.addCircle(opts);
-            currentCircle.setTag(loc.friendId);
-        } else {
-            // This friend already has a circle, so just adjust the radius and position
-            currentCircle.setRadius(loc.accuracy);
-            currentCircle.setCenter(new LatLng(loc.latitude, loc.longitude));
-        }
-
     }
 
     @UiThread
@@ -877,40 +768,52 @@ public class MainFragment extends Fragment implements OnMapReadyCallback, DB.Lis
     //region OnMapReadyCallback
 
     @Override
-    @UiThread
-    public void onMapReady(@NonNull GoogleMap googleMap) {
-        this.googMap = googleMap;
-        Context ctx = requireContext();
-        boolean success = googMap.setMapStyle(MapStyleOptions.loadRawResourceStyle(ctx, R.raw.map_style));
-        if (!success) {
-            L.w("Map style parsing failed");
-        }
-        CameraPosition pos = Prefs.get(ctx).getCameraPosition();
-        if (pos != null) {
-            googMap.moveCamera(CameraUpdateFactory.newCameraPosition(pos));
-        }
-        googMap.setOnMarkerClickListener(markerClickListener);
-        googMap.getUiSettings().setCompassEnabled(false);
-        googMap.setOnCameraMoveStartedListener(new GoogleMap.OnCameraMoveStartedListener() {
-            @Override
-            public void onCameraMoveStarted(int reason) {
-                if (reason == REASON_GESTURE) {
+    public void onMapReady(@NonNull MapLibreMap map) {
+        this.mlMap = map;
+        map.setStyle("https://www.zood.xyz/static/map-style.json", style -> {
+            GeoJsonOptions gjOpts = new GeoJsonOptions().withTolerance(0.05f);
+            this.symbolManager = new SymbolManager(binding.map, mlMap, style, null, null, gjOpts);
+            symbolManager.addClickListener(this);
+            symbolManager.setIconAllowOverlap(true);
+            symbolManager.setTextAllowOverlap(true);
+            symbolTracker = new FriendSymbolTracker(symbolManager, map, style);
+            myLocationSymbol = new MyLocationSymbol(symbolManager, map, style);
+
+            /*
+             * We add the listener here to make sure this listener is fired AFTER the
+             * symbolManager's click listener. That way we can consume the clicks on symbol's first
+             * before the event is propagated to the map click listener. If we don't control the
+             * order we add the click listener, then it would be possible for the OnMapClickListener
+             * to receive events first and THEN the symbol manager's click listener. That ends up
+             * causing weird UI bugs. Hopefully a future version of the SDK will only send events to
+             * the most specific items first and we won't need to rely on this hack anymore.
+             * https://github.com/mapbox/mapbox-gl-native/issues/15718#issuecomment-983202888
+             */
+            map.addOnMapClickListener(new MapLibreMap.OnMapClickListener() {
+                @Override
+                public boolean onMapClick(@NonNull LatLng latLng) {
                     friendForCameraToTrack = -1;
                     binding.myLocationFab.setSelected(false);
+                    infoPanel.hide();
+                    binding.timedShareFab.setVisibility(View.VISIBLE);
+                    symbolTracker.hideErrorCircle();
+
+                    return false; // don't intercept the event
                 }
-            }
+            });
         });
-        googMap.setOnMapClickListener(new GoogleMap.OnMapClickListener() {
+        var pos = Prefs.get(requireContext()).getCameraPosition();
+        if (pos != null) {
+            map.moveCamera(CameraUpdateFactory.newCameraPosition(pos));
+        }
+        map.addOnFlingListener(new MapLibreMap.OnFlingListener() {
             @Override
-            public void onMapClick(@NonNull LatLng latLng) {
+            public void onFling() {
+                if (isFlyingCameraToMyLocation) {
+                    return;
+                }
                 friendForCameraToTrack = -1;
                 binding.myLocationFab.setSelected(false);
-                infoPanel.hide();
-                binding.timedShareFab.setVisibility(View.VISIBLE);
-                if (currentCircle != null) {
-                    currentCircle.remove();
-                    currentCircle = null;
-                }
             }
         });
 
@@ -981,25 +884,21 @@ public class MainFragment extends Fragment implements OnMapReadyCallback, DB.Lis
 
     @UiThread
     private void removeFriendFromMap(long friendId) {
-        Marker marker = markerTracker.removeMarker(friendId);
-        if (marker != null) {
-            marker.remove();
+        if (symbolTracker == null) {
+            return;
         }
-        if (currentCircle != null) {
-            Long circleFriendId = (Long) currentCircle.getTag();
-            if (circleFriendId != null) {
-                if (circleFriendId == friendId) {
-                    currentCircle.remove();
-                }
-            }
-        }
+
+        symbolTracker.removeFriend(friendId);
     }
 
     @UiThread
-    private void updateMarker(@NonNull FriendLocation loc) {
-        // check if we already have a marker for this friend
-        Marker marker = markerTracker.getById(loc.friendId);
-        if (marker == null) {
+    private void updateFriendSymbolLocation(@NonNull FriendLocation loc) {
+        if (symbolTracker == null) {
+            return;
+        }
+        // check if we already have a symbol for this friend
+        FriendSymbol fs = symbolTracker.get(loc.friendId);
+        if (fs == null) {
             App.runInBackground(new WorkerRunnable() {
                 @Override
                 public void run() {
@@ -1011,29 +910,63 @@ public class MainFragment extends Fragment implements OnMapReadyCallback, DB.Lis
                     addMapMarker(friend, loc);
                 }
             });
-            if (friendForCameraToTrack == loc.friendId) {
-                showFriendErrorCircle(loc);
-            }
         } else {
-            marker.setPosition(new LatLng(loc.latitude, loc.longitude));
-            marker.setTag(loc);
-            markerTracker.updateLocation(loc.friendId, loc);
-
-            // if there is an error circle being shown on this marker, adjust it too
-            if (currentCircle != null) {
-                Long friendId = (Long) currentCircle.getTag();
-                if (friendId != null && loc.friendId == friendId) {
-                    if (loc.accuracy != null) {
-                        currentCircle.setRadius(loc.accuracy);
-                        currentCircle.setCenter(new LatLng(loc.latitude, loc.longitude));
-                    } else {
-                        // no accuracy, so remove the circle
-                        currentCircle.remove();
-                        currentCircle = null;
-                    }
-                }
-            }
+            fs.updateLocation(loc);
         }
+    }
+
+    //endregion
+
+    // region OnSymbolClickListener
+
+    @Override
+    public boolean onAnnotationClick(Symbol symbol) {
+        L.i("onAnnotationClick");
+        if (symbol.equals(myLocationSymbol.getSymbol())) {
+            infoPanel.hide();
+            binding.timedShareFab.setVisibility(View.VISIBLE);
+            return true;
+        }
+
+        var fs = symbolTracker.get(symbol);
+        if (fs == null) {
+            // what did we click on?
+            return true;
+        }
+
+        // make the camera track this friend
+        friendForCameraToTrack = fs.getFriendId();
+
+        // move the camera to the friend
+        var update = CameraUpdateFactory.newLatLng(fs.getLatLng());
+        mlMap.animateCamera(update);
+
+        fs.setErrorCircleVisible(true);
+
+        if (infoPanel.getFriendId() == fs.getFriendId()) {
+            // we're already showing this friend in the info panel
+            return true;
+        }
+
+        // retrieve the FriendRecord so we can show the info panel
+        App.runInBackground(new WorkerRunnable() {
+            @Override
+            public void run() {
+                var friend = DB.get().getFriendById(fs.getFriendId());
+                if (friend == null) {
+                    return;
+                }
+                App.runOnUiThread(new UiRunnable() {
+                    @Override
+                    public void run() {
+                        showInfoPanel(friend, fs.getLocation());
+                    }
+                });
+            }
+        });
+
+
+        return true;
     }
 
     //endregion
@@ -1131,54 +1064,7 @@ public class MainFragment extends Fragment implements OnMapReadyCallback, DB.Lis
 
     //endregion
 
-    //region GoogleMap.OnMarkerClickListener
 
-    private final GoogleMap.OnMarkerClickListener markerClickListener = new GoogleMap.OnMarkerClickListener() {
-        @Override
-        @UiThread
-        public boolean onMarkerClick(@NonNull final Marker marker) {
-            if (marker.equals(meMarker)) {
-                infoPanel.hide();
-                binding.timedShareFab.setVisibility(View.VISIBLE);
-                return true;
-            }
-
-            final FriendLocation loc = markerTracker.getLocation(marker);
-            if (loc == null) {
-                // should never happen
-                infoPanel.hide();
-                binding.timedShareFab.setVisibility(View.VISIBLE);
-                return true;
-            }
-            L.i("onMarkerClick found friend " + loc.friendId);
-            App.runInBackground(new WorkerRunnable() {
-                @Override
-                public void run() {
-                    FriendRecord friend = DB.get().getFriendById(loc.friendId);
-                    if (friend == null) {
-                        return;
-                    }
-                    App.runOnUiThread(new UiRunnable() {
-                        @Override
-                        public void run() {
-                            showInfoPanel(friend, loc);
-                        }
-                    });
-                }
-            });
-            friendForCameraToTrack = loc.friendId;
-
-            if (googMap != null) {
-                CameraUpdate update = CameraUpdateFactory.newLatLng(new LatLng(loc.latitude, loc.longitude));
-                googMap.animateCamera(update);
-            }
-
-            showFriendErrorCircle(loc);
-            return true;
-        }
-    };
-
-    //endregion
 
     //region DB.Listener
 
@@ -1190,11 +1076,13 @@ public class MainFragment extends Fragment implements OnMapReadyCallback, DB.Lis
             showInfoPanel(friend, loc);
         }
 
-        updateMarker(loc);
+        // also update the position of the friend's symbol
+        updateFriendSymbolLocation(loc);
 
-        if (friendForCameraToTrack == loc.friendId && googMap != null) {
-            CameraUpdate update = CameraUpdateFactory.newLatLng(new LatLng(loc.latitude, loc.longitude));
-            googMap.animateCamera(update);
+        // if the camera is tracking this friend, update the camera position
+        if (friendForCameraToTrack == loc.friendId && mlMap != null) {
+            var update = CameraUpdateFactory.newLatLng(new LatLng(loc.latitude, loc.longitude));
+            mlMap.animateCamera(update);
         }
     }
 
@@ -1338,13 +1226,13 @@ public class MainFragment extends Fragment implements OnMapReadyCallback, DB.Lis
                         // This person is no friend of ours. Get outta here.
                         return;
                     }
-                    BitmapDescriptor icon = AvatarRenderer.getBitmapDescriptor(requireContext(), username, R.dimen.thirtySix);
+                    Bitmap icon = AvatarRenderer.getBitmap(requireContext(), username, R.dimen.thirtySix);
                     App.runOnUiThread(new UiRunnable() {
                         @Override
                         public void run() {
-                            Marker marker = markerTracker.getById(friend.id);
-                            if (marker != null) {
-                                marker.setIcon(icon);
+                            FriendSymbol s = symbolTracker.get(friend.id);
+                            if (s != null) {
+                                s.onAvatarUpdated(icon);
                             }
                         }
                     });
@@ -1469,52 +1357,22 @@ public class MainFragment extends Fragment implements OnMapReadyCallback, DB.Lis
             if (location == null) {
                 return;
             }
-            if (meMarker == null) {
-                addMyLocation(location);
-            } else {
-                LatLng ll = new LatLng(location.getLatitude(), location.getLongitude());
-                ValueAnimator posAnimator = ObjectAnimator.ofObject(meMarker,
-                        "position",
-                        new LatLngEvaluator(),
-                        meMarker.getPosition(),
-                        ll);
-                posAnimator.setDuration(500);
 
-                posAnimator.start();
+            Context ctx = getContext();
+            if (ctx == null || myLocationSymbol == null) {
+                return;
             }
+            myLocationSymbol.updateLocation(ctx, location);
 
-            if (myCircle == null) {
-                addMyErrorCircle(location);
-            } else {
-                if (!location.hasAccuracy()) {
-                    myCircle.remove();
-                    myCircle = null;
-                } else {
-                    ValueAnimator posAnimator = ObjectAnimator.ofObject(myCircle,
-                            "center",
-                            new LatLngEvaluator(),
-                            myCircle.getCenter(),
-                            new LatLng(location.getLatitude(), location.getLongitude()));
-                    posAnimator.setDuration(500);
-                    ValueAnimator errAnimator = ObjectAnimator.ofObject(myCircle,
-                            "radius",
-                            new DoubleEvaluator(),
-                            myCircle.getRadius(),
-                            (double)location.getAccuracy());
-                    errAnimator.setDuration(500);
-
-                    posAnimator.start();
-                    errAnimator.start();
-                }
-            }
-
+            // if the camera is tracking the user, update the camera position
             if (friendForCameraToTrack == 0) {
-                if (googMap != null && !isFlyingCameraToMyLocation) {
-                    CameraUpdate update = CameraUpdateFactory.newLatLng(new LatLng(location.getLatitude(), location.getLongitude()));
-                    googMap.animateCamera(update);
+                if (mlMap != null && !isFlyingCameraToMyLocation) {
+                    var update = CameraUpdateFactory.newLatLng(new LatLng(location.getLatitude(), location.getLongitude()));
+                    mlMap.animateCamera(update);
                 }
             }
 
+            // share the location with all the user's friends
             App.runInBackground(new WorkerRunnable() {
                 @Override
                 public void run() {

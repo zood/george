@@ -30,6 +30,12 @@ public class FriendLocation {
         this.batteryCharging = batteryCharging;
     }
 
+    public float getAccuracyRadiusInPixels(double zoomLevel) {
+        // https://groups.google.com/g/google-maps-js-api-v3/c/hDRO4oHVSeM/m/osOYQYXg2oUJ
+        double metersPerPixel = 156543.03392 * Math.cos(latitude * Math.PI / 180) / Math.pow(2, zoomLevel);
+        return (float) (accuracy / metersPerPixel);
+    }
+
     @Override
     @NonNull
     public String toString() {

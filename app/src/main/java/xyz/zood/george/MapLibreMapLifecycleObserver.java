@@ -4,13 +4,13 @@ import androidx.annotation.NonNull;
 import androidx.lifecycle.DefaultLifecycleObserver;
 import androidx.lifecycle.LifecycleOwner;
 
-import com.google.android.gms.maps.MapView;
+import org.maplibre.android.maps.MapView;
 
-public class GoogleMapLifecycleObserver implements DefaultLifecycleObserver {
+public class MapLibreMapLifecycleObserver implements DefaultLifecycleObserver {
 
     @NonNull private final MapView map;
 
-    GoogleMapLifecycleObserver(@NonNull MapView map) {
+    MapLibreMapLifecycleObserver(@NonNull MapView map) {
         this.map = map;
     }
 
