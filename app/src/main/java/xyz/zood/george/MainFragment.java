@@ -123,7 +123,7 @@ public class MainFragment extends Fragment implements OnMapReadyCallback, DB.Lis
     private FusedLocationProviderClient locationProviderClient;
     private LocationRequest locationRequest;
     private LocationSettingsRequest locationSettingsRequest;
-    private FriendSymbolTracker symbolTracker;
+    @Nullable private FriendSymbolTracker symbolTracker;
     private MyLocationSymbol myLocationSymbol;
     private ClientNotConnectedNotifier notConnectedNotifier;
     private OscarSocket oscarSocket;
@@ -314,7 +314,6 @@ public class MainFragment extends Fragment implements OnMapReadyCallback, DB.Lis
     public void onDestroyView() {
         DB.get().removeListener(this);
         AvatarManager.removeListener(avatarListener);
-        symbolTracker.clear();
         symbolTracker = null;
         mlMap = null;
         myLocationSymbol = null;
@@ -463,6 +462,10 @@ public class MainFragment extends Fragment implements OnMapReadyCallback, DB.Lis
     }
 
     private void onFriendSelected(@NonNull FriendRecord fr) {
+        if (symbolTracker == null) {
+            return;
+        }
+
         var fs = symbolTracker.get(fr.id);
         if (fs == null) {
             showInfoPanel(fr, null);
@@ -925,6 +928,10 @@ public class MainFragment extends Fragment implements OnMapReadyCallback, DB.Lis
         if (symbol.equals(myLocationSymbol.getSymbol())) {
             infoPanel.hide();
             binding.timedShareFab.setVisibility(View.VISIBLE);
+            return true;
+        }
+
+        if (symbolTracker == null) {
             return true;
         }
 
