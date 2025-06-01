@@ -69,8 +69,8 @@ public class App extends Application {
         sApp.mUiThreadHandler.post(r);
     }
 
-    public static void runOnUiThread(@NonNull UiRunnable r, long delay) {
-        sApp.mUiThreadHandler.postDelayed(r, delay);
+    public static void runOnUiThread(@NonNull UiRunnable r, long delayMs) {
+        sApp.mUiThreadHandler.postDelayed(r, delayMs);
     }
 
     public static Future<?> runOnUiThreadCancellable(long delay, @NonNull UiRunnable r) {

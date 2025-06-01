@@ -21,7 +21,13 @@ public class Permissions {
     @SuppressWarnings("BooleanMethodIsAlwaysInverted")
     @AnyThread @CheckResult
     public static boolean checkForegroundLocationPermission(@NonNull Context ctx) {
-        return ContextCompat.checkSelfPermission(ctx, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED;
+        for (String perm : getForegroundLocationPermissions()) {
+            if (ContextCompat.checkSelfPermission(ctx, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     @AnyThread @CheckResult
@@ -36,11 +42,11 @@ public class Permissions {
 
     @NonNull @AnyThread @CheckResult
     public static String[] getBackgroundLocationPermissions() {
-        return new String[]{Manifest.permission.ACCESS_BACKGROUND_LOCATION, Manifest.permission.ACCESS_FINE_LOCATION};
+        return new String[]{Manifest.permission.ACCESS_BACKGROUND_LOCATION};
     }
 
     @NonNull @AnyThread @CheckResult
     public static String[] getForegroundLocationPermissions() {
-        return new String[]{Manifest.permission.ACCESS_FINE_LOCATION};
+        return new String[]{Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION};
     }
 }

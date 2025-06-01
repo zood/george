@@ -506,20 +506,34 @@ public class MainFragment extends Fragment implements OnMapReadyCallback, DB.Lis
 
         // If the user hasn't granted background location permission, we need
         if (!Permissions.checkBackgroundLocationPermission(ctx)) {
-            checkBackgroundLocationPermission(true);
+            obtainBackgroundLocationPermission(true);
             return;
         }
 
-        AddFriendFragment fragment = AddFriendFragment.newInstance(accessToken, keyPair);
-        FragmentManager mgr = getParentFragmentManager();
-        mgr.beginTransaction()
-                .setCustomAnimations(R.animator.new_enter_from_right,
-                        R.animator.new_exit_to_left,
-                        R.animator.new_enter_from_left,
-                        R.animator.new_exit_to_right)
-                .replace(R.id.fragment_host, fragment)
-                .addToBackStack(null)
-                .commit();
+        // We have to delay the presentation of the add friend screen because if we do it right
+        // away it sometimes shows up as a black screen on some devices when the user is returning
+        // granting background permission.
+        App.runOnUiThread(new UiRunnable() {
+            @Override
+            public void run() {
+                Context ctx = getContext();
+                if (ctx == null) {
+                    return;
+                }
+
+                AddFriendFragment fragment = AddFriendFragment.newInstance(accessToken, keyPair);
+                FragmentManager mgr = getParentFragmentManager();
+                mgr.beginTransaction()
+                        .setCustomAnimations(R.animator.new_enter_from_right,
+                                R.animator.new_exit_to_left,
+                                R.animator.new_enter_from_left,
+                                R.animator.new_exit_to_right)
+                        .replace(R.id.fragment_host, fragment)
+                        .addToBackStack(null)
+                        .commit();
+            }
+        });
+
     }
 
     @UiThread
@@ -621,14 +635,9 @@ public class MainFragment extends Fragment implements OnMapReadyCallback, DB.Lis
     }
 
     @UiThread
-    private void checkBackgroundLocationPermission(boolean fromAddFriendClick) {
+    private void obtainBackgroundLocationPermission(boolean fromAddFriendClick) {
         Context ctx = getContext();
         if (ctx == null) {
-            return;
-        }
-
-        if (Permissions.checkBackgroundLocationPermission(ctx)) {
-            backgroundLocationPermissionGranted();
             return;
         }
 
@@ -717,7 +726,7 @@ public class MainFragment extends Fragment implements OnMapReadyCallback, DB.Lis
         if (ctx == null) {
             return;
         }
-        // Start requesting location updates. The permission check is redundant, but we do it quiet the linter
+        // Start requesting location updates. The permission check is redundant, but we do it to quiet the linter
         if (Permissions.checkForegroundLocationPermission(ctx)) {
             locationProviderClient.requestLocationUpdates(locationRequest, mLocationCallbackHelper, Looper.getMainLooper());
         }
@@ -731,10 +740,14 @@ public class MainFragment extends Fragment implements OnMapReadyCallback, DB.Lis
                     return;
                 }
 
+                if (Permissions.checkBackgroundLocationPermission(ctx)) {
+                    return;
+                }
+
                 App.runOnUiThread(new UiRunnable() {
                     @Override
                     public void run() {
-                        checkBackgroundLocationPermission(false);
+                        obtainBackgroundLocationPermission(false);
                     }
                 });
             }
@@ -1237,6 +1250,10 @@ public class MainFragment extends Fragment implements OnMapReadyCallback, DB.Lis
                     App.runOnUiThread(new UiRunnable() {
                         @Override
                         public void run() {
+                            if (symbolTracker == null) {
+                                return;
+                            }
+
                             FriendSymbol s = symbolTracker.get(friend.id);
                             if (s != null) {
                                 s.onAvatarUpdated(icon);

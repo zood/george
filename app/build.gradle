@@ -11,8 +11,8 @@ android {
         compileSdk 34
         minSdkVersion 29
         targetSdkVersion 34
-        versionCode 47
-        versionName "0.47"
+        versionCode 49
+        versionName "0.49"
         multiDexEnabled true
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         resourceConfigurations += ['en', 'tr', 'ru']
@@ -23,7 +23,8 @@ android {
             }
         }
         ndk {
-            abiFilters 'x86', 'x86_64', 'armeabi-v7a', 'arm64-v8a'
+//            abiFilters 'x86', 'x86_64', 'armeabi-v7a', 'arm64-v8a'
+            abiFilters 'armeabi-v7a', 'arm64-v8a'
         }
     }
     buildTypes {
