@@ -22,7 +22,7 @@ public class Permissions {
     @AnyThread @CheckResult
     public static boolean checkForegroundLocationPermission(@NonNull Context ctx) {
         for (String perm : getForegroundLocationPermissions()) {
-            if (ContextCompat.checkSelfPermission(ctx, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            if (ContextCompat.checkSelfPermission(ctx, perm) != PackageManager.PERMISSION_GRANTED) {
                 return false;
             }
         }
