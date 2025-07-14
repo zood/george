@@ -19,7 +19,10 @@ import androidx.activity.result.PickVisualMediaRequest;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.core.content.FileProvider;
+import androidx.core.view.ViewCompat;
+import androidx.core.view.WindowInsetsCompat;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 
@@ -29,7 +32,6 @@ import java.io.File;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Locale;
-import java.util.UUID;
 
 import xyz.zood.george.AvatarCropperActivity;
 import xyz.zood.george.AvatarManager;
@@ -49,6 +51,20 @@ public class SettingsFragment extends Fragment implements SettingsAdapter.Listen
 
     public static SettingsFragment newInstance() {
         return new SettingsFragment();
+    }
+
+    // applySystemUIInsets applies the system view insets. It should only be called once after the fragment's view is created.
+    private void applySystemUIInsets(FragmentSettingsBinding binding) {
+        ViewCompat.setOnApplyWindowInsetsListener(binding.settingsView, (v, insets) -> {
+            int statusBarHeight;
+            statusBarHeight = insets.getInsets(WindowInsetsCompat.Type.statusBars()).top;
+
+            ConstraintLayout.LayoutParams sbLP = (ConstraintLayout.LayoutParams) binding.statusBarPlaceholder.getLayoutParams();
+            sbLP.height = statusBarHeight;
+            binding.statusBarPlaceholder.setLayoutParams(sbLP);
+
+            return insets;
+        });
     }
 
     //region Lifecycle
@@ -103,6 +119,8 @@ public class SettingsFragment extends Fragment implements SettingsAdapter.Listen
                 onChangeProfilePhoto(binding.avatar);
             }
         });
+
+        applySystemUIInsets(binding);
 
         return binding.getRoot();
     }

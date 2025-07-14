@@ -4,12 +4,23 @@
     xmlns:app="http://schemas.android.com/apk/res-auto">
     <xyz.zood.george.widget.SlidableCL
         android:id="@+id/settings_view"
+        android:fitsSystemWindows="true"
         android:focusable="true"
         android:focusableInTouchMode="true"
         android:background="@android:color/white"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         tools:context=".SettingsActivity">
+        <View
+            android:id="@+id/status_bar_placeholder"
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            android:elevation="1dp"
+            android:outlineProvider="none"
+            android:background="#9999"
+            />
         <com.google.android.material.button.MaterialButton
             android:id="@+id/back"
             style="@style/Widget.MaterialComponents.Button.TextButton"
@@ -18,7 +29,7 @@
             app:iconTint="@color/black_80"
             app:iconSize="24dp"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/status_bar_placeholder"
             android:layout_marginStart="24dp"
             android:layout_marginTop="16dp"
             android:layout_width="24dp"

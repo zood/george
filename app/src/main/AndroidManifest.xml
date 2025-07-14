@@ -32,6 +32,7 @@
         <activity
             android:name="xyz.zood.george.MainActivity"
             android:screenOrientation="portrait"
+            android:windowSoftInputMode="adjustResize"
             android:launchMode="singleInstance"
             android:exported="true"
             android:theme="@style/AppTheme">

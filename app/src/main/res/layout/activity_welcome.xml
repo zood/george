@@ -8,6 +8,7 @@
     android:focusable="true"
     android:focusableInTouchMode="true"
     android:fillViewport="true"
+    android:fitsSystemWindows="true"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     tools:context=".WelcomeActivity">
@@ -405,7 +406,6 @@
         android:minHeight="48dp"
         android:minWidth="112dp"
         android:onClick="onRegisterAction" />
-
 
 </androidx.constraintlayout.widget.ConstraintLayout>
 </ScrollView>

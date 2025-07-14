@@ -9,6 +9,8 @@ import android.view.ViewGroup;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.RawRes;
+import androidx.core.view.ViewCompat;
+import androidx.core.view.WindowInsetsCompat;
 import androidx.fragment.app.Fragment;
 
 import java.io.IOException;
@@ -64,6 +66,18 @@ public class LicenseTextFragment extends Fragment {
         } catch (IOException ex) {
             binding.textView.setText(ex.getLocalizedMessage());
         }
+
+        ViewCompat.setOnApplyWindowInsetsListener(binding.textView, (v, insets) -> {
+            int statusBarHeight = insets.getInsets(WindowInsetsCompat.Type.statusBars()).top;
+            int navBarHeight = insets.getInsets(WindowInsetsCompat.Type.navigationBars()).bottom;
+            binding.textView.setPadding(0, statusBarHeight, 0, navBarHeight);
+
+            ViewGroup.LayoutParams lp = binding.statusBarPlaceholder.getLayoutParams();
+            lp.height = statusBarHeight;
+            binding.statusBarPlaceholder.setLayoutParams(lp);
+
+            return insets;
+        });
 
         return binding.getRoot();
     }

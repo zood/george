@@ -6,6 +6,9 @@ import android.os.Bundle;
 
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.view.WindowCompat;
+import androidx.core.view.WindowInsetsCompat;
+import androidx.core.view.WindowInsetsControllerCompat;
 import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentTransaction;
 
@@ -15,29 +18,16 @@ import io.pijun.george.Prefs;
 import io.pijun.george.WelcomeActivity;
 import io.pijun.george.crypto.KeyPair;
 
-public class MainActivity extends AppCompatActivity implements BackPressNotifier {
-
-    @Nullable private BackPressInterceptor interceptor;
+public class MainActivity extends AppCompatActivity {
 
     public static Intent newIntent(Context ctx) {
         return new Intent(ctx, MainActivity.class);
     }
 
     @Override
-    public void onBackPressed() {
-        if (interceptor != null) {
-            if (interceptor.onBackPressed()) {
-                return;
-            }
-        }
-
-        super.onBackPressed();
-    }
-
-    @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
-        L.i("MainActivity.onCreate");
         super.onCreate(savedInstanceState);
+        WindowCompat.enableEdgeToEdge(getWindow());
 
         // Is there a user account here? If not, send them to the login/sign up screen
         if (!AuthenticationManager.isLoggedIn(this)) {
@@ -74,10 +64,5 @@ public class MainActivity extends AppCompatActivity implements BackPressNotifier
                 ft.commit();
             }
         }
-    }
-
-    @Override
-    public void setBackPressInterceptor(@Nullable BackPressInterceptor interceptor) {
-        this.interceptor = interceptor;
     }
 }

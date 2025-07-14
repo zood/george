@@ -15,8 +15,10 @@ import androidx.annotation.Nullable;
 import androidx.annotation.UiThread;
 import androidx.annotation.WorkerThread;
 import androidx.appcompat.app.AlertDialog;
-import androidx.core.content.ContextCompat;
+import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.core.content.res.ResourcesCompat;
+import androidx.core.view.ViewCompat;
+import androidx.core.view.WindowInsetsCompat;
 import androidx.databinding.DataBindingUtil;
 import androidx.fragment.app.Fragment;
 
@@ -59,6 +61,26 @@ public class AddFriendFragment extends Fragment {
         fragment.setArguments(args);
 
         return fragment;
+    }
+
+    // applySystemUIInsets applies the system view insets. It should only be called once after the fragment's view is created.
+    private void applySystemUIInsets(FragmentAddFriendBinding binding) {
+        ViewCompat.setOnApplyWindowInsetsListener(binding.root, (v, insets) -> {
+            int statusBarHeight = insets.getInsets(WindowInsetsCompat.Type.statusBars()).top;
+            ConstraintLayout.LayoutParams sbLP = (ConstraintLayout.LayoutParams) binding.statusBarPlaceholder.getLayoutParams();
+            sbLP.height = statusBarHeight;
+            binding.statusBarPlaceholder.setLayoutParams(sbLP);
+
+            int bottomInset;
+            int navBarHeight = insets.getInsets(WindowInsetsCompat.Type.navigationBars()).bottom;
+            int imeHeight = insets.getInsets(WindowInsetsCompat.Type.ime()).bottom;
+            bottomInset = Math.max(navBarHeight, imeHeight);
+            ConstraintLayout.LayoutParams nbLP = (ConstraintLayout.LayoutParams) binding.navigationBarPlaceholder.getLayoutParams();
+            nbLP.height = bottomInset;
+            binding.navigationBarPlaceholder.setLayoutParams(nbLP);
+
+            return insets;
+        });
     }
 
     @Override
@@ -123,6 +145,8 @@ public class AddFriendFragment extends Fragment {
             validUserIcon.mutate();
             validUserIcon.setTint(green);
         }
+
+        applySystemUIInsets(binding);
 
         return binding.getRoot();
     }

@@ -220,6 +220,7 @@ public class TimedShareFragment extends Fragment {
             if (didClick == null) {
                 return;
             }
+            L.i("onTimeShareClicked: " + didClick.toString());
             onTimedShareFabClicked();
         });
         viewModel.getTimedShareTimeRemaining().observe(getViewLifecycleOwner(), this::setTimeRemaining);
@@ -249,6 +250,7 @@ public class TimedShareFragment extends Fragment {
     private void setPosition(@NonNull Position position) {
         switch (position) {
             case Expanded:
+                L.i("TimedShareFragment.setPosition");
                 totalOffset = -binding.sheet.getHeight();
                 viewModel.setTimedShareSheetDismissable(true);
                 break;

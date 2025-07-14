@@ -23,7 +23,11 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.UiThread;
 import androidx.annotation.WorkerThread;
+import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.core.app.ActivityCompat;
+import androidx.core.view.ViewCompat;
+import androidx.core.view.WindowCompat;
+import androidx.core.view.WindowInsetsCompat;
 import androidx.databinding.DataBindingUtil;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentActivity;
@@ -98,7 +102,7 @@ import xyz.zood.george.viewmodels.MainViewModel;
 import xyz.zood.george.widget.InfoPanel;
 import xyz.zood.george.widget.ZoodDialog;
 
-public class MainFragment extends Fragment implements OnMapReadyCallback, DB.Listener, AuthenticationManager.Listener, BackPressInterceptor, OnSymbolClickListener {
+public class MainFragment extends Fragment implements OnMapReadyCallback, DB.Listener, AuthenticationManager.Listener, OnSymbolClickListener {
 
     static final String TAG = "main";
 
@@ -141,6 +145,26 @@ public class MainFragment extends Fragment implements OnMapReadyCallback, DB.Lis
         f.setArguments(args);
 
         return f;
+    }
+
+    // applySystemUIInsets applies the system view insets. It should only be called once after the fragment's view is created.
+    private void applySystemUIInsets(FragmentMainBinding binding) {
+        ViewCompat.setOnApplyWindowInsetsListener(binding.root, (v, insets) -> {
+            int statusBarHeight;
+            int navigationBarHeight;
+            statusBarHeight = insets.getInsets(WindowInsetsCompat.Type.statusBars()).top;
+            navigationBarHeight = insets.getInsets(WindowInsetsCompat.Type.navigationBars()).bottom;
+
+            ConstraintLayout.LayoutParams sbLP = (ConstraintLayout.LayoutParams) binding.statusBarPlaceholder.getLayoutParams();
+            sbLP.height = statusBarHeight;
+            binding.statusBarPlaceholder.setLayoutParams(sbLP);
+
+            ConstraintLayout.LayoutParams nbLP = (ConstraintLayout.LayoutParams) binding.navigationBarPlaceholder.getLayoutParams();
+            nbLP.height = navigationBarHeight;
+            binding.navigationBarPlaceholder.setLayoutParams(nbLP);
+
+            return insets;
+        });
     }
 
     //region Fragment lifecycle
@@ -300,6 +324,10 @@ public class MainFragment extends Fragment implements OnMapReadyCallback, DB.Lis
         getLifecycle().addObserver(userActivityPermissionNotifier);
         notConnectedNotifier = new ClientNotConnectedNotifier(requireActivity(), binding.banners);
 
+        applySystemUIInsets(binding);
+        WindowCompat.getInsetsController(requireActivity().getWindow(), binding.root).setAppearanceLightStatusBars(false);
+        WindowCompat.getInsetsController(requireActivity().getWindow(), binding.root).setAppearanceLightNavigationBars(false);
+
         return binding.getRoot();
     }
 
@@ -346,10 +374,6 @@ public class MainFragment extends Fragment implements OnMapReadyCallback, DB.Lis
         super.onStart();
 
         Context ctx = requireContext();
-        if (ctx instanceof BackPressNotifier) {
-            ((BackPressNotifier) ctx).setBackPressInterceptor(this);
-        }
-
         checkPermissions();
 
         // If the device has an FCM token, upload it
@@ -399,11 +423,6 @@ public class MainFragment extends Fragment implements OnMapReadyCallback, DB.Lis
         locationProviderClient.removeLocationUpdates(mLocationCallbackHelper);
 
         oscarSocket.disconnect();
-
-        Context ctx = requireContext();
-        if (ctx instanceof BackPressNotifier) {
-            ((BackPressNotifier) ctx).setBackPressInterceptor(null);
-        }
     }
 
     //endregion
@@ -1418,22 +1437,4 @@ public class MainFragment extends Fragment implements OnMapReadyCallback, DB.Lis
             }
         }
     };
-
-    //region BackPressInterceptor
-
-    @Override
-    public boolean onBackPressed() {
-        if (viewModel == null) {
-            return false;
-        }
-
-        if (viewModel.isTimedShareSheetDismissable()) {
-            viewModel.onCloseTimedSheetAction();
-            return true;
-        }
-
-        return false;
-    }
-
-    //endregion
 }
