@@ -325,7 +325,7 @@ public class WelcomeActivity extends AppCompatActivity implements WelcomeViewHol
         }
     }
 
-    @SuppressLint("WrongThread")
+    @SuppressLint({"ThreadConstraint", "WrongThread"})
     @AnyThread
     private void showProgressDialog(boolean shouldShow) {
         if (Looper.getMainLooper() == Looper.myLooper()) {

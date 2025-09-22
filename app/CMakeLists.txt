@@ -2,16 +2,15 @@
 # library. You should either keep the default value or only pass a
 # value of 3.4.0 or lower.
 
-cmake_minimum_required(VERSION 3.4.1)
+cmake_minimum_required(VERSION 4.0.0)
 
-# store the path to the sodium library in a variable
-set(sodium-dir ${CMAKE_CURRENT_SOURCE_DIR}/../sodium)
+project(georgenative)
 
-add_library(sodium SHARED IMPORTED)
-set_property(	TARGET sodium
-				PROPERTY IMPORTED_LOCATION
-						# Provides the path to the appropriate libsodium.so
-						${sodium-dir}/lib/${ANDROID_ABI}/libsodium.so)
+find_package(sodium REQUIRED CONFIG)
+
+# use a 16 KB page size
+set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -Wl,-z,max-page-size=16384")
+set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -Wl,-z,max-page-size=16384")
 
 # Creates and names a library, sets it as either STATIC
 # or SHARED, and provides the relative paths to its source code.
@@ -29,8 +28,6 @@ add_library( # Sets the name of the library.
              # file are automatically included.
              src/main/cpp/sodium.c)
 
-target_include_directories(native-lib PRIVATE
-							${sodium-dir}/include)
-
-target_link_libraries(native-lib android sodium log)
+target_include_directories(native-lib PRIVATE)
+target_link_libraries(native-lib android sodium::sodium log)
 

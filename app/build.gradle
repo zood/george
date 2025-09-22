@@ -4,16 +4,17 @@ android {
     buildFeatures {
         dataBinding = true
         buildConfig = true
+        prefab = true
     }
 
     defaultConfig {
         applicationId "xyz.zood.george"
-        compileSdk 36
+        compileSdk = 36
         minSdkVersion 29
         targetSdkVersion 36
         versionCode 49
         versionName "0.49"
-        multiDexEnabled true
+        multiDexEnabled = true
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         resourceConfigurations += ['en', 'tr', 'ru']
         vectorDrawables.useSupportLibrary = true
@@ -30,34 +31,30 @@ android {
     }
     buildTypes {
         release {
-            shrinkResources false
-            minifyEnabled false
+            shrinkResources = false
+            minifyEnabled = false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
         debug {
             jniDebuggable = true
-            renderscriptDebuggable = false
         }
     }
-    sourceSets {
-        main {
-//            jniLibs.srcDirs = ['../sodium/lib']
-        }
-    }
+
     externalNativeBuild {
         cmake {
-            path "CMakeLists.txt"
+            path = "CMakeLists.txt"
+            version = "4.1.1"
         }
     }
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_11
         targetCompatibility JavaVersion.VERSION_11
     }
-    ndkVersion '20.0.5594570'
-    namespace 'xyz.zood.george'
+    ndkVersion = '29.0.14033849'
+    namespace = 'xyz.zood.george'
     packagingOptions {
         jniLibs {
-            useLegacyPackaging false
+            useLegacyPackaging = false
         }
     }
 }
@@ -68,6 +65,7 @@ repositories {
 
 dependencies {
     implementation fileTree(dir: 'libs', include: ['*.jar'])
+    implementation fileTree(dir: 'libs', include: ['libsodium-1.0.20.0.aar'])
 
     implementation 'androidx.activity:activity:1.12.0-alpha04'
     implementation 'androidx.appcompat:appcompat:1.7.1'

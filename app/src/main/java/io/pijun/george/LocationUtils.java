@@ -160,6 +160,10 @@ public class LocationUtils {
 
     @AnyThread
     public static void upload(@NonNull Location location) {
+        // Apparently lat and/or lng can be infinite: https://github.com/zood/george/issues/119
+        if (Double.isInfinite(location.getLatitude()) || Double.isInfinite(location.getLongitude())) {
+            return;
+        }
         locationsQueue.add(location);
     }
 
