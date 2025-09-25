@@ -499,6 +499,14 @@ public class MainFragment extends Fragment implements OnMapReadyCallback, DB.Lis
             return;
         }
 
+        // were we tracking another friend before? If so, we need to hide their error circle
+        if (friendForCameraToTrack != -1) {
+            var prevFriend = symbolTracker.get(friendForCameraToTrack);
+            if (prevFriend != null) {
+                prevFriend.setErrorCircleVisible(false);
+            }
+        }
+
         // the camera should track this friend
         friendForCameraToTrack = fr.id;
         binding.myLocationFab.setSelected(false);
@@ -971,6 +979,14 @@ public class MainFragment extends Fragment implements OnMapReadyCallback, DB.Lis
         if (fs == null) {
             // what did we click on?
             return true;
+        }
+
+        // is the friend that was clicked different from the one we're currently tracking?
+        if (friendForCameraToTrack != fs.getFriendId()) {
+            var prevFriendSymbol = symbolTracker.get(friendForCameraToTrack);
+            if (prevFriendSymbol != null) {
+                prevFriendSymbol.setErrorCircleVisible(false);
+            }
         }
 
         // make the camera track this friend
