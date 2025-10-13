@@ -80,6 +80,14 @@ public class PassiveLocationReceiver extends BroadcastReceiver {
                 }
 
                 LocationManager lm = context.getSystemService(LocationManager.class);
+
+                // make sure the device has a 'passive' provider.
+                var providers = lm.getAllProviders();
+                if (!providers.contains(LocationManager.PASSIVE_PROVIDER)) {
+                    // no 'passive' provider so don't request passive location updates
+                    return;
+                }
+
                 lm.requestLocationUpdates(LocationManager.PASSIVE_PROVIDER, 1000, 1, newPendingIntent(context));
                 isRunning = true;
             }

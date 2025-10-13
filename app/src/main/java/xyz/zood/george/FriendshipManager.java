@@ -15,6 +15,7 @@ import java.util.Collections;
 
 import io.pijun.george.CloudLogger;
 import io.pijun.george.Constants;
+import io.pijun.george.L;
 import io.pijun.george.api.OscarClient;
 import io.pijun.george.api.UserComm;
 import io.pijun.george.api.task.OscarTask;
@@ -81,14 +82,14 @@ public class FriendshipManager {
             db.startSharingWith(user, sendingBoxId);
         } catch (DB.DBException dbe) {
             listener.onAddFriendFinished(AddFriendResult.DatabaseError, dbe.getLocalizedMessage());
-            CloudLogger.log(dbe);
+            L.w("addFriend - startSharingWith", dbe);
             return;
         }
 
         try {
             AvatarManager.sendAvatarToUsers(ctx, Collections.singletonList(user), keyPair, accessToken);
         } catch (IOException ex) {
-            CloudLogger.log(ex);
+            L.w("addFriend - sendAvatarTouser", ex);
             // We're purposely not returning early here. This isn't a critical error.
         }
 
@@ -116,7 +117,7 @@ public class FriendshipManager {
                     db.removeFriend(friend);
                     listener.onRemoveFriendFinished(true);
                 } catch (DB.DBException ex) {
-                    CloudLogger.log(ex);
+                    L.w("removeFriend - db.removeFriend", ex);
                     listener.onRemoveFriendFinished(false);
                 }
             }
@@ -131,7 +132,7 @@ public class FriendshipManager {
         UserComm comm = UserComm.newLocationSharingGrant(sendingBoxId);
         String errMsg = OscarClient.queueSendMessage(queue, friend.user, keyPair, accessToken, comm.toJSON(), false, false);
         if (errMsg != null) {
-            CloudLogger.log(new RuntimeException(errMsg));
+            L.w("startSharingWith - queueSendMessage", new RuntimeException(errMsg));
             listener.onShareOpFinished(false);
             return;
         }
@@ -140,7 +141,7 @@ public class FriendshipManager {
         try {
             db.startSharingWith(friend.user, sendingBoxId);
         } catch (DB.DBException ex) {
-            CloudLogger.log(ex);
+            L.w("startSharingWith - startSharingWith", ex);
             listener.onShareOpFinished(false);
         }
 
@@ -151,7 +152,7 @@ public class FriendshipManager {
         try {
             AvatarManager.sendAvatarToUser(ctx, friend.user);
         } catch (IOException ex) {
-            CloudLogger.log(ex);
+            L.w("startSharingWith - sendAvatarToUser", ex);
             listener.onShareOpFinished(false);
         }
         BackupDatabaseWorker.scheduleBackup(ctx);
@@ -163,7 +164,7 @@ public class FriendshipManager {
         try {
             db.stopSharingWith(friend.user);
         } catch (DB.DBException ex) {
-            CloudLogger.log(ex);
+            L.w("stopSharingWith - db.stopSharingWith", ex);
             listener.onShareOpFinished(false);
         }
         BackupDatabaseWorker.scheduleBackup(ctx);
@@ -171,7 +172,7 @@ public class FriendshipManager {
         UserComm comm = UserComm.newLocationSharingRevocation();
         String errMsg = OscarClient.queueSendMessage(queue, friend.user, keyPair, accessToken, comm.toJSON(), false, false);
         if (errMsg != null) {
-            CloudLogger.log(new RuntimeException(errMsg));
+            L.w("stopSharingWith - queueSendMessage", new RuntimeException(errMsg));
             listener.onShareOpFinished(false);
         }
         listener.onShareOpFinished(true);

@@ -293,8 +293,7 @@ public class TimedShareService extends Service implements LocationListenerCompat
         try {
             DB.get().addLimitedShare(mKeyPair.publicKey, mSendingBoxId);
         } catch (DB.DBException dbe) {
-            L.e("Unable to add limited share to db", dbe);
-            CloudLogger.log(dbe);
+            L.e("startLimitedShare", dbe);
             return;
         }
 

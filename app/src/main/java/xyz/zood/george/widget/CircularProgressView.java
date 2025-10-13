@@ -84,7 +84,7 @@ public class CircularProgressView extends View {
 
         width = w;
         height = h;
-        radius = w/2;   // let's hope it's square
+        radius = (float)(w/2);   // let's hope it's square
     }
 
     public void setTimeRemaining(@FloatRange(fromInclusive = true, from = 0.0, toInclusive = true, to = 1.0) float tr) {

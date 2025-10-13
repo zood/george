@@ -104,13 +104,13 @@ public class MainViewModel extends ViewModel implements TimedShareService.Listen
         shareDuration = duration;
         liveTimedShareIsRunning.postValue(true);
         countdownTimer = new Timer();
-        countdownTimer.scheduleAtFixedRate(new TimerTask() {
+        countdownTimer.schedule(new TimerTask() {
             @Override
             public void run() {
                 long remaining = calculateTimedShareRemaining(System.currentTimeMillis());
                 liveTimedShareTimeRemaining.postValue(remaining);
             }
-        }, 0, 1000);
+        }, 1000);
         TimedShareService svc = TimedShareService.get();
         if (svc != null) {
             liveTimedShareUrl.postValue(svc.getUrl());

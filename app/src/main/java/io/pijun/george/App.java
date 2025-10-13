@@ -16,7 +16,6 @@ import io.pijun.george.api.TaskSender;
 import io.pijun.george.database.DB;
 import xyz.zood.george.worker.LocationWorker;
 import xyz.zood.george.receiver.PassiveLocationReceiver;
-import xyz.zood.george.receiver.UserActivityReceiver;
 
 public class App extends Application {
 
@@ -53,7 +52,6 @@ public class App extends Application {
                 if (AuthenticationManager.isLoggedIn(App.this)) {
                     LocationWorker.scheduleLocationWorker(App.this);
                     PassiveLocationReceiver.requestUpdates(App.this);
-                    UserActivityReceiver.requestUpdates(App.this);
                 }
             }
         });

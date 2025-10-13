@@ -1,7 +1,6 @@
 package io.pijun.george;
 
 import android.content.Context;
-import android.location.Criteria;
 import android.location.Location;
 import android.location.LocationManager;
 import android.os.Handler;
@@ -9,7 +8,6 @@ import android.os.HandlerThread;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -53,7 +51,7 @@ public class LocationUtils {
 
     @Nullable
     private static UserComm lastLocationMessage = null;
-    private static final PriorityBlockingQueue<Location> locationsQueue = new PriorityBlockingQueue<>(5, new Comparator<Location>() {
+    private static final PriorityBlockingQueue<Location> locationsQueue = new PriorityBlockingQueue<>(5, new Comparator<>() {
         @Override
         public int compare(Location o1, Location o2) {
             // We want the largest timestamp to be at the front/head of the queue
@@ -170,13 +168,7 @@ public class LocationUtils {
             }
 
             // now remove any older locations that have piled up
-            Iterator<Location> iter = locationsQueue.iterator();
-            while (iter.hasNext()) {
-                Location l = iter.next();
-                if (l.getTime() <= lastLocationMessage.time) {
-                    iter.remove();
-                }
-            }
+            locationsQueue.removeIf(l -> l.getTime() <= lastLocationMessage.time);
         }
     }
 

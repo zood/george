@@ -82,12 +82,10 @@ import io.pijun.george.database.FriendRecord;
 import io.pijun.george.database.UserRecord;
 import io.pijun.george.view.AvatarRenderer;
 import xyz.zood.george.databinding.FragmentMainBinding;
-import xyz.zood.george.notifier.ActivityRecognitionPermissionNotifier;
 import xyz.zood.george.notifier.BackgroundDataRestrictionNotifier;
 import xyz.zood.george.notifier.BackgroundLocationPermissionNotifier;
 import xyz.zood.george.notifier.ClientNotConnectedNotifier;
 import xyz.zood.george.notifier.ForegroundLocationPermissionNotifier;
-import xyz.zood.george.receiver.UserActivityReceiver;
 import xyz.zood.george.viewmodels.Event;
 import xyz.zood.george.viewmodels.MainViewModel;
 import xyz.zood.george.widget.InfoPanel;
@@ -108,13 +106,11 @@ public class MainFragment extends Fragment implements OnMapReadyCallback, DB.Lis
     private InfoPanel infoPanel;
     private boolean isFlyingCameraToMyLocation = false;
     private KeyPair keyPair;
-    private ActivityRecognitionPermissionNotifier userActivityPermissionNotifier;
     private BackgroundLocationPermissionNotifier bgLocationPermissionNotifier;
     private ForegroundLocationPermissionNotifier fgLocationPermissionNotifier;
     public ActivityResultLauncher<String[]> fgLocationPermLauncher;
     public ActivityResultLauncher<String[]> bgLocationPermLauncher;
     public ActivityResultLauncher<String[]> bgLocationPermToAddFriendLauncher;
-    public ActivityResultLauncher<String[]> activityRecognitionPermLauncher;
     private LocationManager locationManager;
     private LocationRequestCompat locationRequestCmp;
     @Nullable private FriendSymbolTracker symbolTracker;
@@ -209,16 +205,6 @@ public class MainFragment extends Fragment implements OnMapReadyCallback, DB.Lis
                 }
             }
         });
-        activityRecognitionPermLauncher = registerForActivityResult(new ActivityResultContracts.RequestMultiplePermissions(), new ActivityResultCallback<>() {
-            @Override
-            public void onActivityResult(Map<String, Boolean> o) {
-                if (Permissions.checkActivityRecognitionPermission(ctx)) {
-                    activityRecognitionPermissionGranted();
-                } else {
-                    userActivityPermissionNotifier.show();
-                }
-            }
-        });
 
         viewModel = new ViewModelProvider(requireActivity()).get(MainViewModel.class);
         locationManager = requireContext().getApplicationContext().getSystemService(LocationManager.class);
@@ -305,8 +291,6 @@ public class MainFragment extends Fragment implements OnMapReadyCallback, DB.Lis
         getLifecycle().addObserver(bgLocationPermissionNotifier);
         fgLocationPermissionNotifier = new ForegroundLocationPermissionNotifier(requireActivity(), this, binding.banners);
         getLifecycle().addObserver(fgLocationPermissionNotifier);
-        userActivityPermissionNotifier = new ActivityRecognitionPermissionNotifier(requireActivity(), this, binding.banners);
-        getLifecycle().addObserver(userActivityPermissionNotifier);
         notConnectedNotifier = new ClientNotConnectedNotifier(requireActivity(), binding.banners);
 
         applySystemUIInsets(binding);
@@ -579,73 +563,8 @@ public class MainFragment extends Fragment implements OnMapReadyCallback, DB.Lis
     //region Permissions
 
     @UiThread
-    private void activityRecognitionPermissionGranted() {
-        Context ctx = getContext();
-        if (ctx == null) {
-            return;
-        }
-        UserActivityReceiver.requestUpdates(ctx);
-    }
-
-    @UiThread
     private void backgroundLocationPermissionGranted() {
-        verifyLocationSettingsResolution();
-
-        App.runInBackground(new WorkerRunnable() {
-            @Override
-            public void run() {
-                ArrayList<FriendRecord> friends = DB.get().getFriends();
-                if (friends.isEmpty()) {
-                    return;
-                }
-
-                App.runOnUiThread(new UiRunnable() {
-                    @Override
-                    public void run() {
-                        checkActivityRecognitionPermission();
-                    }
-                });
-            }
-        });
-    }
-
-    @UiThread
-    private void checkActivityRecognitionPermission() {
-        Context ctx = getContext();
-        if (ctx == null) {
-            return;
-        }
-        if (Permissions.checkActivityRecognitionPermission(ctx)) {
-            activityRecognitionPermissionGranted();
-            return;
-        }
-
-        if (viewModel.isActivityRecognitionRationaleVisible()) {
-            return;
-        }
-
-        FragmentActivity activity = getActivity();
-        if (activity == null) {
-            return;
-        }
-
-        // Do we need to show the rationale?
-        if (ActivityCompat.shouldShowRequestPermissionRationale(activity, Manifest.permission.ACTIVITY_RECOGNITION)) {
-            ZoodDialog dialog = ZoodDialog.newInstance(getString(R.string.activity_recognition_permission_reason_msg));
-            dialog.setTitle(getString(R.string.permission_request));
-            dialog.setButton1(getString(R.string.ok), new View.OnClickListener() {
-                @Override
-                public void onClick(View view) {
-                    viewModel.setActivityRecognitionRationaleVisible(false);
-                    activityRecognitionPermLauncher.launch(Permissions.getActivityRecognitionPermissions());
-                }
-            });
-            dialog.setCancelable(false);
-            dialog.show(getParentFragmentManager(), null);
-            viewModel.setActivityRecognitionRationaleVisible(true);
-        } else {
-            activityRecognitionPermLauncher.launch(Permissions.getActivityRecognitionPermissions());
-        }
+        verifyLocationServicesEnabled();
     }
 
     @UiThread
@@ -772,7 +691,7 @@ public class MainFragment extends Fragment implements OnMapReadyCallback, DB.Lis
         });
     }
 
-    private void verifyLocationSettingsResolution() {
+    private void verifyLocationServicesEnabled() {
         if (!LocationManagerCompat.isLocationEnabled(locationManager)) {
             if (!isVisible()) {
                 return;

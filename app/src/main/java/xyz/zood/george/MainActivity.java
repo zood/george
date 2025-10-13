@@ -7,13 +7,10 @@ import android.os.Bundle;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.view.WindowCompat;
-import androidx.core.view.WindowInsetsCompat;
-import androidx.core.view.WindowInsetsControllerCompat;
 import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentTransaction;
 
 import io.pijun.george.AuthenticationManager;
-import io.pijun.george.L;
 import io.pijun.george.Prefs;
 import io.pijun.george.WelcomeActivity;
 import io.pijun.george.crypto.KeyPair;

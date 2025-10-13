@@ -26,7 +26,7 @@ public class KeyPair implements Parcelable {
 
     @Override
     public int hashCode() {
-        return Objects.hash(publicKey, secretKey);
+        return Objects.hash(Arrays.hashCode(publicKey), Arrays.hashCode(secretKey));
     }
 
     @NonNull
@@ -52,7 +52,7 @@ public class KeyPair implements Parcelable {
         out.writeByteArray(secretKey);
     }
 
-    public static final Parcelable.Creator<KeyPair> CREATOR = new Parcelable.Creator<KeyPair>() {
+    public static final Parcelable.Creator<KeyPair> CREATOR = new Parcelable.Creator<>() {
         @Override
         public KeyPair createFromParcel(Parcel in) {
             KeyPair kp = new KeyPair();

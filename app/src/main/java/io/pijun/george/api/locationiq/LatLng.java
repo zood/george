@@ -1,5 +1,7 @@
 package io.pijun.george.api.locationiq;
 
+import java.util.Objects;
+
 public class LatLng {
     final double lat;
     final double lng;
@@ -9,28 +11,15 @@ public class LatLng {
         this.lng = lng;
     }
 
-    @SuppressWarnings("RedundantIfStatement")
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
-
         LatLng latLng = (LatLng) o;
-
-        if (Double.compare(latLng.lat, lat) != 0) return false;
-        if (Double.compare(latLng.lng, lng) != 0) return false;
-
-        return true;
+        return Double.compare(lat, latLng.lat) == 0 && Double.compare(lng, latLng.lng) == 0;
     }
 
     @Override
     public int hashCode() {
-        int result;
-        long temp;
-        temp = Double.doubleToLongBits(lat);
-        result = (int) (temp ^ (temp >>> 32));
-        temp = Double.doubleToLongBits(lng);
-        result = 31 * result + (int) (temp ^ (temp >>> 32));
-        return result;
+        return Objects.hash(lat, lng);
     }
 }

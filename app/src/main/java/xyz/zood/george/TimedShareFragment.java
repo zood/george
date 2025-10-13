@@ -224,7 +224,7 @@ public class TimedShareFragment extends Fragment {
             onTimedShareFabClicked();
         });
         viewModel.getTimedShareTimeRemaining().observe(getViewLifecycleOwner(), this::setTimeRemaining);
-        viewModel.getOnCloseTimedSheet().observe(getViewLifecycleOwner(), new Observer<Event<Boolean>>() {
+        viewModel.getOnCloseTimedSheet().observe(getViewLifecycleOwner(), new Observer<>() {
             @Override
             public void onChanged(Event<Boolean> booleanEvent) {
                 close();
