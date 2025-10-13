@@ -9,6 +9,7 @@ import java.util.ArrayList;
 
 import io.pijun.george.CloudLogger;
 import io.pijun.george.Constants;
+import io.pijun.george.L;
 import io.pijun.george.api.OscarClient;
 
 public class Snapshot {
@@ -47,7 +48,7 @@ public class Snapshot {
         try {
             snapshot = OscarClient.sGson.fromJson(isr, Snapshot.class);
         } catch (Throwable t) {
-            CloudLogger.log(t);
+            L.w("Snapshot.fromJson", t);
             return null;
         }
         return snapshot;

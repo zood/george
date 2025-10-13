@@ -2,6 +2,7 @@ package io.pijun.george.api;
 
 import android.content.Context;
 
+import androidx.annotation.AnyThread;
 import androidx.annotation.CheckResult;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -116,6 +117,7 @@ public class OscarClient {
 
     @NonNull
     @CheckResult
+    @AnyThread
     public static PersistentQueue<OscarTask> getQueue(@NonNull Context context) {
         if (sQueue == null) {
             synchronized (OscarClient.class) {

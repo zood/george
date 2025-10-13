@@ -251,8 +251,7 @@ public class SettingsFragment extends Fragment implements SettingsAdapter.Listen
             Uri photoUri  = FileProvider.getUriForFile(ctx, "xyz.zood.george.fileprovider", imgFile);
             takePicture.launch(photoUri);
         } catch (Throwable t) {
-            L.w("unable to start camera", t);
-            CloudLogger.log(t);
+            L.w("startCamera", t);
         }
     }
 

@@ -7,8 +7,7 @@ import io.pijun.george.Hex;
 public class AuthenticationChallenge {
 
     public static class User {
-        @NonNull
-        public byte[] publicKey;
+        @NonNull public byte[] publicKey;
         @NonNull public byte[] wrappedSecretKey;
         @NonNull public byte[] wrappedSecretKeyNonce;
         @NonNull public byte[] passwordSalt;

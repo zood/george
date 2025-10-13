@@ -8,6 +8,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.pm.ServiceInfo;
 import android.location.Location;
+import android.location.LocationManager;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.IBinder;
@@ -22,13 +23,9 @@ import androidx.annotation.UiThread;
 import androidx.annotation.WorkerThread;
 import androidx.core.app.NotificationCompat;
 import androidx.core.app.ServiceCompat;
-
-import com.google.android.gms.location.FusedLocationProviderClient;
-import com.google.android.gms.location.LocationCallback;
-import com.google.android.gms.location.LocationRequest;
-import com.google.android.gms.location.LocationResult;
-import com.google.android.gms.location.LocationServices;
-import com.google.android.gms.location.Priority;
+import androidx.core.location.LocationListenerCompat;
+import androidx.core.location.LocationManagerCompat;
+import androidx.core.location.LocationRequestCompat;
 
 import java.lang.ref.WeakReference;
 import java.security.SecureRandom;
@@ -51,7 +48,7 @@ import xyz.zood.george.MainActivity;
 import xyz.zood.george.Permissions;
 import xyz.zood.george.R;
 
-public class TimedShareService extends Service {
+public class TimedShareService extends Service implements LocationListenerCompat {
 
     private static final String ARG_SERVICE_ACTION = "service_action";
     private static final int NOTIFICATION_ID = 22;  // arbitrary number
@@ -72,7 +69,7 @@ public class TimedShareService extends Service {
     private boolean isStarted = false;
     private KeyPair mKeyPair;
     private byte[] mSendingBoxId;
-    private FusedLocationProviderClient mLocationProviderClient;
+    private LocationManager locMgr;
     private static final CopyOnWriteArrayList<WeakReference<Listener>> listeners = new CopyOnWriteArrayList<>();
     private Future<?> stopTask;
 
@@ -262,11 +259,24 @@ public class TimedShareService extends Service {
             return;
         }
 
+        locMgr = this.getSystemService(LocationManager.class);
+        if (locMgr == null) {
+            Toast.makeText(this, R.string.location_service_not_available_on_device, Toast.LENGTH_SHORT).show();
+            stopSelf();
+            return;
+        }
+
+        String provider = LocationUtils.getBestProvider(locMgr);
+        if (provider == null) {
+            Toast.makeText(this, R.string.no_location_provider_available, Toast.LENGTH_SHORT).show();
+            stopSelf();
+            return;
+        }
+
         startTime = System.currentTimeMillis();
         // 30 minutes + 30 seconds. The 30 seconds is so the countdown timer shows
         // 30m for at least a little while. It looks weird to start with '29m'.
         shareDuration = 30 * 60 * 1000 + (30 * 1000);
-//        shareDuration = 16000;
         App.isLimitedShareRunning = true;
         showNotification();
         // create a user
@@ -283,8 +293,7 @@ public class TimedShareService extends Service {
         try {
             DB.get().addLimitedShare(mKeyPair.publicKey, mSendingBoxId);
         } catch (DB.DBException dbe) {
-            L.e("Unable to add limited share to db", dbe);
-            CloudLogger.log(dbe);
+            L.e("startLimitedShare", dbe);
             return;
         }
 
@@ -293,11 +302,10 @@ public class TimedShareService extends Service {
 
         notifyShareStarted(startTime, shareDuration);
 
-        mLocationProviderClient = LocationServices.getFusedLocationProviderClient(this);
-        LocationRequest request = new LocationRequest.Builder(5*DateUtils.SECOND_IN_MILLIS).
-                setPriority(Priority.PRIORITY_HIGH_ACCURACY).
+        LocationRequestCompat req = new LocationRequestCompat.Builder(5* DateUtils.SECOND_IN_MILLIS).
+                setQuality(LocationRequestCompat.QUALITY_HIGH_ACCURACY).
                 build();
-        mLocationProviderClient.requestLocationUpdates(request, mLocationCallbackHelper, sServiceLooper);
+        LocationManagerCompat.requestLocationUpdates(locMgr, provider, req, App.getExecutor(), this);
 
         // schedule a runnable to shut us down
         scheduleStopTask();
@@ -316,7 +324,9 @@ public class TimedShareService extends Service {
         App.isLimitedShareRunning = false;
         stopForeground(true);
 
-        mLocationProviderClient.removeLocationUpdates(mLocationCallbackHelper);
+        if (Permissions.checkForegroundLocationPermission(this)) {
+            LocationManagerCompat.removeUpdates(locMgr, this);
+        }
         App.runInBackground(new WorkerRunnable() {
             @Override
             public void run() {
@@ -347,18 +357,11 @@ public class TimedShareService extends Service {
         scheduleStopTask();
     }
 
-    private final LocationCallback mLocationCallbackHelper = new LocationCallback() {
-        @Override
-        @WorkerThread
-        public void onLocationResult(LocationResult result) {
-            Location location = result.getLastLocation();
-            if (location == null) {
-                return;
-            }
-
-            LocationUtils.upload(location);
-        }
-    };
+    @Override
+    @WorkerThread
+    public void onLocationChanged(@NonNull Location location) {
+        LocationUtils.upload(location);
+    }
 
     //region Listener
 

@@ -1,5 +1,6 @@
 package xyz.zood.george.service;
 
+import android.annotation.SuppressLint;
 import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
@@ -8,19 +9,16 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.pm.ServiceInfo;
 import android.location.Location;
+import android.location.LocationManager;
 import android.os.IBinder;
 import android.os.Looper;
 import android.text.format.DateUtils;
 
 import androidx.annotation.NonNull;
 import androidx.core.app.NotificationCompat;
-
-import com.google.android.gms.location.FusedLocationProviderClient;
-import com.google.android.gms.location.LocationCallback;
-import com.google.android.gms.location.LocationRequest;
-import com.google.android.gms.location.LocationResult;
-import com.google.android.gms.location.LocationServices;
-import com.google.android.gms.location.Priority;
+import androidx.core.location.LocationListenerCompat;
+import androidx.core.location.LocationManagerCompat;
+import androidx.core.location.LocationRequestCompat;
 
 import java.util.concurrent.Future;
 
@@ -37,13 +35,13 @@ import io.pijun.george.database.UserRecord;
 import xyz.zood.george.Permissions;
 import xyz.zood.george.R;
 
-public class LocationService extends Service {
+public class LocationService extends Service implements LocationListenerCompat {
 
     private static final String FINDING_LOCATION_CHANNEL_ID = "finding_location_01";
     private static final int NOTIFICATION_ID = 44;  // arbitrary number
     private static final String REQUESTING_USER_ID = "requesting_user_id";
 
-    private FusedLocationProviderClient fusedLocationClient;
+    private LocationManager locMgr;
     private Future<?> timeout;
     private long requestingUserId = -1;
 
@@ -51,7 +49,7 @@ public class LocationService extends Service {
     public void onCreate() {
         L.i("LocationService.onCreate");
         super.onCreate();
-        fusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
+        locMgr = this.getSystemService(LocationManager.class);
         timeout = App.runOnUiThreadCancellable(30 * DateUtils.SECOND_IN_MILLIS, new UiRunnable() {
             @Override
             public void run() {
@@ -100,6 +98,20 @@ public class LocationService extends Service {
         }
     }
 
+    @Override
+    public void onLocationChanged(@NonNull Location loc) {
+        LocationUtils.upload(loc);
+
+        // if we get a location with an accuracy of <= 10 meters, that's good enough.
+        boolean isAccurate = loc.hasAccuracy() && loc.getAccuracy() <= 10;
+        // Also check that it's a recent value, and not some cached value the system gave us.
+        boolean isRecent = (System.currentTimeMillis() - loc.getTime()) < 30 * DateUtils.SECOND_IN_MILLIS;
+        if (isAccurate && isRecent) {
+            L.i("LocationService - stopping");
+            stopSelf();
+        }
+    }
+
     public static Intent newIntent(Context context, long userId) {
         Intent intent = new Intent(context, LocationService.class);
         intent.putExtra(REQUESTING_USER_ID, userId);
@@ -130,8 +142,14 @@ public class LocationService extends Service {
     }
 
     private void startLocationUpdates() {
-        LocationRequest request = new LocationRequest.Builder(DateUtils.SECOND_IN_MILLIS).
-                setPriority(Priority.PRIORITY_HIGH_ACCURACY).
+        String provider = LocationUtils.getBestProvider(locMgr);
+        if (provider == null) {
+            stopSelf();
+            return;
+        }
+
+        LocationRequestCompat req = new LocationRequestCompat.Builder(500).
+                setQuality(LocationRequestCompat.QUALITY_HIGH_ACCURACY).
                 build();
 
         if (!Permissions.checkBackgroundLocationPermission(this)) {
@@ -139,31 +157,11 @@ public class LocationService extends Service {
             return;
         }
 
-        fusedLocationClient.requestLocationUpdates(request, callback, Looper.getMainLooper());
+        LocationManagerCompat.requestLocationUpdates(locMgr, provider, req, this, Looper.getMainLooper());
     }
 
+    @SuppressLint("MissingPermission")
     private void stopLocationUpdates() {
-        fusedLocationClient.removeLocationUpdates(callback);
+        LocationManagerCompat.removeUpdates(locMgr, this);
     }
-
-    private final LocationCallback callback = new LocationCallback() {
-        @Override
-        public void onLocationResult(@NonNull LocationResult locationResult) {
-            Location loc = locationResult.getLastLocation();
-            if (loc == null) {
-                return;
-            }
-
-            LocationUtils.upload(loc);
-
-            // if we get a location with an accuracy of <= 10 meters, that's good enough.
-            boolean isAccurate = loc.hasAccuracy() && loc.getAccuracy() <= 10;
-            // Also check that it's a recent value, and not some cached value the system gave us.
-            boolean isRecent = (System.currentTimeMillis() - loc.getTime()) < 30 * DateUtils.SECOND_IN_MILLIS;
-            if (isAccurate && isRecent) {
-                L.i("LocationService - stopping");
-                stopSelf();
-            }
-        }
-    };
 }

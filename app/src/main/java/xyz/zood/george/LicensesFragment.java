@@ -9,15 +9,12 @@ import androidx.core.view.WindowInsetsCompat;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 
-import android.text.util.Linkify;
 import android.util.Pair;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
-import io.pijun.george.L;
 import xyz.zood.george.databinding.FragmentLicensesBinding;
-import xyz.zood.george.databinding.FragmentSettingsBinding;
 
 public class LicensesFragment extends Fragment implements LibrariesAdapter.LibrariesAdapterListener {
 

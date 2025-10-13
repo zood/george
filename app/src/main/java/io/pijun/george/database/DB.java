@@ -435,9 +435,12 @@ public class DB {
 
         File avatar = AvatarManager.getMyAvatar(App.getApp());
         try {
-            FileInputStream fis = new FileInputStream(avatar);
-            byte[] buffer = new byte[(int)avatar.length()];
-            int read = fis.read(buffer);
+            byte[] buffer;
+            int read;
+            try (FileInputStream fis = new FileInputStream(avatar)) {
+                buffer = new byte[(int) avatar.length()];
+                read = fis.read(buffer);
+            }
             if (read == avatar.length()) {
                 snapshot.avatar = buffer;
             }

@@ -94,7 +94,7 @@ public class BannerView extends LinearLayout {
         void onBannerItemClick(int id);
     }
 
-    private class ItemHolder {
+    private static class ItemHolder {
         final private ConstraintLayout view;
         final int id;
         final TextView textView;

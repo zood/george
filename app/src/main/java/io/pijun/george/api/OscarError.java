@@ -66,11 +66,12 @@ public class OscarError {
 
     @Nullable
     public static OscarError fromResponse(@NonNull Response<?> r) {
-        ResponseBody errBody = r.errorBody();
-        if (errBody == null) {
-            return null;
+        try (ResponseBody errBody = r.errorBody()) {
+            if (errBody == null) {
+                return null;
+            }
+            return fromReader(errBody.charStream());
         }
-        return fromReader(errBody.charStream());
     }
 
     public static OscarError fromResponseBody(ResponseBody rb) {
