@@ -196,4 +196,7 @@
     <string name="activity_recognition_permission_needed">Activity recognition permission needed</string>
     <string name="my_location">My location</string>
     <string name="send_location_ellipsis">Send location…</string>
+    <string name="location_services_are_disabled">Location services are disabled</string>
+    <string name="location_service_not_available_on_device">Location service not available on device</string>
+    <string name="no_location_provider_available">No location provider available</string>
 </resources>

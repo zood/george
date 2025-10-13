@@ -64,6 +64,10 @@ public class App extends Application {
         return sApp;
     }
 
+    public static ExecutorService getExecutor() {
+        return sApp.mExecutor;
+    }
+
     @AnyThread
     public static void runOnUiThread(@NonNull UiRunnable r) {
         sApp.mUiThreadHandler.post(r);

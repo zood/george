@@ -1,12 +1,15 @@
 package io.pijun.george;
 
 import android.content.Context;
+import android.location.Criteria;
 import android.location.Location;
+import android.location.LocationManager;
 import android.os.Handler;
 import android.os.HandlerThread;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -61,6 +64,25 @@ public class LocationUtils {
     private static volatile long futureTime;
 
     private LocationUtils() {}
+
+    public static String getBestProvider(@NonNull LocationManager lm) {
+        var providers = lm.getProviders(true);
+        if (providers.isEmpty()) {
+            return null;
+        }
+
+        if (providers.contains("fused")) { // the constant wasn't introduced until SDK 31
+            return "fused";
+        }
+        if (providers.contains(LocationManager.GPS_PROVIDER)) {
+            return LocationManager.GPS_PROVIDER;
+        }
+        if (providers.contains(LocationManager.NETWORK_PROVIDER)) {
+            return LocationManager.NETWORK_PROVIDER;
+        }
+
+        return providers.get(0);
+    }
 
     @WorkerThread
     private static void run() {
