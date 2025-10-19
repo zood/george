@@ -27,7 +27,6 @@ import androidx.annotation.UiThread;
 import androidx.annotation.WorkerThread;
 
 import io.pijun.george.App;
-import io.pijun.george.CloudLogger;
 import io.pijun.george.L;
 import io.pijun.george.Prefs;
 import io.pijun.george.UiRunnable;
@@ -141,7 +140,7 @@ public class AvatarManager {
         try {
             fos = new FileOutputStream(imgFile);
         } catch (FileNotFoundException ex) {
-            CloudLogger.log(ex);
+            L.w("opening user avatar file", ex);
             return false;
         }
 
@@ -170,7 +169,7 @@ public class AvatarManager {
         try {
             fos = new FileOutputStream(imgFile);
         } catch (FileNotFoundException ex) {
-            CloudLogger.log(ex);
+            L.w("opening my avatar file", ex);
             return false;
         }
         boolean success = img.compress(Bitmap.CompressFormat.JPEG, 80, fos);
@@ -196,7 +195,7 @@ public class AvatarManager {
                     sendAvatarToUsers(ctx, users);
                     BackupDatabaseWorker.scheduleBackup(ctx);
                 } catch (IOException ex) {
-                    CloudLogger.log(ex);
+                    L.w("sendAvatarToUsers",ex);
                 }
             }
         });
@@ -235,9 +234,12 @@ public class AvatarManager {
             return;
         }
 
-        FileInputStream fis = new FileInputStream(avatarFile);
-        byte []buffer = new byte[(int) avatarFile.length()];
-        int read = fis.read(buffer);
+        byte[] buffer;
+        int read;
+        try (FileInputStream fis = new FileInputStream(avatarFile)) {
+            buffer = new byte[(int) avatarFile.length()];
+            read = fis.read(buffer);
+        }
         if (read < avatarFile.length()) {
             L.w("Did not read entire avatar");
             return;

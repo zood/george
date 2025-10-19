@@ -2,6 +2,7 @@ package io.pijun.george;
 
 import android.content.Context;
 import android.location.Location;
+import android.location.LocationManager;
 import android.os.Handler;
 import android.os.HandlerThread;
 
@@ -50,7 +51,7 @@ public class LocationUtils {
 
     @Nullable
     private static UserComm lastLocationMessage = null;
-    private static final PriorityBlockingQueue<Location> locationsQueue = new PriorityBlockingQueue<>(5, new Comparator<Location>() {
+    private static final PriorityBlockingQueue<Location> locationsQueue = new PriorityBlockingQueue<>(5, new Comparator<>() {
         @Override
         public int compare(Location o1, Location o2) {
             // We want the largest timestamp to be at the front/head of the queue
@@ -61,6 +62,25 @@ public class LocationUtils {
     private static volatile long futureTime;
 
     private LocationUtils() {}
+
+    public static String getBestProvider(@NonNull LocationManager lm) {
+        var providers = lm.getProviders(true);
+        if (providers.isEmpty()) {
+            return null;
+        }
+
+        if (providers.contains("fused")) { // the constant wasn't introduced until SDK 31
+            return "fused";
+        }
+        if (providers.contains(LocationManager.GPS_PROVIDER)) {
+            return LocationManager.GPS_PROVIDER;
+        }
+        if (providers.contains(LocationManager.NETWORK_PROVIDER)) {
+            return LocationManager.NETWORK_PROVIDER;
+        }
+
+        return providers.get(0);
+    }
 
     @WorkerThread
     private static void run() {
@@ -148,13 +168,7 @@ public class LocationUtils {
             }
 
             // now remove any older locations that have piled up
-            Iterator<Location> iter = locationsQueue.iterator();
-            while (iter.hasNext()) {
-                Location l = iter.next();
-                if (l.getTime() <= lastLocationMessage.time) {
-                    iter.remove();
-                }
-            }
+            locationsQueue.removeIf(l -> l.getTime() <= lastLocationMessage.time);
         }
     }
 

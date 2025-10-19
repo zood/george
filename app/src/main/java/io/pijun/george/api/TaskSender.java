@@ -120,7 +120,7 @@ public final class TaskSender {
                 //noinspection UnnecessaryContinue
                 continue;
             } catch (Throwable t) {
-                CloudLogger.log(t);
+                L.w("processQueue - Throwable", t);
                 queue.poll();
             } finally {
                 try {

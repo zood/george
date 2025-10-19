@@ -15,7 +15,7 @@ import androidx.annotation.CheckResult;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.WorkerThread;
-import io.pijun.george.CloudLogger;
+
 import io.pijun.george.L;
 
 public class PersistentQueue<E> {
@@ -136,8 +136,7 @@ public class PersistentQueue<E> {
         try {
             mHelper.getWritableDatabase().insertOrThrow(TASKS_TABLE, null, cv);
         } catch (SQLException ex) {
-            L.w("Error offering", ex);
-            CloudLogger.log(ex);
+            L.w("PersistentQueue.offer", ex);
             return;
         }
         mSemaphore.release();

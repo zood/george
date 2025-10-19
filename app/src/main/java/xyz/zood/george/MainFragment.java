@@ -3,12 +3,11 @@ package xyz.zood.george;
 import android.Manifest;
 import android.content.Context;
 import android.content.Intent;
-import android.content.IntentSender;
 import android.graphics.Bitmap;
 import android.location.Location;
+import android.location.LocationManager;
 import android.net.Uri;
 import android.os.Bundle;
-import android.os.Looper;
 import android.text.TextUtils;
 import android.text.format.DateUtils;
 import android.view.LayoutInflater;
@@ -25,6 +24,9 @@ import androidx.annotation.UiThread;
 import androidx.annotation.WorkerThread;
 import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.core.app.ActivityCompat;
+import androidx.core.location.LocationListenerCompat;
+import androidx.core.location.LocationManagerCompat;
+import androidx.core.location.LocationRequestCompat;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowCompat;
 import androidx.core.view.WindowInsetsCompat;
@@ -35,17 +37,6 @@ import androidx.fragment.app.FragmentManager;
 import androidx.lifecycle.Observer;
 import androidx.lifecycle.ViewModelProvider;
 
-import com.google.android.gms.common.api.ApiException;
-import com.google.android.gms.common.api.ResolvableApiException;
-import com.google.android.gms.location.FusedLocationProviderClient;
-import com.google.android.gms.location.LocationCallback;
-import com.google.android.gms.location.LocationRequest;
-import com.google.android.gms.location.LocationResult;
-import com.google.android.gms.location.LocationServices;
-import com.google.android.gms.location.LocationSettingsRequest;
-import com.google.android.gms.location.LocationSettingsStatusCodes;
-import com.google.android.gms.location.Priority;
-import com.google.android.gms.location.SettingsClient;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.messaging.FirebaseMessaging;
@@ -91,18 +82,16 @@ import io.pijun.george.database.FriendRecord;
 import io.pijun.george.database.UserRecord;
 import io.pijun.george.view.AvatarRenderer;
 import xyz.zood.george.databinding.FragmentMainBinding;
-import xyz.zood.george.notifier.ActivityRecognitionPermissionNotifier;
 import xyz.zood.george.notifier.BackgroundDataRestrictionNotifier;
 import xyz.zood.george.notifier.BackgroundLocationPermissionNotifier;
 import xyz.zood.george.notifier.ClientNotConnectedNotifier;
 import xyz.zood.george.notifier.ForegroundLocationPermissionNotifier;
-import xyz.zood.george.receiver.UserActivityReceiver;
 import xyz.zood.george.viewmodels.Event;
 import xyz.zood.george.viewmodels.MainViewModel;
 import xyz.zood.george.widget.InfoPanel;
 import xyz.zood.george.widget.ZoodDialog;
 
-public class MainFragment extends Fragment implements OnMapReadyCallback, DB.Listener, AuthenticationManager.Listener, OnSymbolClickListener {
+public class MainFragment extends Fragment implements OnMapReadyCallback, DB.Listener, AuthenticationManager.Listener, OnSymbolClickListener, LocationListenerCompat {
 
     static final String TAG = "main";
 
@@ -117,21 +106,17 @@ public class MainFragment extends Fragment implements OnMapReadyCallback, DB.Lis
     private InfoPanel infoPanel;
     private boolean isFlyingCameraToMyLocation = false;
     private KeyPair keyPair;
-    private ActivityRecognitionPermissionNotifier userActivityPermissionNotifier;
     private BackgroundLocationPermissionNotifier bgLocationPermissionNotifier;
     private ForegroundLocationPermissionNotifier fgLocationPermissionNotifier;
     public ActivityResultLauncher<String[]> fgLocationPermLauncher;
     public ActivityResultLauncher<String[]> bgLocationPermLauncher;
     public ActivityResultLauncher<String[]> bgLocationPermToAddFriendLauncher;
-    public ActivityResultLauncher<String[]> activityRecognitionPermLauncher;
-    private FusedLocationProviderClient locationProviderClient;
-    private LocationRequest locationRequest;
-    private LocationSettingsRequest locationSettingsRequest;
+    private LocationManager locationManager;
+    private LocationRequestCompat locationRequestCmp;
     @Nullable private FriendSymbolTracker symbolTracker;
     private MyLocationSymbol myLocationSymbol;
     private ClientNotConnectedNotifier notConnectedNotifier;
     private OscarSocket oscarSocket;
-    private SettingsClient settingsClient;
     private SymbolManager symbolManager;
     private MainViewModel viewModel;
 
@@ -220,24 +205,10 @@ public class MainFragment extends Fragment implements OnMapReadyCallback, DB.Lis
                 }
             }
         });
-        activityRecognitionPermLauncher = registerForActivityResult(new ActivityResultContracts.RequestMultiplePermissions(), new ActivityResultCallback<>() {
-            @Override
-            public void onActivityResult(Map<String, Boolean> o) {
-                if (Permissions.checkActivityRecognitionPermission(ctx)) {
-                    activityRecognitionPermissionGranted();
-                } else {
-                    userActivityPermissionNotifier.show();
-                }
-            }
-        });
 
         viewModel = new ViewModelProvider(requireActivity()).get(MainViewModel.class);
-        locationProviderClient = LocationServices.getFusedLocationProviderClient(requireContext());
-        settingsClient = LocationServices.getSettingsClient(ctx);
-        locationRequest = new LocationRequest.Builder(3*DateUtils.SECOND_IN_MILLIS).setPriority(Priority.PRIORITY_HIGH_ACCURACY).build();
-        LocationSettingsRequest.Builder builder = new LocationSettingsRequest.Builder();
-        builder.addLocationRequest(locationRequest);
-        locationSettingsRequest = builder.build();
+        locationManager = requireContext().getApplicationContext().getSystemService(LocationManager.class);
+        locationRequestCmp = new LocationRequestCompat.Builder(1000).setQuality(LocationRequestCompat.QUALITY_HIGH_ACCURACY).build();
 
         DB.get().addListener(this);
         AuthenticationManager.get().addListener(this);
@@ -320,8 +291,6 @@ public class MainFragment extends Fragment implements OnMapReadyCallback, DB.Lis
         getLifecycle().addObserver(bgLocationPermissionNotifier);
         fgLocationPermissionNotifier = new ForegroundLocationPermissionNotifier(requireActivity(), this, binding.banners);
         getLifecycle().addObserver(fgLocationPermissionNotifier);
-        userActivityPermissionNotifier = new ActivityRecognitionPermissionNotifier(requireActivity(), this, binding.banners);
-        getLifecycle().addObserver(userActivityPermissionNotifier);
         notConnectedNotifier = new ClientNotConnectedNotifier(requireActivity(), binding.banners);
 
         applySystemUIInsets(binding);
@@ -420,7 +389,9 @@ public class MainFragment extends Fragment implements OnMapReadyCallback, DB.Lis
         }
 
         // stop location updates
-        locationProviderClient.removeLocationUpdates(mLocationCallbackHelper);
+        if (Permissions.checkForegroundLocationPermission(requireContext())) {
+            LocationManagerCompat.removeUpdates(locationManager, this);
+        }
 
         oscarSocket.disconnect();
     }
@@ -592,73 +563,8 @@ public class MainFragment extends Fragment implements OnMapReadyCallback, DB.Lis
     //region Permissions
 
     @UiThread
-    private void activityRecognitionPermissionGranted() {
-        Context ctx = getContext();
-        if (ctx == null) {
-            return;
-        }
-        UserActivityReceiver.requestUpdates(ctx);
-    }
-
-    @UiThread
     private void backgroundLocationPermissionGranted() {
-        verifyLocationSettingsResolution();
-
-        App.runInBackground(new WorkerRunnable() {
-            @Override
-            public void run() {
-                ArrayList<FriendRecord> friends = DB.get().getFriends();
-                if (friends.isEmpty()) {
-                    return;
-                }
-
-                App.runOnUiThread(new UiRunnable() {
-                    @Override
-                    public void run() {
-                        checkActivityRecognitionPermission();
-                    }
-                });
-            }
-        });
-    }
-
-    @UiThread
-    private void checkActivityRecognitionPermission() {
-        Context ctx = getContext();
-        if (ctx == null) {
-            return;
-        }
-        if (Permissions.checkActivityRecognitionPermission(ctx)) {
-            activityRecognitionPermissionGranted();
-            return;
-        }
-
-        if (viewModel.isActivityRecognitionRationaleVisible()) {
-            return;
-        }
-
-        FragmentActivity activity = getActivity();
-        if (activity == null) {
-            return;
-        }
-
-        // Do we need to show the rationale?
-        if (ActivityCompat.shouldShowRequestPermissionRationale(activity, Manifest.permission.ACTIVITY_RECOGNITION)) {
-            ZoodDialog dialog = ZoodDialog.newInstance(getString(R.string.activity_recognition_permission_reason_msg));
-            dialog.setTitle(getString(R.string.permission_request));
-            dialog.setButton1(getString(R.string.ok), new View.OnClickListener() {
-                @Override
-                public void onClick(View view) {
-                    viewModel.setActivityRecognitionRationaleVisible(false);
-                    activityRecognitionPermLauncher.launch(Permissions.getActivityRecognitionPermissions());
-                }
-            });
-            dialog.setCancelable(false);
-            dialog.show(getParentFragmentManager(), null);
-            viewModel.setActivityRecognitionRationaleVisible(true);
-        } else {
-            activityRecognitionPermLauncher.launch(Permissions.getActivityRecognitionPermissions());
-        }
+        verifyLocationServicesEnabled();
     }
 
     @UiThread
@@ -755,7 +661,11 @@ public class MainFragment extends Fragment implements OnMapReadyCallback, DB.Lis
         }
         // Start requesting location updates. The permission check is redundant, but we do it to quiet the linter
         if (Permissions.checkForegroundLocationPermission(ctx)) {
-            locationProviderClient.requestLocationUpdates(locationRequest, mLocationCallbackHelper, Looper.getMainLooper());
+            var provider = LocationUtils.getBestProvider(locationManager);
+            if (provider != null) {
+                L.i("using location provider '" + provider + "'");
+                LocationManagerCompat.requestLocationUpdates(locationManager, provider, locationRequestCmp, App.getExecutor(), this);
+            }
         }
 
         // If we have at least 1 friend, then we need permission for background location
@@ -781,29 +691,13 @@ public class MainFragment extends Fragment implements OnMapReadyCallback, DB.Lis
         });
     }
 
-    private void verifyLocationSettingsResolution() {
-        settingsClient.checkLocationSettings(locationSettingsRequest)
-                .addOnFailureListener(e -> {
-                    if (!isVisible()) {
-                        return;
-                    }
-                    FragmentActivity activity = requireActivity();
-                    int statusCode = ((ApiException) e).getStatusCode();
-                    switch (statusCode) {
-                        case LocationSettingsStatusCodes.RESOLUTION_REQUIRED:
-                            try {
-                                ResolvableApiException rae = (ResolvableApiException) e;
-                                rae.startResolutionForResult(activity, 20); // we don't care about the request code
-                            } catch (IntentSender.SendIntentException sie) {
-                                L.w("Unable to start settings resolution", sie);
-                            }
-                            break;
-                        case LocationSettingsStatusCodes.SETTINGS_CHANGE_UNAVAILABLE:
-                            String errMsg = "Location settings are inadequate, and cannot be fixed here. Fix in Settings.";
-                            Toast.makeText(activity, errMsg, Toast.LENGTH_LONG).show();
-                            break;
-                    }
-                });
+    private void verifyLocationServicesEnabled() {
+        if (!LocationManagerCompat.isLocationEnabled(locationManager)) {
+            if (!isVisible()) {
+                return;
+            }
+            Toast.makeText(requireActivity(), R.string.location_services_are_disabled, Toast.LENGTH_LONG).show();
+        }
     }
 
     //endregion
@@ -1408,38 +1302,36 @@ public class MainFragment extends Fragment implements OnMapReadyCallback, DB.Lis
 
     //endregion
 
-    private final LocationCallback mLocationCallbackHelper = new LocationCallback() {
-        @Override
-        @UiThread
-        public void onLocationResult(@NonNull LocationResult result) {
-            Location location = result.getLastLocation();
-            if (location == null) {
-                return;
-            }
+    //region LocationListenerCompat
 
-            Context ctx = getContext();
-            if (ctx == null || myLocationSymbol == null) {
-                return;
-            }
-            myLocationSymbol.updateLocation(ctx, location);
-
-            // if the camera is tracking the user, update the camera position
-            if (friendForCameraToTrack == 0) {
-                if (mlMap != null && !isFlyingCameraToMyLocation) {
-                    var update = CameraUpdateFactory.newLatLng(new LatLng(location.getLatitude(), location.getLongitude()));
-                    mlMap.animateCamera(update);
-                }
-            }
-
-            // share the location with all the user's friends
-            App.runInBackground(new WorkerRunnable() {
-                @Override
-                public void run() {
-                    LocationUtils.upload(location);
-                }
-            });
+    @WorkerThread
+    public void onLocationChanged(Location location) {
+        if (location == null) {
+            return;
         }
-    };
+
+        App.runOnUiThread(new UiRunnable() {
+            @Override
+            public void run() {
+                Context ctx = getContext();
+                if (ctx == null || myLocationSymbol == null) {
+                    return;
+                }
+                myLocationSymbol.updateLocation(ctx, location);
+
+                // if the camera is tracking the user, update the camera position
+                if (friendForCameraToTrack == 0) {
+                    if (mlMap != null && !isFlyingCameraToMyLocation) {
+                        var update = CameraUpdateFactory.newLatLng(new LatLng(location.getLatitude(), location.getLongitude()));
+                        mlMap.animateCamera(update);
+                    }
+                }
+            }
+        });
+
+        // share the location with all the user's friends
+        LocationUtils.upload(location);
+    }
 
     private final UpdateStatusTracker.Listener updateStatusTrackerListener = new UpdateStatusTracker.Listener() {
         @Override

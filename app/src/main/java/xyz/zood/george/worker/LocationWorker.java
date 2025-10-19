@@ -1,11 +1,16 @@
 package xyz.zood.george.worker;
 
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.location.Location;
+import android.location.LocationManager;
 import android.text.format.DateUtils;
 
 import androidx.annotation.AnyThread;
 import androidx.annotation.NonNull;
+import androidx.core.location.LocationListenerCompat;
+import androidx.core.location.LocationManagerCompat;
+import androidx.core.location.LocationRequestCompat;
 import androidx.work.Constraints;
 import androidx.work.ListenableWorker;
 import androidx.work.NetworkType;
@@ -14,11 +19,6 @@ import androidx.work.WorkManager;
 import androidx.work.WorkRequest;
 import androidx.work.WorkerParameters;
 
-import com.google.android.gms.location.FusedLocationProviderClient;
-import com.google.android.gms.location.LocationServices;
-import com.google.android.gms.location.Priority;
-import com.google.android.gms.tasks.CancellationTokenSource;
-import com.google.android.gms.tasks.Task;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.SettableFuture;
 
@@ -32,22 +32,21 @@ import io.pijun.george.LocationUtils;
 import io.pijun.george.Prefs;
 import xyz.zood.george.Permissions;
 
-public class LocationWorker extends ListenableWorker {
+public class LocationWorker extends ListenableWorker implements LocationListenerCompat {
 
     public static final UUID ID = UUID.fromString("f7b3aa9e-4f0b-4eed-a2fb-97a09e48fbc9");
 
-    private final CancellationTokenSource cancel = new CancellationTokenSource();
-    private final FusedLocationProviderClient client;
     private SettableFuture<Result> future;
+    LocationManager locMgr;
 
     public LocationWorker(@NonNull Context ctx, @NonNull WorkerParameters params) {
         super(ctx, params);
-        client = LocationServices.getFusedLocationProviderClient(ctx);
     }
 
     @NonNull
     @Override
     public ListenableFuture<Result> startWork() {
+//        L.i("LW.startWork");
         future = SettableFuture.create();
 
         final Context ctx = getApplicationContext();
@@ -65,7 +64,7 @@ public class LocationWorker extends ListenableWorker {
         }
 
         long timeSince = Prefs.get(ctx).getLastLocationUpdateTime();
-        if (timeSince < 3 * DateUtils.MINUTE_IN_MILLIS) {
+        if (timeSince < 2 * DateUtils.MINUTE_IN_MILLIS) {
             future.set(Result.success());
             return future;
         }
@@ -75,36 +74,39 @@ public class LocationWorker extends ListenableWorker {
             return future;
         }
 
-        Task<Location> task = client.getCurrentLocation(Priority.PRIORITY_HIGH_ACCURACY, cancel.getToken());
-        task.addOnSuccessListener(location -> {
-            if (location == null) {
-                future.set(Result.failure());
-                return;
-            }
+        locMgr = ctx.getSystemService(LocationManager.class);
+        if (locMgr == null) {
+            future.set(Result.success());
+            return future;
+        }
+        String provider = LocationUtils.getBestProvider(locMgr);
+        if (provider == null) {
+            future.set(Result.success());
+            return future;
+        }
 
-            LocationUtils.uploadFuture(location, future); // asynchronous
-        });
-
-        task.addOnFailureListener(ex -> {
-            L.i("LW failed to obtain a location: " + ex.getLocalizedMessage());
-            future.setException(ex);
-            future.set(Result.failure());
-        });
-
-        task.addOnCanceledListener(() -> {
-            L.i("LW getCurrentLocation canceled");
-            future.set(Result.failure());
-        });
+        LocationRequestCompat req = new LocationRequestCompat.Builder(0).setQuality(LocationRequestCompat.QUALITY_HIGH_ACCURACY).build();
+        LocationManagerCompat.requestLocationUpdates(locMgr, provider, req, App.getExecutor(), this);
 
         return future;
     }
 
+    @SuppressLint("MissingPermission")
+    @Override
+    public void onLocationChanged(@NonNull Location location) {
+        LocationUtils.uploadFuture(location, future); // asynchronous
+        LocationManagerCompat.removeUpdates(locMgr, this);
+    }
+
+    @SuppressLint("MissingPermission")
     @Override
     public void onStopped() {
         super.onStopped();
 
         L.i("LW.onStopped called");
-        cancel.cancel();
+        if (locMgr != null) {
+            LocationManagerCompat.removeUpdates(locMgr, this);
+        }
         if (!future.isDone()) {
             future.set(Result.failure());
         }

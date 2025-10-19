@@ -34,7 +34,6 @@ import io.pijun.george.database.FriendRecord;
 import io.pijun.george.database.Snapshot;
 import xyz.zood.george.worker.LocationWorker;
 import xyz.zood.george.receiver.PassiveLocationReceiver;
-import xyz.zood.george.receiver.UserActivityReceiver;
 import io.pijun.george.sodium.HashConfig;
 import retrofit2.Response;
 import xyz.zood.george.AvatarManager;
@@ -256,7 +255,7 @@ public class AuthenticationManager {
             try {
                 DB.get().restoreDatabase(ctx, snapshot);
             } catch (DB.DBException ex) {
-                CloudLogger.log(ex);
+                L.w("_logIn - restoreDatabase", ex);
                 notifyLoginWatchers(Error.DatabaseRestoreFailed, null, watcher);
                 return;
             }
@@ -276,7 +275,7 @@ public class AuthenticationManager {
         notifyLoginWatchers(Error.None, null, watcher);
 
         // If the device has an FCM token, upload it
-        FirebaseMessaging.getInstance().getToken().addOnCompleteListener(new OnCompleteListener<String>() {
+        FirebaseMessaging.getInstance().getToken().addOnCompleteListener(new OnCompleteListener<>() {
             @Override
             public void onComplete(@NonNull Task<String> task) {
                 if (!task.isSuccessful() && task.getException() != null) {
@@ -302,7 +301,6 @@ public class AuthenticationManager {
         // schedule periodic location updates
         LocationWorker.scheduleLocationWorker(ctx);
         PassiveLocationReceiver.requestUpdates(ctx);
-        UserActivityReceiver.requestUpdates(ctx);
     }
 
     @AnyThread
@@ -320,7 +318,6 @@ public class AuthenticationManager {
                 DB.get().deleteAllData();
                 LocationWorker.unscheduleLocationWorker(ctx);
                 PassiveLocationReceiver.stopUpdates(ctx);
-                UserActivityReceiver.stopUpdates(ctx);
                 AvatarManager.deleteAll(ctx);
 
                 App.runOnUiThread(new UiRunnable() {

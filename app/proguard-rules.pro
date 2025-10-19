@@ -17,9 +17,9 @@
 #}
 
 # okio (pulled in from retrofit2)
--dontwarn okio.**
+#-dontwarn okio.**
 # retrofit2
--dontwarn retrofit2.Platform$Java8
+#-dontwarn retrofit2.Platform$Java8
 
 # Don't minify any zood code
 -keep class io.pijun.george.** { *; }
@@ -31,4 +31,10 @@
 
 # For Android-Image-Croper library
 -keep class androidx.appcompat.widget.** { *; }
--keep class com.google.firebase.messaging.FirebaseMessagingService { *; }
+-keep class com.google.firebase.** { *; }
+
+-dontwarn com.google.firebase.analytics.connector.AnalyticsConnector
+
+-dontwarn com.squareup.okhttp.**
+-keep class com.squareup.okhttp.** { *; }
+-keep interface com.squareup.okhttp.** { *; }

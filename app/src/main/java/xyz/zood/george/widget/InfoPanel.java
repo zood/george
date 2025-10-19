@@ -159,13 +159,11 @@ public class InfoPanel {
     private void calculateAndUpdateRefreshButton(long currTime) {
         // if it's been less than 3 minutes since the last update, disable the refresh button
         refreshButton.setVisibility(View.VISIBLE);
-        if ((currTime - currLoc.time) < 3 * DateUtils.MINUTE_IN_MILLIS) {
+        if ((currTime - currLoc.time) < 2 * DateUtils.MINUTE_IN_MILLIS) {
             refreshButton.setEnabled(false);
             long secondsSince = (currTime - currLoc.time) / 1000;
             int minutes;
             if (secondsSince <= 60) {
-                minutes = 3;
-            } else if (secondsSince <= 120) {
                 minutes = 2;
             } else {
                 minutes = 1;
