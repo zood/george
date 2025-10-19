@@ -359,7 +359,7 @@ public class MessageProcessor {
         // Only perform the update if it's been more than 3 minutes since the last one
         // and the app isn't in the foreground
         long timeSinceUpdate = System.currentTimeMillis() - updateTime;
-        if (!App.isInForeground && timeSinceUpdate < 3 * DateUtils.MINUTE_IN_MILLIS) {
+        if (!App.isInForeground && timeSinceUpdate < 2 * DateUtils.MINUTE_IN_MILLIS) {
             L.i("\talready provided an update at " + updateTime);
             UserComm tooSoon = UserComm.newLocationUpdateRequestReceived(UserComm.LOCATION_UPDATE_REQUEST_ACTION_TOO_SOON);
             String errMsg = OscarClient.immediatelySendMessage(userRecord, accessToken, keyPair, tooSoon, true, true);

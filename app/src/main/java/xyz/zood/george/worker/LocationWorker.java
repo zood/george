@@ -46,7 +46,7 @@ public class LocationWorker extends ListenableWorker implements LocationListener
     @NonNull
     @Override
     public ListenableFuture<Result> startWork() {
-        L.i("LW.startWork");
+//        L.i("LW.startWork");
         future = SettableFuture.create();
 
         final Context ctx = getApplicationContext();
@@ -64,7 +64,7 @@ public class LocationWorker extends ListenableWorker implements LocationListener
         }
 
         long timeSince = Prefs.get(ctx).getLastLocationUpdateTime();
-        if (timeSince < 3 * DateUtils.MINUTE_IN_MILLIS) {
+        if (timeSince < 2 * DateUtils.MINUTE_IN_MILLIS) {
             future.set(Result.success());
             return future;
         }
