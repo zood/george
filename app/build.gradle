@@ -8,7 +8,7 @@ android {
     }
 
     dependenciesInfo {
-        includeInApk = false
+        includeInApk = true
     }
 
     defaultConfig {
@@ -16,8 +16,8 @@ android {
         compileSdk = 36
         minSdkVersion 29
         targetSdkVersion 36
-        versionCode 51
-        versionName "0.51"
+        versionCode 55
+        versionName "0.55"
         multiDexEnabled = true
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         resourceConfigurations += ['en', 'tr', 'ru']
@@ -28,9 +28,7 @@ android {
             }
         }
         ndk {
-//            abiFilters 'x86_64', 'arm64-v8a'
-            //noinspection ChromeOsAbiSupport
-            abiFilters 'arm64-v8a'
+            abiFilters 'x86_64', 'arm64-v8a'
         }
     }
     buildTypes {
@@ -41,6 +39,30 @@ android {
         }
         debug {
             jniDebuggable = true
+        }
+    }
+
+    flavorDimensions "channel"
+    productFlavors {
+        github {
+            dimension "channel"
+            dependenciesInfo {
+                includeInApk = false
+            }
+            ndk {
+                //noinspection ChromeOsAbiSupport
+                abiFilters 'arm64-v8a'
+            }
+        }
+        playStore {
+            dimension "channel"
+            dependenciesInfo {
+                includeInApk = true
+            }
+            ndk {
+                //noinspection ChromeOsAbiSupport
+                abiFilters 'arm64-v8a', 'armeabi-v7a'
+            }
         }
     }
 
@@ -84,11 +106,11 @@ dependencies {
     implementation "androidx.viewpager2:viewpager2:1.1.0"
 
     // cloud messaging
-    implementation ('com.google.firebase:firebase-messaging:23.1.2', {
+    implementation ('com.google.firebase:firebase-messaging:25.0.1') {
         exclude group: 'com.google.firebase', module: 'firebase-core'
         exclude group: 'com.google.firebase', module: 'firebase-analytics'
         exclude group: 'com.google.firebase', module: 'firebase-measurement-connector'
-    })
+    }
 
     implementation 'com.google.guava:guava:33.5.0-android'
 
@@ -101,7 +123,7 @@ dependencies {
     implementation 'com.squareup.picasso:picasso:2.5.2'
 
     implementation 'com.vanniktech:android-image-cropper:4.6.0'
-    implementation 'org.maplibre.gl:android-sdk:11.13.5'
+    implementation 'org.maplibre.gl:android-sdk:12.0.1'
     implementation 'org.maplibre.gl:android-plugin-annotation-v9:3.0.2'
 
     // jetpack libs
