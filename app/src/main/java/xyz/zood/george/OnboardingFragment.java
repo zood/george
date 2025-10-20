@@ -110,7 +110,6 @@ public class OnboardingFragment extends Fragment {
         itemIndicators.add(binding.indicator4);
 
         ViewCompat.setOnApplyWindowInsetsListener(binding.getRoot(), (v, insets) -> {
-//            int statusBarHeight = insets.getInsets(WindowInsetsCompat.Type.statusBars()).top;
             int navBarHeight = insets.getInsets(WindowInsetsCompat.Type.navigationBars()).bottom;
             ConstraintLayout.LayoutParams lp = (ConstraintLayout.LayoutParams) binding.navigationBarPlaceholder.getLayoutParams();
             lp.height = navBarHeight;

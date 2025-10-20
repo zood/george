@@ -82,6 +82,15 @@ public class LocationUtils {
         return providers.get(0);
     }
 
+    public static boolean isValidLocation(@NonNull Location l) {
+        // Apparently lat and/or lng can be infinite: https://github.com/zood/george/issues/119
+        if (Double.isInfinite(l.getLatitude()) || Double.isInfinite(l.getLongitude())) {
+            return false;
+        }
+
+        return true;
+    }
+
     @WorkerThread
     private static void run() {
         //noinspection InfiniteLoopStatement
@@ -174,15 +183,20 @@ public class LocationUtils {
 
     @AnyThread
     public static void upload(@NonNull Location location) {
-        // Apparently lat and/or lng can be infinite: https://github.com/zood/george/issues/119
-        if (Double.isInfinite(location.getLatitude()) || Double.isInfinite(location.getLongitude())) {
+        if (!isValidLocation(location)) {
             return;
         }
+
         locationsQueue.add(location);
     }
 
     @AnyThread
     public static void uploadFuture(@NonNull Location location, @NonNull SettableFuture<ListenableWorker.Result> future) {
+        if (!isValidLocation(location)) {
+            future.set(ListenableWorker.Result.success());
+            return;
+        }
+
         LocationUtils.future = future;
         LocationUtils.futureTime = location.getTime();
         locationsQueue.add(location);
