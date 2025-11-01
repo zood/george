@@ -99,6 +99,7 @@ public final class Utils {
         String lc = username.toString().toLowerCase(Locale.US);
         // Check if it's valid, before making any other assumptions.
         if (sUsernamePattern.matcher(lc).matches()) {
+            // valid username - 0 means no error
             return 0;
         }
 

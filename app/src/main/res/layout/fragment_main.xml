@@ -7,28 +7,8 @@
         android:id="@+id/root"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:background="@null"
+        android:background="@android:color/white"
         tools:context=".MainFragment">
-
-<!-- Dummy views that represent the status bar and navigation bar so other views can align around them. Their actual heights are set programmatically in the MainFragment. We set the heights to arbitrary values here so they display properly in the preview. -->
-        <View
-            android:id="@+id/status_bar_placeholder"
-            android:layout_width="match_parent"
-            android:layout_height="1dp"
-            android:background="#9999"
-            android:elevation="1dp"
-            android:outlineProvider="none"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent" />
-
-        <xyz.zood.george.widget.BannerView
-            android:id="@+id/banners"
-            android:orientation="vertical"
-            app:layout_constraintTop_toBottomOf="@+id/status_bar_placeholder"
-            tools:layout_height="48dp"
-            tools:background="@color/zood_red"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content" />
 
         <org.maplibre.android.maps.MapView
             android:id="@+id/map"
@@ -43,6 +23,16 @@
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent"
             tools:background="@android:color/holo_green_light"/>
+
+        <xyz.zood.george.widget.BannerView
+            android:id="@+id/banners"
+            android:orientation="vertical"
+            app:layout_constraintTop_toTopOf="parent"
+            android:elevation="4dp"
+            tools:layout_height="48dp"
+            tools:background="@color/zood_red"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content" />
 
         <androidx.constraintlayout.widget.ConstraintLayout
             android:id="@+id/info_panel"
@@ -287,22 +277,10 @@
         <fragment
             android:id="@+id/friends_bar_fragment"
             android:name="xyz.zood.george.FriendBarFragment"
-            app:layout_constraintBottom_toTopOf="@id/navigation_bar_placeholder"
+            app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             android:layout_width="match_parent"
             android:layout_height="64dp" />
-
-<!-- Set the elevation to 12dp which is the same elevation as the friends bar -->
-        <View
-            android:id="@+id/navigation_bar_placeholder"
-            android:layout_width="match_parent"
-            android:layout_height="48dp"
-            android:elevation="12dp"
-            app:layout_constraintBottom_toBottomOf="parent"
-            tools:background="@color/zood_red"
-            android:background="@android:color/white"
-            android:outlineProvider="none"
-            />
 
     </xyz.zood.george.widget.SlidableCL>
 </layout>

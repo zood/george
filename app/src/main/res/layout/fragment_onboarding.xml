@@ -9,6 +9,8 @@
     android:layout_height="match_parent">
     <androidx.viewpager2.widget.ViewPager2
         android:id="@+id/view_pager"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent"
         android:layout_width="match_parent"
         android:layout_height="match_parent" />
     <View
@@ -62,17 +64,9 @@
         style="@style/Widget.MaterialComponents.Button.TextButton"
         android:layout_marginEnd="24dp"
         android:layout_marginBottom="24dp"
-        app:layout_constraintBottom_toTopOf="@id/navigation_bar_placeholder"
+        app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content" />
-
-    <View
-        android:id="@+id/navigation_bar_placeholder"
-        android:layout_width="match_parent"
-        android:layout_height="24dp"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintBottom_toBottomOf="parent"
-        />
 </xyz.zood.george.widget.SlidableCL>
 </layout>

@@ -79,7 +79,7 @@ public class AddFriendFragment extends Fragment {
             nbLP.height = bottomInset;
             binding.navigationBarPlaceholder.setLayoutParams(nbLP);
 
-            return insets;
+            return WindowInsetsCompat.CONSUMED;
         });
     }
 

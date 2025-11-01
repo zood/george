@@ -11,9 +11,9 @@ import android.widget.TextView;
 import androidx.annotation.DrawableRes;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.core.content.ContextCompat;
 import androidx.core.view.ViewCompat;
+import androidx.core.view.WindowCompat;
 import androidx.core.view.WindowInsetsCompat;
 import androidx.databinding.DataBindingUtil;
 import androidx.fragment.app.Fragment;
@@ -111,11 +111,12 @@ public class OnboardingFragment extends Fragment {
 
         ViewCompat.setOnApplyWindowInsetsListener(binding.getRoot(), (v, insets) -> {
             int navBarHeight = insets.getInsets(WindowInsetsCompat.Type.navigationBars()).bottom;
-            ConstraintLayout.LayoutParams lp = (ConstraintLayout.LayoutParams) binding.navigationBarPlaceholder.getLayoutParams();
-            lp.height = navBarHeight;
+            binding.getRoot().setPadding(0, 0, 0, navBarHeight);
 
-            return insets;
+            return WindowInsetsCompat.CONSUMED;
         });
+        WindowCompat.getInsetsController(requireActivity().getWindow(), binding.getRoot()).setAppearanceLightStatusBars(true);
+        WindowCompat.getInsetsController(requireActivity().getWindow(), binding.getRoot()).setAppearanceLightNavigationBars(true);
 
         return binding.getRoot();
     }

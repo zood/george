@@ -34,7 +34,7 @@ public class LicensesFragment extends Fragment implements LibrariesAdapter.Libra
             sbLP.height = statusBarHeight;
             binding.statusBarPlaceholder.setLayoutParams(sbLP);
 
-            return insets;
+            return WindowInsetsCompat.CONSUMED;
         });
     }
 

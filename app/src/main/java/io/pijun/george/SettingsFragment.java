@@ -63,7 +63,7 @@ public class SettingsFragment extends Fragment implements SettingsAdapter.Listen
             sbLP.height = statusBarHeight;
             binding.statusBarPlaceholder.setLayoutParams(sbLP);
 
-            return insets;
+            return WindowInsetsCompat.CONSUMED;
         });
     }
 

@@ -76,7 +76,7 @@ public class LicenseTextFragment extends Fragment {
             lp.height = statusBarHeight;
             binding.statusBarPlaceholder.setLayoutParams(lp);
 
-            return insets;
+            return WindowInsetsCompat.CONSUMED;
         });
 
         return binding.getRoot();

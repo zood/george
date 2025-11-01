@@ -47,7 +47,7 @@ public class PassiveLocationReceiver extends BroadcastReceiver {
     @Override
     @UiThread
     public void onReceive(Context context, Intent intent) {
-        L.i("PLR.onReceive");
+//        L.i("PLR.onReceive");
         // Don't report the location if we're in the foreground, because they'll just be duplicates
         if (App.isInForeground || App.isLimitedShareRunning) {
             return;

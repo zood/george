@@ -22,7 +22,6 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.UiThread;
 import androidx.annotation.WorkerThread;
-import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.core.app.ActivityCompat;
 import androidx.core.location.LocationListenerCompat;
 import androidx.core.location.LocationManagerCompat;
@@ -140,15 +139,10 @@ public class MainFragment extends Fragment implements OnMapReadyCallback, DB.Lis
             statusBarHeight = insets.getInsets(WindowInsetsCompat.Type.statusBars()).top;
             navigationBarHeight = insets.getInsets(WindowInsetsCompat.Type.navigationBars()).bottom;
 
-            ConstraintLayout.LayoutParams sbLP = (ConstraintLayout.LayoutParams) binding.statusBarPlaceholder.getLayoutParams();
-            sbLP.height = statusBarHeight;
-            binding.statusBarPlaceholder.setLayoutParams(sbLP);
+            binding.root.setPadding(0, 0, 0, navigationBarHeight);
+            binding.banners.setPadding(0, statusBarHeight, 0, 0);
 
-            ConstraintLayout.LayoutParams nbLP = (ConstraintLayout.LayoutParams) binding.navigationBarPlaceholder.getLayoutParams();
-            nbLP.height = navigationBarHeight;
-            binding.navigationBarPlaceholder.setLayoutParams(nbLP);
-
-            return insets;
+            return WindowInsetsCompat.CONSUMED;
         });
     }
 
@@ -294,8 +288,8 @@ public class MainFragment extends Fragment implements OnMapReadyCallback, DB.Lis
         notConnectedNotifier = new ClientNotConnectedNotifier(requireActivity(), binding.banners);
 
         applySystemUIInsets(binding);
-        WindowCompat.getInsetsController(requireActivity().getWindow(), binding.root).setAppearanceLightStatusBars(false);
-        WindowCompat.getInsetsController(requireActivity().getWindow(), binding.root).setAppearanceLightNavigationBars(false);
+        WindowCompat.getInsetsController(requireActivity().getWindow(), binding.root).setAppearanceLightStatusBars(true);
+        WindowCompat.getInsetsController(requireActivity().getWindow(), binding.root).setAppearanceLightNavigationBars(true);
 
         return binding.getRoot();
     }
