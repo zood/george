@@ -2,12 +2,13 @@ package io.pijun.george.api;
 
 import androidx.annotation.NonNull;
 
-@SuppressWarnings("NullableProblems")
 public class LimitedUserInfo {
 
-    @NonNull
-    public String username;
-    @NonNull
-    public byte[] publicKey;
+    @NonNull final public String username;
+    @NonNull final public byte[] publicKey;
 
+    public LimitedUserInfo(@NonNull String username, @NonNull byte[] publicKey) {
+        this.username = username;
+        this.publicKey = publicKey;
+    }
 }

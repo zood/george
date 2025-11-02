@@ -75,9 +75,7 @@ public class AddFriendFragment extends Fragment {
             int navBarHeight = insets.getInsets(WindowInsetsCompat.Type.navigationBars()).bottom;
             int imeHeight = insets.getInsets(WindowInsetsCompat.Type.ime()).bottom;
             bottomInset = Math.max(navBarHeight, imeHeight);
-            ConstraintLayout.LayoutParams nbLP = (ConstraintLayout.LayoutParams) binding.navigationBarPlaceholder.getLayoutParams();
-            nbLP.height = bottomInset;
-            binding.navigationBarPlaceholder.setLayoutParams(nbLP);
+            binding.root.setPadding(0, 0, 0, bottomInset);
 
             return WindowInsetsCompat.CONSUMED;
         });
