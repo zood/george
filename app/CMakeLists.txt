@@ -8,10 +8,6 @@ project(georgenative)
 
 find_package(sodium REQUIRED CONFIG)
 
-# use a 16 KB page size
-set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -Wl,-z,max-page-size=16384")
-set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -Wl,-z,max-page-size=16384")
-
 # Creates and names a library, sets it as either STATIC
 # or SHARED, and provides the relative paths to its source code.
 # You can define multiple libraries, and CMake builds it for you.
@@ -29,5 +25,5 @@ add_library( # Sets the name of the library.
              src/main/cpp/sodium.c)
 
 target_include_directories(native-lib PRIVATE)
-target_link_libraries(native-lib android sodium::sodium log)
+target_link_libraries(native-lib android sodium::sodium-minimal log)
 

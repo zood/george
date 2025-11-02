@@ -96,7 +96,11 @@ JNIEXPORT jobject JNICALL Java_io_pijun_george_Sodium_symmetricKeyEncrypt(
     JNIEnv *env, jclass cls, jbyteArray msg, jbyteArray key) {
     unsigned long long msgLen = (unsigned long long)(*env)->GetArrayLength(env, msg);
     unsigned long long cipherTextLen = msgLen + crypto_secretbox_MACBYTES;
-    unsigned char cipherText[cipherTextLen];
+    unsigned char* cipherText = malloc(cipherTextLen);
+    if (cipherText == NULL) {
+        __android_log_print(ANDROID_LOG_ERROR, "ZoodLoc", "symmetricKeyEncrypt: failed to allocate cipherText");
+        return NULL;
+    }
     unsigned char* msgUChar = ucharArray(env, msg);
     unsigned char nonceUChar[crypto_secretbox_NONCEBYTES];
     unsigned char* keyUChar = ucharArray(env, key);
@@ -109,6 +113,7 @@ JNIEXPORT jobject JNICALL Java_io_pijun_george_Sodium_symmetricKeyEncrypt(
     free(msgUChar);
     free(keyUChar);
     if (result != 0) {
+        free(cipherText);
         return NULL;
     }
 
@@ -124,6 +129,7 @@ JNIEXPORT jobject JNICALL Java_io_pijun_george_Sodium_symmetricKeyEncrypt(
     jbyteArray nonceByteArray = byteArray(env, (unsigned char*)nonceUChar, crypto_secretbox_NONCEBYTES);
     (*env)->SetObjectField(env, skem, nonceFieldId, nonceByteArray);
 
+    free(cipherText);
     return skem;
 }
 
@@ -136,7 +142,11 @@ JNIEXPORT jbyteArray JNICALL Java_io_pijun_george_Sodium_symmetricKeyDecrypt(
         return NULL;
     }
 
-    unsigned char msgUChar[msgLen];
+    unsigned char* msgUChar = malloc(msgLen);
+    if (msgUChar == NULL) {
+        __android_log_print(ANDROID_LOG_ERROR, "ZoodLoc", "symmetricKeyDecrypt: failed to allocate msgUChar");
+        return NULL;
+    }
     unsigned char* cipherTextUChar = ucharArray(env, cipherText);
     unsigned char* nonceUChar = ucharArray(env, nonce);
     unsigned char* keyUChar = ucharArray(env, key);
@@ -150,10 +160,12 @@ JNIEXPORT jbyteArray JNICALL Java_io_pijun_george_Sodium_symmetricKeyDecrypt(
     free(keyUChar);
     if (result != 0) {
         __android_log_print(ANDROID_LOG_INFO, "ZoodLoc", "symmetricKeyDecrypt: non-zero result (%d)", result);
+        free(msgUChar);
         return NULL;
     }
 
     jbyteArray msg = byteArray(env, msgUChar, msgLen);
+    free(msgUChar);
     return msg;
 }
 
@@ -162,7 +174,11 @@ JNIEXPORT jobject JNICALL Java_io_pijun_george_Sodium_publicKeyEncrypt(
     JNIEnv *env, jclass cls, jbyteArray msg, jbyteArray rcvrPubKey, jbyteArray sndrSecKey) {
     int msgLen = (*env)->GetArrayLength(env, msg);
     int cipherTextLen = crypto_box_MACBYTES + msgLen;
-    unsigned char cipherText[cipherTextLen];
+    unsigned char* cipherText = malloc(cipherTextLen);
+    if (cipherText == NULL) {
+        __android_log_print(ANDROID_LOG_ERROR, "ZoodLoc", "publicKeyEncrypt: failed to allocate cipherText");
+        return NULL;
+    }
     unsigned char nonce[crypto_box_NONCEBYTES];
     randombytes_buf(nonce, sizeof nonce);
     unsigned char* msgUChar = ucharArray(env, msg);
@@ -179,6 +195,7 @@ JNIEXPORT jobject JNICALL Java_io_pijun_george_Sodium_publicKeyEncrypt(
     free(sndrKeyUChar);
     if (result != 0) {
         __android_log_print(ANDROID_LOG_INFO, "ZoodLoc", "publicKeyEncrypt: non-zero result (%d)", result);
+        free(cipherText);
         return NULL;
     }
 
@@ -194,6 +211,7 @@ JNIEXPORT jobject JNICALL Java_io_pijun_george_Sodium_publicKeyEncrypt(
     jbyteArray nonceByteArray = byteArray(env, nonce, sizeof nonce);
     (*env)->SetObjectField(env, skem, nonceFieldId, nonceByteArray);
 
+    free(cipherText);
     return skem;
 }
 
@@ -206,7 +224,11 @@ JNIEXPORT jbyteArray JNICALL Java_io_pijun_george_Sodium_publicKeyDecrypt(
         __android_log_print(ANDROID_LOG_INFO, "ZoodLoc", "publicKeyDecrypt: message is too short");
         return NULL;
     }
-    unsigned char msg[msgLen];
+    unsigned char* msg = malloc(msgLen);
+    if (msg == NULL) {
+        __android_log_print(ANDROID_LOG_ERROR, "ZoodLoc", "publicKeyDecrypt: failed to allocate msg");
+        return NULL;
+    }
     unsigned char* cipherTextUChar = ucharArray(env, cipherText);
     unsigned char* nonceUChar = ucharArray(env, nonce);
     unsigned char* pubKeyUChar = ucharArray(env, senderPubKey);
@@ -223,10 +245,13 @@ JNIEXPORT jbyteArray JNICALL Java_io_pijun_george_Sodium_publicKeyDecrypt(
     free(secKeyUChar);
     if (result != 0) {
         __android_log_print(ANDROID_LOG_INFO, "ZoodLoc", "publicKeyDecrypt: non-zero result (%d)", result);
+        free(msg);
         return NULL;
     }
 
-    return byteArray(env, msg, msgLen);
+    jbyteArray result_array = byteArray(env, msg, msgLen);
+    free(msg);
+    return result_array;
 }
 
 #pragma clang diagnostic pop

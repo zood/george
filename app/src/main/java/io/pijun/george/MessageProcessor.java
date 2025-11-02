@@ -15,7 +15,7 @@ import java.io.IOException;
 import java.util.Arrays;
 
 import io.pijun.george.api.DeviceInfo;
-import io.pijun.george.api.LimitedUserInfo;
+import io.pijun.george.api.LimitedUserInfoUnchecked;
 import io.pijun.george.api.Message;
 import io.pijun.george.api.MessageConverter;
 import io.pijun.george.api.OscarAPI;
@@ -109,7 +109,7 @@ public class MessageProcessor {
             // we need to retrieve it from the server
             OscarAPI api = OscarClient.newInstance(token);
             try {
-                Response<LimitedUserInfo> response = api.getUser(Hex.toHexString(senderId)).execute();
+                Response<LimitedUserInfoUnchecked> response = api.getUser(Hex.toHexString(senderId)).execute();
                 if (!response.isSuccessful()) {
                     OscarError apiErr = OscarError.fromResponse(response);
                     if (apiErr == null) {
@@ -126,9 +126,14 @@ public class MessageProcessor {
                             return Result.ErrorUnknown;
                     }
                 }
-                LimitedUserInfo lui = response.body();
-                if (lui == null) {
+                LimitedUserInfoUnchecked luiu = response.body();
+                if (luiu == null) {
                     L.w("Unable to decode user " + Hex.toHexString(senderId) + " from response");
+                    return Result.ErrorUnknown;
+                }
+                var lui = luiu.toLimitedUserInfo();
+                if (lui == null) {
+                    L.w("Decoded user " + Hex.toHexString(senderId) + " had a null username or public key");
                     return Result.ErrorUnknown;
                 }
                 // now that we've encountered a new user, add them to the database (because of TOFU)

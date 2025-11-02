@@ -54,7 +54,7 @@ public interface OscarAPI {
     Call<ServerPublicKeyResponse> getServerPublicKey();
 
     @GET("users/{id}")
-    Call<LimitedUserInfo> getUser(@Path("id") String hexId);
+    Call<LimitedUserInfoUnchecked> getUser(@Path("id") String hexId);
 
     @GET("drop-boxes/{boxId}")
     Call<EncryptedData> pickUpPackage(@Path("boxId") String hexId);
