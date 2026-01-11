@@ -965,10 +965,9 @@ public class MainFragment extends Fragment implements OnMapReadyCallback, DB.Lis
 
             Intent i = new Intent();
             i.setAction(Intent.ACTION_VIEW);
-            i.setData(Uri.parse(String.format(Locale.ENGLISH, "geo:0,0?q=%f,%f(%s)", location.latitude, location.longitude, username)));
-            if (i.resolveActivity(requireContext().getPackageManager()) != null) {
-                startActivity(i);
-            }
+            var geoStr = String.format(Locale.ENGLISH, "geo:0,0?q=%f,%f(%s)", location.latitude, location.longitude, username);
+            i.setData(Uri.parse(geoStr));
+            startActivity(i);
         }
 
         @Override
