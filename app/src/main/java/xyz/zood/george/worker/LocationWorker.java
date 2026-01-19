@@ -107,8 +107,10 @@ public class LocationWorker extends ListenableWorker implements LocationListener
         if (locMgr != null) {
             LocationManagerCompat.removeUpdates(locMgr, this);
         }
-        if (!future.isDone()) {
-            future.set(Result.failure());
+        if (future != null) {
+            if (!future.isDone()) {
+                future.set(Result.failure());
+            }
         }
     }
 
