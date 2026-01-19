@@ -16,11 +16,6 @@
 #   public *;
 #}
 
-# okio (pulled in from retrofit2)
-#-dontwarn okio.**
-# retrofit2
-#-dontwarn retrofit2.Platform$Java8
-
 # Don't minify any zood code
 -keep class io.pijun.george.** { *; }
 -keep class xyz.zood.george.** { *; }
@@ -29,12 +24,16 @@
 -keep class io.pijun.george.*$* { *; }
 -keep class xyz.zood.george.*$* { *; }
 
-# For Android-Image-Croper library
--keep class androidx.appcompat.widget.** { *; }
--keep class com.google.firebase.** { *; }
-
 -dontwarn com.google.firebase.analytics.connector.AnalyticsConnector
+-dontwarn com.google.firebase.ktx.Firebase
 
--dontwarn com.squareup.okhttp.**
--keep class com.squareup.okhttp.** { *; }
--keep interface com.squareup.okhttp.** { *; }
+# OkHttp
+-dontwarn com.squareup.okhttp.Cache
+-dontwarn com.squareup.okhttp.CacheControl$Builder
+-dontwarn com.squareup.okhttp.CacheControl
+-dontwarn com.squareup.okhttp.Call
+-dontwarn com.squareup.okhttp.OkHttpClient
+-dontwarn com.squareup.okhttp.Request$Builder
+-dontwarn com.squareup.okhttp.Request
+-dontwarn com.squareup.okhttp.Response
+-dontwarn com.squareup.okhttp.ResponseBody
