@@ -37,3 +37,6 @@
 -dontwarn com.squareup.okhttp.Request
 -dontwarn com.squareup.okhttp.Response
 -dontwarn com.squareup.okhttp.ResponseBody
+
+# retain source file name and line numbers
+-keepattributes SourceFile,LineNumberTable
