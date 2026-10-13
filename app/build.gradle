@@ -12,8 +12,8 @@ android {
         compileSdk = 36
         minSdkVersion 29
         targetSdkVersion 36
-        versionCode 66
-        versionName "0.66"
+        versionCode 67
+        versionName "0.67"
         multiDexEnabled = true
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         resourceConfigurations += ['en', 'tr', 'ru']
@@ -28,7 +28,7 @@ android {
         release {
             shrinkResources = true
             minifyEnabled = true
-            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
         debug {
             jniDebuggable = true
@@ -71,7 +71,7 @@ android {
     externalNativeBuild {
         cmake {
             path = "CMakeLists.txt"
-            version = "4.1.1"
+            version = "4.1.2"
         }
     }
     compileOptions {

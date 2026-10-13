@@ -37,3 +37,4 @@ app/src/debug/res/values/secrets.xml
 .idea/gradle.xml
 .idea/jarRepositories.xml
 .idea/navEditor.xml
+*AGENTS.md

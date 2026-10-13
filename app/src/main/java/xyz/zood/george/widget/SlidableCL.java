@@ -7,6 +7,8 @@ import androidx.constraintlayout.widget.ConstraintLayout;
 
 @SuppressWarnings("unused")
 public class SlidableCL extends ConstraintLayout {
+    private float pendingXFraction = Float.NaN;
+
     public SlidableCL(Context context) {
         super(context);
     }
@@ -29,6 +31,23 @@ public class SlidableCL extends ConstraintLayout {
 
     public void setXFraction(float xFraction) {
         final int width = getWidth();
-        setX((width > 0) ? (xFraction * width) : -9999);
+        if (width > 0) {
+            pendingXFraction = Float.NaN;
+            setX(xFraction * width);
+        } else {
+            // Not laid out yet, so apply it in onLayout. The animation may even finish before the
+            // first layout (e.g. when system animations are disabled).
+            pendingXFraction = xFraction;
+        }
+    }
+
+    @Override
+    protected void onLayout(boolean changed, int left, int top, int right, int bottom) {
+        super.onLayout(changed, left, top, right, bottom);
+        final int width = getWidth();
+        if (!Float.isNaN(pendingXFraction) && width > 0) {
+            setX(pendingXFraction * width);
+            pendingXFraction = Float.NaN;
+        }
     }
 }

@@ -8,6 +8,9 @@ import android.view.ViewGroup;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.constraintlayout.widget.ConstraintLayout;
+import androidx.core.view.ViewCompat;
+import androidx.core.view.WindowInsetsCompat;
 import androidx.databinding.DataBindingUtil;
 import androidx.fragment.app.Fragment;
 
@@ -40,6 +43,21 @@ public class SafetyNumberFragment extends Fragment {
         fragment.setArguments(args);
 
         return fragment;
+    }
+
+    // applySystemUIInsets applies the system view insets. It should only be called once after the fragment's view is created.
+    private void applySystemUIInsets(FragmentSafetyNumberBinding binding) {
+        ViewCompat.setOnApplyWindowInsetsListener(binding.getRoot(), (v, insets) -> {
+            int statusBarHeight = insets.getInsets(WindowInsetsCompat.Type.statusBars()).top;
+            ConstraintLayout.LayoutParams sbLP = (ConstraintLayout.LayoutParams) binding.statusBarPlaceholder.getLayoutParams();
+            sbLP.height = statusBarHeight;
+            binding.statusBarPlaceholder.setLayoutParams(sbLP);
+
+            int navBarHeight = insets.getInsets(WindowInsetsCompat.Type.navigationBars()).bottom;
+            binding.getRoot().setPadding(0, 0, 0, navBarHeight);
+
+            return WindowInsetsCompat.CONSUMED;
+        });
     }
 
     @Override
@@ -116,6 +134,8 @@ public class SafetyNumberFragment extends Fragment {
                 onShare();
             }
         });
+
+        applySystemUIInsets(binding);
 
         return binding.getRoot();
     }
