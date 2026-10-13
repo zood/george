@@ -7,8 +7,6 @@ local.properties
 .externalNativeBuild
 /app/externalNativeBuild
 google-services.json
-app/src/main/res/values/secrets.xml
-app/src/debug/res/values/secrets.xml
 .cxx/
 .stignore
 

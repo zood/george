@@ -16,6 +16,8 @@ import android.widget.PopupMenu;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 
+import java.util.Locale;
+
 import androidx.annotation.ColorRes;
 import androidx.annotation.DrawableRes;
 import androidx.annotation.NonNull;
@@ -34,11 +36,11 @@ import io.pijun.george.App;
 import io.pijun.george.L;
 import io.pijun.george.UiRunnable;
 import io.pijun.george.UpdateStatusTracker;
-import io.pijun.george.api.locationiq.RevGeocoding;
-import io.pijun.george.api.locationiq.ReverseGeocodingCache;
 import io.pijun.george.database.FriendLocation;
 import io.pijun.george.database.FriendRecord;
 import xyz.zood.george.R;
+import xyz.zood.george.geocoding.RevGeocoding;
+import xyz.zood.george.geocoding.ReverseGeocodingCache;
 
 public class InfoPanel {
 
@@ -416,20 +418,27 @@ public class InfoPanel {
             ReverseGeocodingCache.fetch(context, loc.latitude, loc.longitude, new ReverseGeocodingCache.OnCachedListener() {
                 @Override
                 public void onReverseGeocodingCached(@Nullable RevGeocoding rg) {
-                    if (rg == null) {
-                        return;
-                    }
                     if (currLoc == null) {
                         return;
                     }
                     if (currLoc.latitude == loc.latitude && currLoc.longitude == loc.longitude) {
-                        address.setText(rg.getAddress());
+                        if (rg != null) {
+                            address.setText(rg.getAddress());
+                        } else {
+                            address.setText(formatCoordinates(loc.latitude, loc.longitude));
+                        }
                     }
                 }
             });
         }
 
         App.runOnUiThread(new InfoPanelRefresher(showId), REFRESH_INTERVAL);
+    }
+
+    @NonNull
+    private static String formatCoordinates(double lat, double lng) {
+        // Always use a '.' decimal separator, so it can't be confused with the ',' between the values
+        return String.format(Locale.US, "%.5f, %.5f", lat, lng);
     }
 
     @UiThread

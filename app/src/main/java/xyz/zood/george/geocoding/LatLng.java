@@ -1,4 +1,4 @@
-package io.pijun.george.api.locationiq;
+package xyz.zood.george.geocoding;
 
 import java.util.Objects;
 

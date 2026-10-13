@@ -1,7 +1,10 @@
-package io.pijun.george.api.locationiq;
+package xyz.zood.george.geocoding;
 
 import android.content.Context;
+import android.location.Address;
+import android.location.Geocoder;
 
+import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 
@@ -10,9 +13,9 @@ import androidx.annotation.Nullable;
 import androidx.annotation.UiThread;
 import androidx.annotation.WorkerThread;
 import io.pijun.george.App;
+import io.pijun.george.L;
 import io.pijun.george.UiRunnable;
 import io.pijun.george.WorkerRunnable;
-import retrofit2.Response;
 
 public class ReverseGeocodingCache {
 
@@ -21,23 +24,33 @@ public class ReverseGeocodingCache {
 
     private ReverseGeocodingCache() {}
 
+    // The blocking getFromLocation() is deprecated as of API 33 in favor of a callback variant, but
+    // we're already on a worker thread and it works on every API level we support.
+    @SuppressWarnings("deprecation")
     @WorkerThread
     private static void _fetch(@NonNull final Context ctx, @NonNull LatLng ll) {
         try {
-            Response<RevGeocoding> response = LocationIQClient.get(ctx).getReverseGeocoding("" + ll.lat, "" + ll.lng).execute();
-            if (!response.isSuccessful()) {
+            // Devices without a geocoder backend (usually ones without Google Play Services)
+            if (!Geocoder.isPresent()) {
                 notifyListeners(ll, null);
                 return;
             }
 
-            RevGeocoding rg = response.body();
-            if (rg == null) {
+            List<Address> addresses = new Geocoder(ctx).getFromLocation(ll.lat, ll.lng, 1);
+            if (addresses == null || addresses.isEmpty()) {
+                notifyListeners(ll, null);
+                return;
+            }
+
+            RevGeocoding rg = new RevGeocoding(addresses.get(0));
+            if (rg.getAddress().isEmpty()) {
                 notifyListeners(ll, null);
                 return;
             }
             cache.put(ll, rg);
             notifyListeners(ll, rg);
         } catch (Throwable t) {
+            L.w("Reverse geocoding failed", t);
             notifyListeners(ll, null);
         } finally {
             ongoingRequests.remove(ll);
