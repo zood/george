@@ -25,6 +25,7 @@ public class SettingsAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
     private static final int INVITE_A_FRIEND = 7;
     private static final int NOTIFICATIONS = 8;
     private static final int PRIVACY_POLICY = 9;
+    private static final int THEME = 10;
 
     private final ArrayList<RecyclerViewAdapterItem> adapterItems = new ArrayList<>();
 
@@ -76,7 +77,7 @@ public class SettingsAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
                     }
                 });
                 h.textView.setCompoundDrawablesRelativeWithIntrinsicBounds(
-                        R.drawable.ic_outlined_exit_to_app_24dp,
+                        R.drawable.ic_logout_24dp,
                         0,
                         0,
                         0);
@@ -111,7 +112,7 @@ public class SettingsAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
                     }
                 });
                 h.textView.setCompoundDrawablesRelativeWithIntrinsicBounds(
-                        R.drawable.ic_outlined_person_add_24dp,
+                        R.drawable.ic_person_add_24dp,
                         0,
                         0,
                         0);
@@ -146,12 +147,30 @@ public class SettingsAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
                         0,
                         0,
                         0);
+                break;
+            }
+            case THEME: {
+                SettingsListItemViewHolder h = (SettingsListItemViewHolder) holder;
+                h.textView.setText(R.string.theme);
+                h.textView.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        listener.onThemeAction();
+                    }
+                });
+                h.textView.setCompoundDrawablesRelativeWithIntrinsicBounds(
+                        R.drawable.ic_dark_mode_24dp,
+                        0,
+                        0,
+                        0);
+                break;
             }
         }
     }
     //endregion
 
     private void rebuildRecycler() {
+        adapterItems.add(new RecyclerViewAdapterItem(R.layout.settings_list_item, THEME));
         adapterItems.add(new RecyclerViewAdapterItem(R.layout.settings_list_item, PRIVACY_POLICY));
         adapterItems.add(new RecyclerViewAdapterItem(R.layout.settings_list_item, ABOUT_ID));
         adapterItems.add(new RecyclerViewAdapterItem(R.layout.settings_list_item, INVITE_A_FRIEND));
@@ -164,6 +183,7 @@ public class SettingsAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
         @UiThread void onLogOutAction();
         @UiThread void onNotificationsClicked();
         @UiThread void onPrivacyPolicyClicked();
+        @UiThread void onThemeAction();
     }
 
 }

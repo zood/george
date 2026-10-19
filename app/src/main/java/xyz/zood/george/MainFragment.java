@@ -27,7 +27,6 @@ import androidx.core.location.LocationListenerCompat;
 import androidx.core.location.LocationManagerCompat;
 import androidx.core.location.LocationRequestCompat;
 import androidx.core.view.ViewCompat;
-import androidx.core.view.WindowCompat;
 import androidx.core.view.WindowInsetsCompat;
 import androidx.databinding.DataBindingUtil;
 import androidx.fragment.app.Fragment;
@@ -96,6 +95,8 @@ public class MainFragment extends Fragment implements OnMapReadyCallback, DB.Lis
 
     private static final String ARG_ACCESS_TOKEN = "access_token";
     private static final String ARG_KEY_PAIR = "key_pair";
+    private static final String LIGHT_MAP_STYLE = "https://www.zood.xyz/static/map-style.json";
+    private static final String DARK_MAP_STYLE = "https://www.zood.xyz/static/map-style-dark.json";
 
     private String accessToken;
     private FragmentMainBinding binding;
@@ -288,8 +289,7 @@ public class MainFragment extends Fragment implements OnMapReadyCallback, DB.Lis
         notConnectedNotifier = new ClientNotConnectedNotifier(requireActivity(), binding.banners);
 
         applySystemUIInsets(binding);
-        WindowCompat.getInsetsController(requireActivity().getWindow(), binding.root).setAppearanceLightStatusBars(true);
-        WindowCompat.getInsetsController(requireActivity().getWindow(), binding.root).setAppearanceLightNavigationBars(true);
+        Utils.applySystemBarAppearance(requireActivity().getWindow(), binding.root);
 
         return binding.getRoot();
     }
@@ -701,7 +701,8 @@ public class MainFragment extends Fragment implements OnMapReadyCallback, DB.Lis
     @Override
     public void onMapReady(@NonNull MapLibreMap map) {
         this.mlMap = map;
-        map.setStyle("https://www.zood.xyz/static/map-style.json", style -> {
+        String mapStyle = Utils.isNightMode(requireContext()) ? DARK_MAP_STYLE : LIGHT_MAP_STYLE;
+        map.setStyle(mapStyle, style -> {
             GeoJsonOptions gjOpts = new GeoJsonOptions().withTolerance(0.05f);
             this.symbolManager = new SymbolManager(binding.map, mlMap, style, null, null, gjOpts);
             symbolManager.addClickListener(this);

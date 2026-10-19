@@ -7,7 +7,7 @@
     <ImageView
         android:id="@+id/image"
         android:contentDescription="@string/add_friend"
-        android:background="@android:color/white"
+        android:background="@color/surface_high"
         android:src="@drawable/ic_sharp_person_add_24dp"
         android:tint="@color/zood_blue"
         android:layout_gravity="center"

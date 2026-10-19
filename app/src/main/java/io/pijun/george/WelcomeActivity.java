@@ -24,7 +24,6 @@ import androidx.annotation.StringRes;
 import androidx.annotation.UiThread;
 import androidx.annotation.WorkerThread;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.view.WindowCompat;
 import androidx.databinding.DataBindingUtil;
 import androidx.fragment.app.FragmentManager;
 import io.pijun.george.api.CreateUserResponse;
@@ -86,8 +85,7 @@ public class WelcomeActivity extends AppCompatActivity implements WelcomeViewHol
             }
         });
 
-        WindowCompat.getInsetsController(getWindow(), binding.root).setAppearanceLightStatusBars(true);
-        WindowCompat.getInsetsController(getWindow(), binding.root).setAppearanceLightNavigationBars(true);
+        Utils.applySystemBarAppearance(getWindow(), binding.root);
     }
 
     public void onShowRegistration(View v) {

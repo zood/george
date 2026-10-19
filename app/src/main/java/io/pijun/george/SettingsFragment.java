@@ -38,6 +38,7 @@ import xyz.zood.george.AvatarManager;
 import xyz.zood.george.FriendshipManager;
 import xyz.zood.george.LicensesFragment;
 import xyz.zood.george.R;
+import xyz.zood.george.ThemeDialog;
 import xyz.zood.george.databinding.FragmentSettingsBinding;
 import xyz.zood.george.widget.ZoodDialog;
 
@@ -235,6 +236,11 @@ public class SettingsFragment extends Fragment implements SettingsAdapter.Listen
                 .replace(R.id.fragment_host, fragment)
                 .addToBackStack(null)
                 .commit();
+    }
+
+    @Override
+    public void onThemeAction() {
+        ThemeDialog.newInstance().show(getParentFragmentManager(), null);
     }
 
     //endregion

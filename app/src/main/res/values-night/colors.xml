@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Dark theme values of the theme colors in values/colors.xml. The surfaces are tinted
+     with zood_navy. -->
+    <color name="background">#14161f</color>
+    <color name="surface">#1f2230</color>
+    <color name="surface_high">#282c3d</color>
+    <color name="text_primary">#ffffff</color>
+    <color name="text_body">#e1e3ea</color>
+    <color name="text_secondary">#a9aebd</color>
+    <color name="text_tertiary">#7e8496</color>
+    <color name="outline">#4a5063</color>
+    <color name="divider">#2e3242</color>
+    <color name="inactive">#a9aebd</color>
+    <color name="inactive_50">#80a9aebd</color>
+    <color name="switch_track_on">#3e7997</color>
+    <color name="status_bar_scrim">#99000000</color>
+    <!-- The land color of map-style-dark.json -->
+    <color name="map_placeholder">#181b25</color>
+    <color name="map_button_outline">#5f6578</color>
+    <color name="hairline">#5f6578</color>
+</resources>

@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The selected button is blue, which stands out without an outline -->
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:drawable="@android:color/transparent" android:state_selected="true" />
+    <item android:drawable="@drawable/map_button_outline" />
+</selector>

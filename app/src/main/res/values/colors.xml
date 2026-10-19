@@ -38,4 +38,25 @@
 
     <color name="settings_item_title">#252525</color>
     <color name="settings_item_subtitle">#727272</color>
+
+    <!-- Theme colors. These are the light theme values. The dark theme values are in
+     values-night/colors.xml. -->
+    <color name="background">@android:color/white</color>
+    <color name="surface">@android:color/white</color>
+    <color name="surface_high">@android:color/white</color>
+    <color name="text_primary">@color/black</color>
+    <color name="text_body">@color/black_80</color>
+    <color name="text_secondary">@color/black_60</color>
+    <color name="text_tertiary">@color/black_40</color>
+    <color name="outline">@color/black_20</color>
+    <color name="divider">@color/black_10</color>
+    <color name="inactive">@color/zood_grey</color>
+    <color name="inactive_50">@color/zood_grey_50</color>
+    <color name="switch_track_on">@color/zood_blue_50</color>
+    <color name="status_bar_scrim">#9999</color>
+    <!-- Shown until the map style loads. The light value is MapLibre's default. -->
+    <color name="map_placeholder">#f0e9e1</color>
+    <color name="map_button_outline">@android:color/transparent</color>
+    <!-- 1px rules between list items -->
+    <color name="hairline">@color/black_60</color>
 </resources>

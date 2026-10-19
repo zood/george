@@ -11,6 +11,7 @@ import androidx.annotation.CheckResult;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.Size;
+import androidx.appcompat.app.AppCompatDelegate;
 
 import org.maplibre.android.camera.CameraPosition;
 import org.maplibre.android.geometry.LatLng;
@@ -44,6 +45,8 @@ public class Prefs {
     private final static String KEY_DEVICE_ID = "device_id";
 
     private final static String KEY_SHOWN_ONBOARDING = "shown_onboarding";
+
+    private final static String KEY_NIGHT_MODE = "night_mode";
 
     private Prefs(Context context) {
         mPrefs = context.getSharedPreferences("secrets", Context.MODE_PRIVATE);
@@ -245,6 +248,17 @@ public class Prefs {
 
     public void setShownOnboarding() {
         mPrefs.edit().putBoolean(KEY_SHOWN_ONBOARDING, true).apply();
+    }
+
+    // getNightMode returns the theme the user picked: AppCompatDelegate's MODE_NIGHT_FOLLOW_SYSTEM,
+    // MODE_NIGHT_NO, or MODE_NIGHT_YES.
+    @AppCompatDelegate.NightMode
+    public int getNightMode() {
+        return mPrefs.getInt(KEY_NIGHT_MODE, AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM);
+    }
+
+    public void setNightMode(@AppCompatDelegate.NightMode int mode) {
+        mPrefs.edit().putInt(KEY_NIGHT_MODE, mode).apply();
     }
 
 }

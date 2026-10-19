@@ -7,13 +7,13 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent">
         <ScrollView
-            android:background="@android:color/white"
+            android:background="@color/background"
             android:layout_width="match_parent"
             android:layout_height="match_parent">
             <com.google.android.material.textview.MaterialTextView
                 tools:text="License text"
                 android:id="@+id/text_view"
-                android:background="@android:color/white"
+                android:background="@color/background"
                 android:layout_marginStart="16dp"
                 android:layout_marginEnd="16dp"
                 android:layout_width="match_parent"
@@ -22,7 +22,7 @@
 
         <View
             android:id="@+id/status_bar_placeholder"
-            android:background="#9999"
+            android:background="@color/status_bar_scrim"
             android:layout_width="match_parent"
             android:layout_height="10dp"
             android:layout_marginStart="0dp"

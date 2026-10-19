@@ -46,6 +46,7 @@ public class AvatarRenderer {
     private Bitmap image;
     private final Paint imagePaint;
     private final Paint bgPaint;
+    @ColorInt private final int placeholderColor;
     private StaticLayout layout;
     private BitmapShader shader;
     private final TextPaint textPaint;
@@ -60,6 +61,7 @@ public class AvatarRenderer {
         bgPaint = new Paint();
         bgPaint.setAntiAlias(true);
         bgPaint.setStyle(Paint.Style.FILL);
+        placeholderColor = ctx.getColor(R.color.surface);
         textPaint = new TextPaint();
         if (!isInEditMode) {  // I don't know why font resources can't be loaded in edit mode
             if (montserratBold == null) {
@@ -78,7 +80,7 @@ public class AvatarRenderer {
     @AnyThread
     void draw(@NonNull Canvas canvas) {
         if (image == null && TextUtils.isEmpty(username)) {
-            canvas.drawColor(Color.WHITE);
+            canvas.drawColor(placeholderColor);
             return;
         }
 

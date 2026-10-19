@@ -13,7 +13,6 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.core.content.ContextCompat;
 import androidx.core.view.ViewCompat;
-import androidx.core.view.WindowCompat;
 import androidx.core.view.WindowInsetsCompat;
 import androidx.databinding.DataBindingUtil;
 import androidx.fragment.app.Fragment;
@@ -24,6 +23,7 @@ import androidx.viewpager2.widget.ViewPager2;
 import java.util.ArrayList;
 
 import io.pijun.george.Prefs;
+import io.pijun.george.Utils;
 import io.pijun.george.crypto.KeyPair;
 import xyz.zood.george.databinding.FragmentOnboardingBinding;
 
@@ -115,8 +115,7 @@ public class OnboardingFragment extends Fragment {
 
             return WindowInsetsCompat.CONSUMED;
         });
-        WindowCompat.getInsetsController(requireActivity().getWindow(), binding.getRoot()).setAppearanceLightStatusBars(true);
-        WindowCompat.getInsetsController(requireActivity().getWindow(), binding.getRoot()).setAppearanceLightNavigationBars(true);
+        Utils.applySystemBarAppearance(requireActivity().getWindow(), binding.getRoot());
 
         return binding.getRoot();
     }
@@ -202,13 +201,13 @@ public class OnboardingFragment extends Fragment {
                 binding.button.setText(R.string.next);
             }
             int blue = ContextCompat.getColor(requireContext(), R.color.zood_blue);
-            int black10 = ContextCompat.getColor(requireContext(), R.color.black_10);
+            int divider = ContextCompat.getColor(requireContext(), R.color.divider);
             for (int i=0; i<itemIndicators.size(); i++) {
                 View indicator = itemIndicators.get(i);
                 if (i == position) {
                     indicator.getBackground().setTint(blue);
                 } else {
-                    indicator.getBackground().setTint(black10);
+                    indicator.getBackground().setTint(divider);
                 }
             }
         }

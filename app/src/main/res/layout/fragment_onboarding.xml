@@ -4,7 +4,7 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools">
 <xyz.zood.george.widget.SlidableCL
-    android:background="@android:color/white"
+    android:background="@color/background"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
     <androidx.viewpager2.widget.ViewPager2
@@ -16,7 +16,7 @@
     <View
         android:id="@+id/indicator_1"
         android:background="@drawable/page_indicator"
-        android:backgroundTint="@color/black_10"
+        android:backgroundTint="@color/divider"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toStartOf="@id/indicator_2"
         app:layout_constraintTop_toTopOf="@id/button"
@@ -28,7 +28,7 @@
     <View
         android:id="@+id/indicator_2"
         android:background="@drawable/page_indicator"
-        android:backgroundTint="@color/black_10"
+        android:backgroundTint="@color/divider"
         app:layout_constraintStart_toEndOf="@id/indicator_1"
         app:layout_constraintEnd_toStartOf="@id/indicator_3"
         app:layout_constraintTop_toTopOf="@id/button"
@@ -39,7 +39,7 @@
     <View
         android:id="@+id/indicator_3"
         android:background="@drawable/page_indicator"
-        android:backgroundTint="@color/black_10"
+        android:backgroundTint="@color/divider"
         app:layout_constraintStart_toEndOf="@id/indicator_2"
         app:layout_constraintEnd_toStartOf="@id/indicator_4"
         app:layout_constraintTop_toTopOf="@id/button"
@@ -50,7 +50,7 @@
     <View
         android:id="@+id/indicator_4"
         android:background="@drawable/page_indicator"
-        android:backgroundTint="@color/black_10"
+        android:backgroundTint="@color/divider"
         app:layout_constraintStart_toEndOf="@id/indicator_3"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toTopOf="@id/button"

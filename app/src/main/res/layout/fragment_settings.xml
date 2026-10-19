@@ -7,7 +7,7 @@
         android:fitsSystemWindows="true"
         android:focusable="true"
         android:focusableInTouchMode="true"
-        android:background="@android:color/white"
+        android:background="@color/background"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         tools:context=".SettingsActivity">
@@ -19,14 +19,14 @@
             app:layout_constraintStart_toStartOf="parent"
             android:elevation="1dp"
             android:outlineProvider="none"
-            android:background="#9999"
+            android:background="@color/status_bar_scrim"
             />
         <com.google.android.material.button.MaterialButton
             android:id="@+id/back"
             style="@style/Widget.MaterialComponents.Button.TextButton"
             app:icon="@drawable/ic_chevron_left_24dp"
             app:iconGravity="textStart"
-            app:iconTint="@color/black_80"
+            app:iconTint="@color/text_body"
             app:iconSize="24dp"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@id/status_bar_placeholder"
@@ -69,7 +69,7 @@
                 android:fontFamily="@font/montserrat_extra_bold"
                 android:textSize="18sp"
                 android:lineHeight="25sp"
-                android:textColor="@color/black_80"
+                android:textColor="@color/text_body"
                 app:layout_constraintStart_toEndOf="@id/avatar"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintTop_toTopOf="@id/avatar"
@@ -87,7 +87,7 @@
                 android:fontFamily="sans-serif"
                 android:textSize="14sp"
                 android:textStyle="normal"
-                android:textColor="@color/black_40"
+                android:textColor="@color/text_tertiary"
                 android:lineSpacingExtra="7sp"
                 app:layout_constraintStart_toEndOf="@id/avatar"
                 app:layout_constraintEnd_toEndOf="parent"
@@ -101,7 +101,7 @@
 
             <View
                 android:id="@+id/divider"
-                android:background="@color/black_20"
+                android:background="@color/outline"
                 app:layout_constraintTop_toBottomOf="@id/avatar"
                 android:layout_marginTop="24dp"
                 android:layout_width="match_parent"

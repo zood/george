@@ -178,4 +178,8 @@
     <string name="licenses">Лицензии</string>
     <string name="zood_license"><![CDATA[Zood не был бы возможен без следующих открытых библиотек. Нажмите ниже чтобы посмотреть лицензии.]]></string>
     <string name="privacy_policy">Политика конфиденциальности</string>
+    <string name="theme">Тема</string>
+    <string name="theme_system_default">Как в системе</string>
+    <string name="theme_light">Светлая</string>
+    <string name="theme_dark">Тёмная</string>
 </resources>

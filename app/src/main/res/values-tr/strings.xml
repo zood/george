@@ -88,6 +88,10 @@
     <string name="sign_in_welcome_back_msg">Tekrar hoş geldiniz! Sizi özledik.</string>
     <string name="invite_a_friend">Bir arkadaş davet et</string>
     <string name="privacy_policy">Gizlilik Politikası</string>
+    <string name="theme">Tema</string>
+    <string name="theme_system_default">Sistem varsayılanı</string>
+    <string name="theme_light">Açık</string>
+    <string name="theme_dark">Koyu</string>
     <string name="grant_location_permission">Konum izni ver</string>
     <string name="my_location">Konumum</string>
     <string name="send_location_ellipsis">Konum gönder…</string>

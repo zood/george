@@ -184,6 +184,10 @@
     <string name="licenses">Licenses</string>
     <string name="zood_license"><![CDATA[Zood wouldn\'t be possible without open source libraries. Click any of the libraries below to view their license.]]></string>
     <string name="privacy_policy">Privacy policy</string>
+    <string name="theme">Theme</string>
+    <string name="theme_system_default">System default</string>
+    <string name="theme_light">Light</string>
+    <string name="theme_dark">Dark</string>
     <string name="grant_pre_q_location_permission_via_settings_msg">Zood Location needs permission to access your location in order to display your position on the map and share it with your friends (only). Go to Permissions in the app settings screen to grant it.</string>
     <string name="background_location_permission_reason_msg">In order to periodically share your location with your friends (only), Zood needs permission to access your location while in the background.</string>
     <string name="location_permission_needed">Location permission needed</string>

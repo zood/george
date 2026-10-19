@@ -5,7 +5,7 @@
     <xyz.zood.george.widget.SlidableCL
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:background="@android:color/white"
+        android:background="@color/background"
         tools:context=".SettingsActivity">
         <View
             android:id="@+id/status_bar_placeholder"
@@ -14,14 +14,14 @@
             app:layout_constraintTop_toTopOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             android:outlineProvider="none"
-            android:background="#9999"
+            android:background="@color/status_bar_scrim"
             />
         <com.google.android.material.button.MaterialButton
             android:id="@+id/back"
             style="@style/Widget.MaterialComponents.Button.TextButton"
             app:icon="@drawable/ic_chevron_left_24dp"
             app:iconGravity="textStart"
-            app:iconTint="@color/black_80"
+            app:iconTint="@color/text_body"
             app:iconSize="24dp"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@id/status_bar_placeholder"
@@ -53,7 +53,7 @@
             android:layout_height="wrap_content" />
         <View
             android:id="@+id/list_divider"
-            android:background="@color/black_60"
+            android:background="@color/hairline"
             app:layout_constraintBottom_toTopOf="@id/libraries_list"
             android:layout_marginStart="24dp"
             android:layout_marginEnd="24dp"

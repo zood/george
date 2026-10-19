@@ -1,6 +1,8 @@
 package io.pijun.george;
 
 import android.app.Application;
+import android.app.UiModeManager;
+import android.os.Build;
 import android.os.Handler;
 import android.os.Looper;
 
@@ -10,6 +12,7 @@ import java.util.concurrent.Future;
 
 import androidx.annotation.AnyThread;
 import androidx.annotation.NonNull;
+import androidx.annotation.UiThread;
 import androidx.appcompat.app.AppCompatDelegate;
 
 import io.pijun.george.api.TaskSender;
@@ -34,6 +37,7 @@ public class App extends Application {
         L.i("========================");
         super.onCreate();
         AppCompatDelegate.setCompatVectorFromResourcesEnabled(true);
+        applyNightMode(Prefs.get(this).getNightMode());
         int result = Sodium.init();
         if (result != 0 && result != 1) {
             throw new RuntimeException("sodium_init failed. Unsafe to proceed in this state.");
@@ -55,6 +59,27 @@ public class App extends Application {
                 }
             }
         });
+    }
+
+    // applyNightMode switches the app to mode, one of AppCompatDelegate's MODE_NIGHT_FOLLOW_SYSTEM,
+    // MODE_NIGHT_NO, or MODE_NIGHT_YES. Android 12 and later are told the app's mode, so the
+    // launch screen matches it too. Earlier versions rely on AppCompat.
+    @UiThread
+    public static void applyNightMode(@AppCompatDelegate.NightMode int mode) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            int uiMode;
+            if (mode == AppCompatDelegate.MODE_NIGHT_NO) {
+                uiMode = UiModeManager.MODE_NIGHT_NO;
+            } else if (mode == AppCompatDelegate.MODE_NIGHT_YES) {
+                uiMode = UiModeManager.MODE_NIGHT_YES;
+            } else {
+                // For an app, MODE_NIGHT_AUTO means following the system
+                uiMode = UiModeManager.MODE_NIGHT_AUTO;
+            }
+            sApp.getSystemService(UiModeManager.class).setApplicationNightMode(uiMode);
+        } else {
+            AppCompatDelegate.setDefaultNightMode(mode);
+        }
     }
 
     @NonNull @AnyThread

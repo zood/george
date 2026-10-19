@@ -1,8 +1,7 @@
 package xyz.zood.george;
 
 import android.content.Context;
-import android.content.res.Resources;
-import android.graphics.drawable.Drawable;
+import android.content.res.ColorStateList;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
@@ -16,7 +15,6 @@ import androidx.annotation.UiThread;
 import androidx.annotation.WorkerThread;
 import androidx.appcompat.app.AlertDialog;
 import androidx.constraintlayout.widget.ConstraintLayout;
-import androidx.core.content.res.ResourcesCompat;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 import androidx.databinding.DataBindingUtil;
@@ -48,8 +46,6 @@ public class AddFriendFragment extends Fragment {
 
     private String accessToken;
     private FragmentAddFriendBinding binding;
-    private Drawable invalidUserIcon;
-    private Drawable validUserIcon;
     private FriendshipManager friendshipManager;
 
     static AddFriendFragment newInstance(@NonNull String accessToken, @NonNull KeyPair keyPair) {
@@ -129,21 +125,6 @@ public class AddFriendFragment extends Fragment {
             }
         });
 
-        Resources rsrcs = getResources();
-        int lightRed = rsrcs.getColor(R.color.zood_red_light, null);
-        invalidUserIcon = ResourcesCompat.getDrawable(rsrcs, R.drawable.ic_close_black_24dp, null);
-        if (invalidUserIcon != null) {
-            invalidUserIcon.mutate();
-            invalidUserIcon.setTint(lightRed);
-        }
-
-        int green = rsrcs.getColor(R.color.zood_green, null);
-        validUserIcon = ResourcesCompat.getDrawable(rsrcs, R.drawable.ic_check_black_24dp, null);
-        if (validUserIcon != null) {
-            validUserIcon.mutate();
-            validUserIcon.setTint(green);
-        }
-
         applySystemUIInsets(binding);
 
         return binding.getRoot();
@@ -152,8 +133,6 @@ public class AddFriendFragment extends Fragment {
     @Override
     public void onDestroyView() {
         binding = null;
-        invalidUserIcon = null;
-        validUserIcon = null;
 
         super.onDestroyView();
     }
@@ -239,13 +218,8 @@ public class AddFriendFragment extends Fragment {
             return;
         }
 
-        if (valid) {
-            binding.usernameContainer.setEndIconDrawable(validUserIcon);
-            binding.addFriend.setEnabled(true);
-        } else {
-            binding.usernameContainer.setEndIconDrawable(invalidUserIcon);
-            binding.addFriend.setEnabled(false);
-        }
+        showUserValidityIcon(valid);
+        binding.addFriend.setEnabled(valid);
     }
 
     @UiThread
@@ -297,6 +271,15 @@ public class AddFriendFragment extends Fragment {
         });
     }
 
+    @UiThread
+    private void showUserValidityIcon(boolean valid) {
+        // The layout tints its end icon with its own tint list, which replaces any tint on the
+        // drawable, so the color has to be set on the layout.
+        int color = getResources().getColor(valid ? R.color.zood_green : R.color.zood_red_light, null);
+        binding.usernameContainer.setEndIconTintList(ColorStateList.valueOf(color));
+        binding.usernameContainer.setEndIconDrawable(valid ? R.drawable.ic_check_black_24dp : R.drawable.ic_close_black_24dp);
+    }
+
     private class UsernameWatcher implements TextWatcher {
 
         final TextInputLayout layout;
@@ -327,7 +310,7 @@ public class AddFriendFragment extends Fragment {
                         }
                     });
                 } else {
-                    layout.setEndIconDrawable(invalidUserIcon);
+                    showUserValidityIcon(false);
                     binding.addFriend.setEnabled(false);
                 }
             }

@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Edge for the buttons that float over the map. Shadows barely show on the dark map, so the
+ buttons need an outline there. The color is transparent in the light theme. -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="rectangle">
+    <!-- The corner radius of Material 3 FABs -->
+    <corners android:radius="16dp" />
+    <stroke
+        android:width="1dp"
+        android:color="@color/map_button_outline" />
+</shape>

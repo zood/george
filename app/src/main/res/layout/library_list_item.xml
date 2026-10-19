@@ -10,7 +10,7 @@
         android:background="?attr/selectableItemBackground"
         android:drawablePadding="24dp"
         android:textSize="14sp"
-        android:textColor="@color/black_80"
+        android:textColor="@color/text_body"
         android:fontFamily="@font/montserrat_extra_bold"
         android:gravity="center_vertical"
         android:minHeight="56dp"
@@ -20,7 +20,7 @@
         android:layout_height="wrap_content" />
     <View
         android:id="@+id/divider"
-        android:background="@color/black_60"
+        android:background="@color/hairline"
         android:layout_marginStart="24dp"
         android:layout_marginEnd="24dp"
         android:layout_width="match_parent"

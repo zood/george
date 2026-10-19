@@ -1,0 +1,19 @@
+<resources>
+
+    <style name="AppTheme" parent="Base.AppTheme">
+        <item name="android:colorBackground">@color/background</item>
+        <item name="android:popupMenuStyle">@style/Zood.PopupMenu</item>
+        <item name="colorOnBackground">@color/text_body</item>
+        <item name="colorSurface">@color/background</item>
+        <item name="colorOnSurface">@color/text_body</item>
+        <item name="colorOnSurfaceVariant">@color/text_secondary</item>
+        <item name="colorSurfaceContainerLowest">@color/background</item>
+        <item name="colorSurfaceContainerLow">@color/surface</item>
+        <item name="colorSurfaceContainer">@color/surface</item>
+        <item name="colorSurfaceContainerHigh">@color/surface_high</item>
+        <item name="colorSurfaceContainerHighest">@color/surface_high</item>
+        <item name="colorOutline">@color/text_tertiary</item>
+        <item name="colorOutlineVariant">@color/outline</item>
+    </style>
+
+</resources>

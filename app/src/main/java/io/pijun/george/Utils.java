@@ -2,7 +2,10 @@ package io.pijun.george;
 
 import android.annotation.SuppressLint;
 import android.content.Context;
+import android.content.res.Configuration;
 import android.os.Looper;
+import android.view.View;
+import android.view.Window;
 
 import androidx.annotation.AnyThread;
 import androidx.annotation.IntRange;
@@ -10,6 +13,8 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.StringRes;
 import androidx.annotation.UiThread;
+import androidx.core.view.WindowCompat;
+import androidx.core.view.WindowInsetsControllerCompat;
 import androidx.fragment.app.FragmentManager;
 
 import java.util.HashMap;
@@ -75,6 +80,23 @@ public final class Utils {
         }
         dialog.setButton1(ctx.getString(R.string.ok), null);
         dialog.show(fm, null);
+    }
+
+    /**
+     * Use dark status and navigation bar icons in the light theme, and light icons in the dark theme.
+     */
+    @UiThread
+    public static void applySystemBarAppearance(@NonNull Window window, @NonNull View view) {
+        boolean lightBars = !isNightMode(view.getContext());
+        WindowInsetsControllerCompat controller = WindowCompat.getInsetsController(window, view);
+        controller.setAppearanceLightStatusBars(lightBars);
+        controller.setAppearanceLightNavigationBars(lightBars);
+    }
+
+    @AnyThread
+    public static boolean isNightMode(@NonNull Context ctx) {
+        int nightMode = ctx.getResources().getConfiguration().uiMode & Configuration.UI_MODE_NIGHT_MASK;
+        return nightMode == Configuration.UI_MODE_NIGHT_YES;
     }
 
     public static int dpsToPix(Context ctx, int dps) {

@@ -1,9 +1,10 @@
 <resources>
 
-    <style name="AppTheme" parent="Theme.Material3.Light.NoActionBar">
+    <style name="Base.AppTheme" parent="Theme.Material3.DayNight.NoActionBar">
         <item name="colorPrimary">@color/colorPrimary</item>
         <item name="colorPrimaryDark">@color/colorPrimaryDark</item>
         <item name="colorAccent">@color/colorAccent</item>
+        <item name="colorOnPrimary">@android:color/white</item>
 
 
         <!--Typography-->
@@ -15,6 +16,16 @@
         <item name="textAppearanceButton">@style/Zood.Button</item>
         <item name="textAppearanceCaption">@style/Zood.Caption</item>
         <item name="textAppearanceOverline">@style/Zood.Overline</item>
+    </style>
+
+    <!-- The light theme uses the Material 3 defaults for its surface colors. The dark theme
+     replaces them in values-night/styles.xml. -->
+    <style name="AppTheme" parent="Base.AppTheme" />
+
+    <!-- android.widget.PopupMenu uses android:colorBackground for its background, which is the
+     darkest surface in the dark theme. -->
+    <style name="Zood.PopupMenu" parent="@android:style/Widget.Material.PopupMenu">
+        <item name="android:popupBackground">@drawable/popup_menu_background</item>
     </style>
 
 </resources>

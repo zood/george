@@ -468,7 +468,7 @@ public class InfoPanel {
                 break;
             case RequestedAndUnresponsive:
                 vis = View.VISIBLE;
-                colorId = R.color.zood_grey;
+                colorId = R.color.inactive;
                 break;
             case RequestDenied:
                 vis = View.VISIBLE;

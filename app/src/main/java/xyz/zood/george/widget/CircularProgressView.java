@@ -47,7 +47,7 @@ public class CircularProgressView extends View {
         disabledPaint = new Paint();
         disabledPaint.setAntiAlias(true);
         disabledPaint.setStyle(Paint.Style.STROKE);
-        disabledPaint.setColor(ContextCompat.getColor(ctx, R.color.black_20));
+        disabledPaint.setColor(ContextCompat.getColor(ctx, R.color.outline));
         disabledPaint.setStrokeWidth(strokeWidth);
 
         remainingPaint = new Paint();

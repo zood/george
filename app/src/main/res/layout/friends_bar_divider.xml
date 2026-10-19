@@ -6,7 +6,7 @@
     android:layout_height="64dp">
     <View
         android:id="@+id/divider"
-        android:background="@color/black_10"
+        android:background="@color/divider"
         android:layout_gravity="center"
         android:layout_width="1dp"
         android:layout_height="40dp" />
