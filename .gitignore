@@ -11,6 +11,7 @@ google-services.json
 .stignore
 
 
+.idea/
 .idea/caches/
 .idea/libraries/
 .idea/shelf/
